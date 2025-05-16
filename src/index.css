@@ -10,11 +10,11 @@
 
   /* Root color variables */
   --color-primary: #1a3c7e;
-  --color-secondary: #7D7D7D
-  --color-text-dark: ##1E1E1E;
-  --color-text-light: #ffffff;
-  --color-bg-light: #F5F5F5
-  --color-error: #F95353;
-  --color-success: #64FF5C;
+  --color-secondary: #7d7d7d;
+  --color-light: #ffffff;
+  --color-text-dark: ##1e1e1e;
+  --color-bg-light: #f5f5f5;
+  --color-error: #f95353;
+  --color-success: #64ff5c;
   --color-text-semidark: #444444;
 }
