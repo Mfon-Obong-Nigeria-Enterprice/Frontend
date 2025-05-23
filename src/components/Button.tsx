@@ -3,18 +3,19 @@ import React from "react";
 type ButtonProps = {
   text: string;
   onClick?: () => void;
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "outline";
   fullWidth?: boolean;
   disabled?: boolean;
   type?: "button" | "submit";
 };
 
 const baseStyles =
-  "p-3 rounded-[0.625rem] font-semibold text-base transition-all duration-200 focus:outline-none cursor-pointer";
+  "py-3 px-26 rounded-[0.625rem] font-semibold text-base transition-all duration-200 ease-in-out focus:outline-none cursor-pointer";
 
 const variantStyles = {
-  primary: "bg-[#2ECC71] hover:bg-green-500 text-white",
-  secondary: "bg-secondary hover:bg-text-semidark text-white",
+  primary: "bg-[#2ECC71] hover:bg-[#138643] text-white",
+  secondary: "bg-secondary hover:opacity-90 text-white",
+  outline: "bg-transparent text-blue-500 hover:text-blue-600 text-sm",
 };
 const Button: React.FC<ButtonProps> = ({
   text,
