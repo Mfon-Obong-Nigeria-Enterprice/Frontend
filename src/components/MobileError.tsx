@@ -1,11 +1,14 @@
-import { useNavigate } from "react-router-dom";
 import { IoIosArrowBack } from "react-icons/io";
 import { BiErrorCircle } from "react-icons/bi";
 import Button from "./Button";
 
-const MobileError = ({ onClose }: { onClose: () => void }) => {
-  const navigate = useNavigate();
-
+const MobileError = ({
+  onClose,
+  onSupport,
+}: {
+  onClose: () => void;
+  onSupport?: () => void;
+}) => {
   return (
     <div className="absolute top-0 left-0 w-full h-full flex flex-col py-[10%] items-center gap-4 bg-bg-light p-3 mb-4 md:hidden">
       <div
@@ -41,11 +44,7 @@ const MobileError = ({ onClose }: { onClose: () => void }) => {
         fullWidth={false}
       />
 
-      <Button
-        text="Contact Support"
-        variant="outline"
-        onClick={() => navigate("/")}
-      />
+      <Button text="Contact Support" variant="outline" onClick={onSupport} />
     </div>
   );
 };

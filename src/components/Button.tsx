@@ -14,7 +14,7 @@ const baseStyles =
 
 const variantStyles = {
   primary: "bg-[#2ECC71] hover:bg-[#138643] text-white",
-  secondary: "bg-secondary hover:opacity-90 text-white",
+  secondary: "bg-secondary hover:bg-[#6c6e6c] text-white",
   outline: "bg-transparent text-blue-500 hover:text-blue-600 text-sm",
 };
 const Button: React.FC<ButtonProps> = ({
@@ -26,7 +26,6 @@ const Button: React.FC<ButtonProps> = ({
   type = "button",
 }) => {
   return (
-    // bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded
     <button
       type={type}
       onClick={onClick}

@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { loginSchema } from "../schemas/loginSchema";
-import { IoEyeOffOutline } from "react-icons/io5";
+import { IoEyeOffOutline, IoEyeOutline } from "react-icons/io5";
 import Button from "./Button";
 import MobileError from "./MobileError";
+import SupportFeedback from "./SupportFeedback";
 
 type LoginFormInputs = {
   username: string;
@@ -14,7 +15,10 @@ type LoginFormInputs = {
 
 const Login = () => {
   const navigate = useNavigate();
-  const [showMobileError, setShowMobileError] = useState<boolean>(false);
+  const [activeModal, setActiveModal] = useState<"error" | "support" | null>(
+    null
+  );
+  const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
 
   const {
     register,
@@ -29,9 +33,21 @@ const Login = () => {
     navigate("/dashboard");
   };
 
-  const handleMobileError = () => {
-    setShowMobileError(true);
+  // open/close functions
+  const openModal = (type: "error" | "support") => setActiveModal(type);
+  const closeModal = () => setActiveModal(null);
+
+  // reset modal onclose
+  const closeModalAndReset = () => {
+    closeModal();
+    reset();
   };
+
+  // handle error on mobile
+  const handleMobileError = () => openModal("error");
+
+  // make password visible
+  const toggleVisibility = () => setPasswordVisible(!passwordVisible);
 
   return (
     <main className="bg-bg-light min-h-screen flex justify-center items-center">
@@ -67,7 +83,7 @@ const Login = () => {
           </p>
           <div className="relative">
             <input
-              type="password"
+              type={passwordVisible ? "text" : "password"}
               placeholder="Password"
               {...register("password")}
               aria-invalid={!!errors.password}
@@ -77,10 +93,13 @@ const Login = () => {
                   : "border-[#A1A1A1] focus:border-[#A1A1A1]"
               }`}
             />
-            <IoEyeOffOutline
+            <button
               className="absolute top-1/2 text-secondary right-4 cursor-pointer hover:opacity-80"
               aria-label="Toggle password visibility"
-            />
+              onClick={toggleVisibility}
+            >
+              {passwordVisible ? <IoEyeOffOutline /> : <IoEyeOutline />}
+            </button>
           </div>
           <p
             className="hidden md:block md:min-h-6 text-error text-sm pt-1 transition-all duration-200"
@@ -112,21 +131,30 @@ const Login = () => {
 
           <span
             className="text-blue-500 hover:text-blue-600 text-sm"
-            onClick={() => navigate("/")}
+            onClick={() => {
+              setActiveModal("support");
+              reset();
+            }}
           >
             Contact Support
           </span>
         </div>
 
         {/* Error state for mobile */}
-        {showMobileError && (
+
+        {activeModal === "error" && (
           <MobileError
-            onClose={() => {
-              setShowMobileError(false);
+            onClose={closeModalAndReset}
+            onSupport={() => {
+              closeModal();
+              openModal("support");
               reset();
             }}
           />
         )}
+
+        {/* Show feedback if support is contacted */}
+        {activeModal === "support" && <SupportFeedback onClose={closeModal} />}
       </section>
     </main>
   );
