@@ -119,7 +119,6 @@ const Login = () => {
         </div>
 
         {/* Error state for mobile */}
-        {/* {Object.keys(errors).length > 0 && <MobileErrorOverlay />} */}
         {showMobileError && (
           <MobileError
             onClose={() => {
