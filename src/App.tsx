@@ -1,9 +1,13 @@
 /** @format */
-
+import Login from "./components/Login";
 import "./App.css";
 
 function App() {
-  return <></>;
+  return (
+    <>
+      <Login />
+    </>
+  );
 }
 
 export default App;
