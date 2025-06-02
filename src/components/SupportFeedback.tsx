@@ -1,9 +1,9 @@
 import { GoCheck } from "react-icons/go";
-import Button from "./Button";
+import Button from "./ui/Button";
 
 const SupportFeedback = ({ onClose }: { onClose: () => void }) => {
   return (
-    <section className="absolute top-0 left-0 w-full h-screen bg-slate-100 flex justify-center items-center px-2">
+    <section className="absolute top-0 left-0 w-full h-screen bg-secondary flex justify-center items-center px-2">
       <div className="bg-white min-h-100 max-w-[90%] rounded-xl overflow-hidden">
         <h4 className="text-center py-4 bg-[#F0F0F3] text-text-dark text-base font-medium">
           Support Request
