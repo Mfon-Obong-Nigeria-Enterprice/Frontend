@@ -1,6 +1,6 @@
 import { IoIosArrowBack } from "react-icons/io";
 import { BiErrorCircle } from "react-icons/bi";
-import Button from "./Button";
+import Button from "./ui/Button";
 
 const MobileError = ({
   onClose,
