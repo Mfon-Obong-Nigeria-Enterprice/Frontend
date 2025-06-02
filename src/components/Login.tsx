@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { loginSchema } from "../schemas/loginSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema } from "../lib/zodUtils";
 import { IoEyeOffOutline, IoEyeOutline } from "react-icons/io5";
-import Button from "./Button";
+import Button from "./ui/Button";
 import MobileError from "./MobileError";
 import SupportFeedback from "./SupportFeedback";
 
@@ -12,9 +12,11 @@ type LoginFormInputs = {
   username: string;
   password: string;
 };
+const LOGIN_API_URL = import.meta.env.VITE_LOGIN_API;
 
 const Login = () => {
   const navigate = useNavigate();
+  // const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [activeModal, setActiveModal] = useState<"error" | "support" | null>(
     null
   );
@@ -25,12 +27,64 @@ const Login = () => {
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<LoginFormInputs>({ resolver: yupResolver(loginSchema) });
+  } = useForm<LoginFormInputs>({ resolver: zodResolver(loginSchema) });
 
   const onSubmit = async (data: LoginFormInputs) => {
-    console.log(data);
-    alert("Login Successful");
-    navigate("/dashboard");
+    try {
+      const response = await fetch(`${LOGIN_API_URL}login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      // console.log(response);
+
+      if (!response.ok) {
+        throw new Error("Invalid username or password");
+      }
+
+      // simulated response from backend
+      const user = await response.json();
+      console.log("User from API:", user);
+      // const user = {
+      //   role: "manager",
+      //   isSetupComplete: false,
+      // };
+
+      // store user info
+      localStorage.setItem("role", user.role);
+      localStorage.setItem("isSetupComplete", String(user.isSetupComplete));
+      if (user.token) {
+        localStorage.setItem("token", user.token);
+      }
+
+      // role-based navigation
+      switch (user.role) {
+        case "manager":
+          if (user.isSetupComplete) {
+            navigate("/manager-dashboard");
+          } else {
+            navigate("/manager-setup");
+          }
+          break;
+
+        case "admin":
+          if (user.isSetupComplete) {
+            navigate("/admin-dashboard");
+          } else {
+            navigate("/admin-setup");
+          }
+          break;
+
+        case "staff":
+        default:
+          navigate("/staff-dashboard");
+          break;
+      }
+    } catch (error) {
+      console.error("Login failed", error);
+    }
   };
 
   // open/close functions
