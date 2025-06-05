@@ -54,6 +54,7 @@ const InputField = forwardRef<HTMLInputElement, InputProps>(
             id={id}
             placeholder={placeholder}
             rows={4}
+            ref={ref as React.Ref<HTMLTextAreaElement>}
             className={`${baseInputStyles} ${variantInputStyles} ${defaultInput}`}
             {...(rest as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
           />

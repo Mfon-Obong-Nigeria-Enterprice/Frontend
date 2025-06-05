@@ -10,7 +10,7 @@ type ButtonProps = {
 };
 
 const baseStyles =
-  "py-3 px-26 rounded-[0.625rem] font-semibold text-base transition-all duration-200 ease-in-out focus:outline-none cursor-pointer";
+  "py-3 px-10 rounded-[0.625rem] font-semibold text-base transition-all duration-200 ease-in-out focus:outline-none cursor-pointer";
 
 const variantStyles = {
   primary: "bg-[#2ECC71] hover:bg-[#138643] text-white",
