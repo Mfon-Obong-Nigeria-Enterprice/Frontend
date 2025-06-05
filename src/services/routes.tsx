@@ -1,11 +1,16 @@
 import { createBrowserRouter } from "react-router-dom";
 import Login from "../components/Login";
-import AdminDashboard from "../pages/AdminDashboard";
+// import AdminDashboard from "../pages/adminDashboard/AdminDashboard";
 import ManagerDashboard from "../pages/ManagerDashboard";
 import StaffDashboard from "../pages/StaffDashboard";
-import AdminSetup from "../pages/AdminSetup";
-import AdminSetupPage02 from "../pages/AdminSetupPage02";
-import AdminSetupPage03 from "../pages/AdminSetupPage03";
+import AdminSetup from "../pages/adminSetup/AdminSetup";
+import AdminSetupPage02 from "../pages/adminSetup/AdminSetupPage02";
+import AdminSetupPage03 from "../pages/adminSetup/AdminSetupPage03";
+import AdminSetupPage04 from "../pages/adminSetup/AdminSetupPage04";
+import AdminSetupReview from "../pages/adminSetup/AdminSetupReview";
+import AdminSetupComplete from "../pages/adminSetup/AdminSetupComplete";
+
+import AdminDashboard from "../pages/adminDashboard/AdminDashboard";
 
 const router = createBrowserRouter([
   {
@@ -29,12 +34,24 @@ const router = createBrowserRouter([
     element: <AdminSetup />,
   },
   {
-    path: "admin-setup-page-02",
+    path: "admin-setup-02",
     element: <AdminSetupPage02 />,
   },
   {
-    path: "admin-setup-page-03",
+    path: "admin-setup-03",
     element: <AdminSetupPage03 />,
+  },
+  {
+    path: "admin-setup-04",
+    element: <AdminSetupPage04 />,
+  },
+  {
+    path: "admin-setup-review",
+    element: <AdminSetupReview />,
+  },
+  {
+    path: "admin-setup-complete",
+    element: <AdminSetupComplete />,
   },
 ]);
 

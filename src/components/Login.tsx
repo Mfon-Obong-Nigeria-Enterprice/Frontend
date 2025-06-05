@@ -30,6 +30,8 @@ const Login = () => {
   } = useForm<LoginFormInputs>({ resolver: zodResolver(loginSchema) });
 
   const onSubmit = async (data: LoginFormInputs) => {
+    // navigate("/admin-setup");
+    // console.log(data);
     try {
       const response = await fetch(`${LOGIN_API_URL}login`, {
         method: "POST",
