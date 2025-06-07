@@ -1,20 +1,15 @@
-import { useNavigate } from "react-router-dom";
-import SetupTitle from "./SetupTitle";
-import ProgressBar from "../../../components/ProgressBar";
-import ReviewSummary from "./ReviewSummary";
-import Button from "../../../components/ui/Button";
+import SetupTitle from "./components/SetupTitle";
+import ProgressBar from "./components/ProgressBar";
+import ReviewSummary from "./components/ReviewSummary";
 
-const SetupReview = () => {
-  const navigate = useNavigate();
-
+const Review = () => {
   return (
-    <main className="bg-white md:max-w-[90%] lg:max-w-[80%] w-full mx-auto rounded-[0.625rem] overflow-hidden shadow-2xl font-Inter">
+    <div>
       <SetupTitle
         title="Review & Launch"
         description="Review your set-up before launching the system"
       />
       <ProgressBar currentStep={5} totalSteps={5} />
-
       <section className="px-6 py-10">
         <h3 className="font-medium text-xl leading-none text-text-dark mb-3">
           Setup Summary
@@ -45,26 +40,8 @@ const SetupReview = () => {
           />
         </div>
       </section>
-
-      <div className="flex justify-between mb-10 mx-10">
-        <div className="border border-secondary rounded-lg text-secondary">
-          <Button
-            text="Back"
-            variant="outline"
-            onClick={() => navigate("/admin-setup-04")}
-          />
-        </div>
-        <div>
-          <Button
-            text="Complete Setup"
-            onClick={() => {
-              navigate("/admin-setup-complete");
-            }}
-          />
-        </div>
-      </div>
-    </main>
+    </div>
   );
 };
 
-export default SetupReview;
+export default Review;

@@ -1,15 +1,12 @@
-import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import ProgressBar from "../../../components/ProgressBar";
-import InputField from "../../../components/ui/InputField";
-import Button from "../../../components/ui/Button";
-import { adminSetupSchema } from "../../../lib/zodUtils";
+import { adminSetupSchema } from "../../../lib/zodUtils.ts";
 import { type AdminSetupData } from "../../../types/types.ts";
-import SetupTitle from "./SetupTitle";
+import SetupTitle from "./components/SetupTitle.tsx";
+import ProgressBar from "./components/ProgressBar.tsx";
+import InputField from "@/components/ui/InputField";
 
-const StepOne = () => {
-  const navigate = useNavigate();
+const SetupOne = () => {
   const {
     register,
     handleSubmit,
@@ -18,21 +15,18 @@ const StepOne = () => {
     resolver: zodResolver(adminSetupSchema),
     mode: "onBlur",
   });
-
   const onSubmit = (data: AdminSetupData) => {
     console.log(data);
-    navigate("/admin-setup-02");
+    // navigate("/admin-setup-02");
   };
 
   return (
-    <main className="bg-white md:max-w-[90%] lg:max-w-[80%] w-full mx-auto rounded-[0.625rem] overflow-hidden">
+    <div>
       <SetupTitle
         title="Business Information"
         description="Before you can use the system, please complete this setup steps..."
       />
       <ProgressBar currentStep={1} totalSteps={5} />
-
-      {/* business details */}
       <div className="px-4 md:px-10 py-10">
         <h3 className="pb-6 text-text-dark font-Inter font-medium text-base md:text-lg lg:text-xl leading-none">
           Business Details
@@ -92,13 +86,13 @@ const StepOne = () => {
             />
           </div>
           {/* submit button */}
-          <div className="lg:ml-auto lg:col-span-3">
-            <Button text="Continue" type="submit" />
-          </div>
+          {/* <div className="lg:ml-auto lg:col-span-3"> */}
+          {/* <Button text="Continue" type="submit" /> */}
+          {/* </div> */}
         </form>
       </div>
-    </main>
+    </div>
   );
 };
 
-export default StepOne;
+export default SetupOne;

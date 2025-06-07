@@ -1,17 +1,17 @@
-import { useNavigate } from "react-router-dom";
-import { useClientStore } from "../../../store/ClientStore";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import InputField from "../../../components/ui/InputField";
-import Button from "../../../components/ui/Button";
 import { MdOutlineEdit, MdOutlineDelete } from "react-icons/md";
-import SetupTitle from "./SetupTitle";
-import ProgressBar from "../../../components/ProgressBar";
-import { type AdminSetupClientData } from "../../../types/types";
-import { adminClientSetupSchema } from "../../../lib/zodUtils";
+
+import { useClientStore } from "@/store/ClientStore";
+import { type AdminSetupClientData } from "@/types/types";
+import { adminClientSetupSchema } from "@/lib/zodUtils";
+
+import InputField from "@/components/ui/InputField";
+import Button from "@/components/ui/Button";
+import SetupTitle from "./components/SetupTitle";
+import ProgressBar from "./components/ProgressBar";
 
 const SetupFour = () => {
-  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -36,13 +36,12 @@ const SetupFour = () => {
   };
 
   return (
-    <main className="bg-white md:max-w-[90%] lg:max-w-[80%] w-full mx-auto rounded-[0.625rem] overflow-hidden shadow-2xl">
+    <div>
       <SetupTitle
         title="Client Information"
         description="Before you can use the system, please complete this setup steps..."
       />
       <ProgressBar currentStep={4} totalSteps={5} />
-
       <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-10">
         <h3 className="font-medium font-Inter text-xl leading-none text-text-dark">
           Register New Clients
@@ -88,6 +87,7 @@ const SetupFour = () => {
         </div>
       </form>
 
+      {/* display data */}
       <section className="bg-[#F5F5F5] px-4 py-4 rounded-[0.625rem] flex flex-col gap-3 mb-8 mx-8">
         {clients.length === 0 ? (
           <p className="text-base italic text-text-semidark py-8 text-center">
@@ -144,29 +144,7 @@ const SetupFour = () => {
           picking goods.
         </p>
       </div>
-
-      <div className="flex justify-between mb-10 mx-10">
-        <div className="border border-secondary rounded-lg text-secondary">
-          <Button
-            text="Back"
-            variant="outline"
-            onClick={() => navigate("/admin-setup-04")}
-          />
-        </div>
-        <div>
-          <Button
-            text="Continue"
-            onClick={() => {
-              if (clients.length > 0) {
-                navigate("/admin-setup-review");
-              } else {
-                alert("Please enter a client");
-              }
-            }}
-          />
-        </div>
-      </div>
-    </main>
+    </div>
   );
 };
 

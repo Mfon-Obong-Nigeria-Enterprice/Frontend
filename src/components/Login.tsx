@@ -30,63 +30,63 @@ const Login = () => {
   } = useForm<LoginFormInputs>({ resolver: zodResolver(loginSchema) });
 
   const onSubmit = async (data: LoginFormInputs) => {
-    // navigate("/admin-setup");
-    // console.log(data);
-    try {
-      const response = await fetch(`${LOGIN_API_URL}login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      // console.log(response);
+    navigate("/admin/setup");
+    console.log(data);
+    // try {
+    //   const response = await fetch(`${LOGIN_API_URL}login`, {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify(data),
+    //   });
+    //   // console.log(response);
 
-      if (!response.ok) {
-        throw new Error("Invalid username or password");
-      }
+    //   if (!response.ok) {
+    //     throw new Error("Invalid username or password");
+    //   }
 
-      // simulated response from backend
-      const user = await response.json();
-      console.log("User from API:", user);
-      // const user = {
-      //   role: "manager",
-      //   isSetupComplete: false,
-      // };
+    //   // simulated response from backend
+    //   const user = await response.json();
+    //   console.log("User from API:", user);
+    //   // const user = {
+    //   //   role: "manager",
+    //   //   isSetupComplete: false,
+    //   // };
 
-      // store user info
-      localStorage.setItem("role", user.role);
-      localStorage.setItem("isSetupComplete", String(user.isSetupComplete));
-      if (user.token) {
-        localStorage.setItem("token", user.token);
-      }
+    //   // store user info
+    //   localStorage.setItem("role", user.role);
+    //   localStorage.setItem("isSetupComplete", String(user.isSetupComplete));
+    //   if (user.token) {
+    //     localStorage.setItem("token", user.token);
+    //   }
 
-      // role-based navigation
-      switch (user.role) {
-        case "manager":
-          if (user.isSetupComplete) {
-            navigate("/manager-dashboard");
-          } else {
-            navigate("/manager-setup");
-          }
-          break;
+    //   // role-based navigation
+    //   switch (user.role) {
+    //     case "manager":
+    //       if (user.isSetupComplete) {
+    //         navigate("/manager-dashboard");
+    //       } else {
+    //         navigate("/manager-setup");
+    //       }
+    //       break;
 
-        case "admin":
-          if (user.isSetupComplete) {
-            navigate("/admin-dashboard");
-          } else {
-            navigate("/admin-setup");
-          }
-          break;
+    //     case "admin":
+    //       if (user.isSetupComplete) {
+    //         navigate("/admin-dashboard");
+    //       } else {
+    //         navigate("/admin-setup");
+    //       }
+    //       break;
 
-        case "staff":
-        default:
-          navigate("/staff-dashboard");
-          break;
-      }
-    } catch (error) {
-      console.error("Login failed", error);
-    }
+    //     case "staff":
+    //     default:
+    //       navigate("/staff-dashboard");
+    //       break;
+    //   }
+    // } catch (error) {
+    //   console.error("Login failed", error);
+    // }
   };
 
   // open/close functions

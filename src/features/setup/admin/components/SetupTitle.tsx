@@ -1,4 +1,4 @@
-import { type SetupTitleProps } from "../../../types/types";
+import { type SetupTitleProps } from "../../../../types/types";
 
 const SetupTitle = ({ title, description }: SetupTitleProps) => {
   return (

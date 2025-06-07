@@ -1,19 +1,21 @@
-import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import ProgressBar from "../../../components/ProgressBar";
-import { adminCategorySetupSchema } from "../../../lib/zodUtils";
-import InputField from "../../../components/ui/InputField";
-import Button from "../../../components/ui/Button";
-import { MdOutlineEdit, MdOutlineDelete } from "react-icons/md";
 import { type AdminSetupCatData } from "../../../types/types";
-import SetupTitle from "./SetupTitle";
+import { adminCategorySetupSchema } from "@/lib/zodUtils";
+
+import { MdOutlineEdit, MdOutlineDelete } from "react-icons/md";
+
+import SetupTitle from "./components/SetupTitle";
+import ProgressBar from "./components/ProgressBar";
+import InputField from "@/components/ui/InputField";
+import Button from "@/components/ui/Button";
+
 import { setupTips } from "../../../data/setupTips";
 import { categoryUnit } from "../../../data/categoryUnit";
 import { useCategoryStore } from "../../../store/useCategoryStore";
 
-const StepTwo = () => {
-  const navigate = useNavigate();
+const SetupTwo = () => {
+  const { categories, addCategory } = useCategoryStore();
   const {
     register,
     handleSubmit,
@@ -23,8 +25,6 @@ const StepTwo = () => {
     resolver: zodResolver(adminCategorySetupSchema),
     mode: "onBlur",
   });
-
-  const { categories, addCategory } = useCategoryStore();
 
   const onSubmit = (data: AdminSetupCatData) => {
     const duplicate = categories.some(
@@ -40,14 +40,13 @@ const StepTwo = () => {
   };
 
   return (
-    <main className="bg-white md:max-w-[90%] lg:max-w-[80%] w-full mx-auto rounded-[0.625rem] overflow-hidden shadow-2xl">
+    <div>
       <SetupTitle
         title=" Add Inventory Categories"
         description=" Before you can use the system, please complete this setup steps..."
       />
       <ProgressBar currentStep={2} totalSteps={5} />
 
-      {/* Form details */}
       <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-10">
         <h3 className="font-medium font-Inter text-xl leading-none text-text-dark">
           Add New Category
@@ -89,7 +88,7 @@ const StepTwo = () => {
         </div>
       </form>
 
-      {/* data */}
+      {/* data display */}
       <section className="bg-[#F5F5F5] px-4 py-4 rounded-[0.625rem] flex flex-col gap-3 mb-8 mx-8">
         {categories.length === 0 ? (
           <p className="text-base italic text-text-semidark py-8 text-center">
@@ -126,32 +125,8 @@ const StepTwo = () => {
           ))}
         </ul>
       </div>
-
-      {/* buttons */}
-      <div className="flex justify-between mb-10 mx-10">
-        <div className="border border-secondary rounded-lg text-secondary">
-          <Button
-            text="Back"
-            variant="outline"
-            onClick={() => navigate("/admin-setup")}
-          />
-        </div>
-
-        <div>
-          <Button
-            text="Continue"
-            onClick={() => {
-              if (categories.length > 0) {
-                navigate("/admin-setup-03");
-              } else {
-                alert("Please enter a category");
-              }
-            }}
-          />
-        </div>
-      </div>
-    </main>
+    </div>
   );
 };
 
-export default StepTwo;
+export default SetupTwo;

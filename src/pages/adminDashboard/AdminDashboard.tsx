@@ -1,4 +1,5 @@
-import Navbar from "../../features/admin/dashboard/Navbar";
+import Navbar from "../../features/dashboard/components/Navbar";
+
 const AdminDashboard = () => {
   return (
     <>

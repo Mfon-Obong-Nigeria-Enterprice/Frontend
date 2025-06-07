@@ -1,19 +1,19 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import ProgressBar from "../../../components/ProgressBar";
-import InputField from "../../../components/ui/InputField";
-import SetupTitle from "./SetupTitle";
-import { type AdminSetupProd } from "../../../types/types";
-import { adminProductSetupSchema } from "../../../lib/zodUtils";
-import Button from "../../../components/ui/Button";
-import { useCategoryStore } from "../../../store/useCategoryStore";
 import { MdOutlineEdit, MdOutlineDelete } from "react-icons/md";
-import { categoryUnit as unitOptions } from "../../../data/categoryUnit";
 
-const Stepthree: React.FC = () => {
-  const navigate = useNavigate();
+import { adminProductSetupSchema } from "@/lib/zodUtils";
+import { type AdminSetupProd } from "@/types/types";
+import { useCategoryStore } from "@/store/useCategoryStore";
+
+import SetupTitle from "./components/SetupTitle";
+import ProgressBar from "./components/ProgressBar";
+import InputField from "@/components/ui/InputField";
+import Button from "@/components/ui/Button";
+import { categoryUnit as unitOptions } from "@/data/categoryUnit";
+
+const SetupThree: React.FC = () => {
   const { categories } = useCategoryStore();
   const [products, setProducts] = useState<AdminSetupProd[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -22,8 +22,6 @@ const Stepthree: React.FC = () => {
     ? categories.find((cat) => cat.categoryName === selectedCategory)
         ?.categoryUnit || ""
     : "";
-
-  console.log("categories:", categories);
 
   const {
     register,
@@ -50,7 +48,7 @@ const Stepthree: React.FC = () => {
   };
 
   return (
-    <main className="bg-white md:max-w-[90%] lg:max-w-[80%] w-full mx-auto rounded-[0.625rem] overflow-hidden shadow-2xl">
+    <div>
       <SetupTitle
         title="Add Product"
         description="Before you can use the system, please complete this setup steps..."
@@ -136,6 +134,7 @@ const Stepthree: React.FC = () => {
         </div>
       </form>
 
+      {/* display the data */}
       <section className="bg-[#F5F5F5] px-4 py-4 rounded-[0.625rem] flex flex-col gap-3 mb-8 mx-8">
         {products.length === 0 ? (
           <p className="text-base italic text-text-semidark py-8 text-center">
@@ -193,30 +192,8 @@ const Stepthree: React.FC = () => {
           ))
         )}
       </section>
-
-      <div className="flex justify-between mb-10 mx-10">
-        <div className="border border-secondary rounded-lg text-secondary">
-          <Button
-            text="Back"
-            variant="outline"
-            onClick={() => navigate("/admin-setup-03")}
-          />
-        </div>
-        <div>
-          <Button
-            text="Continue"
-            onClick={() => {
-              if (products.length > 0) {
-                navigate("/admin-setup-04");
-              } else {
-                alert("Please enter a product");
-              }
-            }}
-          />
-        </div>
-      </div>
-    </main>
+    </div>
   );
 };
 
-export default Stepthree;
+export default SetupThree;
