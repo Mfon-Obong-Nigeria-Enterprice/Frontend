@@ -9,6 +9,12 @@ import Review from "@/features/setup/admin/Review";
 import Complete from "@/features/setup/admin/Complete";
 
 import AdminDashboardLayout from "@/layout/dashboard/AdminDashboardLayout";
+import DashboardOverview from "@/features/dashboard/admin/DashboardOverview";
+import AdminInventory from "@/features/dashboard/admin/AdminInventory";
+import Clients from "@/features/dashboard/admin/Clients";
+import DashboardSales from "@/features/dashboard/admin/DashboardSales";
+import DashboardTransactions from "@/features/dashboard/admin/DashboardTransactions";
+import DashboardSettings from "@/features/dashboard/admin/DashboardSettings";
 
 const router = createBrowserRouter([
   { path: "/", element: <Login /> },
@@ -25,14 +31,17 @@ const router = createBrowserRouter([
       { path: "complete", element: <Complete /> },
     ],
   },
-  // { path: "/admin/dashboard", element: <AdminDashboardLayout /> },
   {
-    path: "/admin-dashboard",
+    path: "/admin/dashboard",
     element: <AdminDashboardLayout />,
     children: [
-      // { index: true, element: <DashboardOverview /> },
-      // { path: "clients", element: <ClientsPage /> },
-      // { path: "settings", element: <SettingsPage /> },
+      { index: true, element: <Navigate to="/overview" /> },
+      { path: "overview", element: <DashboardOverview /> },
+      { path: "inventory", element: <AdminInventory /> },
+      { path: "clients", element: <Clients /> },
+      { path: "sales", element: <DashboardSales /> },
+      { path: "transactions", element: <DashboardTransactions /> },
+      { path: "settings", element: <DashboardSettings /> },
     ],
   },
 ]);

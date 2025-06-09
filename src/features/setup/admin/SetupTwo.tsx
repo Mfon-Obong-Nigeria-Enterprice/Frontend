@@ -7,8 +7,8 @@ import { MdOutlineEdit, MdOutlineDelete } from "react-icons/md";
 
 import SetupTitle from "./components/SetupTitle";
 import ProgressBar from "./components/ProgressBar";
-import InputField from "@/components/ui/InputField";
-import Button from "@/components/ui/Button";
+import InputField from "@/components/InputField";
+import Button from "@/components/MyButton";
 
 import { setupTips } from "../../../data/setupTips";
 import { categoryUnit } from "../../../data/categoryUnit";
@@ -48,7 +48,7 @@ const SetupTwo = () => {
       <ProgressBar currentStep={2} totalSteps={5} />
 
       <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-10">
-        <h3 className="font-medium font-Inter text-xl leading-none text-text-dark">
+        <h3 className="font-medium font-Inter text-xl leading-none text-[var(--cl-text-dark)]">
           Add New Category
         </h3>
         <div className="flex flex-col gap-5 lg:grid lg:grid-cols-2 md:gap-8 mt-5 md:mt-10 border border-[#D9D9D9] rounded-[0.625rem] p-4">
@@ -76,7 +76,7 @@ const SetupTwo = () => {
               label="Description (Optional)"
               id="categoryDescription"
               textarea
-              placeholder=""
+              placeholder="Describe the category here..."
               variant="default"
               {...register("categoryDescription")}
             />
@@ -89,9 +89,9 @@ const SetupTwo = () => {
       </form>
 
       {/* data display */}
-      <section className="bg-[#F5F5F5] px-4 py-4 rounded-[0.625rem] flex flex-col gap-3 mb-8 mx-8">
+      <section className="bg-[var(--cl-bg-light)] px-4 py-4 rounded-[0.625rem] flex flex-col gap-3 mb-8 mx-8">
         {categories.length === 0 ? (
-          <p className="text-base italic text-text-semidark py-8 text-center">
+          <p className="text-base italic text-[var(--cl-text-semidark)] py-8 text-center">
             No categories have been added yet.
           </p>
         ) : (
@@ -101,13 +101,26 @@ const SetupTwo = () => {
               className="bg-white rounded-sm p-5 flex gap-2 items-center"
             >
               <div className="flex-1">
-                <h5>Category name: {cat.categoryName}</h5>
-                <p>Unit: {cat.categoryUnit}</p>
-                {cat.categoryDescription && <p>{cat.categoryDescription}</p>}
+                <h5 className="text-sm text-[var(--cl-text-gray)] font-medium">
+                  Category name:
+                  <span className="ml-1 font-normal">{cat.categoryName}</span>
+                </h5>
+                <p className="text-sm text-[var(--cl-text-gray)] font-medium">
+                  Measure unit:
+                  <span className="ml-1 font-normal">{cat.categoryUnit}</span>
+                </p>
+                {cat.categoryDescription && (
+                  <p className="text-sm text-[var(--cl-text-gray)] font-medium">
+                    Description:
+                    <span className="ml-1 font-normal">
+                      {cat.categoryDescription}
+                    </span>
+                  </p>
+                )}
               </div>
               <div className="flex gap-3">
                 <MdOutlineEdit className="text-[#FFA500]" />
-                <MdOutlineDelete />
+                <MdOutlineDelete className="text-[var(--cl-secondary)]" />
               </div>
             </div>
           ))
@@ -115,15 +128,22 @@ const SetupTwo = () => {
       </section>
 
       {/* tips */}
-      <div className="bg-[#e2f3eb] border border-[#2ECC71] mx-6 mb-10 rounded-[0.625rem] py-2 px-10">
-        <h6>Set up Tips</h6>
-        <ul className="list-disc rounded-lg">
-          {setupTips.map((tip, index) => (
-            <li key={index} className="text-[#0B6E35]">
-              {tip}
-            </li>
-          ))}
-        </ul>
+      <div className="bg-gradient-to-t from-[#176639] to-[#2ECC71] mx-6 mb-10 rounded-xl p-0.5 font-Inter">
+        <div className="bg-[var(--cl-bg-light-green)] rounded-[0.75rem] py-2 px-10">
+          <h6 className="font-semibold text-sm text-[#05431F] mb-1.5">
+            Set up Tips
+          </h6>
+          <ul className="list-disc rounded-lg">
+            {setupTips.map((tip, index) => (
+              <li
+                key={index}
+                className="font-medium text-[0.75rem] text-[#0B6E35] leading-relaxed"
+              >
+                {tip}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );

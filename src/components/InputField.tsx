@@ -30,21 +30,22 @@ const InputField = forwardRef<HTMLInputElement, InputProps>(
 
     const variantContainerStyles =
       variant === "setup"
-        ? "bg-[#E0DDDD] rounded-[0.625rem] px-3 md:px-10 lg:px-4 py-6"
+        ? "bg-[var(--cl-bg-gray)] rounded-[0.625rem] px-3 md:px-10 lg:px-4 py-6"
         : "";
 
     const baseInputStyles =
-      "bg-white w-full px-3 md:px-3 py-2 text-secondary rounded-[0.625rem] outline-[#F4E8E7] focus:border focus:border-[#F4E8E7]";
+      "bg-white w-full px-3 md:px-3 py-2 text-[var(--cl-secondary)] rounded-[0.625rem] outline-gray-100 focus:border focus:border-gray-100";
 
     const variantInputStyles = variant === "setup" ? " border-0" : "";
 
-    const defaultInput = variant === "default" ? "border border-secondary" : "";
+    const defaultInput =
+      variant === "default" ? "border border-[var(--cl-secondary)]" : "";
 
     return (
       <fieldset className={`${baseContainerStyles} ${variantContainerStyles}`}>
         <label
           htmlFor={id}
-          className="font-Inter font-normal text-[#333333] text-sm leading-none"
+          className="font-Inter font-normal text-[var(--cl-text-gray)] text-sm leading-none"
         >
           {label}
         </label>

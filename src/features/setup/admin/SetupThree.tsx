@@ -9,8 +9,8 @@ import { useCategoryStore } from "@/store/useCategoryStore";
 
 import SetupTitle from "./components/SetupTitle";
 import ProgressBar from "./components/ProgressBar";
-import InputField from "@/components/ui/InputField";
-import Button from "@/components/ui/Button";
+import InputField from "@/components/InputField";
+import Button from "@/components/MyButton";
 import { categoryUnit as unitOptions } from "@/data/categoryUnit";
 
 const SetupThree: React.FC = () => {
@@ -56,11 +56,11 @@ const SetupThree: React.FC = () => {
       <ProgressBar currentStep={3} totalSteps={5} />
 
       <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-10">
-        <h3 className="font-medium font-Inter text-xl leading-none text-text-dark">
+        <h3 className="font-medium font-Inter text-xl leading-none text-[var(--cl-text-dark)]">
           Add Product
         </h3>
 
-        <div className="flex flex-col gap-5 lg:grid lg:grid-cols-3 md:gap-8 mt-5 md:mt-10 border border-[#d9d9d9] rounded-[0.625rem] p-4">
+        <div className="flex flex-col gap-5 lg:grid lg:grid-cols-3 md:gap-8 mt-5 md:mt-10 border border-[var(--cl-border-gray)] rounded-[0.625rem] p-4">
           <InputField
             label="Product name"
             id="productName"
@@ -102,7 +102,7 @@ const SetupThree: React.FC = () => {
           <InputField
             label="Conversion rate (if applicable)"
             id="unitConversion"
-            placeholder="e.g., 50 pounds per bag"
+            placeholder="e.g. 50 pounds per bag"
             {...register("unitConversion")}
             error={errors.unitConversion?.message}
           />
@@ -137,7 +137,7 @@ const SetupThree: React.FC = () => {
       {/* display the data */}
       <section className="bg-[#F5F5F5] px-4 py-4 rounded-[0.625rem] flex flex-col gap-3 mb-8 mx-8">
         {products.length === 0 ? (
-          <p className="text-base italic text-text-semidark py-8 text-center">
+          <p className="text-base italic text-[var(--cl-text-semidark)] py-8 text-center">
             No Products have been added yet.
           </p>
         ) : (

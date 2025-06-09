@@ -1,8 +1,8 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { ScrollRestoration } from "react-router-dom";
 
-import SetupHeader from "@/components/setup/SetupHeader.tsx";
-import Button from "@/components/ui/Button.tsx";
+import SetupHeader from "@/features/setup/admin/components/SetupHeader";
+import Button from "@/components/MyButton";
 
 const steps = [
   "step-01",
@@ -35,13 +35,12 @@ const AdminSetupLayout = () => {
     }
   };
 
-  // hide back button on first step and hide both buttons on last step
   const isFirstStep = safeIndex === 0;
   const isReviewStep = steps[safeIndex] === "review";
   const isCompletedStep = steps[safeIndex] === "complete";
 
   return (
-    <div className="bg-[#F5F5F5] md:py-10">
+    <div className="bg-[var(--cl-bg-light)] md:py-10">
       <SetupHeader />
       <main className="bg-white md:max-w-[90%] lg:max-w-[80%] w-full mx-auto rounded-[0.625rem] overflow-hidden">
         <Outlet />
@@ -49,9 +48,13 @@ const AdminSetupLayout = () => {
         {!isCompletedStep && (
           <div className="flex justify-between mb-10 mx-10">
             {!isFirstStep && (
-              <div className="border border-secondary rounded-lg text-secondary">
-                <Button text="Back" variant="outline" onClick={onBack} />
-              </div>
+              <Button
+                text="Back"
+                variant="custom"
+                onClick={onBack}
+                fullWidth={false}
+                className="text-[var(--cl-text-semidark)] border border-[var(--cl-secondary)] rounded-lg hover:bg-[var(--cl-light-gray)] hover:text-gray-500 px-10"
+              />
             )}
             <div className={isFirstStep ? "ml-auto" : ""}>
               <Button

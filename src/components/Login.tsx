@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "../lib/zodUtils";
 import { IoEyeOffOutline, IoEyeOutline } from "react-icons/io5";
-import Button from "./ui/Button";
+import Button from "./MyButton";
 import MobileError from "./MobileError";
 import SupportFeedback from "./SupportFeedback";
 
@@ -12,7 +12,7 @@ type LoginFormInputs = {
   username: string;
   password: string;
 };
-const LOGIN_API_URL = import.meta.env.VITE_LOGIN_API;
+// const LOGIN_API_URL = import.meta.env.VITE_LOGIN_API;
 
 const Login = () => {
   const navigate = useNavigate();
@@ -106,12 +106,12 @@ const Login = () => {
   const toggleVisibility = () => setPasswordVisible(!passwordVisible);
 
   return (
-    <main className="bg-bg-light min-h-screen flex justify-center items-center">
-      <section className="md:max-w-3xl w-full mx-auto lg:bg-white lg:rounded-3xl lg:shadow-lg lg:border border-secondary px-6 sm:px-20 pt-10 pb-14">
+    <main className="bg-[var(--cl-bg-light)] min-h-screen flex justify-center items-center">
+      <section className="md:max-w-3xl w-full mx-auto lg:bg-white lg:rounded-3xl lg:shadow-lg lg:border border-[var(--cl-secondary)] px-6 sm:px-20 pt-10 pb-14">
         <div className="max-w-34 mx-auto mb-6">
           <img src="/logo.png" alt="Mfon-Obong Enterprise Logo" />
         </div>
-        <p className="font-semibold text-xl md:text-4xl text-text-dark text-center [text-shadow:0px_4px_4px_rgba(0,0,0,0.25)]">
+        <p className="font-semibold text-xl md:text-4xl text-[var(--text-dark)] text-center [text-shadow:0px_4px_4px_rgba(0,0,0,0.25)]">
           Mfon-Obong Nigeria Enterprise
         </p>
 
@@ -125,14 +125,14 @@ const Login = () => {
             {...register("username")}
             placeholder="Username"
             aria-invalid={!!errors.username}
-            className={`border outline-0 px-4 py-3 rounded-[0.625rem] text-secondary text-base w-full ${
+            className={`border outline-0 px-4 py-3 rounded-[0.625rem] text-[var(--cl-secondary)] text-base w-full ${
               errors.username
-                ? "border-error focus:border-error"
-                : "border-[#A1A1A1] focus:border-[#A1A1A1]"
+                ? "border-[var(--cl-error)] focus:border-[var(--cl-error)]"
+                : "border-[var(--cl-gray-a1)] focus:border-[var(--cl-gray-a1)]"
             }`}
           />
           <p
-            className="hidden md:block md:min-h-6 text-error text-sm pt-1 transition-all duration-200 ease-in-out"
+            className="hidden md:block md:min-h-6 text-[var(--cl-error)] text-sm pt-1 transition-all duration-200 ease-in-out"
             aria-live="polite"
           >
             {errors.username?.message ?? ""}
@@ -143,14 +143,14 @@ const Login = () => {
               placeholder="Password"
               {...register("password")}
               aria-invalid={!!errors.password}
-              className={`border  outline-0  pl-4 pr-10 py-3 rounded-[0.625rem] text-secondary text-base w-full mt-4 ${
+              className={`border  outline-0  pl-4 pr-10 py-3 rounded-[0.625rem] text-[var(--cl-secondary)] text-base w-full mt-4 ${
                 errors.password
-                  ? "border-error focus:border-error"
-                  : "border-[#A1A1A1] focus:border-[#A1A1A1]"
+                  ? "border-[var(--cl-error)] focus:border-[var(--cl-error)]"
+                  : "border-[var(--cl-gray-a1)] focus:border-[var(--cl-gray-a1)]"
               }`}
             />
             <button
-              className="absolute top-1/2 text-secondary right-4 cursor-pointer hover:opacity-80"
+              className="absolute top-1/2 text-[var(--cl-secondary)] right-4 cursor-pointer hover:opacity-80"
               aria-label="Toggle password visibility"
               onClick={toggleVisibility}
             >
@@ -158,7 +158,7 @@ const Login = () => {
             </button>
           </div>
           <p
-            className="hidden md:block md:min-h-6 text-error text-sm pt-1 transition-all duration-200"
+            className="hidden md:block md:min-h-6 text-[var(--cl-error)] text-sm pt-1 transition-all duration-200"
             aria-live="polite"
           >
             {errors.password?.message ?? ""}
@@ -181,12 +181,12 @@ const Login = () => {
         </form>
 
         <div className="flex gap-2.5 justify-center items-center font-Inter mt-5">
-          <span className="text-blue-500 border-b border-blue-500 text-sm">
+          <span className="text-[var(--cl-blue)] border-b border-[var(--cl-blue)] text-sm">
             need help?
           </span>
 
           <span
-            className="text-blue-500 hover:text-blue-600 text-sm"
+            className="text-[var(--cl-blue)] hover:text-blue-700 text-sm transition-colors duration-200 ease-in-out"
             onClick={() => {
               setActiveModal("support");
               reset();

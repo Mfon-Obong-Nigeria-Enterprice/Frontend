@@ -1,17 +1,18 @@
 import { FaRegBell } from "react-icons/fa";
+import { Avatar } from "flowbite-react";
 
 const Header = () => {
   return (
-    <header className="flex justify-between items-center px-2 py-5 bg-white">
+    <header className="h-[4rem] z-50 fixed top-0 left-0 right-0 flex justify-between items-center px-2 py-5 bg-white">
       <div className="flex items-baseline-last gap-1 max-w-[282px]">
         <div>
           <img
-            className="w-[94px]"
+            className="w-[4rem]"
             src="/logo.png"
             alt="Mfon-Enterprise Logo"
           />
         </div>
-        <p className="font-Arial font-bold text-base text-[#333333]">
+        <p className="font-Arial font-bold text-sm leading-none text-[#333333]">
           Mfon-Obong Nigerian Enterprise
         </p>
       </div>
@@ -21,10 +22,15 @@ const Header = () => {
           <FaRegBell />
         </div>
         <p>Admin User</p>
-        <div>
-          {/* <img className="w-[70px]" src="/images/admin-avatar.svg" alt="" /> */}
-          <img className="w-10" src="/images/admin-avatar.svg" alt="" />
-        </div>
+        {/* <div className=""> */}
+        <Avatar
+          img="/images/admin-avatar.svg"
+          alt="Admin avatar"
+          status="online"
+          statusPosition="top-right"
+          rounded
+        />
+        {/* </div> */}
       </div>
     </header>
   );

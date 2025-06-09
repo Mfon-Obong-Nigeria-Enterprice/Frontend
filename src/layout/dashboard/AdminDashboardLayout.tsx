@@ -1,17 +1,52 @@
+import Header from "@/components/dashboard/Header";
 import { Outlet } from "react-router-dom";
-import Sidebar from "./Sidebar/Sidebar";
-import Header from "./Header";
+import { ErrorBoundary } from "react-error-boundary";
+import ErrorFallback from "@/components/ErrorFallback";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/dashboard/AppSidebar";
 
-const AdminDashboardLayout = () => {
+// export default function Layout({ children }: { children: React.ReactNode }) {
+export default function AdminDashboardLayout() {
   return (
-    <div>
+    <ErrorBoundary
+      FallbackComponent={ErrorFallback}
+      onError={(error, info) => {
+        console.error("Admin dashboard error:", error, info);
+      }}
+    >
       <Header />
-      <div>
-        <Sidebar />
-        <Outlet />
-      </div>
-    </div>
+      <SidebarProvider className="mt-[2rem]">
+        <AppSidebar />
+        <main className="w-full">
+          <SidebarTrigger />
+          <Outlet />
+          {/* {children} */}
+        </main>
+      </SidebarProvider>
+    </ErrorBoundary>
   );
-};
+}
 
-export default AdminDashboardLayout;
+//
+// import Sidebar from "./Sidebar";
+
+// // import { error } from "console";
+
+// const AdminDashboardLayout = () => {
+//   return (
+// <ErrorBoundary
+//   FallbackComponent={ErrorFallback}
+//   onError={(error, info) => {
+//     console.error("Admin dashboard error:", error, info);
+//   }}
+// >
+//       <Header />
+//       <div className="flex gap-5">
+//         <Sidebar />
+//         <Outlet />
+//       </div>
+//     </ErrorBoundary>
+//   );
+// };
+
+// export default AdminDashboardLayout;

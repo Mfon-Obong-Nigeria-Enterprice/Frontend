@@ -14,14 +14,14 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
 
   const progressBarColor =
     percentage === 100
-      ? "bg-[#2ECC71]"
+      ? "bg-[var(--cl-bg-green)]"
       : percentage > 50
-      ? "bg-[#FFA500]"
-      : "bg-[#DA251C]";
+      ? "bg-[var(--cl-accent-orange)]"
+      : "bg-[var(--cl-accent-red)]";
 
   return (
-    <div className="h-[115px] bg-[#F0F0F3] flex flex-col justify-center items-center gap-2 md:gap-4">
-      <div className="w-[80%] mx-auto bg-[#E3E3E3] h-2 rounded-[12px]">
+    <div className="h-[115px] bg-[var(--cl-light-gray)] flex flex-col justify-center items-center gap-2 md:gap-4">
+      <div className="w-[80%] mx-auto bg-[var(--cl-bg-progress)] h-2 rounded-[12px]">
         <div
           className={`${progressBarColor} h-full transition-all duration-300 ease-in-out rounded-[12px]`}
           style={{
@@ -29,7 +29,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
           }}
         ></div>
       </div>
-      <p className="text-center text-text-semidark font-Inter text-[0.625rem] md:text-base leading-none">
+      <p className="text-center text-[var(--cl-text-semidark)] font-Inter text-[0.625rem] md:text-base leading-none">
         Step {currentStep} of {totalSteps} ({percentage}% complete)
       </p>
     </div>

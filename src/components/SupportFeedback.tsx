@@ -1,20 +1,20 @@
 import { GoCheck } from "react-icons/go";
-import Button from "./ui/Button";
+import Button from "./MyButton";
 
 const SupportFeedback = ({ onClose }: { onClose: () => void }) => {
   return (
-    <section className="absolute top-0 left-0 w-full h-screen bg-secondary flex justify-center items-center px-2">
+    <section className="absolute top-0 left-0 w-full h-screen bg-[var(--cl-secondary)] flex justify-center items-center px-2">
       <div className="bg-white min-h-100 max-w-[90%] rounded-xl overflow-hidden">
-        <h4 className="text-center py-4 bg-[#F0F0F3] text-text-dark text-base font-medium">
+        <h4 className="text-center py-4 bg-[var(--cl-light-gray)] text-[var(--cl-text-dark)] text-base font-medium">
           Support Request
         </h4>
 
         <div className="px-5">
-          <p className="py-6 font-Inter font-medium text-sm leading-loose text-center max-w-[20rem]">
-            Your request as been sent to the manager. Please wait for a response
-            or check back later...
+          <p className="py-6 font-Inter font-medium text-sm leading-loose text-center text-[var(--cl-text-semidark)] max-w-[20rem]">
+            Your request has been sent to the manager. Please wait for a
+            response or check back later...
           </p>
-          <div className="bg-[#64FF5C] flex justify-center items-center mx-auto mb-6 w-20 h-20 rounded-full">
+          <div className="bg-[var(--cl-success)] flex justify-center items-center mx-auto mb-6 w-20 h-20 rounded-full">
             <GoCheck size={48} className="fill-white" />
           </div>
 

@@ -6,8 +6,8 @@ import { useClientStore } from "@/store/ClientStore";
 import { type AdminSetupClientData } from "@/types/types";
 import { adminClientSetupSchema } from "@/lib/zodUtils";
 
-import InputField from "@/components/ui/InputField";
-import Button from "@/components/ui/Button";
+import InputField from "@/components/InputField";
+import Button from "@/components/MyButton";
 import SetupTitle from "./components/SetupTitle";
 import ProgressBar from "./components/ProgressBar";
 
@@ -43,10 +43,10 @@ const SetupFour = () => {
       />
       <ProgressBar currentStep={4} totalSteps={5} />
       <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-10">
-        <h3 className="font-medium font-Inter text-xl leading-none text-text-dark">
+        <h3 className="font-medium font-Inter text-xl leading-none text-[var(--cl-text-dark)]">
           Register New Clients
         </h3>
-        <div className="flex flex-col gap-5 lg:grid lg:grid-cols-3 md:gap-8 mt-5 md:mt-10 border border-[#D9D9D9] rounded-[0.625rem] p-4">
+        <div className="flex flex-col gap-5 lg:grid lg:grid-cols-3 md:gap-8 mt-5 md:mt-10 border border-[var(--cl-border-gray)] rounded-[0.625rem] p-4">
           <InputField
             label="Client name"
             id="clientName"
@@ -90,7 +90,7 @@ const SetupFour = () => {
       {/* display data */}
       <section className="bg-[#F5F5F5] px-4 py-4 rounded-[0.625rem] flex flex-col gap-3 mb-8 mx-8">
         {clients.length === 0 ? (
-          <p className="text-base italic text-text-semidark py-8 text-center">
+          <p className="text-base italic text-[var(--cl-text-semidark)] py-8 text-center">
             No Clients have been added yet.
           </p>
         ) : (
@@ -137,12 +137,16 @@ const SetupFour = () => {
         )}
       </section>
 
-      <div className="bg-[#e2f3eb] border border-[#2ECC71] mx-6 mb-10 rounded-[0.625rem] py-2 px-10">
-        <h6>Clients Account Tips</h6>
-        <p>
-          Initial balance represents any pre-payment made by the clients before
-          picking goods.
-        </p>
+      <div className="bg-gradient-to-t from-[#176639] to-[#2ECC71] mx-6 mb-10 rounded-xl p-0.5 font-Inter">
+        <div className="bg-[var(--cl-bg-light-green)] rounded-[0.75rem] py-2 px-10">
+          <h6 className="font-semibold text-sm text-[#05431F] mb-1.5">
+            Clients Account Tips
+          </h6>
+          <p className="font-medium text-[0.75rem] text-[#0B6E35] leading-relaxed">
+            Initial balance represents any pre-payment made by the clients
+            before picking goods.
+          </p>
+        </div>
       </div>
     </div>
   );
