@@ -42,52 +42,56 @@ const InputField = forwardRef<HTMLInputElement, InputProps>(
       variant === "default" ? "border border-[var(--cl-secondary)]" : "";
 
     return (
-      <fieldset className={`${baseContainerStyles} ${variantContainerStyles}`}>
-        <label
-          htmlFor={id}
-          className="font-Inter font-normal text-[var(--cl-text-gray)] text-sm leading-none"
+      <>
+        <fieldset
+          className={`${baseContainerStyles} ${variantContainerStyles}`}
         >
-          {label}
-        </label>
-
-        {textarea ? (
-          <textarea
-            id={id}
-            placeholder={placeholder}
-            rows={4}
-            ref={ref as React.Ref<HTMLTextAreaElement>}
-            className={`${baseInputStyles} ${variantInputStyles} ${defaultInput}`}
-            {...(rest as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
-          />
-        ) : options ? (
-          <select
-            id={id}
-            ref={ref as React.Ref<HTMLSelectElement>}
-            className={`${baseInputStyles} ${variantInputStyles} ${defaultInput}`}
-            {...(rest as React.SelectHTMLAttributes<HTMLSelectElement>)}
+          <label
+            htmlFor={id}
+            className="font-Inter font-normal text-[var(--cl-text-gray)] text-sm leading-none"
           >
-            <option value="" disabled>
-              --Select unit --
-            </option>
+            {label}
+          </label>
 
-            {options.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
+          {textarea ? (
+            <textarea
+              id={id}
+              placeholder={placeholder}
+              rows={4}
+              ref={ref as React.Ref<HTMLTextAreaElement>}
+              className={`${baseInputStyles} ${variantInputStyles} ${defaultInput}`}
+              {...(rest as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
+            />
+          ) : options ? (
+            <select
+              id={id}
+              ref={ref as React.Ref<HTMLSelectElement>}
+              className={`${baseInputStyles} ${variantInputStyles} ${defaultInput}`}
+              {...(rest as React.SelectHTMLAttributes<HTMLSelectElement>)}
+            >
+              <option value="" disabled>
+                --Select unit --
               </option>
-            ))}
-          </select>
-        ) : (
-          <input
-            id={id}
-            placeholder={placeholder}
-            ref={ref as React.Ref<HTMLInputElement>}
-            className={`${baseInputStyles} ${variantInputStyles} ${defaultInput}`}
-            {...(rest as React.InputHTMLAttributes<HTMLInputElement>)}
-          />
-        )}
-        {/* max-w-[665px] w-[98%] md:w-[90%] */}
+
+              {options.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              id={id}
+              placeholder={placeholder}
+              ref={ref as React.Ref<HTMLInputElement>}
+              className={`${baseInputStyles} ${variantInputStyles} ${defaultInput}`}
+              {...(rest as React.InputHTMLAttributes<HTMLInputElement>)}
+            />
+          )}
+          {/* max-w-[665px] w-[98%] md:w-[90%] */}
+        </fieldset>
         {error && <p className="text-error text-sm pt-1">{error}</p>}
-      </fieldset>
+      </>
     );
   }
 );

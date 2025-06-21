@@ -4,6 +4,9 @@ import { BsBoxSeam } from "react-icons/bs";
 import { IoPerson, IoSettingsOutline } from "react-icons/io5";
 import { RiLogoutCircleRLine } from "react-icons/ri";
 import { IoIosLogOut } from "react-icons/io";
+import Logo from "@/components/Logo";
+import { useLogout } from "@/hooks/uselogout";
+
 import {
   Sidebar,
   SidebarContent,
@@ -12,9 +15,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  // SidebarFooter,
+  SidebarFooter,
   SidebarGroup,
-  // SidebarHeader,
+  SidebarHeader,
 } from "@/components/ui/sidebar";
 
 const items = [
@@ -38,12 +41,16 @@ const items = [
   },
 ];
 
-export function AppSidebar() {
+export function AdminSidebar() {
   const { pathname } = useLocation();
+  const { logout } = useLogout();
+
   return (
-    <Sidebar className="mt-[3.5rem] pt-10">
-      {/* <SidebarHeader /> */}
-      <SidebarContent className="bg-white">
+    // mt-[3.5rem] pt-10
+    <Sidebar className="bg-white p-0">
+      <SidebarHeader />
+      <Logo />
+      <SidebarContent className="bg-white pt-8">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -71,23 +78,23 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <SidebarGroup className="mt-[18vh]">
+        {/* <SidebarGroup className="mt-[18vh]">
           <SidebarGroupContent>
             <SidebarMenuButton className="p-5 hover:bg-[#F4E8E7]">
               <IoIosLogOut />
               <span>Logout</span>
             </SidebarMenuButton>
           </SidebarGroupContent>
-        </SidebarGroup>
+        </SidebarGroup> */}
       </SidebarContent>
-      {/* <SidebarFooter> */}
-      {/* <SidebarContent className="mt-auto">*/}
-      {/* <SidebarMenuButton>
+      <SidebarFooter>
+        {/* <SidebarContent className="mt-auto">*/}
+        <SidebarMenuButton onClick={logout}>
           <IoIosLogOut />
           <span>Logout</span>
-        </SidebarMenuButton> */}
-      {/* </SidebarContent>  */}
-      {/* </SidebarFooter> */}
+        </SidebarMenuButton>
+        {/* </SidebarContent>  */}
+      </SidebarFooter>
     </Sidebar>
   );
 }
