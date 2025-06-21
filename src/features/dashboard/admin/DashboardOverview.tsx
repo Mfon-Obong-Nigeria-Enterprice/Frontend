@@ -1,4 +1,4 @@
-import DashboardTitle from "./components/DashboardTitle";
+import DashboardTitle from "@/components/dashboard/DashboardTitle";
 import Stats from "./components/Stats";
 import SalesOverview from "./components/SalesOverview";
 import RecentSales from "./components/RecentSales";

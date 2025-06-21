@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// Typescript interface
 export type LoginFormInputs = z.infer<typeof loginSchema>;
 
 export const loginSchema = z.object({
@@ -9,7 +8,7 @@ export const loginSchema = z.object({
     .string()
     .min(6, "Password must be at least 6 characters")
     .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])/,
+      /^(?=.*[a-z])(?=.)/,
       "Password must contain one uppercase and one lowercase"
     ),
 });
