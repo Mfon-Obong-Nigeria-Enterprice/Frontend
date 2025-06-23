@@ -9,7 +9,7 @@ const AdminInventory = () => {
   return (
     <main className="bg-[#f5f5f5] min-h-screen p-10 font-Inter">
       <DashboardTitle
-        heading="Inventory Managerment"
+        heading="Inventory Management"
         description="Manage your product, categories, and stock levels"
       />
       <section className="bg-white rounded-xl mt-5 overflow-hidden">
@@ -41,6 +41,7 @@ const AdminInventory = () => {
               className="py-2 outline-0 w-full"
             />
           </div>
+          {/*  */}
           <div className="flex items-center gap-4">
             <button className="bg-[#D9D9D9] flex gap-1 items-center rounded-md py-2 px-4 border border-[#7d7d7d]">
               <span>Stock status</span>

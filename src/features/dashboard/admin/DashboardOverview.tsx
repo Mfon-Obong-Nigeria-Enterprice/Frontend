@@ -1,8 +1,8 @@
 import DashboardTitle from "@/components/dashboard/DashboardTitle";
 import Stats from "./components/Stats";
 import SalesOverview from "./components/SalesOverview";
-import RecentSales from "./components/RecentSales";
 import OutstandingBalance from "./components/OutstandingBalance";
+import RecentSales from "./components/RecentSales";
 
 const DashboardOverview: React.FC = () => {
   return (

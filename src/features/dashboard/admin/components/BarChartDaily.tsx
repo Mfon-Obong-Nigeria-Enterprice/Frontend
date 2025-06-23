@@ -63,6 +63,9 @@ const BarChartDaily = () => {
       },
     },
   };
+  //  callback: function (tickValue: string | number) {
+  //           return `₦${tickValue}`;
+  //         },
 
   return (
     <div className="bg-[#F5F5F5] p-6 rounded-lg shadow-md ">
