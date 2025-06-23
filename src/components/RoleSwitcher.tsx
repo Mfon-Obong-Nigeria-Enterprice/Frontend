@@ -60,7 +60,7 @@ const DevRoleSwitcher = () => {
 
   const simulateAdminRoute = () => {
     console.warn("🚨 Simulating Admin route — no real login done.");
-    navigate("/admin/setup");
+    navigate("/admin/dashboard/overview");
   };
 
   return (

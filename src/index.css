@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@plugin "daisyui";
 
 @theme {
   --color-primary: #1a3c7e;

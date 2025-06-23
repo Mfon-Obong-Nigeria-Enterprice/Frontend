@@ -5,7 +5,7 @@ const DashboardTransactions = () => {
     // ml-64 mt-[5rem] min-h-screen bg-[#f5f5f5]
     <div className="w-full  p-10">
       <DashboardTitle
-        heading="Transaction Managerment"
+        heading="Transaction Management"
         description="Track all sales payment & client account activities"
       />
     </div>
