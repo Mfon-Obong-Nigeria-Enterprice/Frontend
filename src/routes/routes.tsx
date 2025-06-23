@@ -8,6 +8,9 @@ import SetupFour from "@/features/setup/admin/SetupFour";
 import Review from "@/features/setup/admin/Review";
 import Complete from "@/features/setup/admin/Complete";
 
+import AddProduct from "@/components/AddProduct";
+import Notfound from "@/components/Notfound";
+
 // manager (super admin)
 import ManagerDashboardLayout from "@/layout/dashboard/ManagerDashboardLayout";
 
@@ -27,6 +30,7 @@ import StaffSales from "@/features/dashboard/staff/Staffsales";
 import NewSales from "@/features/dashboard/staff/Newsales";
 import Stock from "@/features/dashboard/staff/Stock";
 import StaffClients from "@/features/dashboard/staff/StaffClients";
+import ClientDetailsPage from "@/pages/ClientDetailsPage";
 
 const router = createBrowserRouter([
   { path: "/", element: <Login /> },
@@ -72,6 +76,18 @@ const router = createBrowserRouter([
       { path: "s-sales", element: <StaffSales /> },
       { path: "new-sales", element: <NewSales /> },
     ],
+  },
+  {
+    path: "add-prod",
+    element: <AddProduct />,
+  },
+  {
+    path: "client-details",
+    element: <ClientDetailsPage />,
+  },
+  {
+    path: "*",
+    element: <Notfound />,
   },
 ]);
 

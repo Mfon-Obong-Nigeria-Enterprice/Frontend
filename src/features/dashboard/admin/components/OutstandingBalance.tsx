@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -8,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import Button from "@/components/MyButton";
 import { MdKeyboardArrowRight } from "react-icons/md";
+import ClientDetailModal from "@/components/dashboard/ClientDetailModal";
 
 const tableData = [
   {
@@ -33,6 +36,9 @@ const tableData = [
 // action will be a url to the clients dashboard or page
 
 const OutstandingBalance = () => {
+  const navigate = useNavigate();
+  const [openModal, setOpenModal] = useState(false);
+
   return (
     <div className="bg-white border border-[#D9D9D9] p-8 mt-5 rounded-[8px] font-Inter">
       <h4 className="font-medium text-xl text-text-dark">
@@ -63,14 +69,19 @@ const OutstandingBalance = () => {
                   index % 2 !== 0 ? "bg-[#F0F0F3]" : ""
                 }`}
               >
-                <TableCell className="font-medium pl-4">
+                <TableCell className="font-medium pl-4 text-[#444444]">
                   {data.client}
                 </TableCell>
                 <TableCell className="text-center  text-[#F95353]">
                   {data.balanceDue}
                 </TableCell>
-                <TableCell className="text-center">{data.days}</TableCell>
-                <TableCell className=" text-center text-blue-400 underline">
+                <TableCell className="text-center text-[#444444]">
+                  {data.days}
+                </TableCell>
+                <TableCell
+                  className=" text-center text-blue-400 underline cursor-pointer"
+                  onClick={() => setOpenModal(true)}
+                >
                   {data.action}
                 </TableCell>
               </TableRow>
@@ -80,10 +91,17 @@ const OutstandingBalance = () => {
       </div>
       <div className="flex justify-between items-center bg-[#f0f0f3] mt-[7dvh]">
         <div>
-          <Button text="View all Sales" variant="outline" />
+          <Button
+            onClick={() => navigate("/admin/dashboard/clients")}
+            text="View all Balances"
+            variant="outline"
+          />
         </div>
-        <MdKeyboardArrowRight size={24} className="mr-5" />
+        <MdKeyboardArrowRight size={24} className="mr-5 text-[#3D80FF]" />
       </div>
+
+      {/* client account modal */}
+      {openModal && <ClientDetailModal setOpenModal={setOpenModal} />}
     </div>
   );
 };
