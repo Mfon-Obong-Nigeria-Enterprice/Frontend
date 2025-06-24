@@ -7,34 +7,6 @@ const salesByCategory = [
   { name: "Equipment rental", value: 23 },
 ];
 
-const todaysMetrics: SalesMetrics = {
-  totalSales: 475200,
-  transactionCount: 28,
-  activeClients: 42,
-  averageTransaction: 16971,
-};
-
-const topProducts: TopProduct[] = [
-  {
-    prodName: "cement",
-    soldUnit: 320,
-    revenue: 960000,
-    category: "construction",
-  },
-  {
-    prodName: "Rod",
-    soldUnit: 190,
-    revenue: 285000,
-    category: "Reinforcement",
-  },
-  {
-    prodName: "Tiles",
-    soldUnit: 100,
-    revenue: 280000,
-    category: "Finishing",
-  },
-];
-
 type SalesMetrics = {
   totalSales: number;
   transactionCount: number;
@@ -53,7 +25,10 @@ interface SalesAnalyticsProps {
   topProduct: TopProduct[];
 }
 
-const SalesAnalytics: React.FC<SalesAnalyticsProps> = () => {
+const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
+  metrics,
+  topProduct,
+}) => {
   // Add loading state or default values
   // if (!metrics) {
   //   return (
@@ -87,7 +62,7 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
-              ₦{todaysMetrics.totalSales.toLocaleString()}
+              ₦{metrics.totalSales.toLocaleString()}
             </div>
             <p className="text-xs text-green-600">+15% from yesterday</p>
           </CardContent>
@@ -101,7 +76,7 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
-              {todaysMetrics.transactionCount}
+              {metrics.transactionCount}
             </div>
             <p className="text-xs text-green-600">Today's completed sales</p>
           </CardContent>
@@ -115,7 +90,7 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
-              {todaysMetrics.activeClients}
+              {metrics.activeClients}
             </div>
             <p className="text-xs text-green-600">Today's completed sales</p>
           </CardContent>
@@ -129,7 +104,7 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
-              ₦{todaysMetrics.averageTransaction.toLocaleString() || 0}
+              ₦{metrics.averageTransaction.toLocaleString() || 0}
             </div>
             <p className="text-xs text-gray-600">Per transaction value</p>
           </CardContent>
@@ -170,10 +145,10 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = () => {
                   </h4>
                 </div>
               </div>
-              {topProducts && topProducts.length > 0 ? (
+              {topProduct && topProduct.length > 0 ? (
                 <div className="space-y-0 ">
                   <>
-                    {topProducts.map((product) => (
+                    {topProduct.map((product) => (
                       <div
                         key={product.prodName}
                         className={`border-b-2 border-gray-100 last:border-b-0 md:border-b-0 $`}
