@@ -39,11 +39,6 @@ const items = [
     url: "/staff/dashboard/s-sales",
     icon: RiLogoutCircleRLine,
   },
-  //   {
-  //     title: "Settings",
-  //     url: "/admin/dashboard/settings",
-  //     icon: IoSettingsOutline,
-  //   },
 ];
 
 export function StaffSidebar() {
