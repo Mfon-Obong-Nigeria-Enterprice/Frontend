@@ -8,7 +8,7 @@ type HeaderProps = {
 
 const Header = ({ userRole }: HeaderProps) => {
   return (
-    <header className="h-[4rem] fixed top-0 right-0 left-0 z-0 flex justify-between items-center px-5 py-3 bg-white">
+    <header className="h-[4rem] fixed top-0 right-0 left-0 z-20 flex justify-between items-center px-5 py-3 bg-white">
       <Logo />
 
       <div className="flex gap-4 items-center">

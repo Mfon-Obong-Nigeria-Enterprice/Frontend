@@ -84,6 +84,7 @@ const AdminInventory = () => {
               className="py-2 outline-0 w-full"
             />
           </div>
+          {/*  */}
           <div className="flex items-center gap-4">
             <button className="bg-[#D9D9D9] flex gap-1 items-center rounded-md py-2 px-4 border border-[#7d7d7d]">
               <span>Stock status</span>
