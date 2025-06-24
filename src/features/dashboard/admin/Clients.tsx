@@ -6,7 +6,7 @@ import ClientDirectory from "./components/ClientDirectory";
 
 const Clients = () => {
   return (
-    <main className="bg-[#f5f5f5] p-10">
+    <main>
       <DashboardTitle
         heading="Client Management"
         description="Manage client accounts & relationships"

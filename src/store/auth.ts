@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import apiService from "@/services/apiService";
+import apiService from "@/services/api";
 import { type LoginResponse, type User } from "@/types/types";
 
 interface ErrorDetail {

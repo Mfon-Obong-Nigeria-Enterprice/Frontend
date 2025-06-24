@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 
 const NewSales: React.FC = () => {
   return (
-    <main className="bg-[#f5f5f5] p-10">
+    <main>
       <section className="bg-white p-3 rounded-[0.625rem] shadow">
         <h4>Create New sales</h4>
         <div className="p-5 rounded-[8px] border border-[#D9D9D9] mt-3">

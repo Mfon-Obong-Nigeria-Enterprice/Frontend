@@ -31,8 +31,7 @@ const topProducts = [
 ];
 const DashboardSales = () => {
   return (
-    // ml-64 mt-[5rem] min-h-screen bg-[#f5f5f5]
-    <main className="w-full bg-[#f5f5f5] min-h-screen p-10 font-Inter">
+    <main>
       <DashboardTitle
         heading="Sales Management"
         description="Process orders & manage customer purchases"
