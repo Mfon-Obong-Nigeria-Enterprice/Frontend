@@ -29,7 +29,7 @@ const data = [
 
 const StaffClients: React.FC = () => {
   return (
-    <main className="  bg-[#f5f5f5] p-10 h-full">
+    <main>
       <DashboardTitle
         heading="Clients"
         description="Search, view, and edit client transaction"

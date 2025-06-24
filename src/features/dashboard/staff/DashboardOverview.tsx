@@ -7,7 +7,7 @@ import RecentSalesActivity from "./components/RecentSalesActivity";
 
 const StaffDashboardOverview: React.FC = () => {
   return (
-    <main className="bg-[#f5f5f5] p-10">
+    <main>
       <div className="flex justify-between items-end mb-7">
         <DashboardTitle
           heading="Dashboard"

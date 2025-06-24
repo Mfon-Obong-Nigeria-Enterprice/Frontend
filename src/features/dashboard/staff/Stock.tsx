@@ -6,7 +6,7 @@ import { IoIosSearch } from "react-icons/io";
 
 const Stock: React.FC = () => {
   return (
-    <main className=" bg-[#f5f5f5] p-10">
+    <main>
       <div className="flex justify-between items-end">
         <DashboardTitle
           heading="Stock levels"

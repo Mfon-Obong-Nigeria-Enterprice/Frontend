@@ -7,7 +7,10 @@ import Button from "./MyButton";
 import { categoryUnit } from "@/data/categoryUnit";
 import { useCategoryStore } from "@/store/useCategoryStore";
 
-const AddCategory = () => {
+type Props = {
+  closeBothModals: () => void;
+};
+const AddCategory = ({ closeBothModals }: Props) => {
   const { categories, addCategory } = useCategoryStore();
   const {
     register,
@@ -70,8 +73,18 @@ const AddCategory = () => {
           </div>
         </div>
         {/* submit button */}
-        <div className="w-full lg:w-[30%] mt-5">
-          <Button text="Add Category" type="submit" />
+        <div className="flex justify-end items-center gap-4 mt-5">
+          <div>
+            <Button
+              text="Cancel"
+              variant="custom"
+              className="border px-6 py-3"
+              onClick={closeBothModals}
+            />
+          </div>
+          <div className="w-full lg:w-[30%] ">
+            <Button text="Add Category" type="submit" />
+          </div>
         </div>
       </form>
     </div>

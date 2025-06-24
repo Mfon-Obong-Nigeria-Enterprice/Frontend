@@ -47,10 +47,10 @@ export function AdminSidebar() {
 
   return (
     // mt-[3.5rem] pt-10
-    <Sidebar className="bg-white p-0">
+    <Sidebar>
       <SidebarHeader />
       <Logo />
-      <SidebarContent className="bg-white pt-8">
+      <SidebarContent className=" pt-8">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>

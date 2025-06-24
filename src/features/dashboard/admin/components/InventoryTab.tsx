@@ -3,7 +3,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { AiOutlineInfo } from "react-icons/ai";
 import ProductDisplayTab from "./ProductDisplayTab";
-import AddCategory from "@/components/AddCategory";
 import CategoryModal from "./CategoryModal";
 
 const displayData = [
@@ -47,10 +46,19 @@ const displayData = [
     minLevel: "20",
     stock: "high",
   },
+  {
+    value: "marine board",
+    ProductTitle: "10x Marine Board",
+    category: "marine board",
+    stockValue: "100 buckets",
+    unitPrice: "10,500",
+    totalValue: "35,000",
+    minLevel: "20",
+    stock: "low",
+  },
 ];
 
 const InventoryTab: React.FC = () => {
-  // const [openModal, setOpenModal] = useState(false);
   const [openCategory, setOpenCategory] = useState<{
     name: string;
     count: number;
@@ -71,7 +79,7 @@ const InventoryTab: React.FC = () => {
           <TabsTrigger
             value="allProducts"
             className={cn(
-              "px-3 data-[state=active]:[&_span]:bg-green-400 data-[state=active]:[&_span]:text-white"
+              "!bg-white px-3 data-[state=active]:[&_span]:bg-green-400 data-[state=active]:[&_span]:text-white data-[state=active]:shadow-xl"
             )}
           >
             <p>
@@ -90,7 +98,7 @@ const InventoryTab: React.FC = () => {
               key={data.value}
               value={data.value}
               className={cn(
-                "px-3 border border-gray-200 data-[state=active]:[&_span]:bg-green-400 data-[state=active]:[&_span]:text-white hover:border-dashed hover:border-green-400 data-[state=active]:border-green-400"
+                "!bg-white px-3 border border-gray-200 data-[state=active]:shadow-xl data-[state=active]:[&_span]:bg-green-400 data-[state=active]:[&_span]:text-white hover:border-dashed hover:border-green-400 data-[state=active]:border-green-400"
               )}
             >
               {data.label}
@@ -109,13 +117,9 @@ const InventoryTab: React.FC = () => {
               </div>
             </TabsTrigger>
           ))}
-          <TabsTrigger
-            value="addCategory"
-            className="bg-green-100 border border-dashed border-green-300 text-green-400"
-          >
-            + Add Category
-          </TabsTrigger>
         </TabsList>
+
+        {/* display data for all products */}
         <div className="grid grid-cols-2 gap-8">
           {displayData.map((prod, index) => (
             <TabsContent key={index} value="allProducts" className="">
@@ -131,6 +135,7 @@ const InventoryTab: React.FC = () => {
             </TabsContent>
           ))}
 
+          {/* display data for the tabbed component */}
           {displayData.map((prod, index) => (
             <TabsContent key={index} value={prod.category.toLowerCase()}>
               <ProductDisplayTab
@@ -144,12 +149,10 @@ const InventoryTab: React.FC = () => {
               />
             </TabsContent>
           ))}
-          <TabsContent value="addCategory" className="col-span-2">
-            <AddCategory />
-          </TabsContent>
         </div>
       </Tabs>
 
+      {/* set the open category to the selected category */}
       {openCategory && (
         <CategoryModal
           setOpenModal={() => setOpenCategory(null)}

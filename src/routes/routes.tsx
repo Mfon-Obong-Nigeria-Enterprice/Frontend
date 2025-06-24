@@ -12,10 +12,16 @@ import AddProduct from "@/components/AddProduct";
 import Notfound from "@/components/Notfound";
 
 // manager (super admin)
-import ManagerDashboardLayout from "@/layout/dashboard/ManagerDashboardLayout";
+import ManagerDashboardLayout from "@/layout/ManagerDashboardLayout";
+import ManagerDashboardOverview from "@/features/dashboard/manager/ManagerDashboardOverview";
+import BusinessReport from "@/features/dashboard/manager/BusinessReport";
+import ManagerClients from "@/features/dashboard/manager/ManagerClients";
+import RevenueAnalytics from "@/features/dashboard/manager/RevenueAnalytics";
+import UserManagement from "@/features/dashboard/manager/UserManagement";
+import ManagerSettings from "@/features/dashboard/manager/ManagerSettings";
 
 // admin
-import AdminDashboardLayout from "@/layout/dashboard/AdminDashboardLayout";
+import AdminDashboardLayout from "@/layout/AdminDashboardLayout";
 import DashboardOverview from "@/features/dashboard/admin/DashboardOverview";
 import AdminInventory from "@/features/dashboard/admin/AdminInventory";
 import Clients from "@/features/dashboard/admin/Clients";
@@ -24,7 +30,7 @@ import DashboardTransactions from "@/features/dashboard/admin/DashboardTransacti
 import DashboardSettings from "@/features/dashboard/admin/DashboardSettings";
 
 // staff
-import StaffDashboardLayout from "@/layout/dashboard/StaffDashboardLayout";
+import StaffDashboardLayout from "@/layout/StaffDashboardLayout";
 import StaffDashboardOverview from "@/features/dashboard/staff/DashboardOverview";
 import StaffSales from "@/features/dashboard/staff/Staffsales";
 import NewSales from "@/features/dashboard/staff/Newsales";
@@ -34,7 +40,35 @@ import ClientDetailsPage from "@/pages/ClientDetailsPage";
 
 const router = createBrowserRouter([
   { path: "/", element: <Login /> },
-  { path: "/manager/dashboard", element: <ManagerDashboardLayout /> },
+  {
+    path: "/manager/dashboard",
+    element: <ManagerDashboardLayout />,
+    children: [
+      { index: true, element: <Navigate to="m-overview" replace /> },
+      { path: "m-overview", element: <ManagerDashboardOverview /> },
+      {
+        path: "business-report",
+        element: <BusinessReport />,
+      },
+      { path: "manage-clients", element: <ManagerClients /> },
+      {
+        path: "manage-transactions",
+        element: <ManagerClients />,
+      },
+      {
+        path: "revenue-analytics",
+        element: <RevenueAnalytics />,
+      },
+      {
+        path: "manage-user",
+        element: <UserManagement />,
+      },
+      {
+        path: "manager-settings",
+        element: <ManagerSettings />,
+      },
+    ],
+  },
   {
     path: "/admin/setup",
     element: <AdminSetupLayout />,

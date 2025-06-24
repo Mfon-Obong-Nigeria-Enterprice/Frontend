@@ -10,7 +10,7 @@ import { Plus } from "lucide-react";
 
 const DashboardOverview: React.FC = () => {
   return (
-    <main className="bg-[#f5f5f5] p-10">
+    <main>
       <div className="flex justify-between items-end mb-7">
         <DashboardTitle
           heading="Dashboard"
