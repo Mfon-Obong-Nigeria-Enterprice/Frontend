@@ -2,6 +2,33 @@ import DashboardTitle from "../../../components/dashboard/DashboardTitle";
 import SalesAnalytics from "./components/AdminSales/SalesAnalytics";
 import SalesTableData from "./components/AdminSales/SalesTableData";
 
+const todaysMetrics = {
+  totalSales: 475200,
+  transactionCount: 28,
+  activeClients: 42,
+  averageTransaction: 16971,
+};
+
+const topProducts = [
+  {
+    prodName: "cement",
+    soldUnit: 320,
+    revenue: 960000,
+    category: "construction",
+  },
+  {
+    prodName: "Rod",
+    soldUnit: 190,
+    revenue: 285000,
+    category: "Reinforcement",
+  },
+  {
+    prodName: "Tiles",
+    soldUnit: 100,
+    revenue: 280000,
+    category: "Finishing",
+  },
+];
 const DashboardSales = () => {
   return (
     // ml-64 mt-[5rem] min-h-screen bg-[#f5f5f5]
@@ -19,7 +46,7 @@ const DashboardSales = () => {
             <span>Export PDF</span>
           </button>
         </div>
-        <SalesAnalytics />
+        <SalesAnalytics metrics={todaysMetrics} topProduct={topProducts} />
 
         <SalesTableData />
       </section>
