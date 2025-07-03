@@ -65,7 +65,7 @@ const BarChartMonthly = () => {
   };
 
   return (
-    <div className="bg-[#F5F5F5] p-6 rounded-lg shadow-md ">
+    <div className="bg-[#F5F5F5] p-2 sm:p-6 rounded-lg shadow-md ">
       <Bar data={data} options={options} />
     </div>
   );

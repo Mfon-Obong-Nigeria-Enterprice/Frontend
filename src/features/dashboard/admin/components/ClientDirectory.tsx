@@ -48,6 +48,7 @@ const transactionData: Transaction[] = [
     date: "5/04/2025",
   },
 ];
+
 const ClientDirectory: React.FC = () => {
   return (
     <div className="mt-7">

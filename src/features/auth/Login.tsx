@@ -4,11 +4,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "@/lib/zodUtils";
 import { IoEyeOffOutline, IoEyeOutline } from "react-icons/io5";
-import Button from "../MyButton";
+import Button from "../../components/MyButton";
 import MobileError from "./MobileError";
-import SupportFeedback from "../SupportFeedback";
-import { useAuthStore } from "@/store/auth";
-import DevRoleSwitcher from "../RoleSwitcher";
+import SupportFeedback from "../../components/SupportFeedback";
+import { useAuthStore } from "@/stores/useAuthStore";
+import DevRoleSwitcher from "../../components/RoleSwitcher";
 
 type LoginFormInputs = {
   username: string;
@@ -35,15 +35,12 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormInputs) => {
     try {
-      const response = await login(data.username, data.password);
-      console.log("LOGIN RESPONSE:", response); // <== check this output
-      console.log("USER:", response?.data?.user);
-      const user = response.data.user;
+      await login(data.username, data.password);
+      const { user } = useAuthStore.getState();
 
-      // Debug: Log the user object to see what's actually returned
-      console.log("User object from login response:", user);
-      console.log("User role:", user.role);
-      console.log("User role type:", typeof user.role);
+      if (!user || !user.role) {
+        throw new Error("User info is missing after login");
+      }
 
       // Normalize the role to handle any case or whitespace issues
       const normalizedRole = user.role?.toString().trim().toUpperCase();
@@ -54,7 +51,7 @@ const Login = () => {
           break;
 
         case "ADMIN":
-          navigate(user.isSetupComplete ? "/admin/dashboard" : "/admin/setup");
+          navigate("/admin/dashboard/overview");
           break;
 
         case "STAFF":
@@ -64,8 +61,8 @@ const Login = () => {
         default:
           console.error("Unknown user role detected:", {
             originalRole: user.role,
-            normalizedRole: normalizedRole,
-            userObject: user,
+            normalizedRole,
+            user,
           });
           throw new Error(`Unknown user role: ${user.role}`);
       }

@@ -34,7 +34,7 @@ const InputField = forwardRef<HTMLInputElement, InputProps>(
         : "";
 
     const baseInputStyles =
-      "bg-white w-full px-3 md:px-3 py-2 text-[var(--cl-secondary)] rounded-[0.625rem] outline-gray-100 focus:border focus:border-gray-100";
+      "bg-white w-full px-3 md:px-3 py-2 text-[var(--cl-secondary)] rounded outline-gray-100 focus:border focus:border-gray-100";
 
     const variantInputStyles = variant === "setup" ? " border-0" : "";
 
@@ -48,7 +48,7 @@ const InputField = forwardRef<HTMLInputElement, InputProps>(
         >
           <label
             htmlFor={id}
-            className="font-Inter font-normal text-[var(--cl-text-gray)] text-sm leading-none"
+            className="font-Inter font-normal text-[var(--cl-text-gray)] text-sm"
           >
             {label}
           </label>

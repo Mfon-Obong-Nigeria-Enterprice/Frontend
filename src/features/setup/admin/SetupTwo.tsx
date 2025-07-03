@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type AdminSetupCatData } from "../../../types/types";
-import { adminCategorySetupSchema } from "@/lib/zodUtils";
+import { type CategoryData } from "../../../types/types";
+import { categorySchema } from "@/lib/zodUtils";
 
 import { MdOutlineEdit, MdOutlineDelete } from "react-icons/md";
 
@@ -12,7 +12,7 @@ import Button from "@/components/MyButton";
 
 import { setupTips } from "../../../data/setupTips";
 import { categoryUnit } from "../../../data/categoryUnit";
-import { useCategoryStore } from "../../../store/useCategoryStore";
+import { useCategoryStore } from "../../../stores/useCategoryStore";
 
 const SetupTwo = () => {
   const { categories, addCategory } = useCategoryStore();
@@ -21,15 +21,14 @@ const SetupTwo = () => {
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<AdminSetupCatData>({
-    resolver: zodResolver(adminCategorySetupSchema),
+  } = useForm<CategoryData>({
+    resolver: zodResolver(categorySchema),
     mode: "onBlur",
   });
 
-  const onSubmit = (data: AdminSetupCatData) => {
+  const onSubmit = (data: CategoryData) => {
     const duplicate = categories.some(
-      (cat) =>
-        cat.categoryName.toLowerCase() === data.categoryName.toLowerCase()
+      (cat) => cat.name.toLowerCase() === data.name.toLowerCase()
     );
     if (duplicate) {
       alert("This category already exists!");
@@ -58,8 +57,8 @@ const SetupTwo = () => {
               id="categoryName"
               type="text"
               placeholder=""
-              {...register("categoryName")}
-              error={errors.categoryName?.message}
+              {...register("name")}
+              error={errors.name?.message}
             />
           </div>
           <div>
@@ -67,8 +66,8 @@ const SetupTwo = () => {
               label="Measure unit"
               id="categoryUnit"
               options={categoryUnit}
-              {...register("categoryUnit")}
-              error={errors.categoryUnit?.message}
+              {...register("unit")}
+              error={errors.unit?.message}
             />
           </div>
           <div className="md:col-span-2 min-h-[4rem]">
@@ -78,7 +77,7 @@ const SetupTwo = () => {
               textarea
               placeholder="Describe the category here..."
               variant="default"
-              {...register("categoryDescription")}
+              {...register("description")}
             />
           </div>
         </div>
