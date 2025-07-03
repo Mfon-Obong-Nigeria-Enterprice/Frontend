@@ -1,167 +1,138 @@
-import React, { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState, useMemo } from "react";
+
 import { cn } from "@/lib/utils";
-import { AiOutlineInfo } from "react-icons/ai";
 import ProductDisplayTab from "./ProductDisplayTab";
 import CategoryModal from "./CategoryModal";
 
-const displayData = [
-  {
-    value: "cement",
-    ProductTitle: "Dangote cement",
-    category: "cement",
-    stockValue: "200 bags",
-    unitPrice: "4,500",
-    totalValue: "900000",
-    minLevel: "40",
-    stock: "high",
-  },
-  {
-    value: "steel rod",
-    ProductTitle: "16mm Steel Rod",
-    category: "Steel rod",
-    stockValue: "150 pcs",
-    unitPrice: "8600",
-    totalValue: "90000",
-    minLevel: "50",
-    stock: "high",
-  },
-  {
-    value: "nails",
-    ProductTitle: "3-inch Nails",
-    category: "Nails",
-    stockValue: "5 bags",
-    unitPrice: "2,800",
-    totalValue: "14,000",
-    minLevel: "10",
-    stock: "low",
-  },
-  {
-    value: "paints",
-    ProductTitle: "Banger Paint White",
-    category: "Paints",
-    stockValue: "100 buckets",
-    unitPrice: "10,500",
-    totalValue: "35,000",
-    minLevel: "20",
-    stock: "high",
-  },
-  {
-    value: "marine board",
-    ProductTitle: "10x Marine Board",
-    category: "marine board",
-    stockValue: "100 buckets",
-    unitPrice: "10,500",
-    totalValue: "35,000",
-    minLevel: "20",
-    stock: "low",
-  },
-];
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Info } from "lucide-react";
+import { useInventoryStore } from "@/stores/useInventoryStore";
 
-const InventoryTab: React.FC = () => {
+const InventoryTab = React.memo(() => {
   const [openCategory, setOpenCategory] = useState<{
     name: string;
     count: number;
+    description?: string;
   } | null>(null);
-  useEffect(() => {}, []);
 
-  const categories = [...new Set(displayData.map((item) => item.category))];
-  const inventoryTabData = categories.map((category) => ({
-    value: category.toLowerCase(),
-    label: category,
-    count: displayData.filter((item) => item.category === category).length,
-  }));
+  const { products, categories, searchQuery } = useInventoryStore();
+
+  const filteredProducts = useMemo(
+    () =>
+      products.filter(
+        (product) =>
+          product.name.toLowerCase().includes(searchQuery) ||
+          product.categoryId?.name?.toLowerCase().includes(searchQuery)
+      ),
+    [products, searchQuery]
+  );
 
   return (
-    <div>
-      <Tabs defaultValue="allProducts" className="w-full">
-        <TabsList className="bg-[#F5F5F5] gap-6 justify-between">
-          <TabsTrigger
-            value="allProducts"
-            className={cn(
-              "!bg-white px-3 data-[state=active]:[&_span]:bg-green-400 data-[state=active]:[&_span]:text-white data-[state=active]:shadow-xl"
-            )}
-          >
-            <p>
-              All Products
-              <span
-                className={cn(
-                  "ml-1 rounded-2xl text-[#7d7d7d] bg-gray-300 py-1 px-2"
-                )}
-              >
-                {displayData.length}
-              </span>
-            </p>
-          </TabsTrigger>
-          {inventoryTabData.map((data) => (
+    <div className="px-5 min-h-30">
+      <Tabs defaultValue="allProducts">
+        <div className="w-full max-w-[970px]">
+          <TabsList className="w-full bg-[#F5F5F5] gap-3 overflow-x-auto whitespace-nowrap h-16">
             <TabsTrigger
-              key={data.value}
-              value={data.value}
+              value="allProducts"
               className={cn(
-                "!bg-white px-3 border border-gray-200 data-[state=active]:shadow-xl data-[state=active]:[&_span]:bg-green-400 data-[state=active]:[&_span]:text-white hover:border-dashed hover:border-green-400 data-[state=active]:border-green-400"
+                "!bg-white px-3 data-[state=active]:[&_span]:bg-green-400 data-[state=active]:[&_span]:text-white data-[state=active]:shadow-xl text-sm"
               )}
             >
-              {data.label}
-              <span className="mx-1 bg-gray-300 rounded-2xl text-[0.625rem] text-[#7d7d7d] py-1 px-2">
-                {data.count}
-              </span>
-              <div className="bg-blue-100 text-text-dark p-1 rounded-sm hover:bg-blue-300">
-                <div
-                  onClick={() =>
-                    setOpenCategory({ name: data.label, count: data.count })
-                  }
-                  className="relative"
-                >
-                  <AiOutlineInfo size={20} />
-                </div>
-              </div>
+              <p>
+                All Products
+                <span className="ml-1 rounded-2xl text-[#7d7d7d] bg-gray-300 py-1 px-2">
+                  {products.length}
+                </span>
+              </p>
             </TabsTrigger>
-          ))}
-        </TabsList>
-
-        {/* display data for all products */}
-        <div className="grid grid-cols-2 gap-8">
-          {displayData.map((prod, index) => (
-            <TabsContent key={index} value="allProducts" className="">
-              <ProductDisplayTab
-                ProductTitle={prod.ProductTitle}
-                category={prod.category}
-                stockValue={prod.stockValue}
-                unitPrice={prod.unitPrice}
-                totalValue={prod.totalValue}
-                minLevel={prod.minLevel}
-                stock={prod.stock}
-              />
-            </TabsContent>
-          ))}
-
-          {/* display data for the tabbed component */}
-          {displayData.map((prod, index) => (
-            <TabsContent key={index} value={prod.category.toLowerCase()}>
-              <ProductDisplayTab
-                ProductTitle={prod.ProductTitle}
-                category={prod.category}
-                stockValue={prod.stockValue}
-                unitPrice={prod.unitPrice}
-                totalValue={prod.totalValue}
-                minLevel={prod.minLevel}
-                stock={prod.stock}
-              />
-            </TabsContent>
-          ))}
+            {/* display data for categories */}
+            {categories?.map((category) => {
+              // const categoryName = category.name.toLowerCase();
+              const categoryName = category.name;
+              console.log(categoryName);
+              const count = products.filter((prod) => {
+                if (
+                  typeof prod.categoryId === "object" &&
+                  prod.categoryId?.name
+                ) {
+                  console.log(prod.categoryId);
+                  return prod.categoryId.name === categoryName;
+                }
+              }).length;
+              return (
+                <TabsTrigger
+                  key={category.name}
+                  value={categoryName}
+                  className={cn(
+                    "!bg-white px-3 border border-gray-200 data-[state=active]:shadow-xl data-[state=active]:[&_span]:bg-green-400 data-[state=active]:[&_span]:text-white hover:border-dashed hover:border-green-400 data-[state=active]:border-green-400 text-sm"
+                  )}
+                >
+                  {category.name}
+                  <span className="mx-0.5 bg-gray-300 rounded-2xl text-[0.625rem] text-[#7d7d7d] py-1 px-2">
+                    {count}
+                  </span>
+                  <p
+                    onClick={() =>
+                      setOpenCategory({
+                        name: category.name,
+                        count,
+                        description: category.description,
+                      })
+                    }
+                  >
+                    <Info className="text-[#D9D9D9]" />
+                  </p>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
         </div>
+        {/* All Products Tab */}
+        <TabsContent value="allProducts">
+          <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8 pb-5">
+            {filteredProducts.map((prod) => (
+              <ProductDisplayTab key={prod._id} product={prod} />
+            ))}
+          </div>
+        </TabsContent>
+        {/* Individual Category Tabs */}
+        {categories?.map((category) => {
+          const categoryName = category.name;
+          // const categoryName = category.name.toLowerCase();
+          const productInCategory = products.filter(
+            (prod) => prod.categoryId.name === categoryName
+            // (prod) => prod.categoryId.name.toLowerCase() === categoryName
+          );
+
+          return (
+            <TabsContent key={categoryName} value={categoryName}>
+              {productInCategory.length === 0 ? (
+                <div className="flex justify-center items-center text-sm p-5 text-gray-500 italic">
+                  No product in this category.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8 pb-5">
+                  {productInCategory.map((prod) => (
+                    <ProductDisplayTab key={prod._id} product={prod} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          );
+        })}
       </Tabs>
 
-      {/* set the open category to the selected category */}
+      {/* when the info button is clicked, the modal opens */}
       {openCategory && (
         <CategoryModal
           setOpenModal={() => setOpenCategory(null)}
           categoryName={openCategory.name}
+          description={openCategory.description}
           productCount={openCategory.count}
         />
       )}
     </div>
   );
-};
+});
 
 export default InventoryTab;

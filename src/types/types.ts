@@ -1,13 +1,13 @@
 import { z } from "zod";
 import {
   adminProductSetupSchema,
-  adminCategorySetupSchema,
+  categorySchema,
   adminSetupSchema,
   adminClientSetupSchema,
 } from "../lib/zodUtils";
 
 export type AdminSetupData = z.infer<typeof adminSetupSchema>;
-export type AdminSetupCatData = z.infer<typeof adminCategorySetupSchema>;
+export type CategoryData = z.infer<typeof categorySchema>;
 export type AdminSetupProdData = z.infer<typeof adminProductSetupSchema>;
 export type AdminSetupClientData = z.infer<typeof adminClientSetupSchema>;
 
@@ -53,3 +53,44 @@ export interface LoginResponse {
     token: string;
   };
 }
+
+export type Category = {
+  _id: string;
+  name: string;
+  units: string[];
+  description?: string;
+  isActive?: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Product = {
+  _id: string;
+  name: string;
+  categoryId: {
+    name: string;
+    _id: string;
+    units: [];
+  };
+  minStockLevel: number;
+  stock: number;
+  unit: string;
+  unitPrice: number;
+  priceHistory: [
+    {
+      price: number;
+      date: string;
+      _id: string;
+    }
+  ];
+  isActive: boolean;
+};
+
+export type NewProduct = {
+  name: string;
+  categoryId: string;
+  unit: string;
+  unitPrice: number;
+  stock: number;
+  minStockLevel: number;
+};

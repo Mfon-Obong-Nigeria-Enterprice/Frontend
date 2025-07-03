@@ -1,10 +1,10 @@
 import { create } from "zustand";
-import { type AdminSetupCatData } from "../types/types";
+import { type CategoryData } from "../types/types";
 
 type CategoryStore = {
-  categories: AdminSetupCatData[];
-  setCategories: (cats: AdminSetupCatData[]) => void;
-  addCategory: (cat: AdminSetupCatData) => void;
+  categories: CategoryData[];
+  setCategories: (cats: CategoryData[]) => void;
+  addCategory: (cat: CategoryData) => void;
   // removeCategory: (categoryId: string | number) => void;
 };
 

@@ -22,10 +22,12 @@ const RecentSales: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-white px-8 py-6 rounded-lg font-Inter">
-      <h4 className="font-medium text-xl text-text-dark">Recent sales</h4>
+    <div className="bg-white p-4 sm:px-8 sm:py-6 mx-2 rounded-lg font-Inter">
+      <h4 className="font-medium text-lg sm:text-xl text-text-dark">
+        Recent sales
+      </h4>
 
-      <Table className="mt-8 rounded-t-xl overflow-hidden">
+      <Table className="mt-5 sm:mt-8 rounded-t-xl overflow-hidden">
         <TableHeader>
           <TableRow className="bg-[#F0F0F3]">
             <TableHead className="w-[100px] text-center text-[#444444]">
@@ -57,12 +59,13 @@ const RecentSales: React.FC = () => {
           ))}
         </TableBody>
       </Table>
-      <div className="flex justify-between items-center bg-[#f0f0f3] mt-[13dvh]">
+      <div className="flex justify-between items-center bg-[#f0f0f3] mt-10 sm:mt-[13dvh]">
         <div>
           <Button
             onClick={() => navigate("/admin/dashboard/sales")}
             text="View all Sales"
             variant="outline"
+            fullWidth={false}
           />
         </div>
         <MdKeyboardArrowRight size={24} className="text-[#3D80FF] mr-5" />

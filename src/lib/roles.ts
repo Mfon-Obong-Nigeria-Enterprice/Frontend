@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 export function useHasRole(roles: string[]) {
   const role = useAuthStore((s) => s.user?.role);
