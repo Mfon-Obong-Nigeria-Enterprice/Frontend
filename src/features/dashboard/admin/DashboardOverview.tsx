@@ -7,33 +7,69 @@ import RecentSales from "./components/RecentSales";
 import { Button } from "@/components/ui/button";
 import { VscRefresh } from "react-icons/vsc";
 import { Plus } from "lucide-react";
+import { useInventoryStore } from "@/stores/useInventoryStore";
+import { type StatCard } from "./components/Stats";
 
 const DashboardOverview: React.FC = () => {
+  const products = useInventoryStore((state) => state.products);
+
+  const lowStockCount = products.filter(
+    (prod) => prod.stock <= prod.minStockLevel
+  ).length;
+
+  const stats: StatCard[] = [
+    {
+      heading: "Total Sales (Today)",
+      salesValue: "₦ 1,250,000",
+      statValue: "12% from yesterday",
+      color: "green",
+    },
+    {
+      heading: "Outstanding balances",
+      salesValue: "₦ 400,000",
+      statValue: "5% from last week",
+      color: "orange",
+    },
+    {
+      heading: "Low Stock Items",
+      salesValue: `${lowStockCount} Products`,
+      statValue: "Needs attention",
+      color: "red",
+      hideArrow: true,
+    },
+    {
+      heading: "Active Clients",
+      salesValue: "42",
+      statValue: "3% new clients this week",
+      color: "green",
+    },
+  ];
+
   return (
     <main>
-      <div className="flex justify-between items-end mb-7">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4 mb-7">
         <DashboardTitle
           heading="Dashboard"
           description="Welcome, Admin User! Here's an overview of your business today"
         />
-        <div className="flex gap-5">
+        <div className="flex gap-5 mx-5">
           <Button
             onClick={() => window.location.reload()}
-            className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
+            className="w-40 bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
           >
             <VscRefresh />
             Refresh
           </Button>
           <Link to="/add-prod">
-            <Button className="bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)] transition-colors duration-200 ease-in-out [&_span]:text-5xl">
+            <Button className="w-40 bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)] transition-colors duration-200 ease-in-out [&_span]:text-5xl">
               <Plus className="w-10 h-10 text-white" />
               Add Product
             </Button>
           </Link>
         </div>
       </div>
-      <Stats />
-      <div className="mt-5 grid grid-cols-[60fr_40fr] gap-5 ">
+      <Stats data={stats} />
+      <div className="grid grid-cols-1 lg:grid-cols-[60fr_40fr] gap-5 mt-5">
         <SalesOverview />
         <RecentSales />
       </div>

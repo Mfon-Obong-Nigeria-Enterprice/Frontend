@@ -52,7 +52,7 @@ const BarChartWeekly = () => {
       },
       y: {
         ticks: {
-          callback: (value: number) => `₦${value}`,
+          callback: (value: number) => `₦${value.toLocaleString()}`,
           stepSize: 10000,
         },
         beginAtZero: true,
@@ -65,7 +65,7 @@ const BarChartWeekly = () => {
   };
 
   return (
-    <div className="bg-[#F5F5F5] p-6 rounded-lg shadow-md ">
+    <div className="bg-[#F5F5F5] p-2 sm:p-6 rounded-lg shadow-md ">
       <Bar data={data} options={options} />
     </div>
   );

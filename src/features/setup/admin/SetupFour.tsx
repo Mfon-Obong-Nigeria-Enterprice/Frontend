@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MdOutlineEdit, MdOutlineDelete } from "react-icons/md";
 
-import { useClientStore } from "@/store/ClientStore";
+import { useClientStore } from "@/stores/ClientStore";
 import { type AdminSetupClientData } from "@/types/types";
 import { adminClientSetupSchema } from "@/lib/zodUtils";
 

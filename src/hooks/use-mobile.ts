@@ -1,5 +1,7 @@
 import * as React from "react";
 
+// const MOBILE_BREAKPOINT = 768
+// changing the breakpoint to 885
 const MOBILE_BREAKPOINT = 885;
 
 export function useIsMobile() {

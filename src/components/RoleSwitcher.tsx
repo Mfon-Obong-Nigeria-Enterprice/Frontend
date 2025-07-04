@@ -1,7 +1,7 @@
 // // delete this component before production!
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { useNavigate } from "react-router-dom";
 
 const roles = [
@@ -9,6 +9,11 @@ const roles = [
     label: "SUPER_ADMIN",
     username: import.meta.env.VITE_DEV_SUPER_ADMIN_USERNAME,
     password: import.meta.env.VITE_DEV_SUPER_ADMIN_PASSWORD,
+  },
+  {
+    label: "ADMIN",
+    username: import.meta.env.VITE_DEV_ADMIN_USERNAME || "aniekan@gmail.com",
+    password: import.meta.env.VITE_DEV_ADMIN_PASSWORD || "aniekan123",
   },
   {
     label: "STAFF",
@@ -31,8 +36,8 @@ const DevRoleSwitcher = () => {
   ) => {
     setLoadingRole(label);
     try {
-      const response = await login(username, password);
-      const user = response?.data?.user;
+      await login(username, password);
+      const user = useAuthStore.getState().user;
 
       if (!user || !user.role) {
         console.error("No user/role returned from backend");
@@ -43,7 +48,10 @@ const DevRoleSwitcher = () => {
 
       switch (role) {
         case "SUPER_ADMIN":
-          navigate("/manager/dashboard");
+          navigate("/manager/dashboard/m-overview");
+          break;
+        case "ADMIN":
+          navigate("/admin/dashboard/overview");
           break;
         case "STAFF":
           navigate("/staff/dashboard/s-overview");
@@ -56,11 +64,6 @@ const DevRoleSwitcher = () => {
     } finally {
       setLoadingRole(null);
     }
-  };
-
-  const simulateAdminRoute = () => {
-    console.warn("🚨 Simulating Admin route — no real login done.");
-    navigate("/admin/dashboard/overview");
   };
 
   return (
@@ -80,14 +83,6 @@ const DevRoleSwitcher = () => {
               : `Login as ${role.label}`}
           </Button>
         ))}
-
-        <Button
-          variant="outline"
-          onClick={simulateAdminRoute}
-          disabled={loadingRole !== null}
-        >
-          🚧 Simulate Admin Route
-        </Button>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import Login from "@/components/login/Login";
+import Login from "@/features/auth/Login";
 import AdminSetupLayout from "@/layout/setup/AdminSetupLayout";
 import SetupOne from "@/features/setup/admin/SetupOne";
 import SetupTwo from "@/features/setup/admin/SetupTwo";
@@ -8,8 +8,10 @@ import SetupFour from "@/features/setup/admin/SetupFour";
 import Review from "@/features/setup/admin/Review";
 import Complete from "@/features/setup/admin/Complete";
 
-import AddProduct from "@/components/AddProduct";
 import Notfound from "@/components/Notfound";
+import AddProduct from "@/components/inventory/AddProduct";
+import ClientDetailsPage from "@/pages/ClientDetailsPage";
+import ImportStockPage from "@/features/import/ImportStockPage";
 
 // manager (super admin)
 import ManagerDashboardLayout from "@/layout/ManagerDashboardLayout";
@@ -32,11 +34,10 @@ import DashboardSettings from "@/features/dashboard/admin/DashboardSettings";
 // staff
 import StaffDashboardLayout from "@/layout/StaffDashboardLayout";
 import StaffDashboardOverview from "@/features/dashboard/staff/DashboardOverview";
-import StaffSales from "@/features/dashboard/staff/Staffsales";
-import NewSales from "@/features/dashboard/staff/Newsales";
+import StaffSales from "@/features/dashboard/staff/StaffSales";
+import NewSales from "@/features/dashboard/staff/NewSales";
 import Stock from "@/features/dashboard/staff/Stock";
 import StaffClients from "@/features/dashboard/staff/StaffClients";
-import ClientDetailsPage from "@/pages/ClientDetailsPage";
 
 const router = createBrowserRouter([
   { path: "/", element: <Login /> },
@@ -119,6 +120,7 @@ const router = createBrowserRouter([
     path: "client-details",
     element: <ClientDetailsPage />,
   },
+  { path: "import-stock", element: <ImportStockPage /> },
   {
     path: "*",
     element: <Notfound />,

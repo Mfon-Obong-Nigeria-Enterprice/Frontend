@@ -2,12 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import SalesCategoryChart from "./SalesCategoryChart";
 import { BsArrowUp } from "react-icons/bs";
 
-const salesByCategory = [
-  { name: "Building Materials", value: 45 },
-  { name: "Construction services", value: 32 },
-  { name: "Equipment rental", value: 23 },
-];
-
 type SalesMetrics = {
   totalSales: number;
   transactionCount: number;
@@ -21,10 +15,17 @@ type TopProduct = {
   revenue: number;
   category: string;
 };
+
 interface SalesAnalyticsProps {
   metrics: SalesMetrics;
   topProduct: TopProduct[];
 }
+
+const salesByCategory = [
+  { name: "Building Materials", value: 45 },
+  { name: "Construction services", value: 32 },
+  { name: "Equipment rental", value: 23 },
+];
 
 const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
   metrics,

@@ -5,7 +5,7 @@ import { MdOutlineEdit, MdOutlineDelete } from "react-icons/md";
 
 import { adminProductSetupSchema } from "@/lib/zodUtils";
 import { type AdminSetupProd } from "@/types/types";
-import { useCategoryStore } from "@/store/useCategoryStore";
+import { useCategoryStore } from "@/stores/useCategoryStore";
 
 import SetupTitle from "./components/SetupTitle";
 import ProgressBar from "./components/ProgressBar";

@@ -1,21 +1,64 @@
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useDebouncedCallback } from "use-debounce";
 import DashboardTitle from "../../../components/dashboard/DashboardTitle";
 import InventoryTab from "./components/InventoryTab";
 import Modal from "@/components/Modal";
-import AddCategory from "@/components/AddCategory";
-// import { Button } from "@/components/ui/button";
+import AddCategory from "@/components/inventory/AddCategory";
+import { useInventoryStore } from "@/stores/useInventoryStore";
 import { IoIosArrowUp } from "react-icons/io";
 import { CiImport } from "react-icons/ci";
 import { IoIosSearch } from "react-icons/io";
 import { Plus, ChevronRight } from "lucide-react";
+import { type Product } from "@/types/types";
 
 const AdminInventory = () => {
-  const [position, setPosition] = useState({ x: 1280, y: 400 });
+  const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [position, setPosition] = useState({ xPercent: 80, yPercent: 80 }); // defaults to 50% from the left, 70% from the top
   const [dragging, setDragging] = useState(false);
   const [rel, setRel] = useState({ x: 0, y: 0 });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
+
+  // set the search query from zustand store
+  const setSearchQuery = useInventoryStore((state) => state.setSearchQuery);
+  const { products, searchQuery } = useInventoryStore();
+
+  // debounce query
+  const debouncedSearch = useDebouncedCallback((value: string) => {
+    setSearchQuery(value);
+  }, 300);
+
+  // adding search suggestions
+  const suggestions = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+
+    const query = searchQuery.toLowerCase();
+
+    return products
+      .filter(
+        (product) =>
+          product.name.toLowerCase().includes(query) ||
+          product.categoryId?.name?.toLowerCase().includes(query)
+      )
+      .map((prod) => ({ type: "product", item: prod }));
+  }, [searchQuery, products]);
+
+  const handleSuggestionClick = (suggestion: {
+    type: "product";
+    item: Product;
+  }) => {
+    const id = suggestion.item._id;
+
+    // Scroll to the DOM element with a matching ID (you must assign ids to elements in InventoryTab)
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setSearchQuery(""); // clear search
+    }
+  };
 
   // to close both modals
   const closeBothModals = () => {
@@ -25,23 +68,46 @@ const AdminInventory = () => {
 
   const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
     setDragging(true);
+    const button = e.currentTarget.getBoundingClientRect();
+
     setRel({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y,
+      x: e.clientX - button.left,
+      y: e.clientY - button.top,
     });
   };
 
   const handleMouseUp = () => setDragging(false);
 
-  // attach/detach mouse events
+  // sets initial position of the button
+  useEffect(() => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+
+      const x = rect.left + rect.width - 80; //80 = button size plus margin
+      const y = rect.top + rect.height - 80;
+
+      // convert to percentage
+      const xPercent = (x / window.innerWidth) * 100;
+      const yPercent = (y / window.innerHeight) * 100;
+
+      setPosition({ xPercent, yPercent });
+    }
+  }, []);
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (dragging) {
-        setPosition({
-          x: e.clientX - rel.x,
-          y: e.clientY - rel.y,
-        });
-      }
+      if (!dragging) return;
+
+      const newX = e.clientX - rel.x;
+      const newY = e.clientY - rel.y;
+
+      const xPercent = (newX / window.innerWidth) * 100;
+      const yPercent = (newY / window.innerHeight) * 100;
+
+      setPosition({
+        xPercent: Math.min(100, Math.max(0, xPercent)),
+        yPercent: Math.min(100, Math.max(0, yPercent)),
+      });
     };
 
     document.addEventListener("mousemove", handleMouseMove);
@@ -58,39 +124,67 @@ const AdminInventory = () => {
         heading="Inventory Management"
         description="Manage your product, categories, and stock levels"
       />
-      <section className="bg-white rounded-xl mt-5 overflow-hidden">
-        <div className="flex justify-between items-center py-4 px-5 bg-[#f0f0f3]">
+      <section className="bg-white xl:rounded-xl mt-5">
+        <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center py-5 px-4 sm:px-5 bg-[#f0f0f3] border-b border-[#d9d9d9] md:border-0">
           <h3 className="text-xl font-medium text-text-dark">
             Product & Categories
           </h3>
           <div className="flex gap-4">
-            <button className="bg-white flex gap-1 items-center rounded-md py-2 px-4 border border-[#7d7d7d]">
-              <IoIosArrowUp />
+            <button className="w-40 bg-white text-[#333333] flex gap-1.5 items-center justify-center rounded-md py-2 px-4 border border-[#7d7d7d]">
+              <IoIosArrowUp size={24} />
               <span>Export</span>
             </button>
-            <button className="bg-white flex gap-1 items-center rounded-md py-2 px-4 border border-[#7d7d7d]">
-              <CiImport />
+
+            <button
+              onClick={() => navigate("/import-stock")}
+              className="w-40 bg-white text-[#333333] flex gap-1.5 items-center rounded-md py-2 px-4 border border-[#7d7d7d]"
+            >
+              <CiImport size={24} />
               <span>Import Stock</span>
             </button>
           </div>
         </div>
-        {/* search */}
-        <div className="flex justify-between items-center px-4 py-5 border">
-          <div className="bg-[#F5F5F5] flex items-center gap-1 w-1/2 px-4 rounded-md">
+        <div className="flex flex-col md:flex-row  md:justify-between md:items-center gap-4 px-4 md:px-5 py-5 border">
+          {/* search */}
+          <div className="relative bg-[#F5F5F5] max-w-lg w-full flex items-center gap-1 md:w-1/2 px-4 rounded-md">
             <IoIosSearch size={18} />
             <input
               type="search"
               placeholder="Search products, categories..."
+              onChange={(e) => debouncedSearch(e.target.value)}
               className="py-2 outline-0 w-full"
             />
+            {searchQuery && (
+              <div className="absolute top-full left-0 z-50 bg-white border rounded-md shadow-md w-full min-h-24">
+                {suggestions.length > 0 ? (
+                  suggestions.map((suggestion, i) => (
+                    <p
+                      key={i}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                    >
+                      {suggestion.item.name}{" "}
+                      <span className="text-xs text-gray-500">
+                        (category: {suggestion.item.categoryId?.name})
+                      </span>
+                    </p>
+                  ))
+                ) : (
+                  <p className="p-4 italic text-center text-gray-500">
+                    No matching products found for{" "}
+                    <span className="text-gray-700">"{searchQuery}"</span>
+                  </p>
+                )}
+              </div>
+            )}
           </div>
-          {/*  */}
+
           <div className="flex items-center gap-4">
-            <button className="bg-[#D9D9D9] flex gap-1 items-center rounded-md py-2 px-4 border border-[#7d7d7d]">
+            <button className="w-50 bg-[#D9D9D9] text-[#444444] flex gap-1.5 justify-center items-center rounded-md py-2 px-4 border border-[#7d7d7d]">
               <span>Stock status</span>
               <IoIosArrowUp />
             </button>
-            <button className="bg-[#D9D9D9] flex gap-1 items-center rounded-md py-2 px-4 border border-[#7d7d7d]">
+            <button className="max-w-40 w-full bg-[#D9D9D9] text-[#444444] flex gap-1.5 justify-center items-center rounded-md py-2 px-4 border border-[#7d7d7d]">
               <span>Price range</span>
               <IoIosArrowUp />
             </button>
@@ -98,19 +192,23 @@ const AdminInventory = () => {
         </div>
 
         {/* tabbed section */}
-        <div className="my-5 ">
+        <div className="my-5" ref={containerRef}>
           <InventoryTab />
-        </div>
 
-        {/* draggable button */}
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          onMouseDown={handleMouseDown}
-          className="fixed z-50 flex justify-center items-center bg-[#2ECC71] hover:bg-[#2cCC79] w-16 h-16 rounded-full text-white shadow-2xl cursor-move text-5xl"
-          style={{ left: position.x, top: position.y }}
-        >
-          <Plus />
-        </button>
+          {/* draggable button */}
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            onMouseDown={handleMouseDown}
+            className="fixed z-50 flex justify-center items-center bg-[#2ECC71] hover:bg-[#2cCC79] w-16 h-16 rounded-full text-white shadow-2xl cursor-move text-5xl"
+            // style={{ left: position.x, top: position.y }}
+            style={{
+              left: `${position.xPercent}vw`,
+              top: `${position.yPercent}vh`,
+            }}
+          >
+            <Plus />
+          </button>
+        </div>
 
         <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)}>
           <h6 className="text-lg font-medium text-[#333333] ml-5 mb-3">

@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { adminSetupSchema } from "@/lib/zodUtils.ts";
 import { type AdminSetupData } from "@/types/types.ts";
-import { useAdminSetupStore } from "@/store/adminsetup.ts";
+import { useAdminSetupStore } from "@/stores/adminsetup.ts";
 
 import SetupTitle from "./components/SetupTitle.tsx";
 import ProgressBar from "./components/ProgressBar.tsx";
