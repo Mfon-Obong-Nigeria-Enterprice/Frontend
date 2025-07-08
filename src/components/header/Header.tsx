@@ -1,7 +1,6 @@
 import { FaRegBell } from "react-icons/fa";
-import { Avatar } from "flowbite-react";
 import Logo from "../Logo";
-
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 type HeaderProps = {
   userRole?: "manager" | "admin" | "staff";
 };
@@ -21,13 +20,10 @@ const Header = ({ userRole }: HeaderProps) => {
         </div>
         <p className="hidden sm:block capitalize">{userRole}</p>
 
-        <Avatar
-          img={`/images/${userRole}-avatar.png`}
-          alt={`${userRole} avatar`}
-          status="online"
-          statusPosition="top-right"
-          rounded
-        />
+        <Avatar>
+          <AvatarImage src={`/images/${userRole}-avatar.png`} />
+          <AvatarFallback>CN</AvatarFallback>
+        </Avatar>
       </div>
     </header>
   );

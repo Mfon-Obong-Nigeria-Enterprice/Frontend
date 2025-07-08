@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Pencil, Trash2, MoveUp, MoveDown } from "lucide-react";
 import { useInventoryStore } from "@/stores/useInventoryStore";
 import { updateProduct } from "@/services/productService";
-import { newProductSchema } from "@/lib/zodUtils";
+import { newProductSchema } from "@/schemas/productSchema";
 import { type NewProduct } from "@/types/types";
 import {
   Select,

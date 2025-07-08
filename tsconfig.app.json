@@ -27,5 +27,10 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": [
+    "src",
+    "../../Mfon-extra/src/data",
+    "../../Mfon-extra/src/features/setup",
+    "../../Mfon-extra/src/components/setup"
+  ]
 }
