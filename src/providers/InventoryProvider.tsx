@@ -6,6 +6,7 @@ import { useInventoryStore } from "@/stores/useInventoryStore";
 
 export const InventoryProvider = ({ children }: { children: ReactNode }) => {
   const { setProducts, setCategories } = useInventoryStore();
+
   const { data: categories } = useSuspenseQuery({
     queryKey: ["categories"],
     queryFn: getAllCategories,
@@ -16,6 +17,7 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
     queryFn: getAllProducts,
   });
 
+  // save to zustand store
   useEffect(() => {
     setProducts(products);
     setCategories(categories);

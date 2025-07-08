@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema } from "@/lib/zodUtils";
+import { loginSchema } from "@/schemas/authSchema";
 import { IoEyeOffOutline, IoEyeOutline } from "react-icons/io5";
 import Button from "../../components/MyButton";
 import MobileError from "./MobileError";
@@ -48,6 +48,10 @@ const Login = () => {
       switch (normalizedRole) {
         case "SUPER_ADMIN":
           navigate("/manager/dashboard");
+          break;
+
+        case "MAINTAINER":
+          navigate("/maintainer/dashboard");
           break;
 
         case "ADMIN":

@@ -3,7 +3,7 @@ import { type AxiosError } from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { categorySchema } from "@/lib/zodUtils";
+import { categorySchema } from "@/schemas/categorySchema";
 import { type CategoryData } from "@/types/types";
 import { createCategory } from "@/services/categoryService";
 import TagInput from "../TagInput";

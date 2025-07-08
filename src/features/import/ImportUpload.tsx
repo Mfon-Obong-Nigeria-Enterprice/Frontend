@@ -1,8 +1,12 @@
-import React from "react";
+import React, { useRef, useState } from "react";
+import Papa from "papaparse";
+import ExcelJS from "exceljs";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useGoBack } from "@/hooks/useGoBack";
 import { X, FolderOpen } from "lucide-react";
 import { useImportStore } from "@/stores/useImportStore";
+import { type ProductImportRow } from "@/types/types";
 
 const requirements: string[] = [
   "Maximum file size 10MB",
@@ -12,23 +16,87 @@ const requirements: string[] = [
 
 const ImportUpload: React.FC = () => {
   const goBack = useGoBack();
-  const { setStep, setData, setError } = useImportStore();
+  const { setStep, setData, setFile, setError, reset } = useImportStore();
+  const [isDragging, setIsDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleUpload = () => {
-    // simulate file parsing
+  const handleUpload = async (file: File) => {
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setError("File size exceeds the maximum allowed size of 10MB");
+      return;
+    }
+
+    const fileName = file.name.toLowerCase();
+
     try {
-      const data = [
-        { product: "Cement", category: "Building", stock: 100, price: 3000 },
-        { product: "Iron rod", category: "Metal", stock: 50, price: 5000 },
-      ];
-      setData(data);
+      let parsedData: ProductImportRow[] = [];
+
+      // check if it's a CSV file
+      if (fileName.endsWith(".csv")) {
+        // parse CSV file with PapaParse
+        const text = await file.text();
+        const { data, errors } = Papa.parse<ProductImportRow>(text, {
+          header: true,
+          skipEmptyLines: true, // skip empty lines
+        });
+
+        if (errors.length > 0) {
+          console.error("CSV parse errors:", errors);
+          setError("CSV file has formatting issues.");
+          setStep("error");
+          return;
+        }
+
+        parsedData = data;
+      } else if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
+        // parse excel file with ExcelJS
+        const buffer = await file.arrayBuffer();
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(buffer);
+
+        const worksheet = workbook.worksheets[0]; // read first sheet
+        const rows: ProductImportRow[] = [];
+
+        worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+          // skip header row
+          if (rowNumber === 1) return;
+
+          const rowData: Partial<ProductImportRow> = {};
+          row.eachCell((cell, colNumber) => {
+            const header = worksheet.getRow(1).getCell(colNumber).text.trim();
+            rowData[header as keyof ProductImportRow] = cell.text.trim();
+          });
+
+          rows.push(rowData as ProductImportRow);
+        });
+        parsedData = rows;
+      } else {
+        // for unsupported format
+        setError("Unsupported file type. Please upload a .csv or .xlsx file");
+        return;
+      }
+
+      // on success, update global state
+      setData(parsedData); // set parsed rows to state
+      setFile(file); // store file info for display
       setError(null);
-      setStep("preview");
+      setStep("preview"); // move to preview screen
     } catch (err) {
-      setError("Could not parse file.");
+      setError("Could not parse file. Please check formatting.");
       setStep("error");
+      console.error("File parse error:", err);
     }
   };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleUpload(file);
+  };
+
+  const handleBrowse = () => inputRef.current?.click();
 
   return (
     <div>
@@ -36,15 +104,40 @@ const ImportUpload: React.FC = () => {
         <h4 className="text-lg font-medium text-[#333333]"> Import stock</h4>
         <button
           className="h-7 w-7 inline-flex justify-center items-center border border-full rounded-full"
-          onClick={() => goBack()}
+          onClick={() => {
+            goBack();
+            reset();
+          }}
         >
           <X size={14} />
         </button>
       </div>
       <div className="px-5 pt-8 space-y-6">
         {/* file upload */}
-        <div className="bg-[#F5F5F5] flex flex-col justify-center items-center min-h-70 gap-1.5 border-2 border-dashed border-[#7D7D7D] rounded-md">
-          <FolderOpen size={60} />
+        <div
+          className={cn(
+            "bg-[#F5F5F5] hover:bg-gray-200 flex flex-col justify-center items-center min-h-70 gap-1.5 border-2 border-dashed rounded-md cursor-pointer transition-colors duration-300 ease-in-out",
+            isDragging ? "border-blue-500" : "border-[#7D7D7D]"
+          )}
+          onClick={handleBrowse}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+        >
+          <input
+            type="file"
+            accept=".csv, .xls, .xlsx"
+            ref={inputRef}
+            hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleUpload(file);
+            }}
+          />
+          <FolderOpen size={60} className="text-[#7D7D7D]" />
           <p className="font-medium text-[#444444] text-center mt-6">
             Drop your file here or click to browse
           </p>
@@ -69,7 +162,7 @@ const ImportUpload: React.FC = () => {
           </Button>
           <Button
             onClick={() => {
-              handleUpload();
+              // handleUpload(file);
               setStep("preview");
             }}
           >

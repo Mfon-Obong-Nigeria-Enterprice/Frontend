@@ -11,9 +11,14 @@ const roles = [
     password: import.meta.env.VITE_DEV_SUPER_ADMIN_PASSWORD,
   },
   {
+    label: "MAINTAINER",
+    username: import.meta.env.VITE_DEV_MAINTAINER_USERNAME,
+    password: import.meta.env.VITE_DEV_MAINTAINER_PASSWORD,
+  },
+  {
     label: "ADMIN",
-    username: import.meta.env.VITE_DEV_ADMIN_USERNAME || "aniekan@gmail.com",
-    password: import.meta.env.VITE_DEV_ADMIN_PASSWORD || "aniekan123",
+    username: import.meta.env.VITE_DEV_ADMIN_USERNAME,
+    password: import.meta.env.VITE_DEV_ADMIN_PASSWORD,
   },
   {
     label: "STAFF",
@@ -49,6 +54,9 @@ const DevRoleSwitcher = () => {
       switch (role) {
         case "SUPER_ADMIN":
           navigate("/manager/dashboard/m-overview");
+          break;
+        case "MAINTAINER":
+          navigate("/maintainer/dashboard/overview");
           break;
         case "ADMIN":
           navigate("/admin/dashboard/overview");

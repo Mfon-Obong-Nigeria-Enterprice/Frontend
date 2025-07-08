@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useInventoryStore } from "@/stores/useInventoryStore";
 import { createProduct } from "@/services/productService";
 import { type NewProduct } from "@/types/types";
-import { newProductSchema } from "@/lib/zodUtils";
+import { newProductSchema } from "@/schemas/productSchema";
 import { useGoBack } from "@/hooks/useGoBack";
 import {
   Select,

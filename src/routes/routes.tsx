@@ -1,13 +1,5 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import Login from "@/features/auth/Login";
-import AdminSetupLayout from "@/layout/setup/AdminSetupLayout";
-import SetupOne from "@/features/setup/admin/SetupOne";
-import SetupTwo from "@/features/setup/admin/SetupTwo";
-import SetupThree from "@/features/setup/admin/SetupThree";
-import SetupFour from "@/features/setup/admin/SetupFour";
-import Review from "@/features/setup/admin/Review";
-import Complete from "@/features/setup/admin/Complete";
-
 import Notfound from "@/components/Notfound";
 import AddProduct from "@/components/inventory/AddProduct";
 import ClientDetailsPage from "@/pages/ClientDetailsPage";
@@ -21,6 +13,10 @@ import ManagerClients from "@/features/dashboard/manager/ManagerClients";
 import RevenueAnalytics from "@/features/dashboard/manager/RevenueAnalytics";
 import UserManagement from "@/features/dashboard/manager/UserManagement";
 import ManagerSettings from "@/features/dashboard/manager/ManagerSettings";
+
+// maintainer
+import MaintainerLayout from "@/layout/MaintainerLayout";
+import MaintainerDashboard from "@/features/dashboard/maintainer/MaintainerDashboard";
 
 // admin
 import AdminDashboardLayout from "@/layout/AdminDashboardLayout";
@@ -71,16 +67,11 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: "/admin/setup",
-    element: <AdminSetupLayout />,
+    path: "/maintainer/dashboard",
+    element: <MaintainerLayout />,
     children: [
-      { index: true, element: <Navigate to="step-01" replace /> },
-      { path: "step-01", element: <SetupOne /> },
-      { path: "step-02", element: <SetupTwo /> },
-      { path: "step-03", element: <SetupThree /> },
-      { path: "step-04", element: <SetupFour /> },
-      { path: "review", element: <Review /> },
-      { path: "complete", element: <Complete /> },
+      { index: true, element: <Navigate to="/overview" replace /> },
+      { path: "overview", element: <MaintainerDashboard /> },
     ],
   },
   {

@@ -1,17 +1,20 @@
 import { Link, useLocation } from "react-router-dom";
-import { MdOutlineDashboard, MdOutlineShoppingBag } from "react-icons/md";
-import { BsBoxSeam } from "react-icons/bs";
-import { IoPerson, IoSettingsOutline } from "react-icons/io5";
-import { RiLogoutCircleRLine } from "react-icons/ri";
-import { IoIosLogOut } from "react-icons/io";
+import {
+  LayoutDashboard,
+  //   Book,
+  //   UserRound,
+  //   UserRoundCog,
+  //   Settings,
+  LogOut,
+} from "lucide-react";
+// import { HiMiniChartBar } from "react-icons/hi2";
+
 import Logo from "@/components/Logo";
 import { useLogout } from "@/hooks/uselogout";
-
 import {
   Sidebar,
   SidebarContent,
   SidebarGroupContent,
-  // SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -23,41 +26,58 @@ import {
 const items = [
   {
     title: "Dashboard",
-    url: "/admin/dashboard/overview",
-    icon: MdOutlineDashboard,
+    url: "/maintainer/dashboard/main-dashboard",
+    icon: LayoutDashboard,
   },
-  { title: "Inventory", url: "/admin/dashboard/inventory", icon: BsBoxSeam },
-  { title: "Clients", url: "/admin/dashboard/clients", icon: IoPerson },
-  { title: "Sales", url: "/admin/dashboard/sales", icon: MdOutlineShoppingBag },
-  {
-    title: "Transactions",
-    url: "/admin/dashboard/transactions",
-    icon: RiLogoutCircleRLine,
-  },
-  {
-    title: "Settings",
-    url: "/admin/dashboard/settings",
-    icon: IoSettingsOutline,
-  },
+  //   {
+  //     title: "Business Report",
+  //     url: "/manager/dashboard/business-report",
+  //     icon: Book,
+  //   },
+  //   {
+  //     title: "Clients",
+  //     url: "/manager/dashboard/manage-clients",
+  //     icon: UserRound,
+  //   },
+  //   {
+  //     title: "Transaction",
+  //     url: "/manager/dashboard/manage-transactions",
+  //     icon: UserRound,
+  //   },
+  //   {
+  //     title: "Revenue Analytics",
+  //     url: "/manager/dashboard/revenue-analytics",
+  //     icon: HiMiniChartBar,
+  //   },
+  //   {
+  //     title: "User Management",
+  //     url: "/manager/dashboard/manage-user",
+  //     icon: UserRoundCog,
+  //   },
+  //   {
+  //     title: "Settings",
+  //     url: "/manager/dashboard/manager-settings",
+  //     icon: Settings,
+  //   },
 ];
 
-export function AdminSidebar() {
+const MaintainerSidebar = () => {
   const { pathname } = useLocation();
   const { logout } = useLogout();
 
   return (
-    // mt-[3.5rem] pt-10
     <Sidebar>
       <SidebarHeader />
       <Logo />
-      <SidebarContent className=" pt-8">
+      <SidebarContent className="pt-8">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
                 const isActive = pathname.startsWith(item.url);
+
                 return (
-                  <SidebarMenuItem key={item.title}>
+                  <SidebarMenuItem key={item.title} className="">
                     <SidebarMenuButton
                       asChild
                       className={`hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all
@@ -81,10 +101,11 @@ export function AdminSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenuButton onClick={logout}>
-          <IoIosLogOut />
+          <LogOut />
           <span>Logout</span>
         </SidebarMenuButton>
       </SidebarFooter>
     </Sidebar>
   );
-}
+};
+export default MaintainerSidebar;
