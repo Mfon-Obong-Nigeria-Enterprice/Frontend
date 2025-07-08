@@ -1,13 +1,5 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import Login from "@/features/auth/Login";
-// import AdminSetupLayout from "../../../../Mfon-extra/src/features/setup/AdminSetupLayout";
-// import SetupOne from "@/features/setup/admin/SetupOne";
-// import SetupTwo from "@/features/setup/admin/SetupTwo";
-// import SetupThree from "@/features/setup/admin/SetupThree";
-// import SetupFour from "@/features/setup/admin/SetupFour";
-// import Review from "@/features/setup/admin/Review";
-// import Complete from "@/features/setup/admin/Complete";
-
 import Notfound from "@/components/Notfound";
 import AddProduct from "@/components/inventory/AddProduct";
 import ClientDetailsPage from "@/pages/ClientDetailsPage";

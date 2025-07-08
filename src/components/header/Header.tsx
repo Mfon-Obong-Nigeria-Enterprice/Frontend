@@ -2,7 +2,7 @@ import { FaRegBell } from "react-icons/fa";
 import Logo from "../Logo";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 type HeaderProps = {
-  userRole?: "manager" | "admin" | "staff";
+  userRole?: "manager" | "maintainer" | "admin" | "staff";
 };
 
 const Header = ({ userRole }: HeaderProps) => {
