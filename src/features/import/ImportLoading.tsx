@@ -1,6 +1,8 @@
+/** @format */
+
 import { useEffect, useState } from "react";
 import { useImportStore } from "@/stores/useImportStore";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/progress";
 
 const ImportLoading = () => {

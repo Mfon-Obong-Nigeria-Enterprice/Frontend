@@ -1,6 +1,6 @@
 import DashboardTitle from "@/components/dashboard/DashboardTitle";
 import { Search, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 
 type Transaction = {
   invoice: string;
