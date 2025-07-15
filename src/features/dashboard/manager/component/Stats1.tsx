@@ -13,28 +13,7 @@ export type StatCard = {
 type StatsProps = {
   data: StatCard[];
 };
-// const statData: statDataProp[] = [
-//   {
-//     heading: "Total Sales (Today)",
-//     salesValue: "₦ 1,250,000",
-//     statValue: "12% from yesterday",
-//   },
-//   {
-//     heading: "Outstanding balances",
-//     salesValue: "₦ 1,250,000",
-//     statValue: "5% from last week",
-//   },
-//   {
-//     heading: "Low Stock Items",
-//     salesValue: "7 Products",
-//     statValue: "Needs attention",
-//   },
-//   {
-//     heading: "Active Clients",
-//     salesValue: "42",
-//     statValue: "3% New Clients this week",
-//   },
-// ];
+
 
 const Stats1 = ({ data }: StatsProps) => {
   return (
