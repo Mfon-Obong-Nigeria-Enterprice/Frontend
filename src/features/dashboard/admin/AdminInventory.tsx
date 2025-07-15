@@ -10,8 +10,9 @@ import { useInventoryStore } from "@/stores/useInventoryStore";
 import { IoIosArrowUp } from "react-icons/io";
 import { CiImport } from "react-icons/ci";
 import { IoIosSearch } from "react-icons/io";
-import { Plus, ChevronRight } from "lucide-react";
+import { Plus, ChevronRight, RotateCcw } from "lucide-react";
 import { type Product } from "@/types/types";
+
 
 const AdminInventory = () => {
   const navigate = useNavigate();
@@ -135,6 +136,13 @@ const AdminInventory = () => {
               <span>Export</span>
             </button>
 
+            <button
+              onClick={() => navigate("/update-stock")}
+              className="w-40 bg-white text-[#333333] flex gap-1.5 items-center rounded-md py-2 px-4 border border-[#7d7d7d]"
+            >
+              <RotateCcw size={24} />
+              <button type="submit">Update Stock</button>
+            </button>
             <button
               onClick={() => navigate("/import-stock")}
               className="w-40 bg-white text-[#333333] flex gap-1.5 items-center rounded-md py-2 px-4 border border-[#7d7d7d]"
