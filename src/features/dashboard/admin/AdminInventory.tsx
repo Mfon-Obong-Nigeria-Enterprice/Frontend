@@ -162,29 +162,27 @@ const AdminInventory = () => {
               onChange={(e) => debouncedSearch(e.target.value)}
               className="py-2 outline-0 w-full"
             />
-            {searchQuery && (
-              <div className="absolute top-full left-0 z-50 bg-white border rounded-md shadow-md w-full min-h-24">
-                {suggestions.length > 0 ? (
-                  suggestions.map((suggestion, i) => (
-                    <p
-                      key={i}
-                      onClick={() => handleSuggestionClick(suggestion)}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                    >
-                      {suggestion.item.name}{" "}
-                      <span className="text-xs text-gray-500">
-                        (category: {suggestion.item.categoryId?.name})
-                      </span>
-                    </p>
-                  ))
-                ) : (
-                  <p className="p-4 italic text-center text-gray-500">
-                    No matching products found for{" "}
-                    <span className="text-gray-700">"{searchQuery}"</span>
-                  </p>
-                )}
-              </div>
-            )}
+           {Array.isArray(suggestions) && suggestions.length > 0 ? (
+  suggestions.map((suggestion, i) => (
+    suggestion?.item && (
+      <p
+        key={i}
+        onClick={() => handleSuggestionClick(suggestion)}
+        className="w-full text-left px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+      >
+        {suggestion.item.name}{" "}
+        <span className="text-xs text-gray-500">
+          (category: {suggestion.item.categoryId?.name || "Uncategorized"})
+        </span>
+      </p>
+    )
+  ))
+) : (
+  <p className="p-4 italic text-center text-gray-500">
+    No matching products found for{" "}
+    <span className="text-gray-700">"{searchQuery}"</span>
+  </p>
+)}
           </div>
 
           <div className="flex items-center gap-4">
@@ -201,7 +199,7 @@ const AdminInventory = () => {
 
         {/* tabbed section */}
         <div className="my-5" ref={containerRef}>
-          <InventoryTab />
+          <InventoryTab/>
 
           {/* draggable button */}
           <button
