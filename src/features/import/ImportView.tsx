@@ -1,38 +1,34 @@
+/** @format */
+
+import React from "react";
 import { useGoBack } from "@/hooks/useGoBack";
-import { X, File } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { X, File, Dot } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { useImportStore } from "@/stores/useImportStore";
 
-const fileData = [
-  {
-    product: "Dangote cement",
-    category: "cement",
-    stock: 500,
-    unitPrice: 50000,
-  },
-  {
-    product: "16mm cement",
-    category: "Steel Rod",
-    stock: 150,
-    unitPrice: 4000,
-  },
-  {
-    product: "16mm cement",
-    category: "Steel Rod",
-    stock: 150,
-    unitPrice: 4000,
-  },
-  {
-    product: "16mm cement",
-    category: "Steel Rod",
-    stock: 150,
-    unitPrice: 4000,
-  },
-];
-
-const ImportView = () => {
-  const { setStep } = useImportStore();
+const ImportView: React.FC = () => {
+  const { data, setStep, file, reset } = useImportStore();
   const goBack = useGoBack();
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="p-6 text-center text-sm text-gray-500">
+        No data to preview. Please go back and upload a file.
+        <div className="mt-4">
+          <Button onClick={() => setStep("upload")}>Back to upload</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const headers = Object.keys(data[0]);
+  const fileName = file?.name ?? "Unnamed file";
+  // const fileExtension = file?.type ?? "Unknown";
+  const fileSize = file
+    ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+    : "Unknown";
+  const totalRows = data.length;
+  const previewRows = data.slice(0, 5); // Show only the first 5 rows for preview
 
   return (
     <div>
@@ -40,7 +36,10 @@ const ImportView = () => {
         <h4 className="text-lg font-medium text-[#333333]"> Import stock</h4>
         <button
           className="h-7 w-7 inline-flex justify-center items-center border border-full rounded-full"
-          onClick={() => goBack()}
+          onClick={() => {
+            goBack();
+            reset();
+          }}
         >
           <X size={14} />
         </button>
@@ -53,9 +52,15 @@ const ImportView = () => {
           </div>
           <div>
             <h6 className="text-base leading-none font-medium text-[#333333]">
-              Test
+              {fileName}
             </h6>
-            <p className="text-[0.625rem] text-[#7D7D7D]">test</p>
+            <p className="flex items-center text-[0.625rem] text-[#7D7D7D]">
+              <span>{fileSize}</span>
+              <Dot />
+              <span>{totalRows} row</span>
+              <Dot />
+              <span>Uploaded successful</span>
+            </p>
           </div>
         </div>
 
@@ -66,35 +71,33 @@ const ImportView = () => {
           <table className="w-full">
             <thead>
               <tr className="border w-full px-3">
-                <td className="py-2 text-center text-[#333333] font-medium">
-                  Product name
-                </td>
-                <td className="text-center text-[#333333] font-medium">
-                  Category
-                </td>
-                <td className="text-center text-[#333333] font-medium">
-                  Stock
-                </td>
-                <td className="text-center text-[#333333] font-medium">
-                  Unit price
-                </td>
+                {headers.map((header) => (
+                  <th
+                    key={header}
+                    className="px-4 py-2 text-center text-[#333333] font-medium"
+                  >
+                    {header}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody>
-              {fileData.map((file, index) => (
-                <tr key={index} className="border px-3">
-                  <td className="text-center text-sm text-[#444444] py-2">
-                    {file.product}
-                  </td>
-                  <td className="text-center text-sm text-[#444444]">
-                    {file.category}
-                  </td>
-                  <td className="text-center text-sm text-[#444444]">
-                    {file.stock}
-                  </td>
-                  <td className="text-center text-sm text-[#444444]">
-                    ₦ {file.unitPrice.toLocaleString()}
-                  </td>
+            <tbody className="divide-y divide-gray-100 bg-white text-sm text-gray-600">
+              {previewRows.map((row, i) => (
+                <tr key={i} className="border px-3">
+                  {headers.map((key) => (
+                    <td
+                      key={key}
+                      className="text-center text-sm text-[#444444] py-2"
+                    >
+                      {row[key as keyof typeof row]}
+                      {/* {`${
+                        row[key as keyof typeof row] === "stock"
+                          ? "₦ {row.toLocaleString()}"
+                          : "row"
+                      }`} */}
+                    </td>
+                  ))}
+                  {/* ₦ {file.unitPrice.toLocaleString()} */}
                 </tr>
               ))}
             </tbody>

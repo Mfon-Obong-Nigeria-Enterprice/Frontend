@@ -1,3 +1,5 @@
+/** @format */
+
 import { useState } from "react";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -5,7 +7,7 @@ import { toast } from "sonner";
 import { Pencil, Trash2, MoveUp, MoveDown } from "lucide-react";
 import { useInventoryStore } from "@/stores/useInventoryStore";
 import { updateProduct } from "@/services/productService";
-import { newProductSchema } from "@/lib/zodUtils";
+import { newProductSchema } from "@/schemas/productSchema";
 import { type NewProduct } from "@/types/types";
 import {
   Select,
@@ -17,7 +19,7 @@ import {
   SelectGroup,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Modal from "@/components/Modal";
 

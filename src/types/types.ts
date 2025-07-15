@@ -1,33 +1,14 @@
 import { z } from "zod";
-import {
-  adminProductSetupSchema,
-  categorySchema,
-  adminSetupSchema,
-  adminClientSetupSchema,
-} from "../lib/zodUtils";
+import { categorySchema } from "@/schemas/categorySchema";
 
-export type AdminSetupData = z.infer<typeof adminSetupSchema>;
 export type CategoryData = z.infer<typeof categorySchema>;
-export type AdminSetupProdData = z.infer<typeof adminProductSetupSchema>;
-export type AdminSetupClientData = z.infer<typeof adminClientSetupSchema>;
 
-export type Role = "SUPER_ADMIN" | "ADMIN" | "STAFF";
+export type Role = "SUPER_ADMIN" | "MAINTAINER" | "ADMIN" | "STAFF";
 
 export type SetupTitleProps = {
   title: string;
   description: string;
 };
-
-export interface AdminSetupProd {
-  productName: string;
-  categoryName: string;
-  productUnit: string;
-  secondUnit?: string;
-  unitConversion?: string;
-  initialQuantity: string;
-  unitPrice: string;
-  lowStockAlert: string;
-}
 
 export interface User {
   id: string;
@@ -35,21 +16,23 @@ export interface User {
   email: string;
   role: Role;
   branch: string;
-  isSetupComplete?: boolean;
+  branchId: string;
+  created_at: string;
 }
 
 export interface LoginResponse {
   status: number;
   message: string;
   data: {
-    user: {
-      id: string;
-      email: string;
-      role: Role;
-      name: string;
-      branch: string;
-      isSetupComplete?: boolean;
-    };
+    user: User;
+    // user: {
+    //   id: string;
+    //   email: string;
+    //   role: Role;
+    //   name: string;
+    //   branch: string;
+    //   isSetupComplete?: boolean;
+    // };
     token: string;
   };
 }
@@ -135,4 +118,11 @@ export type NewProduct = {
   unitPrice: number;
   stock: number;
   minStockLevel: number;
+};
+
+export type ProductImportRow = {
+  "Product Name": string;
+  Category: string;
+  "Stock Quantity": number | string;
+  "Price per unit": number | string;
 };

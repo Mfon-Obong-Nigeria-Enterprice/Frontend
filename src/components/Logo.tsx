@@ -1,7 +1,6 @@
 import React from "react";
 
 const Logo: React.FC = () => {
-  //  items-baseline-last
   return (
     <div className="flex items-center gap-1 max-w-[282px] bg-white">
       <div>
