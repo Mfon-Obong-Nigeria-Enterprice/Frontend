@@ -1,3 +1,4 @@
+// import { Skeleton } from "@/components/ui/skeleton";
 import { BsArrowUp } from "react-icons/bs";
 
 // type statDataProp = { heading: string; salesValue: string; statValue: string };
@@ -35,6 +36,18 @@ type StatsProps = {
 //     statValue: "3% New Clients this week",
 //   },
 // ];
+
+// const skeleton = Array.from({ length: 4 });
+{
+  /* <div
+  key={`sk-${i}`}
+  className="bg-white rounded-lg border border-[#D9D9D9]  p-3 sm:py-5 sm:px-7 flex flex-col gap-1 sm:gap-2.5"
+>
+  <Skeleton className="h-3 w-2/3" />
+  <Skeleton className="h-5 w-1/2" />
+  <Skeleton className="h-3 w-3/4" />
+</div>; */
+}
 
 const Stats = ({ data }: StatsProps) => {
   return (

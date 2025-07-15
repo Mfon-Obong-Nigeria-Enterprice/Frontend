@@ -53,6 +53,52 @@ export interface LoginResponse {
     token: string;
   };
 }
+// This file defines the types used in the application, including user roles, setup data, and product categories.
+
+export interface Client {
+  _id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  balance: number;
+  transactions: TransactionItem[];
+  isActive: boolean;
+  isRegistered: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastTransactionDate?: string;
+}
+
+export interface TransactionItem {
+  _id: string;
+  type: "DEPOSIT";
+  amount: number;
+  description?: string;
+  date: string;
+  reference: string;
+}
+
+export interface ClientWithTransactions {
+  _id: string;
+  name: string;
+  phone: string;
+  email: string;
+  address: string;
+  balance: number;
+  transactions: TransactionItem[];
+  isActive: boolean;
+  isRegistered: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastTransactionDate?: string;
+}
+
+export interface CreateTransactionPayload {
+  type: "DEPOSIT";
+  amount: number;
+  description?: string;
+}
 
 export type Category = {
   _id: string;
@@ -67,23 +113,19 @@ export type Category = {
 export type Product = {
   _id: string;
   name: string;
-  categoryId: {
-    name: string;
-    _id: string;
-    units: [];
-  };
+  categoryId: Category[];
   minStockLevel: number;
   stock: number;
   unit: string;
   unitPrice: number;
-  priceHistory: [
-    {
-      price: number;
-      date: string;
-      _id: string;
-    }
-  ];
+  priceHistory: priceHistory[];
   isActive: boolean;
+};
+
+export type priceHistory = {
+  price: number;
+  date: string;
+  _id: string;
 };
 
 export type NewProduct = {

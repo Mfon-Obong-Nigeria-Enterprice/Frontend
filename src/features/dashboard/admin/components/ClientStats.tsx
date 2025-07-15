@@ -1,55 +1,116 @@
-import { BsArrowUp } from "react-icons/bs";
-
-type statDataProp = { heading: string; Value: string; statValue: string };
-
-const statData: statDataProp[] = [
-  {
-    heading: "Total Clients",
-    Value: "42",
-    statValue: "3% more than last month",
-  },
-  {
-    heading: "Active Clients",
-    Value: "19",
-    statValue: "76% of total",
-  },
-  {
-    heading: "Outstanding balances",
-    Value: "₦ 1,250,000",
-    statValue: "5% from last week",
-  },
-  {
-    heading: "Low Stock Items",
-    Value: "7 Products",
-    statValue: "Needs attention",
-  },
-];
+import { useClientStore } from "@/stores/useClientStore";
+import { useInventoryStore } from "@/stores/useInventoryStore";
+import { BsArrowDown, BsArrowUp } from "react-icons/bs";
 
 const ClientStats = () => {
-  return (
-    <section className="mt-5 grid grid-cols-4 gap-4">
-      {statData.map((stat, index) => (
-        <div
-          key={index}
-          className="bg-white rounded-lg border border-[#D9D9D9] py-5 px-7 flex flex-col gap-2.5"
-        >
-          <p className="font-Inter text-sm text-[#7D7D7D]">{stat.heading}</p>
-          <p className="font-Arial font-bold text-xl text-text-dark">{`${stat.Value}`}</p>
-          <p
-            className={`${
-              index === 1
-                ? "text-[#F39C12]"
-                : index === 2
-                ? "text-[#F95353]"
-                : "text-[#1AD410]"
-            } text-[0.75rem]  flex gap-1 items-center`}
-          >
-            <BsArrowUp className={index === 2 ? "hidden" : ""} />
-            <span className="font-Arial leading-tight">{stat.statValue}</span>
-          </p>
+  const {
+    clients,
+    getActiveClients,
+    // getNewClients,
+    getClientGrowthPercentage,
+    getActiveClientsPercentage,
+    getOutStandingBalanceData,
+  } = useClientStore();
+  const products = useInventoryStore((state) => state.products);
+
+  const lowStockCount = products.filter(
+    (prod) => prod.stock <= prod.minStockLevel
+  ).length;
+
+  const totalClients = clients.length;
+  const activeClients = getActiveClients();
+  // const newClients = getNewClients();
+  const clientGrowthPercentage = getClientGrowthPercentage();
+  const activeClientsPercentage = getActiveClientsPercentage();
+  const outstandingBalance = getOutStandingBalanceData();
+
+  const ClientsCard = ({
+    title,
+    value,
+    percentageLabel,
+    percentage,
+    showTrend = false,
+  }: {
+    title: string;
+    value: number | string;
+    percentageLabel: string;
+    percentage?: number;
+    showTrend?: boolean;
+  }) => {
+    const isPositive = percentage !== undefined ? percentage >= 0 : true;
+
+    return (
+      <section>
+        <div className="bg-white rounded-lg border border-[#D9D9D9] py-5 px-7 flex flex-col gap-2.5 mx-3 md:mx-1">
+          <p className="font-Inter text-sm text-[#7D7D7D]">{title}</p>
+
+          <p className="font-Arial font-bold text-xl text-text-dark">{value}</p>
+          {percentage !== undefined && (
+            <p
+              className={`flex items-center text-xs ${
+                showTrend
+                  ? isPositive
+                    ? "text-[#1AD410]"
+                    : "text-[#F30C12]"
+                  : "text-[#F95353]"
+              }`}
+            >
+              {showTrend && (
+                <>
+                  {isPositive ? (
+                    <BsArrowUp className="mr-1 w-3 h-3" />
+                  ) : (
+                    <BsArrowDown className="mr-1 h-3 w-3" />
+                  )}
+                  {Math.abs(percentage)}%
+                </>
+              )}
+              {percentageLabel && (
+                <span className={`text-xs pl-1 `}>{percentageLabel}</span>
+              )}
+            </p>
+          )}
         </div>
-      ))}
-    </section>
+      </section>
+    );
+  };
+
+  //
+
+  return (
+    <div className="mt-5 grid md:grid-cols-4 gap-4">
+      <ClientsCard
+        title="Total Clients"
+        value={totalClients}
+        percentageLabel="more than last month"
+        percentage={clientGrowthPercentage}
+        showTrend={true}
+      />
+      {/*  */}
+      <ClientsCard
+        title="Active Clients"
+        value={activeClients}
+        percentageLabel="of total"
+        percentage={activeClientsPercentage}
+        showTrend={true}
+      />
+      {/*  */}
+      <ClientsCard
+        title="Outsanding balances"
+        value={outstandingBalance.clientsWithDebt}
+        percentageLabel="from last week"
+        percentage={clientGrowthPercentage}
+        showTrend={true}
+      />
+      {/*  */}
+      <ClientsCard
+        title="Low stock items"
+        value={`${lowStockCount} Products`}
+        percentageLabel="Needs attention"
+        percentage={clientGrowthPercentage}
+        showTrend={false}
+      />
+    </div>
   );
 };
 

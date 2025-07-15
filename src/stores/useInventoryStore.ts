@@ -4,6 +4,7 @@ import { type Product, type Category } from "@/types/types";
 type InventoryState = {
   products: Product[];
   categories: Category[];
+  filteredProducts: Product[];
   selectedCategoryId: string;
   categoryUnits: string[];
   setSelectedCategoryId: (id: string) => void;
@@ -18,6 +19,7 @@ type InventoryState = {
 export const useInventoryStore = create<InventoryState>((set) => ({
   products: [],
   categories: [],
+  filteredProducts: [],
   selectedCategoryId: "",
   categoryUnits: [],
   setSelectedCategoryId: (id) =>
@@ -31,7 +33,25 @@ export const useInventoryStore = create<InventoryState>((set) => ({
 
   setCategoryUnits: (units) => set({ categoryUnits: units }),
   searchQuery: "",
-  setSearchQuery: (query) => set({ searchQuery: query }),
+  setSearchQuery: (query) =>
+    set((state) => {
+      const filtered = query
+        ? state.products.filter(
+            (product) =>
+              product.name
+                .toLocaleLowerCase()
+                .includes(query.toLocaleLowerCase()) ||
+              product.categoryId?.name
+                .toLocaleLowerCase()
+                .includes(query.toLocaleLowerCase())
+          )
+        : state.products;
+
+      return {
+        searchQuery: query,
+        filteredProducts: filtered,
+      };
+    }),
 
   setProducts: (products) => set({ products }),
   updateProduct: (updated: Product) =>
