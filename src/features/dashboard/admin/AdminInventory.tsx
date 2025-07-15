@@ -1,3 +1,5 @@
+/** @format */
+
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +14,13 @@ import { CiImport } from "react-icons/ci";
 import { IoIosSearch } from "react-icons/io";
 import { Plus, ChevronRight } from "lucide-react";
 import { type Product } from "@/types/types";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 const AdminInventory = () => {
   const navigate = useNavigate();
@@ -21,6 +30,8 @@ const AdminInventory = () => {
   const [rel, setRel] = useState({ x: 0, y: 0 });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
+  const [stockStatus, setStockStatus] = useState("all");
+  const [priceRange, setPriceRange] = useState("all");
 
   // set the search query from zustand store
   const setSearchQuery = useInventoryStore((state) => state.setSearchQuery);
@@ -180,20 +191,36 @@ const AdminInventory = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="w-50 bg-[#D9D9D9] text-[#444444] flex gap-1.5 justify-center items-center rounded-md py-2 px-4 border border-[#7d7d7d]">
-              <span>Stock status</span>
-              <IoIosArrowUp />
-            </button>
-            <button className="max-w-40 w-full bg-[#D9D9D9] text-[#444444] flex gap-1.5 justify-center items-center rounded-md py-2 px-4 border border-[#7d7d7d]">
-              <span>Price range</span>
-              <IoIosArrowUp />
-            </button>
+            <Select value={stockStatus} onValueChange={setStockStatus}>
+              <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d]">
+                <SelectValue placeholder="Stock status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All products</SelectItem>
+                <SelectItem value="high">High product</SelectItem>
+                <SelectItem value="low">Low product</SelectItem>
+                <SelectItem value="out">Out of stock</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={priceRange} onValueChange={setPriceRange}>
+              <SelectTrigger className="max-w-40 w-full bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d]">
+                <SelectValue placeholder="Price range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All price</SelectItem>
+                <SelectItem value="under-1000">Under 1,000</SelectItem>
+                <SelectItem value="1000-5000">1,000-5,000</SelectItem>
+                <SelectItem value="5000-10000">5,000-10,000</SelectItem>
+                <SelectItem value="10000-50000">10,000-50,000</SelectItem>
+                <SelectItem value="above-50000">Above 50,000</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         {/* tabbed section */}
         <div className="my-5" ref={containerRef}>
-          <InventoryTab />
+          <InventoryTab stockStatus={stockStatus} priceRange={priceRange} />
 
           {/* draggable button */}
           <button
