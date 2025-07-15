@@ -17,7 +17,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { Eye, Trash2 } from "lucide-react";
 import {
   Dialog,
@@ -35,6 +34,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
+import { Button } from "@/components/ui/Button";
 // import { MoveRight, MoveLeft } from "lucide-react";
 
 interface ClientDirectoryProps {
