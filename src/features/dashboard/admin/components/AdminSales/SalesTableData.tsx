@@ -75,7 +75,7 @@ const recentSales: SalesTransaction[] = [
   {
     id: "3",
     client: "Ade properties",
-    amount: +225000,
+    amount: 225000,
     time: "9:15 AM",
     items: "25x steel Rods",
     staff: "Sarah Wilson",
@@ -173,6 +173,8 @@ const SalesTableData: React.FC = () => {
     return amount > 0 ? "text-green-400" : "text-[#F95353]";
   }, []);
 
+  const formatCurrency = (value: number) => `₦${value.toLocaleString()}`;
+
   //
   //
   return (
@@ -181,7 +183,9 @@ const SalesTableData: React.FC = () => {
         <CardHeader>
           <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
             <div>
-              <CardTitle>Recent Sales</CardTitle>
+              <CardTitle className="text-[#1E1E1E] text-xl font-medium">
+                Recent Sales
+              </CardTitle>
             </div>
             <div className=" w-full sm:w-1/2 relative rounded-md">
               <IoIosSearch
@@ -257,7 +261,7 @@ const SalesTableData: React.FC = () => {
                     </Select>
                   </TableCell>
                   <TableCell className={getAmountColor(sale.amount)}>
-                    ₦{sale.amount.toLocaleString()}
+                    {formatCurrency(sale.amount)}
                   </TableCell>
                   <TableCell className="">{sale.staff}</TableCell>
                   <TableCell>
@@ -265,7 +269,7 @@ const SalesTableData: React.FC = () => {
                       <DialogTrigger asChild>
                         <button
                           onClick={() => handleViewSale(sale)}
-                          className="text-[#3D80FF] text-sm underline-offset-2 hover:underline hover:text-red-600 active:text-brown-700 active:underline cursor-pointer border-none "
+                          className="text-[#3D80FF] text-sm underline decoration-blue-[#3D80FF] decoration-1.5 underline-offset-4 hover:underline hover:text-red-600 active:text-brown-700 active:underline cursor-pointer border-none "
                         >
                           View
                         </button>
@@ -312,7 +316,7 @@ const SalesTableData: React.FC = () => {
                                     selectedState.amount
                                   )}`}
                                 >
-                                  ₦{selectedState.amount.toLocaleString()}
+                                  {formatCurrency(selectedState.amount)}
                                 </p>
                               </div>
                             </div>

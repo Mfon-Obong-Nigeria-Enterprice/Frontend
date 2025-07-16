@@ -34,8 +34,8 @@ const AdminInventory = () => {
   const [priceRange, setPriceRange] = useState("all");
 
   // set the search query from zustand store
-  const setSearchQuery = useInventoryStore((state) => state.setSearchQuery);
-  const { products, searchQuery } = useInventoryStore();
+
+  const { searchQuery, setSearchQuery, filteredProducts } = useInventoryStore();
 
   // debounce query
   const debouncedSearch = useDebouncedCallback((value: string) => {
@@ -48,17 +48,19 @@ const AdminInventory = () => {
 
     const query = searchQuery.toLowerCase();
 
-    return products
+    return filteredProducts
       .filter(
         (product) =>
           product.name.toLowerCase().includes(query) ||
           product.categoryId?.name?.toLowerCase().includes(query)
       )
-      .map((prod) => ({ type: "product", item: prod }));
-  }, [searchQuery, products]);
+      .map((prod) => ({ type: "product" as const, item: prod }));
+  }, [searchQuery, filteredProducts]);
+
+  //
 
   const handleSuggestionClick = (suggestion: {
-    type: "product";
+    type: "products" | "categories";
     item: Product;
   }) => {
     const id = suggestion.item._id;
@@ -161,6 +163,7 @@ const AdminInventory = () => {
             <IoIosSearch size={18} />
             <input
               type="search"
+              value={searchQuery}
               placeholder="Search products, categories..."
               onChange={(e) => debouncedSearch(e.target.value)}
               className="py-2 outline-0 w-full"
