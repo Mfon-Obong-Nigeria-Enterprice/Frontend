@@ -1,9 +1,6 @@
 import { getAllClients } from "@/services/clientService";
 import { getAllProducts } from "@/services/productService";
-import {
-  createTransaction,
-  // getClientTransactions,
-} from "@/services/transactionService";
+import { createTransaction } from "@/services/transactionService";
 import type {
   Client,
   Product,
@@ -63,7 +60,11 @@ export const useClientStore = create<clientsStore>()(
       initializeStore: async () => {
         try {
           const state = get();
-          if (state.products.length === 0 && state.clients.length === 0) {
+          if (
+            state.products.length === 0 &&
+            state.clients.length === 0 &&
+            state.transactions.length === 0
+          ) {
             const [products, clients] = await Promise.all([
               getAllProducts(),
               getAllClients(),
@@ -72,7 +73,7 @@ export const useClientStore = create<clientsStore>()(
             set({
               products,
               clients,
-              // transactions,
+              transactions: [],
               // currentUser: null,
             });
           }
