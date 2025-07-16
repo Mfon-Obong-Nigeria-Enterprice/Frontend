@@ -1,3 +1,5 @@
+/** @format */
+
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import Login from "@/features/auth/Login";
 import Notfound from "@/components/Notfound";
@@ -73,7 +75,7 @@ const router = createBrowserRouter([
     path: "/maintainer/dashboard",
     element: <MaintainerLayout />,
     children: [
-      { index: true, element: <Navigate to="/overview" replace /> },
+      { index: true, element: <Navigate to="/maintainer/dashboard/overview" replace /> },
       { path: "overview", element: <MaintainerDashboard /> },
     ],
   },

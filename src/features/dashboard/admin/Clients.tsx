@@ -1,6 +1,8 @@
+/** @format */
+
 import DashboardTitle from "../../../components/dashboard/DashboardTitle";
 import ClientStats from "./components/ClientStats";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Plus, ChevronUp, Search } from "lucide-react";
 import ClientDirectory from "./components/ClientDirectory";
 
