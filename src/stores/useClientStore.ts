@@ -23,6 +23,7 @@ interface clientStore {
 
   // Client Actions
   addClient: (client: Client) => Promise<void>;
+  fetchClient: () => Promise<void>;
   updateClient: (id: string, updates: Partial<Client>) => void;
   deleteClient: (id: string) => void;
   addPayment: (clientId: string, amount: number) => void;
@@ -97,6 +98,15 @@ export const useClientStore = create<clientStore>()(
         } catch (error) {
           console.error("Failed to create client:", error);
           throw error; // Re-throw so the UI can handle the error
+        }
+      },
+
+      fetchClient: async () => {
+        try {
+          const clients = await getAllClients();
+          set({ clients });
+        } catch (error) {
+          console.error("Failed to fetch clients:", error);
         }
       },
 
@@ -252,6 +262,7 @@ export const useClientStore = create<clientStore>()(
       name: "inventory-store",
       partialize: (state) => ({
         products: state.products,
+        clients: state.clients,
         transactions: state.transactions,
       }),
     }

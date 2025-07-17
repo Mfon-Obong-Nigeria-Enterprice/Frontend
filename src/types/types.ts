@@ -78,7 +78,7 @@ export interface ClientWithTransactions {
 }
 
 export interface CreateTransactionPayload {
-  type: "DEPOSIT";
+  type: "Credit" | "partial" | "debit";
   amount: number;
   description?: string;
 }
