@@ -3,6 +3,8 @@ import api from "./baseApi";
 import { type AxiosError } from "axios";
 import type { Client } from "@/types/types";
 
+type CreateClientPayload = Pick<Client, "name" | "phone" | "email" | "address">;
+
 export const getAllClients = async (): Promise<Client[]> => {
   try {
     const token = await localforage.getItem<string>("access_token");
@@ -24,10 +26,7 @@ export const getAllClients = async (): Promise<Client[]> => {
 };
 
 export const createClient = async (
-  client: Omit<
-    Client,
-    "_id" | "createdAt" | "updatedAt" | "transactions" | "lastTransactionDate"
-  >
+  client: CreateClientPayload
 ): Promise<Client> => {
   const token = await localforage.getItem<string>("access_token");
   if (!token) throw new Error("No access token found");

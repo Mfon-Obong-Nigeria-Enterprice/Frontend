@@ -1,4 +1,4 @@
-import { getAllClients } from "@/services/clientService";
+import { createClient, getAllClients } from "@/services/clientService";
 import { getAllProducts } from "@/services/productService";
 import { createTransaction } from "@/services/transactionService";
 import type {
@@ -10,7 +10,7 @@ import type {
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-interface clientsStore {
+interface clientStore {
   products: Product[];
   clients: Client[];
   transactions: TransactionItem[];
@@ -22,7 +22,7 @@ interface clientsStore {
   addProduct: (product: Product) => void;
 
   // Client Actions
-  addClient: (client: Client) => void;
+  addClient: (client: Client) => Promise<void>;
   updateClient: (id: string, updates: Partial<Client>) => void;
   deleteClient: (id: string) => void;
   addPayment: (clientId: string, amount: number) => void;
@@ -43,13 +43,8 @@ interface clientsStore {
     totalDebt: number;
   };
 }
-// const transactions = (
-//   await Promise.all(
-//     clients.map((client) => getClientTransactions(client._id))
-//   )
-// ).flat();
 
-export const useClientStore = create<clientsStore>()(
+export const useClientStore = create<clientStore>()(
   persist(
     (set, get) => ({
       products: [],
@@ -88,18 +83,35 @@ export const useClientStore = create<clientsStore>()(
         }));
       },
 
-      addClient: (clientData) => {
-        const client: Client = {
-          ...clientData,
-          _id: Date.now().toString(),
-          balance: 0,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        set((state) => ({
-          clients: [...state.clients, client],
-        }));
+      addClient: async (clientData) => {
+        try {
+          // Call the API to create the client on the backend
+          const newClient = await createClient(clientData);
+
+          // Update local state with the client returned from the API
+          set((state) => ({
+            clients: [...state.clients, newClient],
+          }));
+
+          console.log("Client successfully created:", newClient);
+        } catch (error) {
+          console.error("Failed to create client:", error);
+          throw error; // Re-throw so the UI can handle the error
+        }
       },
+
+      // addClient: (clientData) => {
+      //   const client: Client = {
+      //     ...clientData,
+      //     _id: Date.now().toString(),
+      //     balance: 0,
+      //     createdAt: new Date().toISOString(),
+      //     updatedAt: new Date().toISOString(),
+      //   };
+      //   set((state) => ({
+      //     clients: [...state.clients, client],
+      //   }));
+      // },
 
       updateClient: (id, updates) => {
         set((state) => ({
@@ -157,17 +169,6 @@ export const useClientStore = create<clientsStore>()(
         );
         return activeClientIds.size;
       },
-
-      // getActiveClients: () => {
-      //   const { clients } = get();
-      //   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-
-      //   const activeClients = clients.filter((client) =>
-      //     client.transactions.some((t) => new Date(t.date) >= thirtyDaysAgo)
-      //   );
-
-      //   return activeClients.length;
-      // },
 
       getNewClients: () => {
         const { clients } = get();
@@ -251,9 +252,7 @@ export const useClientStore = create<clientsStore>()(
       name: "inventory-store",
       partialize: (state) => ({
         products: state.products,
-        clients: state.clients,
         transactions: state.transactions,
-        // currentUser: state.currentUser,
       }),
     }
   )
