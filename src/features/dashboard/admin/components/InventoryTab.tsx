@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import ProductDisplayTab from "./ProductDisplayTab";
@@ -8,77 +8,33 @@ import CategoryModal from "./CategoryModal";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info } from "lucide-react";
-import { useInventoryStore } from "@/stores/useInventoryStore";
-import type { Product } from "@/types/types";
+import type { Product, Category } from "@/types/types";
 
 interface InventoryTabProps {
+  products: Product[];
+  categories: Category[];
   stockStatus: string;
   priceRange: string;
 }
 
 const InventoryTab = React.memo(
-  ({ stockStatus, priceRange }: InventoryTabProps) => {
+  ({ products, categories }: InventoryTabProps) => {
     const [openCategory, setOpenCategory] = useState<{
       name: string;
       count: number;
       description?: string;
     } | null>(null);
 
-    const { products, categories, searchQuery } = useInventoryStore();
-
-    // Filtering logic for stock status
-    function filterByStockStatus(product: Product) {
-      if (stockStatus === "all") return true;
-      if (stockStatus === "high") return product.stock > 20;
-      if (stockStatus === "low")
-        return product.stock > 0 && product.stock <= 20;
-      if (stockStatus === "out") return product.stock === 0;
-      return true;
-    }
-
-    // Filtering logic for price range
-    function filterByPriceRange(product: Product) {
-      if (priceRange === "all") return true;
-      const price = product.unitPrice;
-      if (priceRange === "under-1000") return price < 1000;
-      if (priceRange === "1000-5000") return price >= 1000 && price <= 5000;
-      if (priceRange === "5000-10000") return price > 5000 && price <= 10000;
-      if (priceRange === "10000-50000") return price > 10000 && price <= 50000;
-      if (priceRange === "above-50000") return price > 50000;
-      return true;
-    }
-
-    const filteredProducts = useMemo(
-      () =>
-        products.filter(
-          (product) =>
-            (product.name.toLowerCase().includes(searchQuery) ||
-              product.categoryId?.name?.toLowerCase().includes(searchQuery)) &&
-            filterByStockStatus(product) &&
-            filterByPriceRange(product)
-        ),
-      [products, searchQuery, stockStatus, priceRange]
-    );
-
     // Helper for category tab filtering
     function filterCategoryProducts(categoryName: string) {
-      return products.filter(
-        (prod) =>
-          prod.categoryId.name === categoryName &&
-          (prod.name.toLowerCase().includes(searchQuery) ||
-            prod.categoryId?.name?.toLowerCase().includes(searchQuery)) &&
-          filterByStockStatus(prod) &&
-          filterByPriceRange(prod)
-      );
+      return products.filter((prod) => prod.categoryId.name === categoryName);
     }
-
-    console.log("Stock Status:", stockStatus, "Price Range:", priceRange);
 
     return (
       <div className="px-5 min-h-30">
         <Tabs defaultValue="allProducts">
           <div className="w-full max-w-[970px]">
-            <TabsList className="w-full bg-[#F5F5F5] gap-3 overflow-x-auto whitespace-nowrap h-16">
+            <TabsList className="g-[#F5F5F5] gap-3 overflow-x-auto whitespace-nowrap h-16">
               <TabsTrigger
                 value="allProducts"
                 className={cn(
@@ -94,15 +50,12 @@ const InventoryTab = React.memo(
               </TabsTrigger>
               {/* display data for categories */}
               {categories?.map((category) => {
-                // const categoryName = category.name.toLowerCase();
                 const categoryName = category.name;
-                console.log(categoryName);
                 const count = products.filter((prod) => {
                   if (
                     typeof prod.categoryId === "object" &&
                     prod.categoryId?.name
                   ) {
-                    console.log(prod.categoryId);
                     return prod.categoryId.name === categoryName;
                   }
                 }).length;
@@ -137,7 +90,7 @@ const InventoryTab = React.memo(
           {/* All Products Tab */}
           <TabsContent value="allProducts">
             <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8 pb-5">
-              {filteredProducts.map((prod) => (
+              {products.map((prod) => (
                 <ProductDisplayTab key={prod._id} product={prod} />
               ))}
             </div>
@@ -145,7 +98,6 @@ const InventoryTab = React.memo(
           {/* Individual Category Tabs */}
           {categories?.map((category) => {
             const categoryName = category.name;
-            // const categoryName = category.name.toLowerCase();
             const productInCategory = filterCategoryProducts(categoryName);
 
             return (
