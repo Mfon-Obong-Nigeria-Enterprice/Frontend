@@ -84,19 +84,19 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
       return {
         status: "Credit",
         variant: "default" as const,
-        color: "#2ECC71",
+        color: "text-green-500",
       };
     } else if (balance < 0) {
       return {
         status: "Debt",
         variant: "destructive" as const,
-        color: "#F95353",
+        color: "text-emerald-500",
       };
     }
     return {
       status: "Zero",
       variant: "secondary" as const,
-      color: "#444444",
+      color: "text-neutral-700",
     };
   };
 
@@ -165,8 +165,8 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
                       <div>
                         <p className="font-[400] text-[#444444] text-sm">
                           {lastTransaction
-                            ? lastTransaction.amount.toLocaleString()
-                            : "0"}
+                            ? `₦${lastTransaction.amount.toLocaleString()}`
+                            : "₦0"}
                         </p>
                       </div>
                     </TableCell>
