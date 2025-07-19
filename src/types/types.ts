@@ -1,14 +1,10 @@
+// @/types/types.ts
 import { z } from "zod";
-import { categorySchema } from "@/schemas/categorySchema";
+import { categorySchema } from "@/schemas/categorySchema"; // Assuming you have this schema
 
 export type CategoryData = z.infer<typeof categorySchema>;
 
 export type Role = "SUPER_ADMIN" | "MAINTAINER" | "ADMIN" | "STAFF";
-
-export type SetupTitleProps = {
-  title: string;
-  description: string;
-};
 
 export interface User {
   id: string;
@@ -25,14 +21,6 @@ export interface LoginResponse {
   message: string;
   data: {
     user: User;
-    // user: {
-    //   id: string;
-    //   email: string;
-    //   role: Role;
-    //   name: string;
-    //   branch: string;
-    //   isSetupComplete?: boolean;
-    // };
     token: string;
   };
 }
@@ -40,7 +28,7 @@ export interface LoginResponse {
 export type Category = {
   _id: string;
   name: string;
-  units: string[];
+  units: string[]; // New field
   description?: string;
   isActive?: boolean;
   createdAt: string;
@@ -48,25 +36,29 @@ export type Category = {
 };
 
 export type Product = {
-  _id: string;
+  _id: string; // Mongo ID
   name: string;
-  categoryId: {
-    name: string;
-    _id: string;
-    units: [];
-  };
+  categoryId: string | { _id: string; name: string; units: string[] }; // Can be string or object, with units
   minStockLevel: number;
-  stock: number;
+  stock: number; // Current stock
   unit: string;
   unitPrice: number;
-  priceHistory: [
-    {
-      price: number;
-      date: string;
-      _id: string;
-    }
-  ];
+  priceHistory?: Array<{
+    price: number;
+    date: string;
+    _id: string;
+  }>;
   isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type UpdateStockProduct = Product & {
+  id: string; // Used for React keys and local identification in UpdateStock
+  newQuantity?: number; // The quantity being updated by the user
+  selected?: boolean; // For checkbox selection
+  category: string; // The category name, derived for display
+  shieldStatus: "high" | "low"; // Standardized to "high" | "low"
 };
 
 export type NewProduct = {
@@ -83,4 +75,12 @@ export type ProductImportRow = {
   Category: string;
   "Stock Quantity": number | string;
   "Price per unit": number | string;
+};
+
+export type InventoryState = {
+  products: Product[];
+  categories: Category[];
+  searchQuery: string;
+  selectedCategoryId: string;
+  categoryUnits: string[];
 };

@@ -6,7 +6,6 @@ import Notfound from "@/components/Notfound";
 import AddProduct from "@/components/inventory/AddProduct";
 import ClientDetailsPage from "@/pages/ClientDetailsPage";
 import ImportStockPage from "@/features/import/ImportStockPage";
-import UpdateStockPage from "@/features/dashboard/admin/components/UpdateStockPage";
 
 
 // manager (super admin)
@@ -117,10 +116,6 @@ const router = createBrowserRouter([
     element: <ClientDetailsPage />,
   },
   { path: "import-stock", element: <ImportStockPage /> },
-  {
-    path: "Update-Stock", 
-    element: <UpdateStockPage/>, 
-  },
   {
     path: "*",
     element: <Notfound />,
