@@ -1,24 +1,26 @@
 import axios, { type AxiosInstance } from "axios";
-// import { useAuthStore } from "@/stores/useAuthStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "https://example.com/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+console.log("Api url", API_BASE_URL);
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  // headers: { "Content-Type": "application/json" },
+  headers: { "Content-Type": "application/json" },
 });
 
 // Attach access token to every request
-// api.interceptors.request.use(
-//   (config) => {
-//     const token = useAuthStore.getState().accessToken;
-//     if (token) {
-//       config.headers.Authorization = `Bearer ${token}`;
-//     }
-//     return config;
-//   },
-//   (error) => Promise.reject(error)
-// );
+api.interceptors.request.use(
+  (config) => {
+    const token = useAuthStore.getState().accessToken;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // Handle 401 errors (unauthorized)
 // api.interceptors.response.use(

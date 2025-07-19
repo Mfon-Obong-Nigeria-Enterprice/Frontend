@@ -37,7 +37,7 @@ const AdminInventory = () => {
     categories,
     searchQuery,
     setSearchQuery,
-    updateProducts,
+    updateProducts, 
   } = useInventoryStore();
 
   const debouncedSearch = useDebouncedCallback((value: string) => {

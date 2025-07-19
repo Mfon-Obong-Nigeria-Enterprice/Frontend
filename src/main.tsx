@@ -8,7 +8,14 @@ import "./index.css";
 import App from "./App.tsx";
 
 // create the query client
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5,
+    },
+  },
+});
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
