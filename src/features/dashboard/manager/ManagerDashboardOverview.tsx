@@ -1,7 +1,16 @@
-// import { Button } from "@/components/ui/button";
+import React from 'react'
+import DashboardOverview1 from './component/DashboardOverview1'
+import RecentTransactions from './component/DashboardTransaction'
+import OutstandingBalances from './component/OutstandingBalances'
 
 const ManagerDashboardOverview = () => {
-  return <div className=" ">Manager Dashboard</div>;
-};
+  return (
+    <div>
+      <DashboardOverview1/>
+      <RecentTransactions/>
+      <OutstandingBalances/>
+    </div>
+  )
+}
 
-export default ManagerDashboardOverview;
+export default ManagerDashboardOverview
