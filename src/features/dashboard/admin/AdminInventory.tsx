@@ -1,333 +1,294 @@
+// @/pages/AdminInventory.tsx
 /* eslint-disable react-hooks/exhaustive-deps */
-// @/components/inventory/components/UpdateStock.tsx
-/* eslint-disable @typescript-eslint/no-unused-vars */
+import { useState, useEffect, useRef, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDebouncedCallback } from "use-debounce";
+import DashboardTitle from "../../../components/dashboard/DashboardTitle";
+import InventoryTab from "./components/InventoryTab";
+import Modal from "@/components/Modal";
+import AddCategory from "@/components/inventory/AddCategory";
+import { useInventoryStore } from "@/stores/useInventoryStore";
+import { IoIosArrowUp, IoIosSearch } from "react-icons/io";
+import { CiImport } from "react-icons/ci";
+import { Plus, ChevronRight, RotateCcw } from "lucide-react";
+import { type Product } from "@/types/types";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import UpdateStock from "./components/UpdateStock"; // Ensure this import path is correct
 
-import { useState, useMemo, useEffect } from "react";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Search, X } from "lucide-react";
-import { type Product, type UpdateStockProduct, type Category } from "@/types/types"; // Import Category
+const AdminInventory = () => {
+  const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [position, setPosition] = useState({ xPercent: 80, yPercent: 80 });
+  const [dragging, setDragging] = useState(false);
+  const [rel, setRel] = useState({ x: 0, y: 0 });
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
+  const [stockStatus, setStockStatus] = useState("all");
+  const [priceRange, setPriceRange] = useState("all");
 
-interface UpdateStockProps {
-  products: Product[];
-  categories: Category[]; // UpdateStock now expects categories to derive names
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (updatedProducts: Product[]) => void;
-}
+  const {
+    products,
+    categories,
+    searchQuery,
+    setSearchQuery,
+    updateProducts,
+  } = useInventoryStore();
 
-// Helper function to determine shield status based on your type definition
-const getShieldStatus = (product: Product, newQuantity?: number): "high" | "low" => {
-  const currentStock = newQuantity !== undefined ? newQuantity : (product.stock || 0);
-  const minLevel = product.minStockLevel || 0;
-  return currentStock > minLevel ? "high" : "low";
-};
+  const debouncedSearch = useDebouncedCallback((value: string) => {
+    setSearchQuery(value);
+  }, 300);
 
-export default function UpdateStock({
-  products: initialProducts,
-  categories, // Receive the categories prop here
-  isOpen,
-  onClose,
-  onSave,
-}: UpdateStockProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Helper function to get category name from categoryId
-  const getCategoryName = (categoryId: string | { _id: string; name: string; units: string[] }): string => {
-    if (typeof categoryId === 'object' && categoryId.name) {
-      return categoryId.name;
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
+  
+  const getCategoryName = (product: Product): string => {
+    if (!product.categoryId) return "Uncategorized";
+    if (typeof product.categoryId === 'object') {
+      return product.categoryId.name;
     }
-    const id = typeof categoryId === 'string' ? categoryId : categoryId._id;
-    const foundCategory = categories.find(c => c._id === id);
-    return foundCategory?.name || 'Uncategorized';
+    const category = categories.find(c => c._id === product.categoryId);
+    return category?.name || "Uncategorized";
   };
 
-  const [products, setProducts] = useState<UpdateStockProduct[]>(() => {
-    return initialProducts.map(product => {
-      return {
-        ...product,
-        id: product._id, // Use _id as id for local state
-        category: getCategoryName(product.categoryId),
-        selected: false,
-        newQuantity: product.stock, // Initialize newQuantity with current stock
-        shieldStatus: getShieldStatus(product), // Initial status
-      } as UpdateStockProduct;
-    });
-  });
+  const productsForUpdateStock: Product[] = useMemo(() => {
+    return products;
+  }, [products]);
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [bulkQuantity, setBulkQuantity] = useState("");
-
-  // Effect to re-initialize products state when initialProducts or categories prop changes
-  // and when the modal opens/closes to reset its internal state.
-  useEffect(() => {
-    if (isOpen) {
-      setProducts(initialProducts.map(product => {
-        return {
-          ...product,
-          id: product._id,
-          category: getCategoryName(product.categoryId),
-          selected: false,
-          newQuantity: product.stock,
-          shieldStatus: getShieldStatus(product),
-        } as UpdateStockProduct;
-      }));
-      setSearchTerm("");
-      setBulkQuantity("");
-    }
-  }, [initialProducts, categories, isOpen]);
-
-  const filteredProducts = useMemo(() => {
-    if (!searchTerm.trim()) return products;
-
-    const term = searchTerm.toLowerCase();
-    return products.filter(p => {
-      const nameMatch = p.name?.toLowerCase().includes(term) ?? false;
-      const categoryMatch = p.category?.toLowerCase().includes(term) ?? false;
-      return nameMatch || categoryMatch;
-    });
-  }, [products, searchTerm]);
-
-  const selectedCount = useMemo(
-    () => products.filter((p) => p.selected).length,
-    [products]
-  );
-
-  const allFilteredSelected = useMemo(
-    () => filteredProducts.length > 0 && filteredProducts.every((p) => p.selected),
-    [filteredProducts]
-  );
-
-  const toggleProductSelection = (id: string) => {
-    setProducts(prev =>
-      prev.map(p => p.id === id ? { ...p, selected: !p.selected } : p)
-    );
+  const handleSave = (updatedProducts: Product[]) => {
+    console.log("AdminInventory: Saving updated products to store:", updatedProducts);
+    updateProducts(updatedProducts); // This now correctly calls the bulk update action
+    setIsModalOpen(false);
   };
 
-  const toggleSelectAll = (checked: boolean) => {
-    const filteredIds = new Set(filteredProducts.map(p => p.id));
-    setProducts(prev =>
-      prev.map(p =>
-        filteredIds.has(p.id) ? { ...p, selected: checked } : p
+  const suggestions = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const query = searchQuery.toLowerCase();
+    return products
+      .filter(
+        (product) =>
+          product.name.toLowerCase().includes(query) ||
+          getCategoryName(product).toLowerCase().includes(query)
       )
-    );
+      .map((prod) => ({ type: "product" as const, item: prod }));
+  }, [searchQuery, products, categories]);
+
+  const handleSuggestionClick = (suggestion: { type: "product"; item: Product }) => {
+    const id = suggestion.item._id;
+    if (id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        setSearchQuery("");
+      }
+    }
   };
 
-  const handleQuantityChange = (id: string, value: string) => {
-    const num = parseInt(value, 10);
-    const newNum = isNaN(num) ? 0 : Math.max(0, num);
-
-    setProducts(prev =>
-      prev.map(p => p.id === id ? {
-        ...p,
-        newQuantity: newNum,
-        shieldStatus: getShieldStatus(p, newNum) // Update status based on new quantity
-      } : p)
-    );
+  const closeBothModals = () => {
+    setIsAddModalOpen(false);
+    setAddCategoryModalOpen(false);
   };
 
-  const applyBulkQuantity = () => {
-    const num = parseInt(bulkQuantity, 10);
-    const newNum = isNaN(num) ? 0 : Math.max(0, num);
-
-    setProducts(prev =>
-      prev.map(p => p.selected ? {
-        ...p,
-        newQuantity: newNum,
-        shieldStatus: getShieldStatus(p, newNum) // Update status based on new quantity
-      } : p)
-    );
-    setBulkQuantity(""); // Clear bulk quantity input after applying
+  const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
+    setDragging(true);
+    const button = e.currentTarget.getBoundingClientRect();
+    setRel({ x: e.clientX - button.left, y: e.clientY - button.top });
   };
 
-  const handleSave = () => {
-    const updatedProductsPayload: Product[] = products
-      .filter(p => p.selected && p.newQuantity !== undefined && p.newQuantity !== p.stock)
-      .map((p) => {
-        // Destructure to remove local UpdateStockProduct specific fields
-        const { id, newQuantity, selected, category, shieldStatus, ...rest } = p;
-        return {
-          ...rest,
-          stock: newQuantity, // Ensure stock is the newQuantity
-        } as Product; // Cast back to Product type
+  const handleMouseUp = () => setDragging(false);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = rect.left + rect.width - 80;
+      const y = rect.top + rect.height - 80;
+      const xPercent = (x / window.innerWidth) * 100;
+      const yPercent = (y / window.innerHeight) * 100;
+      setPosition({ xPercent, yPercent });
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragging) return;
+      const newX = e.clientX - rel.x;
+      const newY = e.clientY - rel.y;
+      const xPercent = (newX / window.innerWidth) * 100;
+      const yPercent = (newY / window.innerHeight) * 100;
+      setPosition({
+        xPercent: Math.min(98, Math.max(2, xPercent)),
+        yPercent: Math.min(98, Math.max(2, yPercent)),
       });
+    };
 
-    onSave(updatedProductsPayload);
-    onClose();
-  };
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [dragging, rel]);
 
-  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      {/* Make Card flex-col and overflow-hidden to allow inner scrolling */}
-      <Card className="max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
-        {/* Make CardHeader sticky at the top */}
-        <CardHeader className="flex items-center justify-between sticky top-0 bg-white z-10 p-4 border-b">
-          <CardTitle>Update Stock Levels</CardTitle>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
-        </CardHeader>
-
-        {/* This CardContent will be the primary scrollable area */}
-        <CardContent className="flex-grow overflow-y-auto p-4">
-          <div className="space-y-6 pt-4"> {/* Keep some top padding, remove old border-t from here */}
-            {/* Search Input */}
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
-                <Input
-                  placeholder="Search products..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-10 bg-gray-200 pl-10"
-                />
-              </div>
+    <main>
+      <DashboardTitle heading="Inventory Management" description="Manage your products and categories" />
+      <section className="bg-white xl:rounded-xl mt-5">
+        <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center py-5 px-4 sm:px-5 bg-[#f0f0f3] border-b border-[#d9d9d9] md:border-0">
+          <h3 className="text-xl font-medium text-text-dark">Product & Categories</h3>
+          <div className="flex gap-4">
+            <button className="w-40 bg-white text-[#333333] flex gap-1.5 items-center justify-center rounded-md py-2 px-4 border border-[#7d7d7d]">
+              <IoIosArrowUp size={24} />
+              <span>Export</span>
+            </button>
+            <div>
+              <button
+                onClick={handleOpenModal}
+                className="w-40 bg-white text-[#333333] flex gap-1.5 items-center rounded-md py-2 px-4 border border-[#7d7d7d]"
+              >
+                <RotateCcw size={24} />
+                Update Stock
+              </button>
             </div>
-
-            {/* Bulk Update Controls */}
-            <div className="space-y-4 p-4 border-b">
-              <div className="flex flex-col md:flex-row md:items-center md:gap-6 space-y-4 md:space-y-0">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="select-all"
-                    checked={allFilteredSelected}
-                    onCheckedChange={(checked) => toggleSelectAll(checked as boolean)}
-                  />
-                  <Label htmlFor="select-all">Select All</Label>
-                </div>
-                <div className="flex flex-col md:flex-row md:items-center md:gap-4">
-                  <div className="flex items-center gap-2">
-                    <Label>Set all selected to:</Label>
-                    <Input
-                      type="number"
-                      className="w-28 h-8"
-                      placeholder="Quantity"
-                      value={bulkQuantity}
-                      onChange={(e) => setBulkQuantity(e.target.value)}
-                    />
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={applyBulkQuantity}
-                    disabled={selectedCount === 0 || bulkQuantity === "" || isNaN(parseInt(bulkQuantity, 10))}
-                    className="bg-emerald-500 text-white hover:bg-green-500 hover:text-white"
-                  >
-                    Apply
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Product List */}
-            <div className="space-y-4">
-              {filteredProducts.length === 0 ? (
-                <div className="text-center p-8">
-                  <p className="text-gray-500 mb-2">No products found</p>
-                  <Button
-                    variant="link"
-                    onClick={() => setSearchTerm("")}
-                    className="text-emerald-500"
-                  >
-                    Clear search
-                  </Button>
-                </div>
-              ) : (
-                filteredProducts.map((product) => (
-                  <div key={product.id} className="border rounded-lg p-4">
-                    <div className="flex flex-col md:flex-row justify-between gap-6">
-                      {/* Product details */}
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-3 text-[#333333]">
-                          <Checkbox
-                            id={`product-${product.id}`}
-                            checked={product.selected || false}
-                            onCheckedChange={() => toggleProductSelection(product.id)}
-                          />
-                          <Label htmlFor={`product-${product.id}`}>{product.name || 'Unnamed Product'}</Label>
-                        </div>
-                        <span className="text-sm text-[#7D7D7D] px-3 py-1 w-26 h-7 text-center border rounded-sm bg-gray-100 ml-9">
-                          {product.category}
-                        </span>
-                        <div className="flex gap-4 flex-wrap">
-                          <div>
-                            <span className="text-sm block text-[#7D7D7D] ml-6">Current</span>
-                            <span className="text-sm text-[#444444] ml-6">
-                              {product.stock} {product.unit || 'units'}
-                            </span>
-                          </div>
-                          <div>
-                            <div className={`px-3 py-1 text-xs font-medium rounded ml-6 ${
-                              product.shieldStatus === "high"
-                                ? "bg-green-100 text-emerald-500"
-                                : "bg-red-100 text-red-800"
-                            }`}>
-                              {product.shieldStatus === "high" ? "High Stock" : "Low Stock"}
-                            </div>
-                          </div>
-                        </div>
-                        <span className="text-sm block text-[#7D7D7D] ml-6">Unit Price</span>
-                        <span className="text-sm font-sm text-[#444444] ml-6">
-                          ₦{product.unitPrice?.toLocaleString('en-NG') || '0.00'}
-                        </span>
-                      </div>
-
-                      {/* Quantity controls */}
-                      <div className="w-full md:max-w-xs space-y-2 text-[#7D7D7D] pt-10">
-                        <Label htmlFor={`quantity-${product.id}`}>New Quantity</Label>
-                        <Input
-                          id={`quantity-${product.id}`}
-                          type="number"
-                          min="0"
-                          value={product.newQuantity?.toString() ?? ''}
-                          onChange={(e) => handleQuantityChange(product.id, e.target.value)}
-                          className="border border-black w-full"
-                        />
-                        <Label>Min Level</Label>
-                        <Input
-                          value={`${product.minStockLevel || 0} ${product.unit || 'units'}`}
-                          readOnly
-                          className="border-none text-[#444444]"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </CardContent>
-
-        {/* Make Footer sticky at the bottom */}
-        <div className="sticky bottom-0 bg-white z-10 p-4 border-t flex flex-col md:flex-row justify-between items-center gap-2">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="select-all-footer"
-              checked={allFilteredSelected}
-              onCheckedChange={(checked) => toggleSelectAll(checked as boolean)}
-            />
-            <Label htmlFor="select-all-footer">
-              {selectedCount} Product{selectedCount !== 1 ? "s" : ""} Selected
-            </Label>
-          </div>
-          <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
-            <Button variant="outline" onClick={onClose} className="w-full md:w-auto">
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSave}
-              disabled={selectedCount === 0}
-              className="bg-emerald-500 hover:bg-green-700 w-full md:w-auto"
+            <button
+              onClick={() => navigate("/import-stock")}
+              className="w-40 bg-white text-[#333333] flex gap-1.5 items-center rounded-md py-2 px-4 border border-[#7d7d7d]"
             >
-              Save Changes
-            </Button>
+              <CiImport size={24} />
+              <span>Import Stock</span>
+            </button>
           </div>
         </div>
-      </Card>
-    </div>
+
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 px-4 md:px-5 py-5 border">
+          <div className="relative bg-[#F5F5F5] max-w-lg w-full flex items-center gap-1 md:w-1/2 px-4 rounded-md">
+            <IoIosSearch size={18} />
+            <input
+              type="search"
+              placeholder="Search products, categories..."
+              onChange={(e) => debouncedSearch(e.target.value)}
+              className="py-2 outline-0 w-full"
+            />
+            {searchQuery.trim() && suggestions.length > 0 && (
+              <div className="absolute top-full left-0 w-full bg-white shadow-lg z-10 border border-gray-200 rounded-b-md">
+                {suggestions.map((suggestion, i) => (
+                  <div
+                    key={i}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                  >
+                    {suggestion.item.name}
+                    <span className="text-xs text-gray-500 ml-2">
+                      ({getCategoryName(suggestion.item)})
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {searchQuery.trim() && suggestions.length === 0 && (
+              <div className="absolute top-full left-0 w-full bg-white shadow-lg z-10 p-4 italic text-center text-gray-500 border border-gray-200 rounded-b-md">
+                No matching products found for <span className="text-gray-700">"{searchQuery}"</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Select value={stockStatus} onValueChange={setStockStatus}>
+              <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d]">
+                <SelectValue placeholder="Stock status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All products</SelectItem>
+                <SelectItem value="high">High stock</SelectItem>
+                <SelectItem value="low">Low stock</SelectItem>
+                <SelectItem value="out">Out of stock</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={priceRange} onValueChange={setPriceRange}>
+              <SelectTrigger className="max-w-40 w-full bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d]">
+                <SelectValue placeholder="Price range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All prices</SelectItem>
+                <SelectItem value="under-1000">Under ₦1,000</SelectItem>
+                <SelectItem value="1000-5000">₦1,000-₦5,000</SelectItem>
+                <SelectItem value="5000-10000">₦5,000-₦10,000</SelectItem>
+                <SelectItem value="10000-50000">₦10,000-₦50,000</SelectItem>
+                <SelectItem value="above-50000">Above ₦50,000</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="my-5" ref={containerRef}>
+          <InventoryTab stockStatus={stockStatus} priceRange={priceRange} />
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            onMouseDown={handleMouseDown}
+            className="fixed z-50 flex justify-center items-center bg-[#2ECC71] hover:bg-[#2cCC79] w-16 h-16 rounded-full text-white shadow-2xl cursor-move"
+            style={{
+              left: `${position.xPercent}vw`,
+              top: `${position.yPercent}vh`,
+              transform: 'translate(-50%, -50%)'
+            }}
+          >
+            <Plus className="h-8 w-8" />
+          </button>
+        </div>
+
+        <UpdateStock
+          products={productsForUpdateStock}
+          categories={categories} // Now passing categories to UpdateStock
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onSave={handleSave}
+        />
+
+        <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)}>
+          <h6 className="text-lg font-medium text-[#333333] ml-5 mb-3">
+            What would you like to add?
+          </h6>
+          <div className="flex flex-col gap-4 px-7 pt-4 pb-6 border-t border-[#d9d9d9]">
+            <Link
+              to="/add-product"
+              className="flex justify-between items-center border py-3 px-6 rounded-[0.625rem] hover:shadow-2xl transition-all duration-100 ease-in-out"
+              onClick={() => setIsAddModalOpen(false)}
+            >
+              <div>
+                <p className="text-[#333333] text-sm">Add Product</p>
+                <p className="text-[#7D7D7D] text-[0.625rem]">Add a new product to your inventory</p>
+              </div>
+              <ChevronRight size={18} />
+            </Link>
+            <div
+              onClick={() => {
+                setIsAddModalOpen(false);
+                setAddCategoryModalOpen(true);
+              }}
+              className="flex justify-between items-center border py-3 px-6 rounded-[0.625rem] hover:shadow-2xl transition-all duration-100 ease-in-out cursor-pointer"
+            >
+              <div>
+                <p className="text-[#333333] text-sm">Add Category</p>
+                <p className="text-[#7D7D7D] text-[0.625rem]">Create a new product category</p>
+              </div>
+              <ChevronRight size={18} />
+            </div>
+          </div>
+        </Modal>
+
+        <Modal isOpen={addCategoryModalOpen} onClose={() => setAddCategoryModalOpen(false)} size="xxl">
+          <AddCategory closeBothModals={closeBothModals} />
+        </Modal>
+      </section>
+    </main>
   );
-}
+};
+
+export default AdminInventory;
