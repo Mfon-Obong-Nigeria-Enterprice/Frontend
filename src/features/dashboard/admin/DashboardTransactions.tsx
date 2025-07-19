@@ -1,6 +1,8 @@
 import DashboardTitle from "@/components/dashboard/DashboardTitle";
 import { Search, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import Stats from "./components/Stats";
+import type { StatCard } from "@/types/stats";
 
 type Transaction = {
   invoice: string;
@@ -13,6 +15,33 @@ type Transaction = {
   time: string;
 };
 
+const stats: StatCard[] = [
+  {
+    heading: "Total Sales (Today)",
+    salesValue: 450000,
+    format: "currency",
+    hideArrow: true,
+  },
+  {
+    heading: "Payments Received",
+    salesValue: 300000,
+    format: "currency",
+    hideArrow: true,
+    salesColor: "green",
+  },
+  {
+    heading: "Outstanding balance",
+    salesValue: 150000,
+    format: "currency",
+    hideArrow: true,
+    salesColor: "orange",
+  },
+  {
+    heading: "Total transactions",
+    salesValue: 10,
+    hideArrow: true,
+  },
+];
 const transactionData: Transaction[] = [
   {
     invoice: "INV-2025-001",
@@ -67,6 +96,7 @@ const DashboardTransactions = () => {
         heading="Transaction Management"
         description="Track all sales payment & client account activities"
       />
+      <Stats data={stats} />
       <div className="flex justify-between gap-10 items-center">
         {/* search */}
         <div className="relative bg-white max-w-lg w-full flex items-center gap-1 md:w-1/2 px-4 rounded-md border border-[#d9d9d9]">
