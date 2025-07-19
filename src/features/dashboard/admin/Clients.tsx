@@ -7,10 +7,16 @@ import { Plus, ChevronUp, Search } from "lucide-react";
 import ClientDirectory from "./components/ClientDirectory";
 import { useState } from "react";
 import { AddClientDialog } from "./components/AddClientDialog";
+// import { useClientStore } from "@/stores/useClientStore";
 
 const Clients = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  // const { initializeStore } = useClientStore();
+
+  // useEffect(() => {
+  //   initializeStore();
+  // }, [initializeStore]);
   return (
     <main>
       <DashboardTitle

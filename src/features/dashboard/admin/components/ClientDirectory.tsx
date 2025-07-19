@@ -8,9 +8,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useClientStore } from "@/stores/useClientStore";
-import type { Client, TransactionItem } from "@/types/types";
+import type { Client } from "@/types/types";
 import { Badge } from "@/components/ui/badge";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,21 +44,47 @@ interface ClientDirectoryProps {
 const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [dialog, setDialog] = useState<"view" | "delete" | null>(null);
-  const { clients, transactions, deleteClient } = useClientStore();
+  const { clients, initializeStore, fetchClient, deleteClient } =
+    useClientStore();
 
-  const filteredClients = clients.filter((client) =>
-    client.name.toLocaleLowerCase().includes(searchTerm.toLocaleLowerCase())
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        await initializeStore();
+        await fetchClient();
+      } catch (error) {
+        console.error("failed to initialize store", error);
+      }
+    };
+    initialize();
+  }, [initializeStore, fetchClient]);
+
+  const filteredClients = clients.filter(
+    (client) =>
+      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client._id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getClientTransaction = (clientId: string) => {
-    const clientTransactions = transactions
-      .filter((tr: TransactionItem) => tr._id === clientId)
-      .sort(
-        (a: TransactionItem, b: TransactionItem) =>
-          new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
+  // thisi is where the transaction is coming from
+  const getClientTransaction = (client: Client) => {
+    if (
+      !client.transactions ||
+      !Array.isArray(client.transactions) ||
+      client.transactions.length === 0
+    ) {
+      return null;
+    }
+    const sortedTransaction = [...client.transactions].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    // const clientTransactions = transactions
+    //   .filter((tr: TransactionItem) => tr._id === clientId)
+    //   .sort(
+    //     (a: TransactionItem, b: TransactionItem) =>
+    //       new Date(b.date).getTime() - new Date(a.date).getTime()
+    //   );
 
-    return clientTransactions[0] || null;
+    return sortedTransaction[0] || null;
   };
   const formatCurrency = (value: number) => `₦${value.toLocaleString()}`;
 
@@ -105,13 +131,32 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
     setDialog(action);
   };
 
-  const handleDelete = () => {
-    if (selectedClient) {
-      deleteClient(selectedClient._id);
+  const deleteClientData = async () => {
+    if (!selectedClient) return;
+    try {
+      await deleteClient(selectedClient._id);
       setSelectedClient(null);
       setDialog(null);
+      console.log("Client deleted successfully");
+    } catch (error: any) {
+      console.error("Deletion failed:", error);
+
+      // Handle specific error types
+      if (error?.response?.status === 403) {
+        alert(
+          "You don't have permission to delete this client. Please check your access rights."
+        );
+      } else if (error?.response?.status === 401) {
+        alert("Your session has expired. Please log in again.");
+        // Redirect to login or refresh token
+      } else {
+        alert("Failed to delete client. Please try again.");
+      }
     }
   };
+
+  //
+  //
   return (
     <div className="mt-7 mb-2 px-4 ">
       <Card>
@@ -129,7 +174,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
             </TableHeader>
             <TableBody>
               {currentClient.map((client) => {
-                const lastTransaction = getClientTransaction(client._id);
+                const lastTransaction = getClientTransaction(client);
                 const balanceStatus = getBalanceStatus(client.balance);
                 return (
                   <TableRow key={client._id}>
@@ -340,7 +385,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
             <div className="flex gap-2">
               <Button
                 variant="destructive"
-                onClick={handleDelete}
+                onClick={deleteClientData}
                 className="flex-1"
               >
                 Delete Client

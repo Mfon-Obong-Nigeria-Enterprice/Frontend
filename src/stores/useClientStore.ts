@@ -1,25 +1,17 @@
-import { createClient, getAllClients } from "@/services/clientService";
-import { getAllProducts } from "@/services/productService";
+import {
+  createClient,
+  deleteClient as deleteClientApi,
+  getAllClients,
+} from "@/services/clientService";
 import { createTransaction } from "@/services/transactionService";
-import type {
-  Client,
-  Product,
-  TransactionItem,
-  CreateTransactionPayload,
-} from "@/types/types";
+import type { Client, CreateTransactionPayload } from "@/types/types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 interface clientStore {
-  products: Product[];
   clients: Client[];
-  transactions: TransactionItem[];
-  // currentUser: User | null;
 
   initializeStore: () => Promise<void>;
-
-  // Product Actions
-  addProduct: (product: Product) => void;
 
   // Client Actions
   addClient: (client: Client) => Promise<void>;
@@ -33,7 +25,6 @@ interface clientStore {
   ) => Promise<void>;
 
   // Utility functions
-  getTotalInventoryValue: () => number;
   getClientsWithDebt: () => Client[];
   getNewClients: () => number;
   getActiveClients: () => number;
@@ -48,41 +39,34 @@ interface clientStore {
 export const useClientStore = create<clientStore>()(
   persist(
     (set, get) => ({
-      products: [],
       clients: [],
-      transactions: [],
-      // currentUser: null,
 
       initializeStore: async () => {
         try {
           const state = get();
-          if (
-            state.products.length === 0 &&
-            state.clients.length === 0 &&
-            state.transactions.length === 0
-          ) {
-            const [products, clients] = await Promise.all([
-              getAllProducts(),
-              getAllClients(),
-            ]);
+          console.log("initializing store", state.clients.length);
+          //
+          if (state.clients.length === 0) {
+            console.log("Fetching clients from API...");
+            const clients = await getAllClients();
+            console.log("Clients fetched:", clients);
 
             set({
-              products,
               clients,
-              transactions: [],
-              // currentUser: null,
             });
+          } else {
+            console.log("Store already has clients, skipping initialization");
           }
         } catch (err) {
           console.error("failed to initialize store", err);
         }
       },
 
-      addProduct: (product) => {
-        set((state) => ({
-          products: [...state.products, product],
-        }));
-      },
+      // addProduct: (product) => {
+      //   set((state) => ({
+      //     products: [...state.products, product],
+      //   }));
+      // },
 
       addClient: async (clientData) => {
         try {
@@ -133,10 +117,16 @@ export const useClientStore = create<clientStore>()(
         }));
       },
 
-      deleteClient: (id) => {
-        set((state) => ({
-          clients: state.clients.filter((c) => c._id !== id),
-        }));
+      deleteClient: async (id) => {
+        try {
+          await deleteClientApi(id);
+          set((state) => ({
+            clients: state.clients.filter((c) => c._id !== id),
+          }));
+        } catch (error) {
+          console.error(error);
+          throw error;
+        }
       },
 
       addPayment: (clientId, amount) => {
@@ -149,32 +139,32 @@ export const useClientStore = create<clientStore>()(
                   ...client,
                   balance: client.balance + amount,
                   updatedAt: new Date().toISOString(),
+
+                  // Add transaction record
+                  transaction: [
+                    {
+                      ...(client.transactions || []),
+                      _id: Date.now().toString(),
+                      type: "Credit",
+                      amount,
+                      date: new Date().toISOString(),
+                      description: "payment recieved",
+                      reference: `TXN${Date.now()}`,
+                    },
+                  ],
                 }
               : client
           ),
         }));
-
-        // Add transaction record
-        const transaction: TransactionItem = {
-          _id: Date.now().toString(),
-          type: "DEPOSIT",
-          amount,
-          date: new Date().toISOString(),
-          description: "payment recieved",
-          reference: "",
-        };
-
-        set((state) => ({
-          transactions: [...state.transactions, transaction],
-        }));
       },
 
       getActiveClients: () => {
-        const { transactions } = get();
+        const { clients } = get();
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
         const activeClientIds = new Set(
-          transactions
-            .filter((t) => new Date(t.date) >= thirtyDaysAgo)
+          clients
+            .filter((t) => new Date(t.createdAt) >= thirtyDaysAgo)
             .map((t) => t._id)
         );
         return activeClientIds.size;
@@ -221,12 +211,12 @@ export const useClientStore = create<clientStore>()(
           const updatedClient = await createTransaction(ClientId, payload);
           set((state) => ({
             clients: state.clients.map((client) =>
-              client._id === updatedClient._id ? updatedClient : client
+              client._id === updatedClient._id ? { ...updatedClient } : client
             ),
-            transactions: [
-              ...state.transactions,
-              ...updatedClient.transactions.slice(-1),
-            ],
+            // transactions: [
+            //   ...state.transactions,
+            //   ...updatedClient.transactions.slice(-1),
+            // ],
           }));
         } catch (err) {
           console.error(err);
@@ -237,12 +227,12 @@ export const useClientStore = create<clientStore>()(
         return get().clients.filter((c) => c.balance < 0);
       },
 
-      getTotalInventoryValue: () => {
-        return get().products.reduce(
-          (acc, pr) => acc + pr.unitPrice * pr.stock,
-          0
-        );
-      },
+      // getTotalInventoryValue: () => {
+      //   return get().products.reduce(
+      //     (acc, pr) => acc + pr.unitPrice * pr.stock,
+      //     0
+      //   );
+      // },
 
       getOutStandingBalanceData: () => {
         const { clients } = get();
@@ -261,9 +251,8 @@ export const useClientStore = create<clientStore>()(
     {
       name: "inventory-store",
       partialize: (state) => ({
-        products: state.products,
         clients: state.clients,
-        transactions: state.transactions,
+        // transactions: state.transactions,
       }),
     }
   )

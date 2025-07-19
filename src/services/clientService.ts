@@ -68,10 +68,14 @@ export const deleteClient = async (id: string): Promise<void> => {
   if (!token) throw new Error("No access token found");
 
   try {
-    await api.delete(`/clients/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
+    const response = await api.delete(`/clients/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
     });
     console.log("Client deleted:", id);
+    return response.data;
   } catch (error) {
     const err = error as AxiosError;
     console.error("Error deleting client:", err.response?.data || err.message);
