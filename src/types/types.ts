@@ -55,7 +55,7 @@ export interface Client {
 
 export interface TransactionItem {
   _id: string;
-  type: "DEPOSIT";
+  type: "Credit" | "partial" | "debit";
   amount: number;
   description?: string;
   date: string;
