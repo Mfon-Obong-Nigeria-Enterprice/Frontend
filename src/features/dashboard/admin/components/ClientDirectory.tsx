@@ -7,16 +7,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useClientStore } from "@/stores/useClientStore";
+
 import type { Client } from "@/types/types";
 import { Badge } from "@/components/ui/badge";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useClients, useDeleteClient } from "@/hooks/useClients";
+
 import { Eye, Trash2 } from "lucide-react";
 import {
   Dialog,
@@ -44,28 +46,17 @@ interface ClientDirectoryProps {
 const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [dialog, setDialog] = useState<"view" | "delete" | null>(null);
-  const { clients, initializeStore, fetchClient, deleteClient } =
-    useClientStore();
 
-  useEffect(() => {
-    const initialize = async () => {
-      try {
-        await initializeStore();
-        await fetchClient();
-      } catch (error) {
-        console.error("failed to initialize store", error);
-      }
-    };
-    initialize();
-  }, [initializeStore, fetchClient]);
+  const { data: clients = [] } = useClients();
+  const { mutateAsync: deleteClient } = useDeleteClient();
 
-  const filteredClients = clients.filter(
+  const filteredClients = (clients || []).filter(
     (client) =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client._id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // thisi is where the transaction is coming from
+  // this is where the transaction is coming from
   const getClientTransaction = (client: Client) => {
     if (
       !client.transactions ||
@@ -77,12 +68,6 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
     const sortedTransaction = [...client.transactions].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-    // const clientTransactions = transactions
-    //   .filter((tr: TransactionItem) => tr._id === clientId)
-    //   .sort(
-    //     (a: TransactionItem, b: TransactionItem) =>
-    //       new Date(b.date).getTime() - new Date(a.date).getTime()
-    //   );
 
     return sortedTransaction[0] || null;
   };
@@ -140,15 +125,10 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
       console.log("Client deleted successfully");
     } catch (error: any) {
       console.error("Deletion failed:", error);
-
-      // Handle specific error types
       if (error?.response?.status === 403) {
-        alert(
-          "You don't have permission to delete this client. Please check your access rights."
-        );
+        alert("You don't have permission to delete this client.");
       } else if (error?.response?.status === 401) {
-        alert("Your session has expired. Please log in again.");
-        // Redirect to login or refresh token
+        alert("Session expired. Please log in again.");
       } else {
         alert("Failed to delete client. Please try again.");
       }
@@ -254,8 +234,6 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
                   </TableRow>
                 );
               })}
-
-              {/*  */}
 
               {currentClient.length === 0 && (
                 <TableRow>

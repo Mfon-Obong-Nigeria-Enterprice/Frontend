@@ -1,12 +1,9 @@
-/** @format */
-
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import Login from "@/features/auth/Login";
 import Notfound from "@/components/Notfound";
 import AddProduct from "@/components/inventory/AddProduct";
-import ClientDetailsPage from "@/pages/ClientDetailsPage";
+import ClientDetailsPage from "@/pages/ClientDetailsPage.tsx";
 import ImportStockPage from "@/features/import/ImportStockPage";
-
 
 // manager (super admin)
 import ManagerDashboardLayout from "@/layout/ManagerDashboardLayout";
@@ -37,7 +34,6 @@ import StaffSales from "@/features/dashboard/staff/StaffSales";
 import NewSales from "@/features/dashboard/staff/NewSales";
 import Stock from "@/features/dashboard/staff/Stock";
 import StaffClients from "@/features/dashboard/staff/StaffClients";
-
 
 const router = createBrowserRouter([
   { path: "/", element: <Login /> },
@@ -74,7 +70,10 @@ const router = createBrowserRouter([
     path: "/maintainer/dashboard",
     element: <MaintainerLayout />,
     children: [
-      { index: true, element: <Navigate to="/maintainer/dashboard/overview" replace /> },
+      {
+        index: true,
+        element: <Navigate to="/maintainer/dashboard/overview" replace />,
+      },
       { path: "overview", element: <MaintainerDashboard /> },
     ],
   },
@@ -112,7 +111,7 @@ const router = createBrowserRouter([
     element: <AddProduct />,
   },
   {
-    path: "client-details",
+    path: "client-details/:clientId",
     element: <ClientDetailsPage />,
   },
   { path: "import-stock", element: <ImportStockPage /> },
