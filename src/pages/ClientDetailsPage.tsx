@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -13,76 +14,94 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ChevronDown, MoveRight, MoveLeft } from "lucide-react";
+import { useTransactionsStore } from "@/stores/useTransactionStore";
+// import { Transaction } from "@/types/transactions";
+// type Transaction = {
+//   method: string;
+//   items: string[];
+//   type: "Debit" | "Credit" | "Partial";
+//   amount: string;
+//   balance: string;
+//   staff: string;
+//   date: string;
+//   time: string;
+// };
 
-type Transaction = {
-  method: string;
-  items: string[];
-  type: "Debit" | "Credit" | "Partial";
-  amount: string;
-  balance: string;
-  staff: string;
-  date: string;
-  time: string;
-};
-
-const transactionData: Transaction[] = [
-  {
-    method: "Bank transfer",
-    items: ["10x cement", "4x Nails"],
-    type: "Debit",
-    amount: "-₦ 250,000",
-    balance: "-₦ 450,000",
-    staff: "John Doe",
-    date: "5/25/2025",
-    time: "10:45 AM",
-  },
-  {
-    method: "Check payment",
-    items: [
-      "10 bags of cement",
-      "10x 8MM long rod",
-      "15x nails",
-      "20x 4mm rod",
-      "10x 6mm rod",
-    ],
-    type: "Partial",
-    amount: "₦ 100,000",
-    balance: "-₦ 200,000",
-    staff: "Jane Smith",
-    date: "5/21/2025",
-    time: "09:45 PM",
-  },
-  {
-    method: "Cash",
-    items: ["10x cement"],
-    type: "Credit",
-    amount: "₦ 75,000",
-    balance: "-₦750,000",
-    staff: "Mike Johnson",
-    date: "5/25/2025",
-    time: "04:15 PM",
-  },
-  {
-    method: "Cheque",
-    items: ["58x steel rods"],
-    type: "Debit",
-    amount: "-₦ 255,000",
-    balance: "₦0.00",
-    staff: "Sara Wilson",
-    date: "5/04/2025",
-    time: "08:10 AM",
-  },
-];
+// const transactionData: Transaction[] = [
+//   {
+//     method: "Bank transfer",
+//     items: ["10x cement", "4x Nails"],
+//     type: "Debit",
+//     amount: "-₦ 250,000",
+//     balance: "-₦ 450,000",
+//     staff: "John Doe",
+//     date: "5/25/2025",
+//     time: "10:45 AM",
+//   },
+//   {
+//     method: "Check payment",
+//     items: [
+//       "10 bags of cement",
+//       "10x 8MM long rod",
+//       "15x nails",
+//       "20x 4mm rod",
+//       "10x 6mm rod",
+//     ],
+//     type: "Partial",
+//     amount: "₦ 100,000",
+//     balance: "-₦ 200,000",
+//     staff: "Jane Smith",
+//     date: "5/21/2025",
+//     time: "09:45 PM",
+//   },
+//   {
+//     method: "Cash",
+//     items: ["10x cement"],
+//     type: "Credit",
+//     amount: "₦ 75,000",
+//     balance: "-₦750,000",
+//     staff: "Mike Johnson",
+//     date: "5/25/2025",
+//     time: "04:15 PM",
+//   },
+//   {
+//     method: "Cheque",
+//     items: ["58x steel rods"],
+//     type: "Debit",
+//     amount: "-₦ 255,000",
+//     balance: "₦0.00",
+//     staff: "Sara Wilson",
+//     date: "5/04/2025",
+//     time: "08:10 AM",
+//   },
+// ];
 
 const ClientDetailsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { clientId } = useParams<{ clientId: string }>();
+  const { transactions } = useTransactionsStore();
+
+  const transaction = transactions.find(
+    (transaction) => transaction.clientId?._id === clientId
+  );
+
+  if (!transaction) {
+    return (
+      <div className="flex justify-center text-red-500 min-h-screen items-center">
+        Transaction not found
+      </div>
+    );
+  }
+  //   displayDate: new Date(transaction.createdAt).toLocaleDateString(),
+  // }));
+
   //   const [expandedDesc, setExpandedDesc] = useState<boolean>(false);
   //   const toggleExpanded = () => setExpandedDesc(!expandedDesc);
-  const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  // const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
-  const toggleRow = (index: number) => {
-    setExpandedRow((prev) => (prev === index ? null : index));
-  };
+  // const toggleRow = (index: number) => {
+  //   setExpandedRow((prev) => (prev === index ? null : index));
+  // };
 
   return (
     <>
@@ -103,27 +122,43 @@ const ClientDetailsPage: React.FC = () => {
             <span>Export data</span>
           </Button>
 
+          <Select>
+            <SelectTrigger className="w-[130px]">
+              <SelectValue placeholder="Edit Client"></SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel></SelectLabel>
+                <SelectItem value="edit">Edit Client</SelectItem>
+                <SelectItem value="suspend">Suspend Client</SelectItem>
+                <SelectItem value="delete">Delete Client</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
           <Button className="bg-[#FFC761] hover:bg-[#FFA500] text-text-dark">
             Send Payment Reminder
           </Button>
 
-          <Button
+          {/* <Button
             onClick={() => navigate("/client-details")}
             className="bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)] text-white"
           >
             Edit Client
-          </Button>
-          <Button
+          </Button> */}
+          {/* <Button
             onClick={() => navigate("/client-details")}
             className="bg-[#F95353] hover:bg-[#f95353e1] text-white"
           >
             Suspend account
-          </Button>
+          </Button> */}
         </div>
       </header>
       <main className="flex gap-3 bg-[#F5F5F5] py-5 px-12">
+        {/* section by the left */}
         <section className="w-[40%] bg-white py-8 px-5 rounded">
-          <p className="text-lg text-[#333333] mb-6">Okoro builders</p>
+          <p className="text-lg text-[#333333] mb-6">
+            {transaction.clientId?.name}
+          </p>
           <div
             className={`flex flex-col justify-center gap-1 min-h-18 border-l-4 text-xs py-1.5 px-3 rounded-[8px] border-[#F95353] bg-[#FFE9E9]
             }`}
@@ -131,12 +166,11 @@ const ClientDetailsPage: React.FC = () => {
             <p className="text-[#444444] text-xs">Current balance</p>
             <p className="text-lg text-[#F95353]">-₦ 250,000</p>
           </div>
-
           {/* info */}
           <article className="my-7">
             <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
               <p>Phone</p>
-              <p>0814 234 5678</p>
+              <p>{transaction.clientId?.phone}</p>
             </div>
             <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
               <p>Address</p>
@@ -203,6 +237,7 @@ const ClientDetailsPage: React.FC = () => {
           </ul>
         </section>
 
+        {/* section by the right */}
         {/* data */}
         <section className="w-full bg-white py-8 px-5 rounded">
           <div className="flex justify-between items-end gap-5 mb-10">
@@ -233,9 +268,9 @@ const ClientDetailsPage: React.FC = () => {
                   <SelectGroup>
                     <SelectLabel>Select transaction type</SelectLabel>
                     <SelectItem value="all">All transactions</SelectItem>
+                    <SelectItem value="purchase">Purchase</SelectItem>
+                    <SelectItem value="pick-up">Pick-up</SelectItem>
                     {/* <SelectItem value="banana">Banana</SelectItem>
-                    <SelectItem value="blueberry">Blueberry</SelectItem>
-                    <SelectItem value="grapes">Grapes</SelectItem>
                     <SelectItem value="pineapple">Pineapple</SelectItem> */}
                   </SelectGroup>
                 </SelectContent>
@@ -296,17 +331,17 @@ const ClientDetailsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {transactionData.map((transaction, i) => {
+              {transactions.map((transaction, i) => {
                 return (
                   <tr key={i} className="border-b border-[#d9d9d9]">
                     <td className="flex flex-col text-center text-[#7D7D7D] text-sm font-normal py-3">
-                      <span>{transaction.date}</span>
-                      <span>{transaction.time}</span>
+                      {/* <span>{transaction.date}</span>
+                      <span>{transaction.time}</span> */}
                     </td>
                     <td className="text-center">
                       <span
                         className={`border text-xs py-1.5 px-3 rounded-[6.25rem] ${
-                          transaction.type === "Debit"
+                          transaction.type === "PURCHASE"
                             ? "border-[#F95353] bg-[#FFCACA] text-[#F95353]"
                             : transaction.type === "Credit"
                             ? "border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71]"
@@ -323,9 +358,9 @@ const ClientDetailsPage: React.FC = () => {
                     >
                       <div className="flex items-center justify-center gap-1">
                         <span>
-                          {expandedRow === i
+                          {/* {expandedRow === i
                             ? transaction.items.join(", ")
-                            : transaction.items[0]}
+                            : transaction.items[0]} */}
                         </span>
                         {transaction.items.length > 1 && (
                           <ChevronDown
@@ -338,31 +373,31 @@ const ClientDetailsPage: React.FC = () => {
                     </td>
 
                     <td className="text-[#333333] text-center text-xs">
-                      {transaction.method}
+                      {transaction.paymentMethod}
                     </td>
                     <td
-                      className={`text-sm text-center ${
-                        transaction.amount.includes("-")
-                          ? "text-[#F95353]"
-                          : "text-[#2ECC71]"
-                      }`}
+                    // className={`text-sm text-center ${
+                    //   transaction.total.includes("-")
+                    //     ? "text-[#F95353]"
+                    //     : "text-[#2ECC71]"
+                    // }`}
                     >
-                      {transaction.amount}
+                      {transaction.total}
                     </td>
                     <td
-                      className={`text-sm text-center ${
-                        transaction.balance.includes("-")
-                          ? "text-[#F95353]"
-                          : transaction.balance.startsWith("₦0")
-                          ? "text-[#444444]"
-                          : "text-[#2ECC71]"
-                      }`}
+                    // className={`text-sm text-center ${
+                    //   transaction.balance.includes("-")
+                    //     ? "text-[#F95353]"
+                    //     : transaction.balance.startsWith("₦0")
+                    //     ? "text-[#444444]"
+                    //     : "text-[#2ECC71]"
+                    // }`}
                     >
-                      {transaction.balance}
+                      {transaction.amountPaid}
                     </td>
-                    <td className="text-[#333333] text-center text-xs">
+                    {/* <td className="text-[#333333] text-center text-xs">
                       {transaction.staff}
-                    </td>
+                    </td> */}
                   </tr>
                 );
               })}

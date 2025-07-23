@@ -14,7 +14,7 @@ import { type StatCard } from "@/types/stats";
 const DashboardOverview: React.FC = () => {
   const products = useInventoryStore((state) => state.products);
   const { getActiveClients, getActiveClientsPercentage } = useClientStore();
-  const lowStockCount = products.filter(
+  const lowStockCount = products?.filter(
     (prod) => prod.stock <= prod.minStockLevel
   ).length;
 

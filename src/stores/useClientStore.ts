@@ -3,8 +3,9 @@ import {
   deleteClient as deleteClientApi,
   getAllClients,
 } from "@/services/clientService";
-import { createTransaction } from "@/services/transactionService";
-import type { Client, CreateTransactionPayload } from "@/types/types";
+// import { createTransaction } from "@/services/transactionService";
+import type { Client } from "@/types/types";
+// CreateTransactionPayload
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -19,10 +20,10 @@ interface clientStore {
   updateClient: (id: string, updates: Partial<Client>) => void;
   deleteClient: (id: string) => void;
   addPayment: (clientId: string, amount: number) => void;
-  addTransaction: (
-    id: string,
-    payload: CreateTransactionPayload
-  ) => Promise<void>;
+  // addTransaction: (
+  //   id: string,
+  //   payload: CreateTransactionPayload
+  // ) => Promise<void>;
 
   // Utility functions
   getClientsWithDebt: () => Client[];
@@ -206,22 +207,22 @@ export const useClientStore = create<clientStore>()(
         );
       },
 
-      addTransaction: async (ClientId, payload) => {
-        try {
-          const updatedClient = await createTransaction(ClientId, payload);
-          set((state) => ({
-            clients: state.clients.map((client) =>
-              client._id === updatedClient._id ? { ...updatedClient } : client
-            ),
-            // transactions: [
-            //   ...state.transactions,
-            //   ...updatedClient.transactions.slice(-1),
-            // ],
-          }));
-        } catch (err) {
-          console.error(err);
-        }
-      },
+      // addTransaction: async (ClientId, payload) => {
+      //   try {
+      //     const updatedClient = await createTransaction(ClientId, payload);
+      //     set((state) => ({
+      //       clients: state.clients.map((client) =>
+      //         client._id === updatedClient._id ? { ...updatedClient } : client
+      //       ),
+      //       // transactions: [
+      //       //   ...state.transactions,
+      //       //   ...updatedClient.transactions.slice(-1),
+      //       // ],
+      //     }));
+      //   } catch (err) {
+      //     console.error(err);
+      //   }
+      // },
 
       getClientsWithDebt: () => {
         return get().clients.filter((c) => c.balance < 0);
