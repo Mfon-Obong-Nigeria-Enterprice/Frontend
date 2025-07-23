@@ -7,6 +7,7 @@ import AddProduct from "@/components/inventory/AddProduct";
 import ClientDetailsPage from "@/pages/ClientDetailsPage";
 import ImportStockPage from "@/features/import/ImportStockPage";
 
+
 // manager (super admin)
 import ManagerDashboardLayout from "@/layout/ManagerDashboardLayout";
 import ManagerDashboardOverview from "@/features/dashboard/manager/ManagerDashboardOverview";
@@ -36,6 +37,7 @@ import StaffSales from "@/features/dashboard/staff/StaffSales";
 import NewSales from "@/features/dashboard/staff/NewSales";
 import Stock from "@/features/dashboard/staff/Stock";
 import StaffClients from "@/features/dashboard/staff/StaffClients";
+
 
 const router = createBrowserRouter([
   { path: "/", element: <Login /> },

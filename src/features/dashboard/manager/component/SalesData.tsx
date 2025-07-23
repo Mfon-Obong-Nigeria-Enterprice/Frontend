@@ -75,7 +75,7 @@ const recentSales: SalesTransaction[] = [
   {
     id: "3",
     client: "Ade properties",
-    amount: 225000,
+    amount: +225000,
     time: "9:15 AM",
     items: "25x steel Rods",
     staff: "Sarah Wilson",
@@ -113,14 +113,14 @@ const recentSales: SalesTransaction[] = [
   },
 ];
 
-const SalesTableData: React.FC = () => {
+const SalesData: React.FC = () => {
   const [selectedState, setSelectedState] = useState<SalesTransaction | null>(
     null
   );
   const [selectedItem, setSelectedItem] = useState<{ [key: string]: string }>(
     {}
   );
-  // custom hooks for search and pagination
+  
   const {
     searchQuery,
     setSearchQuery,
@@ -137,7 +137,7 @@ const SalesTableData: React.FC = () => {
     canGoNext,
   } = usePagination(filteredSales.length, 4);
 
-  // Memomized curent page using useMemo since the value is an object
+  
 
   const currentSales = useMemo(() => {
     const startIndex = (currentPage - 1) * 4;
@@ -145,7 +145,7 @@ const SalesTableData: React.FC = () => {
     return filteredSales.slice(startIndex, endIndex);
   }, [filteredSales, currentPage]);
 
-  // handling user search for current sale
+ 
 
   const handleSearchSale = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -155,7 +155,6 @@ const SalesTableData: React.FC = () => {
     [setSearchQuery, resetPage]
   );
 
-  // viweing each sales handler
   const handleViewSale = useCallback((sale: SalesTransaction) => {
     setSelectedState(sale);
   }, []);
@@ -168,24 +167,18 @@ const SalesTableData: React.FC = () => {
     return selectedItem[sale.id] || sale.items;
   };
 
-  // Helper function to determine amount color
+  
   const getAmountColor = useCallback((amount: number) => {
     return amount > 0 ? "text-green-400" : "text-[#F95353]";
   }, []);
 
-  const formatCurrency = (value: number) => `₦${value.toLocaleString()}`;
-
-  //
-  //
   return (
     <div className="bg-white px-8 py-6 rounded-lg font-Inter">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
             <div>
-              <CardTitle className="text-[#1E1E1E] text-xl font-medium">
-                Recent Sales
-              </CardTitle>
+              <CardTitle>Recent Sales</CardTitle>
             </div>
             <div className=" w-full sm:w-1/2 relative rounded-md">
               <IoIosSearch
@@ -222,7 +215,7 @@ const SalesTableData: React.FC = () => {
                 </TableHead>
                 <TableHead className=" text-[#333333] text-base ">
                   Staff
-                </TableHead>
+                 </TableHead>
                 <TableHead className=" text-[#333333] text-base ">
                   Actions
                 </TableHead>
@@ -261,7 +254,7 @@ const SalesTableData: React.FC = () => {
                     </Select>
                   </TableCell>
                   <TableCell className={getAmountColor(sale.amount)}>
-                    {formatCurrency(sale.amount)}
+                    ₦{sale.amount.toLocaleString()}
                   </TableCell>
                   <TableCell className="">{sale.staff}</TableCell>
                   <TableCell>
@@ -269,7 +262,7 @@ const SalesTableData: React.FC = () => {
                       <DialogTrigger asChild>
                         <button
                           onClick={() => handleViewSale(sale)}
-                          className="text-[#3D80FF] text-sm underline decoration-blue-[#3D80FF] decoration-1.5 underline-offset-4 hover:underline hover:text-red-600 active:text-brown-700 active:underline cursor-pointer border-none "
+                          className="text-[#3D80FF] text-sm underline-offset-2 hover:underline hover:text-red-600 active:text-brown-700 active:underline cursor-pointer border-none "
                         >
                           View
                         </button>
@@ -290,7 +283,7 @@ const SalesTableData: React.FC = () => {
                                   {selectedState.client}
                                 </p>
                               </div>
-                              {/*  */}
+                              
                               <div>
                                 <p className="text-sm font-medium text-gray-500">
                                   Items Purchased
@@ -299,14 +292,14 @@ const SalesTableData: React.FC = () => {
                                   {getDisplayItems(selectedState)}
                                 </p>
                               </div>
-                              {/*  */}
+                              
                               <div>
                                 <p className="text-sm font-medium text-gray-500">
                                   Time
                                 </p>
                                 <p className="text-sm">{selectedState.time}</p>
                               </div>
-                              {/*  */}
+                              
                               <div className="border-t pt-4">
                                 <p className="text-sm font-medium text-gray-600">
                                   Total Amount
@@ -316,7 +309,7 @@ const SalesTableData: React.FC = () => {
                                     selectedState.amount
                                   )}`}
                                 >
-                                  {formatCurrency(selectedState.amount)}
+                                  ₦{selectedState.amount.toLocaleString()}
                                 </p>
                               </div>
                             </div>
@@ -329,7 +322,6 @@ const SalesTableData: React.FC = () => {
               ))}
             </TableBody>
           </Table>
-          {/* Empty state */}
           {filteredSales.length === 0 && (
             <div className="py-4 text-center text-gray-500">
               <p>No sales found matching your search criteria</p>
@@ -344,7 +336,7 @@ const SalesTableData: React.FC = () => {
             </div>
           )}
 
-          {/* pagination state */}
+          
           {filteredSales.length > 0 && totalPages > 1 && (
             <div className="mt-6 flex justify-center">
               <Pagination>
@@ -396,29 +388,5 @@ const SalesTableData: React.FC = () => {
   );
 };
 
-export default SalesTableData;
+export default SalesData;
 
-// search for the available sale in the table
-// const filteredSales = recentSales.filter(
-//   (sale) =>
-//     sale.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-//     sale.items.toLowerCase().includes(searchQuery.toLowerCase())
-// );
-// const totalPages = Math.ceil(filteredSales.length / itemPage);
-// const startIndex = (pagination - 1) * itemPage;
-// const endIndex = startIndex + itemPage;
-// const currentSales = filteredSales.slice(startIndex, endIndex);
-
-// previouspage pagination handler
-// const handlePreviousPage = () => {
-//   setPagination((prev) => Math.max(prev - 1, 1));
-// };
-// // Nextpage pagination handler
-// const handleNextPage = () => {
-//   setPagination((next) => Math.min(next + 1, totalPages));
-// };
-// sales query handler
-// const handleSearchSale = (e: React.ChangeEvent<HTMLInputElement>) => {
-//   setSearchQuery(e.target.value);
-//   setPagination(1);
-// };

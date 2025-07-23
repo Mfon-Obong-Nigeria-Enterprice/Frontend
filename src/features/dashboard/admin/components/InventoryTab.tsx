@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /** @format */
 
 import React, { useState } from "react";
@@ -9,6 +10,8 @@ import CategoryModal from "./CategoryModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info } from "lucide-react";
 import type { Product, Category } from "@/types/types";
+import { useInventoryStore } from "@/stores/useInventoryStore";
+import type { Product } from "@/types/types"; // Ensure Category is imported
 
 interface InventoryTabProps {
   products: Product[];
@@ -28,6 +31,74 @@ const InventoryTab = React.memo(
     // Helper for category tab filtering
     function filterCategoryProducts(categoryName: string) {
       return products.filter((prod) => prod.categoryId.name === categoryName);
+    const { products, categories, searchQuery } = useInventoryStore();
+
+    // Helper function to safely get category name from product.categoryId
+    // This is crucial for handling cases where categoryId might be just an ID string
+    const getCategoryNameForProduct = (
+      categoryId: string | { _id: string; name: string; units: string[] }
+    ): string => {
+      if (typeof categoryId === "object" && categoryId.name) {
+        return categoryId.name;
+      }
+      // If categoryId is just a string (the ID), find the category by ID
+      const id = typeof categoryId === "string" ? categoryId : categoryId._id;
+      const foundCategory = categories.find((c) => c._id === id);
+      return foundCategory?.name || "Uncategorized"; // Provide a fallback
+    };
+
+    // Filtering logic for stock status
+    function filterByStockStatus(product: Product) {
+      if (stockStatus === "all") return true;
+      if (stockStatus === "high") return product.stock > 20;
+      if (stockStatus === "low")
+        return product.stock > 0 && product.stock <= 20;
+      if (stockStatus === "out") return product.stock === 0;
+      return true;
+    }
+
+    // Filtering logic for price range
+    function filterByPriceRange(product: Product) {
+      if (priceRange === "all") return true;
+      const price = product.unitPrice;
+      if (priceRange === "under-1000") return price < 1000;
+      if (priceRange === "1000-5000") return price >= 1000 && price <= 5000;
+      if (priceRange === "5000-10000") return price > 5000 && price <= 10000;
+      if (priceRange === "10000-50000") return price > 10000 && price <= 50000;
+      if (priceRange === "above-50000") return price > 50000;
+      return true;
+    }
+
+    const filteredProducts = useMemo(
+      () =>
+        products.filter(
+          (product) => {
+            const productCategoryName = getCategoryNameForProduct(product.categoryId); // Use the helper
+            return (
+              (product.name.toLowerCase().includes(searchQuery) ||
+                productCategoryName.toLowerCase().includes(searchQuery)) && // Use the helper here too
+              filterByStockStatus(product) &&
+              filterByPriceRange(product)
+            );
+          }
+        ),
+      [products, searchQuery, stockStatus, priceRange, categories] // Add 'categories' to dependencies
+    );
+
+    // Helper for category tab filtering
+    function filterCategoryProducts(categoryName: string) {
+      return products.filter(
+        (prod) => {
+          const productCategoryName = getCategoryNameForProduct(prod.categoryId); // Use the helper
+          return (
+            productCategoryName === categoryName && // Compare against the safely obtained name
+            (prod.name.toLowerCase().includes(searchQuery) ||
+             productCategoryName.toLowerCase().includes(searchQuery)) &&
+            filterByStockStatus(prod) &&
+            filterByPriceRange(prod)
+          );
+        }
+      );
     }
 
     return (
@@ -35,6 +106,8 @@ const InventoryTab = React.memo(
         <Tabs defaultValue="allProducts">
           <div className="w-full max-w-[970px]">
             <TabsList className="g-[#F5F5F5] gap-3 overflow-x-auto whitespace-nowrap h-16">
+            {/* Added scrollbar for mobile */}
+            <TabsList className="w-full bg-[#F5F5F5] gap-3 overflow-x-auto whitespace-nowrap h-16 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
               <TabsTrigger
                 value="allProducts"
                 className={cn(
@@ -50,6 +123,7 @@ const InventoryTab = React.memo(
               </TabsTrigger>
               {/* display data for categories */}
               {categories?.map((category) => {
+
                 const categoryName = category.name;
                 const count = products.filter((prod) => {
                   if (
@@ -58,10 +132,17 @@ const InventoryTab = React.memo(
                   ) {
                     return prod.categoryId.name === categoryName;
                   }
+
+                const categoryName = category.name; // This is safe as 'categories' are actual Category objects
+                console.log(categoryName);
+                const count = products.filter((prod) => {
+                  const productCategoryName = getCategoryNameForProduct(prod.categoryId); // Use the helper
+                  return productCategoryName === categoryName;
+
                 }).length;
                 return (
                   <TabsTrigger
-                    key={category.name}
+                    key={category.name} // Use category.name directly here as it's from the categories array
                     value={categoryName}
                     className={cn(
                       "!bg-white px-3 border border-gray-200 data-[state=active]:shadow-xl data-[state=active]:[&_span]:bg-green-400 data-[state=active]:[&_span]:text-white hover:border-dashed hover:border-green-400 data-[state=active]:border-green-400 text-sm"
@@ -72,15 +153,17 @@ const InventoryTab = React.memo(
                       {count}
                     </span>
                     <p
-                      onClick={() =>
+                      onClick={(e) => { // Added 'e' parameter to prevent tab change on click
+                        e.stopPropagation(); // Stop propagation to prevent tab trigger from firing
                         setOpenCategory({
                           name: category.name,
                           count,
                           description: category.description,
-                        })
-                      }
+                        });
+                      }}
+                      className="ml-1" // Added a small margin
                     >
-                      <Info className="text-[#D9D9D9]" />
+                      <Info className="text-[#D9D9D9] h-4 w-4" /> {/* Adjusted size for consistency */}
                     </p>
                   </TabsTrigger>
                 );
