@@ -10,6 +10,9 @@ import AddCategory from "@/components/inventory/AddCategory";
 import { useInventoryStore } from "@/stores/useInventoryStore";
 import { IoIosArrowUp, IoIosSearch } from "react-icons/io";
 import { CiImport } from "react-icons/ci";
+import { IoIosSearch } from "react-icons/io";
+import { Plus, ChevronRight } from "lucide-react";
+import type { Product } from "@/types/types";
 import { Plus, ChevronRight, RotateCcw } from "lucide-react";
 import { type Product } from "@/types/types";
 import {
@@ -19,7 +22,18 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
 import UpdateStock from "./components/UpdateStock"; // Ensure this import path is correct
+
 
 const AdminInventory = () => {
   const navigate = useNavigate();
@@ -31,6 +45,11 @@ const AdminInventory = () => {
   const [addCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
   const [stockStatus, setStockStatus] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
+
+
+  // set the search query from zustand store
+  const setSearchQuery = useInventoryStore((state) => state.setSearchQuery);
+  const { products, categories, searchQuery } = useInventoryStore();
 
   const {
     products,
@@ -91,6 +110,42 @@ const AdminInventory = () => {
     }
   };
 
+
+  // Filtering logic for stock status
+  function filterByStockStatus(product: Product) {
+    if (stockStatus === "all") return true;
+    if (stockStatus === "high") return product.stock >= product.minStockLevel;
+    if (stockStatus === "low")
+      return product.stock > 0 && product.stock < product.minStockLevel;
+    if (stockStatus === "out") return product.stock === 0;
+    return true;
+  }
+
+  // Filtering logic for price range
+  function filterByPriceRange(product: Product) {
+    if (priceRange === "all") return true;
+    const price = product.unitPrice;
+    if (priceRange === "under-1000") return price < 1000;
+    if (priceRange === "1000-5000") return price >= 1000 && price <= 5000;
+    if (priceRange === "5000-10000") return price > 5000 && price <= 10000;
+    if (priceRange === "10000-50000") return price > 10000 && price <= 50000;
+    if (priceRange === "above-50000") return price > 50000;
+    return true;
+  }
+
+  const filteredProducts = useMemo(
+    () =>
+      products.filter(
+        (product) =>
+          (product.name.toLowerCase().includes(searchQuery) ||
+            product.categoryId?.name?.toLowerCase().includes(searchQuery)) &&
+          filterByStockStatus(product) &&
+          filterByPriceRange(product)
+      ),
+    [products, searchQuery, stockStatus, priceRange]
+  );
+
+  // to close both modals
   const closeBothModals = () => {
     setIsAddModalOpen(false);
     setAddCategoryModalOpen(false);
@@ -104,6 +159,61 @@ const AdminInventory = () => {
 
   const handleMouseUp = () => setDragging(false);
 
+  const handleExportExcel = () => {
+    const data = filteredProducts.map((prod) => ({
+      Name: prod.name,
+      Category:
+        typeof prod.categoryId === "object"
+          ? prod.categoryId.name
+          : prod.categoryId,
+      Unit: prod.unit,
+      Stock: prod.stock,
+      "Unit Price": prod.unitPrice,
+      "Min Stock Level": prod.minStockLevel,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory");
+    XLSX.writeFile(workbook, "inventory_export.xlsx");
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+
+    const columns = [
+      { header: "Product Name", dataKey: "name" },
+      { header: "Category", dataKey: "category" },
+      { header: "Unit", dataKey: "unit" },
+      { header: "Stock", dataKey: "stock" },
+      { header: "Unit Price", dataKey: "unitPrice" },
+      { header: "Min Stock Level", dataKey: "minStockLevel" },
+    ];
+
+    const rows = filteredProducts.map((prod) => ({
+      name: prod.name,
+      category:
+        typeof prod.categoryId === "object"
+          ? prod.categoryId.name
+          : prod.categoryId,
+      unit: prod.unit,
+      stock: prod.stock,
+      unitPrice: prod.unitPrice,
+      minStockLevel: prod.minStockLevel,
+    }));
+
+    doc.text("Inventory Export", 14, 16);
+    autoTable(doc, {
+      startY: 22,
+      columns,
+      body: rows,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [44, 204, 113] },
+    });
+    doc.save("inventory_export.pdf");
+  };
+
+  // sets initial position of the button
   useEffect(() => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
@@ -144,6 +254,29 @@ const AdminInventory = () => {
         <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center py-5 px-4 sm:px-5 bg-[#f0f0f3] border-b border-[#d9d9d9] md:border-0">
           <h3 className="text-xl font-medium text-text-dark">Product & Categories</h3>
           <div className="flex gap-4">
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="w-40 bg-white text-[#333333] flex gap-1.5 items-center justify-center rounded-md py-2 px-4 border border-[#7d7d7d]">
+                  <IoIosArrowUp size={24} />
+                  <span>Export</span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="p-0 w-48">
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                  onClick={handleExportPDF}
+                >
+                  Export as PDF
+                </button>
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                  onClick={handleExportExcel}
+                >
+                  Export as Excel
+                </button>
+              </PopoverContent>
+            </Popover>
             <button className="w-40 bg-white text-[#333333] flex gap-1.5 items-center justify-center rounded-md py-2 px-4 border border-[#7d7d7d]">
               <IoIosArrowUp size={24} />
               <span>Export</span>
@@ -228,6 +361,14 @@ const AdminInventory = () => {
         </div>
 
         <div className="my-5" ref={containerRef}>
+          <InventoryTab
+            products={filteredProducts}
+            categories={categories}
+            stockStatus={stockStatus}
+            priceRange={priceRange}
+          />
+
+          {/* draggable button */}
           <InventoryTab stockStatus={stockStatus} priceRange={priceRange} />
           <button
             onClick={() => setIsAddModalOpen(true)}
