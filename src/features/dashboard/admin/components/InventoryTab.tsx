@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /** @format */
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 
 import { cn } from "@/lib/utils";
 import ProductDisplayTab from "./ProductDisplayTab";
@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info } from "lucide-react";
 import type { Product, Category } from "@/types/types";
 import { useInventoryStore } from "@/stores/useInventoryStore";
-import type { Product } from "@/types/types"; // Ensure Category is imported
 
 interface InventoryTabProps {
   products: Product[];
@@ -21,17 +20,15 @@ interface InventoryTabProps {
 }
 
 const InventoryTab = React.memo(
-  ({ products, categories }: InventoryTabProps) => {
+  ({ products = [], categories = [], stockStatus, priceRange }: InventoryTabProps) => {
     const [openCategory, setOpenCategory] = useState<{
       name: string;
       count: number;
       description?: string;
     } | null>(null);
 
-    // Helper for category tab filtering
-    function filterCategoryProducts(categoryName: string) {
-      return products.filter((prod) => prod.categoryId.name === categoryName);
-    const { products, categories, searchQuery } = useInventoryStore();
+    // Only get searchQuery from store, use props for products and categories
+    const { searchQuery } = useInventoryStore();
 
     // Helper function to safely get category name from product.categoryId
     // This is crucial for handling cases where categoryId might be just an ID string
@@ -105,7 +102,6 @@ const InventoryTab = React.memo(
       <div className="px-5 min-h-30">
         <Tabs defaultValue="allProducts">
           <div className="w-full max-w-[970px]">
-            <TabsList className="g-[#F5F5F5] gap-3 overflow-x-auto whitespace-nowrap h-16">
             {/* Added scrollbar for mobile */}
             <TabsList className="w-full bg-[#F5F5F5] gap-3 overflow-x-auto whitespace-nowrap h-16 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
               <TabsTrigger
@@ -124,21 +120,10 @@ const InventoryTab = React.memo(
               {/* display data for categories */}
               {categories?.map((category) => {
 
-                const categoryName = category.name;
-                const count = products.filter((prod) => {
-                  if (
-                    typeof prod.categoryId === "object" &&
-                    prod.categoryId?.name
-                  ) {
-                    return prod.categoryId.name === categoryName;
-                  }
-
                 const categoryName = category.name; // This is safe as 'categories' are actual Category objects
-                console.log(categoryName);
                 const count = products.filter((prod) => {
-                  const productCategoryName = getCategoryNameForProduct(prod.categoryId); // Use the helper
+                  const productCategoryName = getCategoryNameForProduct(prod.categoryId);
                   return productCategoryName === categoryName;
-
                 }).length;
                 return (
                   <TabsTrigger

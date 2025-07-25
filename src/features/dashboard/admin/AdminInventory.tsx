@@ -10,9 +10,6 @@ import AddCategory from "@/components/inventory/AddCategory";
 import { useInventoryStore } from "@/stores/useInventoryStore";
 import { IoIosArrowUp, IoIosSearch } from "react-icons/io";
 import { CiImport } from "react-icons/ci";
-import { IoIosSearch } from "react-icons/io";
-import { Plus, ChevronRight } from "lucide-react";
-import type { Product } from "@/types/types";
 import { Plus, ChevronRight, RotateCcw } from "lucide-react";
 import { type Product } from "@/types/types";
 import {
@@ -49,13 +46,11 @@ const AdminInventory = () => {
 
   // set the search query from zustand store
   const setSearchQuery = useInventoryStore((state) => state.setSearchQuery);
-  const { products, categories, searchQuery } = useInventoryStore();
-
+ 
   const {
     products,
     categories,
     searchQuery,
-    setSearchQuery,
     updateProducts, 
   } = useInventoryStore();
 
@@ -256,31 +251,27 @@ const AdminInventory = () => {
           <div className="flex gap-4">
 
             <Popover>
-              <PopoverTrigger asChild>
-                <button className="w-40 bg-white text-[#333333] flex gap-1.5 items-center justify-center rounded-md py-2 px-4 border border-[#7d7d7d]">
-                  <IoIosArrowUp size={24} />
-                  <span>Export</span>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="p-0 w-48">
-                <button
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                  onClick={handleExportPDF}
-                >
-                  Export as PDF
-                </button>
-                <button
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                  onClick={handleExportExcel}
-                >
-                  Export as Excel
-                </button>
-              </PopoverContent>
-            </Popover>
-            <button className="w-40 bg-white text-[#333333] flex gap-1.5 items-center justify-center rounded-md py-2 px-4 border border-[#7d7d7d]">
-              <IoIosArrowUp size={24} />
-              <span>Export</span>
-            </button>
+            <PopoverTrigger asChild>
+              <button className="w-40 bg-white text-[#333333] flex gap-1.5 items-center justify-center rounded-md py-2 px-4 border border-[#7d7d7d]">
+                <IoIosArrowUp size={24} />
+                <span>Export</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 w-48">
+              <button
+                className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                onClick={handleExportPDF}
+              >
+                Export as PDF
+              </button>
+              <button
+                className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                onClick={handleExportExcel}
+              >
+                Export as Excel
+              </button>
+            </PopoverContent>
+          </Popover>
             <div>
               <button
                 onClick={handleOpenModal}
@@ -369,7 +360,6 @@ const AdminInventory = () => {
           />
 
           {/* draggable button */}
-          <InventoryTab stockStatus={stockStatus} priceRange={priceRange} />
           <button
             onClick={() => setIsAddModalOpen(true)}
             onMouseDown={handleMouseDown}
