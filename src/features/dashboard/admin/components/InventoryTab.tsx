@@ -1,4 +1,9 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+/**
+ * eslint-disable react-hooks/exhaustive-deps
+ *
+ * @format
+ */
+
 /** @format */
 
 import React, { useState, useMemo } from "react";
@@ -20,7 +25,12 @@ interface InventoryTabProps {
 }
 
 const InventoryTab = React.memo(
-  ({ products = [], categories = [], stockStatus, priceRange }: InventoryTabProps) => {
+  ({
+    products = [],
+    categories = [],
+    stockStatus,
+    priceRange,
+  }: InventoryTabProps) => {
     const [openCategory, setOpenCategory] = useState<{
       name: string;
       count: number;
@@ -68,34 +78,32 @@ const InventoryTab = React.memo(
 
     const filteredProducts = useMemo(
       () =>
-        products.filter(
-          (product) => {
-            const productCategoryName = getCategoryNameForProduct(product.categoryId); // Use the helper
-            return (
-              (product.name.toLowerCase().includes(searchQuery) ||
-                productCategoryName.toLowerCase().includes(searchQuery)) && // Use the helper here too
-              filterByStockStatus(product) &&
-              filterByPriceRange(product)
-            );
-          }
-        ),
+        products.filter((product) => {
+          const productCategoryName = getCategoryNameForProduct(
+            product.categoryId
+          ); // Use the helper
+          return (
+            (product.name.toLowerCase().includes(searchQuery) ||
+              productCategoryName.toLowerCase().includes(searchQuery)) && // Use the helper here too
+            filterByStockStatus(product) &&
+            filterByPriceRange(product)
+          );
+        }),
       [products, searchQuery, stockStatus, priceRange, categories] // Add 'categories' to dependencies
     );
 
     // Helper for category tab filtering
     function filterCategoryProducts(categoryName: string) {
-      return products.filter(
-        (prod) => {
-          const productCategoryName = getCategoryNameForProduct(prod.categoryId); // Use the helper
-          return (
-            productCategoryName === categoryName && // Compare against the safely obtained name
-            (prod.name.toLowerCase().includes(searchQuery) ||
-             productCategoryName.toLowerCase().includes(searchQuery)) &&
-            filterByStockStatus(prod) &&
-            filterByPriceRange(prod)
-          );
-        }
-      );
+      return products.filter((prod) => {
+        const productCategoryName = getCategoryNameForProduct(prod.categoryId); // Use the helper
+        return (
+          productCategoryName === categoryName && // Compare against the safely obtained name
+          (prod.name.toLowerCase().includes(searchQuery) ||
+            productCategoryName.toLowerCase().includes(searchQuery)) &&
+          filterByStockStatus(prod) &&
+          filterByPriceRange(prod)
+        );
+      });
     }
 
     return (
@@ -119,10 +127,11 @@ const InventoryTab = React.memo(
               </TabsTrigger>
               {/* display data for categories */}
               {categories?.map((category) => {
-
                 const categoryName = category.name; // This is safe as 'categories' are actual Category objects
                 const count = products.filter((prod) => {
-                  const productCategoryName = getCategoryNameForProduct(prod.categoryId);
+                  const productCategoryName = getCategoryNameForProduct(
+                    prod.categoryId
+                  );
                   return productCategoryName === categoryName;
                 }).length;
                 return (
@@ -138,7 +147,8 @@ const InventoryTab = React.memo(
                       {count}
                     </span>
                     <p
-                      onClick={(e) => { // Added 'e' parameter to prevent tab change on click
+                      onClick={(e) => {
+                        // Added 'e' parameter to prevent tab change on click
                         e.stopPropagation(); // Stop propagation to prevent tab trigger from firing
                         setOpenCategory({
                           name: category.name,
@@ -148,7 +158,8 @@ const InventoryTab = React.memo(
                       }}
                       className="ml-1" // Added a small margin
                     >
-                      <Info className="text-[#D9D9D9] h-4 w-4" /> {/* Adjusted size for consistency */}
+                      <Info className="text-[#D9D9D9] h-4 w-4" />{" "}
+                      {/* Adjusted size for consistency */}
                     </p>
                   </TabsTrigger>
                 );
