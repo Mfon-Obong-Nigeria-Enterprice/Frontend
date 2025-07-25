@@ -3,18 +3,19 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDebouncedCallback } from "use-debounce";
+
 import DashboardTitle from "../../../components/dashboard/DashboardTitle";
 import InventoryTab from "./components/InventoryTab";
 import Modal from "@/components/Modal";
 import AddCategory from "@/components/inventory/AddCategory";
+
 import { useInventoryStore } from "@/stores/useInventoryStore";
+
 import { IoIosArrowUp, IoIosSearch } from "react-icons/io";
 import { CiImport } from "react-icons/ci";
-import { IoIosSearch } from "react-icons/io";
-import { Plus, ChevronRight } from "lucide-react";
-import type { Product } from "@/types/types";
 import { Plus, ChevronRight, RotateCcw } from "lucide-react";
-import { type Product } from "@/types/types";
+
+import type { Product } from "@/types/types";
 import {
   Select,
   SelectTrigger,
@@ -32,8 +33,7 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-import UpdateStock from "./components/UpdateStock"; // Ensure this import path is correct
-
+import UpdateStock from "./components/UpdateStock";
 
 const AdminInventory = () => {
   const navigate = useNavigate();
@@ -46,18 +46,12 @@ const AdminInventory = () => {
   const [stockStatus, setStockStatus] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
 
-
   // set the search query from zustand store
-  const setSearchQuery = useInventoryStore((state) => state.setSearchQuery);
-  const { products, categories, searchQuery } = useInventoryStore();
+  // const setSearchQuery = useInventoryStore((state) => state.setSearchQuery);
+  // const { products, categories, searchQuery } = useInventoryStore();
 
-  const {
-    products,
-    categories,
-    searchQuery,
-    setSearchQuery,
-    updateProducts, 
-  } = useInventoryStore();
+  const { products, categories, searchQuery, setSearchQuery, updateProducts } =
+    useInventoryStore();
 
   const debouncedSearch = useDebouncedCallback((value: string) => {
     setSearchQuery(value);
@@ -67,13 +61,13 @@ const AdminInventory = () => {
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
-  
+
   const getCategoryName = (product: Product): string => {
     if (!product.categoryId) return "Uncategorized";
-    if (typeof product.categoryId === 'object') {
+    if (typeof product.categoryId === "object") {
       return product.categoryId.name;
     }
-    const category = categories.find(c => c._id === product.categoryId);
+    const category = categories.find((c) => c._id === product.categoryId);
     return category?.name || "Uncategorized";
   };
 
@@ -82,7 +76,10 @@ const AdminInventory = () => {
   }, [products]);
 
   const handleSave = (updatedProducts: Product[]) => {
-    console.log("AdminInventory: Saving updated products to store:", updatedProducts);
+    console.log(
+      "AdminInventory: Saving updated products to store:",
+      updatedProducts
+    );
     updateProducts(updatedProducts); // This now correctly calls the bulk update action
     setIsModalOpen(false);
   };
@@ -99,7 +96,10 @@ const AdminInventory = () => {
       .map((prod) => ({ type: "product" as const, item: prod }));
   }, [searchQuery, products, categories]);
 
-  const handleSuggestionClick = (suggestion: { type: "product"; item: Product }) => {
+  const handleSuggestionClick = (suggestion: {
+    type: "product";
+    item: Product;
+  }) => {
     const id = suggestion.item._id;
     if (id) {
       const el = document.getElementById(id);
@@ -109,7 +109,6 @@ const AdminInventory = () => {
       }
     }
   };
-
 
   // Filtering logic for stock status
   function filterByStockStatus(product: Product) {
@@ -246,15 +245,18 @@ const AdminInventory = () => {
     };
   }, [dragging, rel]);
 
-
   return (
     <main>
-      <DashboardTitle heading="Inventory Management" description="Manage your products and categories" />
+      <DashboardTitle
+        heading="Inventory Management"
+        description="Manage your products and categories"
+      />
       <section className="bg-white xl:rounded-xl mt-5">
         <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center py-5 px-4 sm:px-5 bg-[#f0f0f3] border-b border-[#d9d9d9] md:border-0">
-          <h3 className="text-xl font-medium text-text-dark">Product & Categories</h3>
+          <h3 className="text-xl font-medium text-text-dark">
+            Product & Categories
+          </h3>
           <div className="flex gap-4">
-
             <Popover>
               <PopoverTrigger asChild>
                 <button className="w-40 bg-white text-[#333333] flex gap-1.5 items-center justify-center rounded-md py-2 px-4 border border-[#7d7d7d]">
@@ -327,7 +329,8 @@ const AdminInventory = () => {
             )}
             {searchQuery.trim() && suggestions.length === 0 && (
               <div className="absolute top-full left-0 w-full bg-white shadow-lg z-10 p-4 italic text-center text-gray-500 border border-gray-200 rounded-b-md">
-                No matching products found for <span className="text-gray-700">"{searchQuery}"</span>
+                No matching products found for{" "}
+                <span className="text-gray-700">"{searchQuery}"</span>
               </div>
             )}
           </div>
@@ -369,7 +372,7 @@ const AdminInventory = () => {
           />
 
           {/* draggable button */}
-          <InventoryTab stockStatus={stockStatus} priceRange={priceRange} />
+
           <button
             onClick={() => setIsAddModalOpen(true)}
             onMouseDown={handleMouseDown}
@@ -377,7 +380,7 @@ const AdminInventory = () => {
             style={{
               left: `${position.xPercent}vw`,
               top: `${position.yPercent}vh`,
-              transform: 'translate(-50%, -50%)'
+              transform: "translate(-50%, -50%)",
             }}
           >
             <Plus className="h-8 w-8" />
@@ -404,7 +407,9 @@ const AdminInventory = () => {
             >
               <div>
                 <p className="text-[#333333] text-sm">Add Product</p>
-                <p className="text-[#7D7D7D] text-[0.625rem]">Add a new product to your inventory</p>
+                <p className="text-[#7D7D7D] text-[0.625rem]">
+                  Add a new product to your inventory
+                </p>
               </div>
               <ChevronRight size={18} />
             </Link>
@@ -417,14 +422,20 @@ const AdminInventory = () => {
             >
               <div>
                 <p className="text-[#333333] text-sm">Add Category</p>
-                <p className="text-[#7D7D7D] text-[0.625rem]">Create a new product category</p>
+                <p className="text-[#7D7D7D] text-[0.625rem]">
+                  Create a new product category
+                </p>
               </div>
               <ChevronRight size={18} />
             </div>
           </div>
         </Modal>
 
-        <Modal isOpen={addCategoryModalOpen} onClose={() => setAddCategoryModalOpen(false)} size="xxl">
+        <Modal
+          isOpen={addCategoryModalOpen}
+          onClose={() => setAddCategoryModalOpen(false)}
+          size="xxl"
+        >
           <AddCategory closeBothModals={closeBothModals} />
         </Modal>
       </section>
