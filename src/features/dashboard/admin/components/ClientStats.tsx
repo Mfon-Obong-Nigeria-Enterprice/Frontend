@@ -1,27 +1,30 @@
 import { useClientStore } from "@/stores/useClientStore";
 import { useInventoryStore } from "@/stores/useInventoryStore";
+import { useClientStats } from "@/hooks/useClientStats";
 import { BsArrowDown, BsArrowUp } from "react-icons/bs";
 
 const ClientStats = () => {
+  const { totalClients, activeClients, activePercentage, growthPercent } =
+    useClientStats();
   const {
-    clients,
-    getActiveClients,
+    // clients,
+    // getActiveClients,
     // getNewClients,
-    getClientGrowthPercentage,
-    getActiveClientsPercentage,
+    // getClientGrowthPercentage,
+    // getActiveClientsPercentage,
     getOutStandingBalanceData,
   } = useClientStore();
   const products = useInventoryStore((state) => state.products);
 
-  const lowStockCount = products.filter(
+  const lowStockCount = products?.filter(
     (prod) => prod.stock <= prod.minStockLevel
   ).length;
 
-  const totalClients = clients.length;
-  const activeClients = getActiveClients();
+  // const totalClients = clients?.length;
+  // const activeClients = getActiveClients();
   // const newClients = getNewClients();
-  const clientGrowthPercentage = getClientGrowthPercentage();
-  const activeClientsPercentage = getActiveClientsPercentage();
+  // const clientGrowthPercentage = getClientGrowthPercentage();
+  // const activeClientsPercentage = getActiveClientsPercentage();
   const outstandingBalance = getOutStandingBalanceData();
 
   const ClientsCard = ({
@@ -83,7 +86,7 @@ const ClientStats = () => {
         title="Total Clients"
         value={totalClients}
         percentageLabel="more than last month"
-        percentage={clientGrowthPercentage}
+        percentage={growthPercent}
         showTrend={true}
       />
       {/*  */}
@@ -91,7 +94,7 @@ const ClientStats = () => {
         title="Active Clients"
         value={activeClients}
         percentageLabel="of total"
-        percentage={activeClientsPercentage}
+        percentage={activePercentage}
         showTrend={true}
       />
       {/*  */}
@@ -99,7 +102,7 @@ const ClientStats = () => {
         title="Outsanding balances"
         value={outstandingBalance.clientsWithDebt}
         percentageLabel="from last week"
-        percentage={clientGrowthPercentage}
+        percentage={growthPercent}
         showTrend={true}
       />
       {/*  */}
@@ -107,7 +110,7 @@ const ClientStats = () => {
         title="Low stock items"
         value={`${lowStockCount} Products`}
         percentageLabel="Needs attention"
-        percentage={clientGrowthPercentage}
+        percentage={growthPercent}
         showTrend={false}
       />
     </div>

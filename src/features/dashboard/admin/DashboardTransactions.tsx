@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 import { useDebounce } from "use-debounce";
 import DashboardTitle from "@/components/dashboard/DashboardTitle";
 import { Search, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import Stats from "./components/Stats";
 import type { StatCard } from "@/types/stats";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
+import { useClientStore } from "@/stores/useClientStore";
 import usePagination from "@/hooks/usePagination";
 import {
   Pagination,
@@ -16,6 +17,30 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import type { Transaction } from "@/types/transactions";
+import type { Client } from "@/types/types";
+import TransactionModal from "./components/TransactionModal";
+
+type BaseSuggestion = {
+  value: string;
+  type: "transaction" | "client" | "invoice";
+};
+
+type TransactionSuggestion = BaseSuggestion & {
+  type: "transaction";
+  transaction: Transaction;
+};
+
+type ClientSuggestion = BaseSuggestion & {
+  type: "client";
+  client: Client;
+};
+
+type InvoiceSuggestion = BaseSuggestion & {
+  type: "invoice";
+  invoice: string;
+};
+
+type Suggestion = TransactionSuggestion | ClientSuggestion | InvoiceSuggestion;
 
 const stats: StatCard[] = [
   {
@@ -46,7 +71,9 @@ const stats: StatCard[] = [
 ];
 
 const DashboardTransactions = () => {
-  const { transactions } = useTransactionsStore();
+  const { transactions, open, openModal, selectedTransaction, closeModal } =
+    useTransactionsStore();
+  const { clients } = useClientStore();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
@@ -56,9 +83,35 @@ const DashboardTransactions = () => {
   const suggestionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const tableRef = useRef<HTMLTableElement>(null);
 
+  // clientId is only available for registered clients.
+  const mergedTransactions = useMemo(() => {
+    return (transactions ?? []).map((transaction) => {
+      // const clientId = transaction.clientId?._id;
+      const clientId =
+        typeof transaction.clientId === "string"
+          ? transaction?.clientId
+          : transaction.clientId?._id;
+
+      // if (!clientId) {
+      //   return { ...transaction, clientBalance: null }; // for walk-in clients or missing id
+      // }
+      const clientMatch = clients?.find((client) => client._id === clientId);
+
+      return {
+        ...transaction,
+        clientBalance: clientMatch?.balance ?? null,
+      };
+    });
+  }, [transactions, clients]);
+
+  useEffect(() => {
+    console.log("Transactions", transactions);
+    console.log("Clients", clients);
+  }, [transactions, clients]);
+
   const filteredTransactions = useMemo(() => {
     const lowerTerm = debouncedSearchTerm.toLowerCase();
-    return (transactions ?? []).filter((transaction) => {
+    return (mergedTransactions ?? []).filter((transaction) => {
       const invoice = transaction.invoiceNumber?.toLowerCase() ?? "";
       const client =
         transaction.clientId?.name?.toLowerCase() ??
@@ -66,7 +119,7 @@ const DashboardTransactions = () => {
         "";
       return invoice.includes(lowerTerm) || client.includes(lowerTerm);
     });
-  }, [debouncedSearchTerm, transactions]);
+  }, [debouncedSearchTerm, mergedTransactions]);
 
   // Generate suggestions based on search term
   const suggestions = useMemo(() => {
@@ -113,13 +166,15 @@ const DashboardTransactions = () => {
     return suggestionList.slice(0, 8); // Limit to 8 suggestions
   }, [searchTerm, filteredTransactions]);
 
-  const handleSuggestionClick = (suggestion: Transaction) => {
+  const handleSuggestionClick = (suggestion: Suggestion) => {
     setSearchTerm(suggestion.value);
     setShowSuggestions(false);
     setSelectedSuggestionIndex(-1);
 
-    // Scroll to the transaction row
-    scrollToTransaction(suggestion.transaction._id);
+    if (suggestion.type === "transaction") {
+      scrollToTransaction(suggestion.transaction._id);
+    }
+    // scrollToTransaction((suggestion.transaction as Transaction)._id);
   };
 
   const scrollToTransaction = (transactionId: string) => {
@@ -192,6 +247,7 @@ const DashboardTransactions = () => {
       case "Enter":
         e.preventDefault();
         if (selectedSuggestionIndex >= 0) {
+          // @ts-expect-error transaction type is needed
           handleSuggestionClick(suggestions[selectedSuggestionIndex]);
         }
         break;
@@ -216,11 +272,11 @@ const DashboardTransactions = () => {
     }
   }, [selectedSuggestionIndex]);
 
-  const clearSearch = () => {
-    setSearchTerm("");
-    setShowSuggestions(false);
-    setSelectedSuggestionIndex(-1);
-  };
+  // const clearSearch = () => {
+  //   setSearchTerm("");
+  //   setShowSuggestions(false);
+  //   setSelectedSuggestionIndex(-1);
+  // };
 
   // Use filteredTransactions for pagination instead of filterByInvoice
   const {
@@ -230,7 +286,7 @@ const DashboardTransactions = () => {
     goToNextPage,
     canGoPrevious,
     canGoNext,
-  } = usePagination(filteredTransactions.length, 5);
+  } = usePagination(mergedTransactions.length, 5);
 
   const currentTransaction = useMemo(() => {
     const startIndex = (currentPage - 1) * 5;
@@ -299,8 +355,13 @@ const DashboardTransactions = () => {
                 suggestions.map((suggestion, i) => (
                   <div
                     key={i}
-                    ref={(el) => (suggestionRefs.current[i] = el)}
-                    onClick={() => handleSuggestionClick(suggestion)}
+                    ref={(el) => {
+                      suggestionRefs.current[i] = el;
+                    }}
+                    onClick={() =>
+                      // @ts-expect-error transaction type is needed
+                      handleSuggestionClick(suggestion)
+                    }
                     onMouseEnter={() => setSelectedSuggestionIndex(i)}
                     className={`flex items-center justify-between px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors ${
                       selectedSuggestionIndex === i
@@ -321,6 +382,7 @@ const DashboardTransactions = () => {
                     <div className="text-xs text-gray-400">
                       {suggestion.type === "invoice" && (
                         <span className="ml-2">
+                          {/* @ts-expect-error transaction type is needed */}
                           {suggestion.transaction.clientId?.name ??
                             suggestion.transaction.walkInClient?.name}
                         </span>
@@ -456,20 +518,44 @@ const DashboardTransactions = () => {
                   <td className="text-sm text-center">
                     ₦{transaction.total.toLocaleString()}
                   </td>
-                  <td className="text-sm text-center">
-                    ₦{transaction.amountPaid.toLocaleString()}
+                  <td
+                    className={`text-sm text-center ${
+                      typeof transaction.clientBalance === "number"
+                        ? transaction.clientBalance < 0
+                          ? "text-[#F95353]"
+                          : transaction.clientBalance > 0
+                          ? "text-[#2ECC71]"
+                          : "text-[#7d7d7d]"
+                        : "text-[#7d7d7d]"
+                    }`}
+                  >
+                    {transaction.clientBalance !== null ? (
+                      <>
+                        {transaction.clientBalance < 0 ? "-" : ""}₦
+                        {Math.abs(transaction.clientBalance).toLocaleString()}
+                      </>
+                    ) : (
+                      "₦0.00"
+                    )}
                   </td>
                   <td className="text-center text-[#3D80FF] text-sm">
-                    {transaction.clientId?._id ? (
+                    <button
+                      onClick={() => openModal(transaction)}
+                      className="underline cursor-pointer hover:no-underline transition-all duration-150 ease-in-out"
+                    >
+                      View
+                    </button>
+
+                    {/* {transaction.clientId?._id ? (
                       <Link
-                        to={`/clients/${transaction.clientId._id}`}
+                        to={`/clients/${transaction?.clientId._id}`}
                         className="underline"
                       >
                         View
                       </Link>
                     ) : (
                       <span>walk-in</span>
-                    )}
+                    )} */}
                   </td>
                 </tr>
               ))
@@ -488,6 +574,7 @@ const DashboardTransactions = () => {
           </tbody>
         </table>
 
+        {open && <TransactionModal />}
         {/* pagination */}
         {currentTransaction?.length > 0 && totalPages > 1 && (
           <div className="h-16 bg-[#f5f5f5] text-sm text-[#7D7D7D] flex justify-center items-center gap-3 rounded-b-[0.625rem] ">

@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { useParams } from "react-router-dom";
+
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronUp } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import DatePicker from "@/components/DatePicker";
 import {
@@ -13,99 +14,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronDown, MoveRight, MoveLeft } from "lucide-react";
-import { useTransactionsStore } from "@/stores/useTransactionStore";
-// import { Transaction } from "@/types/transactions";
-// type Transaction = {
-//   method: string;
-//   items: string[];
-//   type: "Debit" | "Credit" | "Partial";
-//   amount: string;
-//   balance: string;
-//   staff: string;
-//   date: string;
-//   time: string;
-// };
-
-// const transactionData: Transaction[] = [
-//   {
-//     method: "Bank transfer",
-//     items: ["10x cement", "4x Nails"],
-//     type: "Debit",
-//     amount: "-₦ 250,000",
-//     balance: "-₦ 450,000",
-//     staff: "John Doe",
-//     date: "5/25/2025",
-//     time: "10:45 AM",
-//   },
-//   {
-//     method: "Check payment",
-//     items: [
-//       "10 bags of cement",
-//       "10x 8MM long rod",
-//       "15x nails",
-//       "20x 4mm rod",
-//       "10x 6mm rod",
-//     ],
-//     type: "Partial",
-//     amount: "₦ 100,000",
-//     balance: "-₦ 200,000",
-//     staff: "Jane Smith",
-//     date: "5/21/2025",
-//     time: "09:45 PM",
-//   },
-//   {
-//     method: "Cash",
-//     items: ["10x cement"],
-//     type: "Credit",
-//     amount: "₦ 75,000",
-//     balance: "-₦750,000",
-//     staff: "Mike Johnson",
-//     date: "5/25/2025",
-//     time: "04:15 PM",
-//   },
-//   {
-//     method: "Cheque",
-//     items: ["58x steel rods"],
-//     type: "Debit",
-//     amount: "-₦ 255,000",
-//     balance: "₦0.00",
-//     staff: "Sara Wilson",
-//     date: "5/04/2025",
-//     time: "08:10 AM",
-//   },
-// ];
+import { useClientStore } from "@/stores/useClientStore";
 
 const ClientDetailsPage: React.FC = () => {
-  const navigate = useNavigate();
   const { clientId } = useParams<{ clientId: string }>();
-  const { transactions } = useTransactionsStore();
+  const navigate = useNavigate();
+  const { clients } = useClientStore();
 
-  const transaction = transactions.find(
-    (transaction) => transaction.clientId?._id === clientId
-  );
-
-  if (!transaction) {
-    return (
-      <div className="flex justify-center text-red-500 min-h-screen items-center">
-        Transaction not found
-      </div>
-    );
+  if (!clients || clients.length === 0) {
+    return <div>Loading clients...</div>;
   }
-  //   displayDate: new Date(transaction.createdAt).toLocaleDateString(),
-  // }));
 
-  //   const [expandedDesc, setExpandedDesc] = useState<boolean>(false);
-  //   const toggleExpanded = () => setExpandedDesc(!expandedDesc);
-  // const [expandedRow, setExpandedRow] = useState<number | null>(null);
-
-  // const toggleRow = (index: number) => {
-  //   setExpandedRow((prev) => (prev === index ? null : index));
-  // };
+  // get client
+  const client = clients.find((c) => c._id === clientId);
+  console.log("client", client);
+  if (!client) {
+    return <div>Client not found</div>;
+  }
 
   return (
     <>
       <header className="flex justify-between items-center py-3 px-10">
+        {" "}
         <div className="flex gap-10">
           <button
             onClick={() => navigate(-1)}
@@ -121,7 +51,6 @@ const ClientDetailsPage: React.FC = () => {
             <ChevronUp />
             <span>Export data</span>
           </Button>
-
           <Select>
             <SelectTrigger className="w-[130px]">
               <SelectValue placeholder="Edit Client"></SelectValue>
@@ -138,75 +67,84 @@ const ClientDetailsPage: React.FC = () => {
           <Button className="bg-[#FFC761] hover:bg-[#FFA500] text-text-dark">
             Send Payment Reminder
           </Button>
-
-          {/* <Button
-            onClick={() => navigate("/client-details")}
-            className="bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)] text-white"
-          >
-            Edit Client
-          </Button> */}
-          {/* <Button
-            onClick={() => navigate("/client-details")}
-            className="bg-[#F95353] hover:bg-[#f95353e1] text-white"
-          >
-            Suspend account
-          </Button> */}
         </div>
       </header>
+
+      {/* main content */}
       <main className="flex gap-3 bg-[#F5F5F5] py-5 px-12">
         {/* section by the left */}
         <section className="w-[40%] bg-white py-8 px-5 rounded">
           <p className="text-lg text-[#333333] mb-6">
-            {transaction.clientId?.name}
+            {client?.name ?? "Unknown"}
           </p>
           <div
-            className={`flex flex-col justify-center gap-1 min-h-18 border-l-4 text-xs py-1.5 px-3 rounded-[8px] border-[#F95353] bg-[#FFE9E9]
+            className={`flex flex-col justify-center gap-1 min-h-18 border-l-4 text-xs py-1.5 px-3 rounded-[8px] ${
+              client.balance > 0
+                ? "border-[#2ECC71] bg-[#C8F9DD]"
+                : "border-[#F95353] bg-[#FFE9E9]"
+            }
             }`}
           >
             <p className="text-[#444444] text-xs">Current balance</p>
-            <p className="text-lg text-[#F95353]">-₦ 250,000</p>
+            <p
+              className={`text-lg font-bold ${
+                client.balance > 0 ? "text-[#2ECC71]" : "text-[#F95353]"
+              }`}
+            >
+              ₦{client.balance.toLocaleString()}
+            </p>
           </div>
           {/* info */}
           <article className="my-7">
             <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
               <p>Phone</p>
-              <p>{transaction.clientId?.phone}</p>
+              <p>{client.phone ?? "No phone number"}</p>
             </div>
             <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
               <p>Address</p>
-              <address>124 Abak Road ( wharehouse 3)</address>
+              <address>{client.address}</address>
             </div>
             <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
               <p>Registered</p>
-              <p>5/4/2025</p>
+              <p>{new Date(client.createdAt).toLocaleDateString()}</p>
             </div>
             <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
               <p>Last activity</p>
-              <p>5/25/2025</p>
+              <p>
+                {client.lastTransactionDate &&
+                  new Date(client.lastTransactionDate).toLocaleDateString()}
+              </p>
             </div>
             <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
               <p>Account status</p>
-              <p className="text-[#F95353] capitalize">Overdue</p>
+              <p
+                className={`capitalize ${
+                  client.balance > 0 ? "text-[#2ECC71]" : "text-[#F95353]"
+                }`}
+              >
+                {client.balance > 0 ? "credit" : "Overdue"}
+              </p>
             </div>
           </article>
 
           {/* description */}
-          <div className="bg-[#F5F5F5] p-4 rounded-md border border-[#d9d9d9] mt-5">
-            <p className="text-[0.625rem] text-[#7D7D7D] mb-1">
-              Client Description
-            </p>
-            <p className="text-[0.625rem] text-[#444444]">
-              Major construction company specializing in residential and
-              commercial buildings. Long-term client with multiple ongoing
-              projects. Prefers bulk material orders and has established credit
-              terms. Primary contact: Mr. Okoro (Site Manager).
-            </p>
-          </div>
-
+          {client.description && (
+            <div className="bg-[#F5F5F5] p-4 rounded-md border border-[#d9d9d9] mt-5">
+              <p className="text-[0.625rem] text-[#7D7D7D] mb-1">
+                Client Description
+              </p>
+              <p className="text-[0.625rem] text-[#444444]">
+                {client.description}
+              </p>
+            </div>
+          )}
           {/* data */}
           <ul className="grid grid-cols-2 gap-5 mt-5">
             <li className="bg-[#F5F5F5] flex flex-col gap-0.5 justify-center items-center rounded-[8px] p-5">
-              <span className="text-sm text-[#333333] font-semibold">24</span>
+              <span className="text-sm text-[#333333] font-semibold">
+                {" "}
+                {client.transactions.length}
+              </span>
               <span className="text-xs text-[#444444] font-normal">
                 Total order
               </span>
@@ -238,8 +176,8 @@ const ClientDetailsPage: React.FC = () => {
         </section>
 
         {/* section by the right */}
-        {/* data */}
         <section className="w-full bg-white py-8 px-5 rounded">
+          {/* data */}
           <div className="flex justify-between items-end gap-5 mb-10">
             <div>
               <p className="text-[#7D7D7D] text-[0.625rem] mb-1 ml-1.5">
@@ -270,8 +208,6 @@ const ClientDetailsPage: React.FC = () => {
                     <SelectItem value="all">All transactions</SelectItem>
                     <SelectItem value="purchase">Purchase</SelectItem>
                     <SelectItem value="pick-up">Pick-up</SelectItem>
-                    {/* <SelectItem value="banana">Banana</SelectItem>
-                    <SelectItem value="pineapple">Pineapple</SelectItem> */}
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -291,10 +227,6 @@ const ClientDetailsPage: React.FC = () => {
                   <SelectGroup>
                     <SelectLabel>Select staff</SelectLabel>
                     <SelectItem value="all-staff">All Staff</SelectItem>
-                    {/* <SelectItem value="banana">Banana</SelectItem>
-                    <SelectItem value="blueberry">Blueberry</SelectItem>
-                    <SelectItem value="grapes">Grapes</SelectItem>
-                    <SelectItem value="pineapple">Pineapple</SelectItem> */}
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -303,112 +235,112 @@ const ClientDetailsPage: React.FC = () => {
               Apply filters
             </Button>
           </div>
-          {/* data table */}
-          <table className="w-full">
-            <thead className="bg-[#F5F5F5]">
-              <tr>
-                <th className="py-1.5 text-xs text-[#333333] font-normal text-center">
-                  Date/Time
-                </th>
-                <th className="py-3 text-xs text-[#333333] font-normal text-center">
-                  Type
-                </th>
-                <th className="py-3 text-xs text-[#333333] font-normal text-center">
-                  Description
-                </th>
-                <th className="py-3 text-xs text-[#333333] font-normal text-center">
-                  Payment Method
-                </th>
-                <th className="py-3 text-xs text-[#333333] font-normal text-center">
-                  Amount
-                </th>
-                <th className="py-3 text-xs text-[#333333] font-normal text-center">
-                  Balance
-                </th>
-                <th className="py-3 text-xs text-[#333333] font-normal text-center">
-                  Staff
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((transaction, i) => {
-                return (
-                  <tr key={i} className="border-b border-[#d9d9d9]">
-                    <td className="flex flex-col text-center text-[#7D7D7D] text-sm font-normal py-3">
-                      {/* <span>{transaction.date}</span>
-                      <span>{transaction.time}</span> */}
-                    </td>
-                    <td className="text-center">
-                      <span
-                        className={`border text-xs py-1.5 px-3 rounded-[6.25rem] ${
-                          transaction.type === "PURCHASE"
-                            ? "border-[#F95353] bg-[#FFCACA] text-[#F95353]"
-                            : transaction.type === "Credit"
-                            ? "border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71]"
-                            : "border-[#FFA500] bg-[#FFE7A4] text-[#FFA500]"
-                        }`}
-                      >
-                        {transaction.type}
-                      </span>
-                    </td>
+          {/* display data */}
+          {client.transactions.length === 0 ? (
+            <p className="text-center text-sm text-[#7D7D7D] py-10">
+              No transactions found for this client
+            </p>
+          ) : (
+            client.transactions.map((txn) => (
+              <div
+                key={txn._id}
+                className="border rounded-lg px-5 py-3 mb-10 shadow"
+              >
+                {/* type, date and time, balance */}
+                <div className="grid grid-cols-[1fr_5fr_1fr] py-4 border-b border-[#d7d7d7]">
+                  <p className="text-xs">{txn.type}</p>
+                  <p className="flex flex-col">
+                    <span className="text-xs">
+                      {new Date(txn.date).toLocaleDateString()}
+                    </span>
+                    <span className="text-xs">
+                      {new Date(txn.date).toLocaleTimeString()}
+                    </span>
+                  </p>
+                  <p
+                    className={`${
+                      txn.amount > 0 ? "text-[#2ECC71]" : "text-[#F95353]"
+                    }`}
+                  >
+                    ₦{client.balance.toLocaleString()}
+                  </p>
+                </div>
+                {/* details */}
+                <div className="flex justify-between px-2 py-5">
+                  <div className="w-[220px] space-y-3">
+                    <h6 className="text-[#333333] font-normal text-base">
+                      Balance Change
+                    </h6>
 
-                    <td
-                      onClick={() => toggleRow(i)}
-                      className="cursor-pointer text-center text-xs text-[#333] max-w-[120px]"
-                    >
-                      <div className="flex items-center justify-center gap-1">
-                        <span>
-                          {/* {expandedRow === i
-                            ? transaction.items.join(", ")
-                            : transaction.items[0]} */}
-                        </span>
-                        {transaction.items.length > 1 && (
-                          <ChevronDown
-                            className={`w-4 h-4 transition-transform ${
-                              expandedRow === i ? "rotate-180 w-10" : ""
-                            }`}
-                          />
-                        )}
+                    <div className="bg-[#F5F5F5] rounded py-2 px-5">
+                      <div className="flex justify-between">
+                        <p className="text-[9px] text-[#7D7D7D]">Previous</p>
+                        <p className="text-[9px] text-[#7D7D7D]">New</p>
                       </div>
-                    </td>
 
-                    <td className="text-[#333333] text-center text-xs">
-                      {transaction.paymentMethod}
-                    </td>
-                    <td
-                    // className={`text-sm text-center ${
-                    //   transaction.total.includes("-")
-                    //     ? "text-[#F95353]"
-                    //     : "text-[#2ECC71]"
-                    // }`}
-                    >
-                      {transaction.total}
-                    </td>
-                    <td
-                    // className={`text-sm text-center ${
-                    //   transaction.balance.includes("-")
-                    //     ? "text-[#F95353]"
-                    //     : transaction.balance.startsWith("₦0")
-                    //     ? "text-[#444444]"
-                    //     : "text-[#2ECC71]"
-                    // }`}
-                    >
-                      {transaction.amountPaid}
-                    </td>
-                    {/* <td className="text-[#333333] text-center text-xs">
-                      {transaction.staff}
-                    </td> */}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      <div className="flex justify-between">
+                        <span className="text-[#444444] text-[13px]">
+                          250,00
+                        </span>
+                        <span>
+                          <ArrowRight size={13} />
+                        </span>
+                        <span className="text-[#444444] text-[13px]">
+                          509955
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* transaction details */}
+                  <div className="space-y-3">
+                    <h6 className="text-[#333333] font-normal text-base">
+                      Transaction Details
+                    </h6>
+                    <div>
+                      <p className="font-medium text-[#444444] text-[13px]">
+                        Amount:{" "}
+                        <span className="font-normal">
+                          ₦{client.balance.toLocaleString()}
+                        </span>
+                      </p>
+                      <p className="font-medium text-[#444444] text-[13px]">
+                        Method:{" "}
+                        <span className="font-normal">
+                          {/*{txn.paymentMethod}*/}
+                        </span>{" "}
+                      </p>
+                    </div>
+                  </div>
 
-          <div className="flex justify-center items-center gap-2 mt-20">
-            <MoveLeft />
-            <p>Page 1 of 1</p>
-            <MoveRight />
-          </div>
+                  {/* process by */}
+                  <div className="space-y-3">
+                    <h6 className="text-[#333333] font-normal text-base">
+                      Process By
+                    </h6>
+                    <p className="font-medium text-[#444444] text-[13px]">
+                      Staff:
+                      <span className="font-normal"> Jane Smith</span>
+                    </p>
+                    <p className="rounded-[2px] bg-[#E2F3EB] p-0.5 text-center">
+                      <span className="text-[#3D80FF] text-xs">
+                        INV-2-25-003
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* partial payment block */}
+                <div className="bg-[#F5F5F5] py-4 px-6 rounded-[8px]">
+                  <h6 className="text-base text-[#333333] font-normal">
+                    Partial Payment Received
+                  </h6>
+                  <p className="text-[0.625rem] text-[#333333]">
+                    Payment towards outstanding balance
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
         </section>
       </main>
     </>

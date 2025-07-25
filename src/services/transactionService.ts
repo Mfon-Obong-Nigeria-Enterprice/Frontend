@@ -8,7 +8,7 @@ import { AxiosError } from "axios";
 //   ClientWithTransactions,
 // } from "@/types/types";
 
-export const getAllTransactions = async (): Promise<Transaction> => {
+export const getAllTransactions = async (): Promise<Transaction[]> => {
   const token = await localforage.getItem<string>("access_token");
   if (!token) throw new Error("No access token found");
 

@@ -33,6 +33,7 @@ export interface Client {
   email?: string;
   address?: string;
   balance: number;
+  description?: string;
   transactions: TransactionItem[];
   isActive: boolean;
   isRegistered: boolean;
