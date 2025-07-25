@@ -1,3 +1,5 @@
+/** @format */
+
 // @/pages/AdminInventory.tsx
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -33,7 +35,7 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-import UpdateStock from "./components/UpdateStock";
+import UpdateStock from "./components/UpdateStock"; // Ensure this import path is correct
 
 const AdminInventory = () => {
   const navigate = useNavigate();
@@ -47,10 +49,9 @@ const AdminInventory = () => {
   const [priceRange, setPriceRange] = useState("all");
 
   // set the search query from zustand store
-  // const setSearchQuery = useInventoryStore((state) => state.setSearchQuery);
-  // const { products, categories, searchQuery } = useInventoryStore();
+  const setSearchQuery = useInventoryStore((state) => state.setSearchQuery);
 
-  const { products, categories, searchQuery, setSearchQuery, updateProducts } =
+  const { products, categories, searchQuery, updateProducts } =
     useInventoryStore();
 
   const debouncedSearch = useDebouncedCallback((value: string) => {
@@ -279,10 +280,6 @@ const AdminInventory = () => {
                 </button>
               </PopoverContent>
             </Popover>
-            <button className="w-40 bg-white text-[#333333] flex gap-1.5 items-center justify-center rounded-md py-2 px-4 border border-[#7d7d7d]">
-              <IoIosArrowUp size={24} />
-              <span>Export</span>
-            </button>
             <div>
               <button
                 onClick={handleOpenModal}
@@ -372,7 +369,6 @@ const AdminInventory = () => {
           />
 
           {/* draggable button */}
-
           <button
             onClick={() => setIsAddModalOpen(true)}
             onMouseDown={handleMouseDown}
