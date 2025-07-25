@@ -1,5 +1,3 @@
-/** @format */
-
 import { Link } from "react-router-dom";
 import DashboardTitle from "@/components/dashboard/DashboardTitle";
 import Stats from "./components/Stats";
@@ -10,40 +8,48 @@ import { Button } from "@/components/ui/Button";
 import { VscRefresh } from "react-icons/vsc";
 import { Plus } from "lucide-react";
 import { useInventoryStore } from "@/stores/useInventoryStore";
-import { type StatCard } from "./components/Stats";
+import { useClientStore } from "@/stores/useClientStore";
+import { type StatCard } from "@/types/stats";
 
 const DashboardOverview: React.FC = () => {
   const products = useInventoryStore((state) => state.products);
-
-  const lowStockCount = products.filter(
+  const { getActiveClients, getActiveClientsPercentage } = useClientStore();
+  const lowStockCount = products?.filter(
     (prod) => prod.stock <= prod.minStockLevel
   ).length;
+
+  const activeClients = getActiveClients();
+  const activeClientsPercentage = getActiveClientsPercentage();
 
   const stats: StatCard[] = [
     {
       heading: "Total Sales (Today)",
-      salesValue: "₦ 1,250,000",
+      salesValue: 1250000,
+      format: "currency",
       statValue: "12% from yesterday",
-      color: "green",
+      statColor: "green",
     },
     {
       heading: "Outstanding balances",
-      salesValue: "₦ 400,000",
+      salesValue: 400000,
+      format: "currency",
       statValue: "5% from last week",
-      color: "orange",
+      statColor: "orange",
     },
     {
       heading: "Low Stock Items",
       salesValue: `${lowStockCount} Products`,
       statValue: "Needs attention",
-      color: "red",
+      // format: "text",
+      statColor: "red",
       hideArrow: true,
     },
     {
       heading: "Active Clients",
-      salesValue: "42",
-      statValue: "3% new clients this week",
-      color: "green",
+      salesValue: `${activeClients}`,
+      statValue: `${activeClientsPercentage}% new clients this week`,
+      statColor: "green",
+      // format: "text",
     },
   ];
 

@@ -5,15 +5,19 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDebouncedCallback } from "use-debounce";
+
 import DashboardTitle from "../../../components/dashboard/DashboardTitle";
 import InventoryTab from "./components/InventoryTab";
 import Modal from "@/components/Modal";
 import AddCategory from "@/components/inventory/AddCategory";
+
 import { useInventoryStore } from "@/stores/useInventoryStore";
+
 import { IoIosArrowUp, IoIosSearch } from "react-icons/io";
 import { CiImport } from "react-icons/ci";
 import { Plus, ChevronRight, RotateCcw } from "lucide-react";
-import { type Product } from "@/types/types";
+
+import type { Product } from "@/types/types";
 import {
   Select,
   SelectTrigger,

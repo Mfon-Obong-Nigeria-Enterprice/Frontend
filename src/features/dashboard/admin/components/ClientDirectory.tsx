@@ -1,3 +1,4 @@
+import React, { useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -10,14 +11,13 @@ import {
 import { useClientStore } from "@/stores/useClientStore";
 import type { Client } from "@/types/types";
 import { Badge } from "@/components/ui/badge";
-import React, { useEffect, useMemo, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Eye, Trash2 } from "lucide-react";
+import { Eye } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -40,32 +40,32 @@ import { Button } from "@/components/ui/Button";
 interface ClientDirectoryProps {
   searchTerm: string;
 }
+// deleteClient
 
 const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [dialog, setDialog] = useState<"view" | "delete" | null>(null);
-  const { clients, initializeStore, fetchClient, deleteClient } =
-    useClientStore();
+  const { clients } = useClientStore();
 
-  useEffect(() => {
-    const initialize = async () => {
-      try {
-        await initializeStore();
-        await fetchClient();
-      } catch (error) {
-        console.error("failed to initialize store", error);
-      }
-    };
-    initialize();
-  }, [initializeStore, fetchClient]);
+  // useEffect(() => {
+  //   const initialize = async () => {
+  //     try {
+  //       await initializeStore();
+  //       await fetchClient();
+  //     } catch (error) {
+  //       console.error("failed to initialize store", error);
+  //     }
+  //   };
+  //   initialize();
+  // }, [initializeStore, fetchClient]);
 
-  const filteredClients = clients.filter(
+  const filteredClients = (clients ?? []).filter(
     (client) =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client._id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // thisi is where the transaction is coming from
+  // this is where the transaction is coming from
   const getClientTransaction = (client: Client) => {
     if (
       !client.transactions ||
@@ -74,6 +74,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
     ) {
       return null;
     }
+
     const sortedTransaction = [...client.transactions].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
@@ -86,6 +87,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
 
     return sortedTransaction[0] || null;
   };
+
   const formatCurrency = (value: number) => `₦${value.toLocaleString()}`;
 
   const {
@@ -131,32 +133,30 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
     setDialog(action);
   };
 
-  const deleteClientData = async () => {
-    if (!selectedClient) return;
-    try {
-      await deleteClient(selectedClient._id);
-      setSelectedClient(null);
-      setDialog(null);
-      console.log("Client deleted successfully");
-    } catch (error: any) {
-      console.error("Deletion failed:", error);
+  // const deleteClientData = async () => {
+  //   if (!selectedClient) return;
+  //   try {
+  //     await deleteClient(selectedClient._id);
+  //     setSelectedClient(null);
+  //     setDialog(null);
+  //     console.log("Client deleted successfully");
+  //   } catch (error: any) {
+  //     console.error("Deletion failed:", error);
 
-      // Handle specific error types
-      if (error?.response?.status === 403) {
-        alert(
-          "You don't have permission to delete this client. Please check your access rights."
-        );
-      } else if (error?.response?.status === 401) {
-        alert("Your session has expired. Please log in again.");
-        // Redirect to login or refresh token
-      } else {
-        alert("Failed to delete client. Please try again.");
-      }
-    }
-  };
+  //     // Handle specific error types
+  //     if (error?.response?.status === 403) {
+  //       alert(
+  //         "You don't have permission to delete this client. Please check your access rights."
+  //       );
+  //     } else if (error?.response?.status === 401) {
+  //       alert("Your session has expired. Please log in again.");
+  //       // Redirect to login or refresh token
+  //     } else {
+  //       alert("Failed to delete client. Please try again.");
+  //     }
+  //   }
+  // };
 
-  //
-  //
   return (
     <div className="mt-7 mb-2 px-4 ">
       <Card>
@@ -242,14 +242,14 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
                             <Eye className="h-4 w-4 mr-2" />
                             view Details
                           </DropdownMenuItem>
-                          {/*  */}
-                          <DropdownMenuItem
+
+                          {/* <DropdownMenuItem
                             onClick={() => handleAction(client, "delete")}
                             className="text-red-600"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete
-                          </DropdownMenuItem>
+                          </DropdownMenuItem> */}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -367,7 +367,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={dialog === "delete"} onOpenChange={() => setDialog(null)}>
+      {/* <Dialog open={dialog === "delete"} onOpenChange={() => setDialog(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Client</DialogTitle>
@@ -396,7 +396,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
             </div>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
 
       {/* <table className="w-full">
         <thead className="bg-[#F5F5F5] border border-[#d9d9d9]">

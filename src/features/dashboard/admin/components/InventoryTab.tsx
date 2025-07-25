@@ -4,14 +4,11 @@
  * @format
  */
 
-/** @format */
-
 import React, { useState, useMemo } from "react";
 
 import { cn } from "@/lib/utils";
 import ProductDisplayTab from "./ProductDisplayTab";
 import CategoryModal from "./CategoryModal";
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info } from "lucide-react";
 import type { Product, Category } from "@/types/types";
@@ -40,21 +37,17 @@ const InventoryTab = React.memo(
     // Only get searchQuery from store, use props for products and categories
     const { searchQuery } = useInventoryStore();
 
-    // Helper function to safely get category name from product.categoryId
-    // This is crucial for handling cases where categoryId might be just an ID string
     const getCategoryNameForProduct = (
       categoryId: string | { _id: string; name: string; units: string[] }
     ): string => {
       if (typeof categoryId === "object" && categoryId.name) {
         return categoryId.name;
       }
-      // If categoryId is just a string (the ID), find the category by ID
       const id = typeof categoryId === "string" ? categoryId : categoryId._id;
       const foundCategory = categories.find((c) => c._id === id);
-      return foundCategory?.name || "Uncategorized"; // Provide a fallback
+      return foundCategory?.name || "Uncategorized";
     };
 
-    // Filtering logic for stock status
     function filterByStockStatus(product: Product) {
       if (stockStatus === "all") return true;
       if (stockStatus === "high") return product.stock > 20;
@@ -64,7 +57,6 @@ const InventoryTab = React.memo(
       return true;
     }
 
-    // Filtering logic for price range
     function filterByPriceRange(product: Product) {
       if (priceRange === "all") return true;
       const price = product.unitPrice;
@@ -92,7 +84,6 @@ const InventoryTab = React.memo(
       [products, searchQuery, stockStatus, priceRange, categories] // Add 'categories' to dependencies
     );
 
-    // Helper for category tab filtering
     function filterCategoryProducts(categoryName: string) {
       return products.filter((prod) => {
         const productCategoryName = getCategoryNameForProduct(prod.categoryId); // Use the helper
@@ -169,12 +160,13 @@ const InventoryTab = React.memo(
           {/* All Products Tab */}
           <TabsContent value="allProducts">
             <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8 pb-5">
-              {products.map((prod) => (
+              {filteredProducts?.map((prod) => (
                 <ProductDisplayTab key={prod._id} product={prod} />
               ))}
             </div>
           </TabsContent>
-          {/* Individual Category Tabs */}
+
+          {/* Category-Specific Tabs */}
           {categories?.map((category) => {
             const categoryName = category.name;
             const productInCategory = filterCategoryProducts(categoryName);
@@ -197,7 +189,7 @@ const InventoryTab = React.memo(
           })}
         </Tabs>
 
-        {/* when the info button is clicked, the modal opens */}
+        {/* Info Modal */}
         {openCategory && (
           <CategoryModal
             setOpenModal={() => setOpenCategory(null)}
