@@ -37,7 +37,7 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
             style={{ color: stat.salesColor || "text-text-dark" }}
           >
             {stat.format === "currency"
-              ? `₦ ${stat.salesValue.toLocaleString()}`
+              ? `₦${stat.salesValue.toLocaleString()}`
               : stat.format === "number"
               ? Number(stat.salesValue).toLocaleString()
               : stat.salesValue}

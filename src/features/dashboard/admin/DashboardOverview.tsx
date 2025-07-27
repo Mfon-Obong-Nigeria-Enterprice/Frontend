@@ -13,12 +13,17 @@ import { type StatCard } from "@/types/stats";
 
 const DashboardOverview: React.FC = () => {
   const products = useInventoryStore((state) => state.products);
-  const { getActiveClients, getActiveClientsPercentage } = useClientStore();
+  const {
+    getActiveClients,
+    getActiveClientsPercentage,
+    getOutStandingBalanceData,
+  } = useClientStore();
   const lowStockCount = products?.filter(
     (prod) => prod.stock <= prod.minStockLevel
   ).length;
 
   const activeClients = getActiveClients();
+  const outstandingBalance = getOutStandingBalanceData();
   const activeClientsPercentage = getActiveClientsPercentage();
 
   const stats: StatCard[] = [
@@ -31,7 +36,7 @@ const DashboardOverview: React.FC = () => {
     },
     {
       heading: "Outstanding balances",
-      salesValue: 400000,
+      salesValue: outstandingBalance.totalDebt,
       format: "currency",
       statValue: "5% from last week",
       statColor: "orange",

@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/pagination";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
 import { Button } from "@/components/ui/Button";
+import { formatCurrency } from "@/utils/formatCurrency";
 // import { MoveRight, MoveLeft } from "lucide-react";
 
 interface ClientDirectoryProps {
@@ -88,8 +89,6 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
     return sortedTransaction[0] || null;
   };
 
-  const formatCurrency = (value: number) => `₦${value.toLocaleString()}`;
-
   const {
     currentPage,
     totalPages,
@@ -106,11 +105,12 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
     const endIndex = startIndex + 4;
     return filteredClients.slice(startIndex, endIndex);
   }, [filteredClients, currentPage]);
+  //  if (balance > 0) return `+$${balance.toFixed(2)}`
 
   const getBalanceStatus = (balance: number) => {
     if (balance > 0) {
       return {
-        status: "Credit",
+        status: "Deposit",
         variant: "default" as const,
         color: "text-green-500",
       };
@@ -160,24 +160,24 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
   return (
     <div className="mt-7 mb-2 px-4 ">
       <Card>
-        <CardContent>
+        <CardContent className="text-center">
           <Table>
-            <TableHeader className="bg-[#D9D9D9]">
+            <TableHeader className="bg-[#D9D9D9] ">
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Clients</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Balance</TableHead>
-                <TableHead>Action</TableHead>
+                <TableHead className="text-center">Date</TableHead>
+                <TableHead className="text-center">Clients</TableHead>
+                <TableHead className="text-center">Type</TableHead>
+                <TableHead className="text-center">Amount</TableHead>
+                <TableHead className="text-center">Balance</TableHead>
+                <TableHead className="text-center">Action</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="text-center">
               {currentClient.map((client) => {
                 const lastTransaction = getClientTransaction(client);
                 const balanceStatus = getBalanceStatus(client.balance);
                 return (
-                  <TableRow key={client._id}>
+                  <TableRow key={client._id} className="text-center">
                     <TableCell>
                       <div>
                         <p className="font-[400] text-[#444444] text-sm">
@@ -200,7 +200,18 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
                     </TableCell>
                     {/* transaction type */}
                     <TableCell>
-                      <Badge variant="outline" className="capitalize p-2">
+                      <Badge
+                        variant="outline"
+                        className={`uppercase p-2 w-[85px] text-[12px] ${
+                          lastTransaction?.type === "PURCHASE"
+                            ? "border border-[#F95353] bg-[#FFCACA] text-[#F95353] rounded-2xl"
+                            : lastTransaction?.type === "" //will be figured out later
+                            ? "border border-[#FFA500] bg-[#FFE7A4] text-[#FFA500] rounded-2xl"
+                            : lastTransaction?.type === "PICKUP"
+                            ? "border border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71] rounded-2xl"
+                            : "bg-gray-100 rounded-2xl text-gray-300 border border-gray-300 "
+                        }`}
+                      >
                         {lastTransaction ? lastTransaction.type : "New Client"}
                       </Badge>
                     </TableCell>
@@ -210,7 +221,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
                       <div>
                         <p className="font-[400] text-[#444444] text-sm">
                           {lastTransaction
-                            ? `₦${lastTransaction.amount.toLocaleString()}`
+                            ? formatCurrency(lastTransaction.amount)
                             : "₦0"}
                         </p>
                       </div>
@@ -218,7 +229,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
 
                     {/* client balance */}
                     <TableCell>
-                      <div className="flex items-center gap-2">
+                      <div>
                         <span className={`font-medium ${balanceStatus.color}`}>
                           {formatCurrency(Math.abs(client.balance))}
                         </span>
