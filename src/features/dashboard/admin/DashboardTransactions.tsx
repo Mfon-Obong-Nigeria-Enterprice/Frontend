@@ -1,13 +1,19 @@
 import { useMemo, useState, useEffect, useRef } from "react";
-// import { Link } from "react-router-dom";
 import { useDebounce } from "use-debounce";
+
 import DashboardTitle from "@/components/dashboard/DashboardTitle";
-import { Search, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import ClientTransactionModal from "./components/ClientTransactionModal";
+import WalkinTransactionModal from "./components/WalkinTransactionModal";
 import Stats from "./components/Stats";
-import type { StatCard } from "@/types/stats";
+
+import { Search, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
+
+import { Button } from "@/components/ui/Button";
+
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { useClientStore } from "@/stores/useClientStore";
+import { useUserStore } from "@/stores/useUserStore";
+
 import usePagination from "@/hooks/usePagination";
 import {
   Pagination,
@@ -16,29 +22,23 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+
+import type { StatCard } from "@/types/stats";
 import type { Transaction } from "@/types/transactions";
 import type { Client } from "@/types/types";
-import TransactionModal from "./components/TransactionModal";
 
-type BaseSuggestion = {
+type BaseSuggestion<T extends "transaction" | "client" | "invoice"> = {
+  type: T;
   value: string;
-  type: "transaction" | "client" | "invoice";
-};
-
-type TransactionSuggestion = BaseSuggestion & {
-  type: "transaction";
   transaction: Transaction;
-};
-
-type ClientSuggestion = BaseSuggestion & {
-  type: "client";
   client: Client;
 };
 
-type InvoiceSuggestion = BaseSuggestion & {
-  type: "invoice";
-  invoice: string;
-};
+type TransactionSuggestion = BaseSuggestion<"transaction">;
+
+type ClientSuggestion = BaseSuggestion<"client">;
+
+type InvoiceSuggestion = BaseSuggestion<"invoice">;
 
 type Suggestion = TransactionSuggestion | ClientSuggestion | InvoiceSuggestion;
 
@@ -71,9 +71,10 @@ const stats: StatCard[] = [
 ];
 
 const DashboardTransactions = () => {
-  const { transactions, open, openModal, selectedTransaction, closeModal } =
+  const { transactions, open, openModal, selectedTransaction } =
     useTransactionsStore();
-  const { clients } = useClientStore();
+  const { clients, getClientById } = useClientStore();
+  const { getUserNameById } = useUserStore();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
@@ -95,18 +96,21 @@ const DashboardTransactions = () => {
       // if (!clientId) {
       //   return { ...transaction, clientBalance: null }; // for walk-in clients or missing id
       // }
-      const clientMatch = clients?.find((client) => client._id === clientId);
+      const client = clientId ? getClientById(clientId) : null;
 
       return {
         ...transaction,
-        clientBalance: clientMatch?.balance ?? null,
+        client,
+        // clientBalance: clientMatch?.balance ?? null,
       };
     });
-  }, [transactions, clients]);
+  }, [transactions, getClientById]);
 
+  // remove this on prod
   useEffect(() => {
     console.log("Transactions", transactions);
     console.log("Clients", clients);
+    console.log("Users in store:", useUserStore.getState().users);
   }, [transactions, clients]);
 
   const filteredTransactions = useMemo(() => {
@@ -126,43 +130,64 @@ const DashboardTransactions = () => {
     if (!searchTerm || searchTerm.length < 1) return [];
 
     const lowerTerm = searchTerm.toLowerCase();
-    const uniqueSuggestions = new Set();
-    const suggestionList: Array<{
-      type: "invoice" | "client";
-      value: string;
-      transaction: Transaction | string;
-    }> = [];
+    const uniqueSuggestions = new Set<string>();
+    const suggestionList: Suggestion[] = [];
 
+    // filteredTransactions.forEach((transaction) => {
+    //   // Add invoice suggestions
+    //   if (transaction.invoiceNumber?.toLowerCase().includes(lowerTerm)) {
+    //     const suggestion = {
+    //       type: "invoice" as const,
+    //       value: transaction.invoiceNumber,
+    //       transaction,
+    //     };
+    //     if (!uniqueSuggestions.has(suggestion.value)) {
+    //       uniqueSuggestions.add(suggestion.value);
+    //       suggestionList.push(suggestion);
+    //     }
+    //   }
+
+    //   // Add client suggestions
+    //   const clientName =
+    //     transaction.clientId?.name ?? transaction.walkInClient?.name;
+    //   if (clientName?.toLowerCase().includes(lowerTerm)) {
+    //     const suggestion = {
+    //       type: "client" as const,
+    //       value: clientName,
+    //       transaction,
+    //     };
+    //     if (!uniqueSuggestions.has(suggestion.value)) {
+    //       uniqueSuggestions.add(suggestion.value);
+    //       suggestionList.push(suggestion);
+    //     }
+    //   }
+    // });
     filteredTransactions.forEach((transaction) => {
-      // Add invoice suggestions
-      if (transaction.invoiceNumber?.toLowerCase().includes(lowerTerm)) {
-        const suggestion = {
-          type: "invoice" as const,
-          value: transaction.invoiceNumber,
-          transaction,
-        };
-        if (!uniqueSuggestions.has(suggestion.value)) {
-          uniqueSuggestions.add(suggestion.value);
-          suggestionList.push(suggestion);
-        }
-      }
-
-      // Add client suggestions
+      const invoiceMatch = transaction.invoiceNumber
+        ?.toLowerCase()
+        .includes(lowerTerm);
       const clientName =
         transaction.clientId?.name ?? transaction.walkInClient?.name;
-      if (clientName?.toLowerCase().includes(lowerTerm)) {
-        const suggestion = {
-          type: "client" as const,
+      const clientMatch = clientName?.toLowerCase().includes(lowerTerm);
+
+      if (invoiceMatch && !uniqueSuggestions.has(transaction.invoiceNumber!)) {
+        uniqueSuggestions.add(transaction.invoiceNumber!);
+        suggestionList.push({
+          type: "transaction",
+          value: transaction.invoiceNumber!,
+          transaction,
+        });
+      }
+
+      if (clientMatch && clientName && !uniqueSuggestions.has(clientName)) {
+        uniqueSuggestions.add(clientName);
+        suggestionList.push({
+          type: "client",
           value: clientName,
           transaction,
-        };
-        if (!uniqueSuggestions.has(suggestion.value)) {
-          uniqueSuggestions.add(suggestion.value);
-          suggestionList.push(suggestion);
-        }
+        });
       }
     });
-
     return suggestionList.slice(0, 8); // Limit to 8 suggestions
   }, [searchTerm, filteredTransactions]);
 
@@ -247,7 +272,6 @@ const DashboardTransactions = () => {
       case "Enter":
         e.preventDefault();
         if (selectedSuggestionIndex >= 0) {
-          // @ts-expect-error transaction type is needed
           handleSuggestionClick(suggestions[selectedSuggestionIndex]);
         }
         break;
@@ -358,10 +382,7 @@ const DashboardTransactions = () => {
                     ref={(el) => {
                       suggestionRefs.current[i] = el;
                     }}
-                    onClick={() =>
-                      // @ts-expect-error transaction type is needed
-                      handleSuggestionClick(suggestion)
-                    }
+                    onClick={() => handleSuggestionClick(suggestion)}
                     onMouseEnter={() => setSelectedSuggestionIndex(i)}
                     className={`flex items-center justify-between px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors ${
                       selectedSuggestionIndex === i
@@ -382,7 +403,6 @@ const DashboardTransactions = () => {
                     <div className="text-xs text-gray-400">
                       {suggestion.type === "invoice" && (
                         <span className="ml-2">
-                          {/* @ts-expect-error transaction type is needed */}
                           {suggestion.transaction.clientId?.name ??
                             suggestion.transaction.walkInClient?.name}
                         </span>
@@ -460,9 +480,9 @@ const DashboardTransactions = () => {
               <th className="py-3 text-base text-[#333333] font-normal text-center">
                 Type
               </th>
-              <th className="py-3 text-base text-[#333333] font-normal text-center">
+              {/* <th className="py-3 text-base text-[#333333] font-normal text-center">
                 Status
-              </th>
+              </th> */}
               <th className="py-3 text-base text-[#333333] font-normal text-center">
                 Amount
               </th>
@@ -490,8 +510,7 @@ const DashboardTransactions = () => {
                     </span>
                   </td>
                   <td className=" text-center text-[#444444] text-sm font-normal py-3">
-                    {transaction.clientId?.name ||
-                      transaction.walkInClient?.name}
+                    {transaction.clientName || transaction.walkInClientName}
                   </td>
                   <td className="text-center">
                     {transaction.type && (
@@ -506,7 +525,7 @@ const DashboardTransactions = () => {
                       </span>
                     )}
                   </td>
-                  <td
+                  {/* <td
                     className={`text-xs text-center ${
                       transaction.status === "COMPLETED"
                         ? "text-[#2ECC71]"
@@ -514,25 +533,26 @@ const DashboardTransactions = () => {
                     }`}
                   >
                     {transaction.status}
-                  </td>
+                  </td> */}
                   <td className="text-sm text-center">
                     ₦{transaction.total.toLocaleString()}
                   </td>
                   <td
                     className={`text-sm text-center ${
-                      typeof transaction.clientBalance === "number"
-                        ? transaction.clientBalance < 0
+                      typeof transaction?.client?.balance === "number"
+                        ? transaction?.client?.balance < 0
                           ? "text-[#F95353]"
-                          : transaction.clientBalance > 0
+                          : transaction?.client?.balance > 0
                           ? "text-[#2ECC71]"
                           : "text-[#7d7d7d]"
                         : "text-[#7d7d7d]"
                     }`}
                   >
-                    {transaction.clientBalance !== null ? (
+                    {transaction.client !== null &&
+                    transaction.client.balance !== null ? (
                       <>
-                        {transaction.clientBalance < 0 ? "-" : ""}₦
-                        {Math.abs(transaction.clientBalance).toLocaleString()}
+                        {transaction.client.balance < 0 ? "-" : ""}₦
+                        {Math.abs(transaction?.client.balance).toLocaleString()}
                       </>
                     ) : (
                       "₦0.00"
@@ -574,7 +594,18 @@ const DashboardTransactions = () => {
           </tbody>
         </table>
 
-        {open && <TransactionModal />}
+        {/* {open && transactions?.clientId !== null ? (
+          <ClientTransactionModal />
+        ) : (
+          <WalkinTransactionModal />
+        )} */}
+
+        {open && selectedTransaction?.clientId ? (
+          <ClientTransactionModal />
+        ) : (
+          <WalkinTransactionModal />
+        )}
+
         {/* pagination */}
         {currentTransaction?.length > 0 && totalPages > 1 && (
           <div className="h-16 bg-[#f5f5f5] text-sm text-[#7D7D7D] flex justify-center items-center gap-3 rounded-b-[0.625rem] ">

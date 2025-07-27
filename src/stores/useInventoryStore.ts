@@ -1,6 +1,9 @@
-
 import { create } from "zustand";
-import { type Product, type InventoryState, type Category } from "@/types/types";
+import {
+  type Product,
+  type InventoryState,
+  type Category,
+} from "@/types/types";
 
 type InventoryStoreState = InventoryState & {
   isCategoriesLoaded: boolean;
@@ -21,64 +24,72 @@ type InventoryActions = {
   removeProduct: (productId: string) => void; // Added
 };
 
-export const useInventoryStore = create<InventoryStoreState & InventoryActions>((set) => ({
-  products: [], // Initialized as empty
-  categories: [], // Initialized as empty
-  searchQuery: "",
-  selectedCategoryId: "",
-  categoryUnits: [],
-  isCategoriesLoaded: false, // Added
-  isProductsLoaded: false, // Added
+export const useInventoryStore = create<InventoryStoreState & InventoryActions>(
+  (set) => ({
+    products: [], // Initialized as empty
+    categories: [], // Initialized as empty
+    searchQuery: "",
+    selectedCategoryId: "",
+    categoryUnits: [],
+    isCategoriesLoaded: false, // Added
+    isProductsLoaded: false, // Added
 
-  setProducts: (products) => {
-    console.log("Zustand Store: setProducts called with:", products);
-    set({ products, isProductsLoaded: true }); // Set loaded flag
-  },
-  setCategories: (categories) => {
-    console.log("Zustand Store: setCategories called with:", categories);
-    set({ categories, isCategoriesLoaded: true }); // Set loaded flag
-  },
-  setSearchQuery: (query) => set({ searchQuery: query }),
-  setProductsLoaded: (loaded) => set({ isProductsLoaded: loaded }), // Added
-  setCategoriesLoaded: (loaded) => set({ isCategoriesLoaded: loaded }), // Added
+    setProducts: (products) => {
+      set({ products, isProductsLoaded: true }); // Set loaded flag
+    },
+    setCategories: (categories) => {
+      set({ categories, isCategoriesLoaded: true }); // Set loaded flag
+    },
+    setSearchQuery: (query) => set({ searchQuery: query }),
+    setProductsLoaded: (loaded) => set({ isProductsLoaded: loaded }), // Added
+    setCategoriesLoaded: (loaded) => set({ isCategoriesLoaded: loaded }), // Added
 
-  setSelectedCategoryId: (id) => set((state) => {
-    const category = state.categories.find(c => c._id === id);
-    return {
-      selectedCategoryId: id,
-      categoryUnits: category?.units || []
-    };
-  }),
+    setSelectedCategoryId: (id) =>
+      set((state) => {
+        const category = state.categories.find((c) => c._id === id);
+        return {
+          selectedCategoryId: id,
+          categoryUnits: category?.units || [],
+        };
+      }),
 
-  updateProduct: (updated) => set((state) => ({
-    products: state.products.map(p =>
-      p._id === updated._id ? updated : p
-    )
-  })),
+    updateProduct: (updated) =>
+      set((state) => ({
+        products: state.products.map((p) =>
+          p._id === updated._id ? updated : p
+        ),
+      })),
 
-  updateProductsBulk: (updatedProducts) => set((state) => { // Renamed from updateProducts
-    const updatedMap = new Map(updatedProducts.map(p => [p._id, p]));
-    return {
-      products: state.products.map(p => {
-        const updated = updatedMap.get(p._id);
-        if (updated) {
-          // Only update the stock (and any other relevant fields if needed)
-          return { ...p, stock: updated.stock };
-        }
-        return p;
-      })
-    };
-  }),
+    updateProductsBulk: (updatedProducts) =>
+      set((state) => {
+        // Renamed from updateProducts
+        const updatedMap = new Map(updatedProducts.map((p) => [p._id, p]));
+        return {
+          products: state.products.map((p) => {
+            const updated = updatedMap.get(p._id);
+            if (updated) {
+              // Only update the stock (and any other relevant fields if needed)
+              return { ...p, stock: updated.stock };
+            }
+            return p;
+          }),
+        };
+      }),
 
-  addProduct: (product) => set((state) => ({
-    products: [...state.products, product]
-  })),
+    addProduct: (product) =>
+      set((state) => ({
+        products: [...state.products, product],
+      })),
 
-  addCategory: (category) => set((state) => ({
-    categories: [...state.categories, category]
-  })),
+    addCategory: (category) =>
+      set((state) => ({
+        categories: [...state.categories, category],
+      })),
 
-  removeProduct: (productId) => set((state) => ({ // Added
-    products: state.products.filter(p => p._id !== productId)
-  })),
-}));
+    removeProduct: (productId) =>
+      set((state) => ({
+        // Added
+        products: state.products.filter((p) => p._id !== productId),
+      })),
+  })
+);

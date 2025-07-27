@@ -9,7 +9,6 @@ export const login = async (
 
   const accessToken = response.data.access_token || response.data.token;
   const user = response.data.user;
-  console.log("LOGIN RESPONSE:", response.data);
 
   if (!accessToken || !user) {
     console.error("Login response missing token or user", response.data);

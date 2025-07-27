@@ -16,13 +16,17 @@ export const getAllClients = async (): Promise<Client[]> => {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    console.log("Clients fetched:", response.data);
     return response.data;
   } catch (error) {
     const err = error as AxiosError;
     console.error("Error fetching clients:", err.response?.data || err.message);
     throw error;
   }
+};
+
+export const getClientById = async (id: string): Promise<Client> => {
+  const response = await api(`/clients/${id}`);
+  return response.data;
 };
 
 export const createClient = async (
@@ -35,7 +39,7 @@ export const createClient = async (
     const response = await api.post("/clients", client, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    console.log("Client created:", response.data);
+
     return response.data;
   } catch (error) {
     const err = error as AxiosError;
@@ -74,7 +78,7 @@ export const deleteClient = async (id: string): Promise<void> => {
         "Content-Type": "application/json",
       },
     });
-    console.log("Client deleted:", id);
+
     return response.data;
   } catch (error) {
     const err = error as AxiosError;

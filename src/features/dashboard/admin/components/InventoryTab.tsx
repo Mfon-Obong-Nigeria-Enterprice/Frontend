@@ -149,7 +149,7 @@ const InventoryTab = React.memo(
                       }}
                       className="ml-1" // Added a small margin
                     >
-                      <Info className="text-[#D9D9D9] h-4 w-4" />{" "}
+                      <Info className="text-[#D9D9D9] h-4 w-4" />
                       {/* Adjusted size for consistency */}
                     </p>
                   </TabsTrigger>

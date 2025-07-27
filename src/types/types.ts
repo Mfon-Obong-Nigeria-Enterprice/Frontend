@@ -32,7 +32,7 @@ export interface Client {
   phone?: string;
   email?: string;
   address?: string;
-  balance: number;
+  balance?: number;
   description?: string;
   transactions: TransactionItem[];
   isActive: boolean;
