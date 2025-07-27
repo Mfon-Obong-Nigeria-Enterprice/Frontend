@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useClientStore } from "@/stores/useClientStore";
+import ClientDetailInfo from "@/components/clients/ClientDetailInfo";
 
 const ClientDetailsPage: React.FC = () => {
   const { clientId } = useParams<{ clientId: string }>();
@@ -35,7 +36,6 @@ const ClientDetailsPage: React.FC = () => {
   return (
     <>
       <header className="flex justify-between items-center py-3 px-10">
-        {" "}
         <div className="flex gap-10">
           <button
             onClick={() => navigate(-1)}
@@ -64,117 +64,13 @@ const ClientDetailsPage: React.FC = () => {
               </SelectGroup>
             </SelectContent>
           </Select>
-          <Button className="bg-[#FFC761] hover:bg-[#FFA500] text-text-dark">
-            Send Payment Reminder
-          </Button>
         </div>
       </header>
 
       {/* main content */}
       <main className="flex gap-3 bg-[#F5F5F5] py-5 px-12">
         {/* section by the left */}
-        <section className="w-[40%] bg-white py-8 px-5 rounded">
-          <p className="text-lg text-[#333333] mb-6">
-            {client?.name ?? "Unknown"}
-          </p>
-          <div
-            className={`flex flex-col justify-center gap-1 min-h-18 border-l-4 text-xs py-1.5 px-3 rounded-[8px] ${
-              client.balance > 0
-                ? "border-[#2ECC71] bg-[#C8F9DD]"
-                : "border-[#F95353] bg-[#FFE9E9]"
-            }
-            }`}
-          >
-            <p className="text-[#444444] text-xs">Current balance</p>
-            <p
-              className={`text-lg font-bold ${
-                client.balance > 0 ? "text-[#2ECC71]" : "text-[#F95353]"
-              }`}
-            >
-              ₦{client.balance.toLocaleString()}
-            </p>
-          </div>
-          {/* info */}
-          <article className="my-7">
-            <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
-              <p>Phone</p>
-              <p>{client.phone ?? "No phone number"}</p>
-            </div>
-            <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
-              <p>Address</p>
-              <address>{client.address}</address>
-            </div>
-            <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
-              <p>Registered</p>
-              <p>{new Date(client.createdAt).toLocaleDateString()}</p>
-            </div>
-            <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
-              <p>Last activity</p>
-              <p>
-                {client.lastTransactionDate &&
-                  new Date(client.lastTransactionDate).toLocaleDateString()}
-              </p>
-            </div>
-            <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
-              <p>Account status</p>
-              <p
-                className={`capitalize ${
-                  client.balance > 0 ? "text-[#2ECC71]" : "text-[#F95353]"
-                }`}
-              >
-                {client.balance > 0 ? "credit" : "Overdue"}
-              </p>
-            </div>
-          </article>
-
-          {/* description */}
-          {client.description && (
-            <div className="bg-[#F5F5F5] p-4 rounded-md border border-[#d9d9d9] mt-5">
-              <p className="text-[0.625rem] text-[#7D7D7D] mb-1">
-                Client Description
-              </p>
-              <p className="text-[0.625rem] text-[#444444]">
-                {client.description}
-              </p>
-            </div>
-          )}
-          {/* data */}
-          <ul className="grid grid-cols-2 gap-5 mt-5">
-            <li className="bg-[#F5F5F5] flex flex-col gap-0.5 justify-center items-center rounded-[8px] p-5">
-              <span className="text-sm text-[#333333] font-semibold">
-                {" "}
-                {client.transactions.length}
-              </span>
-              <span className="text-xs text-[#444444] font-normal">
-                Total order
-              </span>
-            </li>
-
-            <li className="bg-[#F5F5F5] flex flex-col gap-0.5 justify-center items-center rounded-[8px] p-5">
-              <span className="text-sm text-[#333333] font-semibold">
-                ₦1,8M
-              </span>
-              <span className="text-xs text-[#444444] font-normal">
-                Lifetime value
-              </span>
-            </li>
-
-            <li className="bg-[#F5F5F5] flex flex-col gap-0.5 justify-center items-center rounded-[8px] p-5">
-              <span className="text-sm text-[#333333] font-semibold">30</span>
-              <span className="text-xs text-[#444444] font-normal">
-                Days overdue
-              </span>
-            </li>
-
-            <li className="bg-[#F5F5F5] flex flex-col gap-0.5 justify-center items-center rounded-[8px] p-5">
-              <span className="text-sm text-[#333333] font-semibold">2</span>
-              <span className="text-xs text-[#444444] font-normal">
-                Pending invoices
-              </span>
-            </li>
-          </ul>
-        </section>
-
+        <ClientDetailInfo client={client} />
         {/* section by the right */}
         <section className="w-full bg-white py-8 px-5 rounded">
           {/* data */}
@@ -300,7 +196,7 @@ const ClientDetailsPage: React.FC = () => {
                       <p className="font-medium text-[#444444] text-[13px]">
                         Amount:{" "}
                         <span className="font-normal">
-                          ₦{client.balance.toLocaleString()}
+                          ₦{client?.balance.toLocaleString()}
                         </span>
                       </p>
                       <p className="font-medium text-[#444444] text-[13px]">

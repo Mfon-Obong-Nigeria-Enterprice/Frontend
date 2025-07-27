@@ -2,11 +2,13 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Client } from "@/types/types";
 // import { createTransaction } from "@/services/transactionService";
+import { toSentenceCaseName } from "@/utils/format";
 
 interface clientStore {
   clients: Client[];
 
   setClients: (clients: Client[]) => void;
+  getClientById: (id: string) => Client[];
   updateClient: (id: string, updates: Partial<Client>) => void;
   deleteClientLocally: (id: string) => void;
 
@@ -33,7 +35,14 @@ export const useClientStore = create<clientStore>()(
     (set, get) => ({
       clients: [],
 
-      setClients: (clients) => set({ clients }),
+      setClients: (clients) =>
+        set({
+          clients: clients.map((client) => ({
+            ...client,
+            name: toSentenceCaseName(client.name),
+          })),
+        }),
+      getClientById: (id) => get().clients.find((client) => client?._id === id),
 
       updateClient: (id, updates) => {
         set((state) => ({

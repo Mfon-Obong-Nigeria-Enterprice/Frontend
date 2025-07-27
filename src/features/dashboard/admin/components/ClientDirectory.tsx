@@ -157,6 +157,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
   //   }
   // };
 
+  console.log("clients", clients);
   return (
     <div className="mt-7 mb-2 px-4 ">
       <Card>
