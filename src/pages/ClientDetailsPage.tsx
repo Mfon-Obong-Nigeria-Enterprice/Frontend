@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useParams } from "react-router-dom";
 
 import { useNavigate } from "react-router-dom";
@@ -15,16 +15,30 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useClientStore } from "@/stores/useClientStore";
+import { useTransactionsStore } from "@/stores/useTransactionStore";
+
 import ClientDetailInfo from "@/components/clients/ClientDetailInfo";
+import { balanceTextClass } from "@/utils/format";
+import { mergeTransactionsWithClients } from "@/utils/mergeTransactionsWithClients";
 
 const ClientDetailsPage: React.FC = () => {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
   const { clients } = useClientStore();
+  const { transactions } = useTransactionsStore();
+
+  const mergedTransactions = useMemo(() => {
+    if (!transactions || !clients) return [];
+    return mergeTransactionsWithClients(transactions, clients);
+  }, [transactions, clients]);
 
   if (!clients || clients.length === 0) {
     return <div>Loading clients...</div>;
   }
+
+  const clientTransactions = mergedTransactions.filter(
+    (t) => t.client?._id === clientId
+  );
 
   // get client
   const client = clients.find((c) => c._id === clientId);
@@ -132,12 +146,12 @@ const ClientDetailsPage: React.FC = () => {
             </Button>
           </div>
           {/* display data */}
-          {client.transactions.length === 0 ? (
+          {clientTransactions.length === 0 ? (
             <p className="text-center text-sm text-[#7D7D7D] py-10">
               No transactions found for this client
             </p>
           ) : (
-            client.transactions.map((txn) => (
+            clientTransactions.map((txn) => (
               <div
                 key={txn._id}
                 className="border rounded-lg px-5 py-3 mb-10 shadow"
@@ -147,18 +161,16 @@ const ClientDetailsPage: React.FC = () => {
                   <p className="text-xs">{txn.type}</p>
                   <p className="flex flex-col">
                     <span className="text-xs">
-                      {new Date(txn.date).toLocaleDateString()}
+                      {new Date(txn.createdAt).toLocaleDateString()}
                     </span>
                     <span className="text-xs">
-                      {new Date(txn.date).toLocaleTimeString()}
+                      {new Date(txn.createdAt).toLocaleTimeString()}
                     </span>
                   </p>
-                  <p
-                    className={`${
-                      txn.amount > 0 ? "text-[#2ECC71]" : "text-[#F95353]"
-                    }`}
-                  >
-                    ₦{client.balance.toLocaleString()}
+                  <p className={`${balanceTextClass(client.balance)}`}>
+                    {client.balance && client.balance < 0 ? "-" : ""} ₦
+                    {client.balance &&
+                      Math.abs(Number(client.balance)).toLocaleString()}
                   </p>
                 </div>
                 {/* details */}
@@ -176,13 +188,16 @@ const ClientDetailsPage: React.FC = () => {
 
                       <div className="flex justify-between">
                         <span className="text-[#444444] text-[13px]">
-                          250,00
+                          {client.balance &&
+                            `₦ ${(
+                              client.balance + txn.total
+                            ).toLocaleString()}`}
                         </span>
                         <span>
                           <ArrowRight size={13} />
                         </span>
                         <span className="text-[#444444] text-[13px]">
-                          509955
+                          ₦{client.balance?.toLocaleString()}
                         </span>
                       </div>
                     </div>
@@ -196,14 +211,12 @@ const ClientDetailsPage: React.FC = () => {
                       <p className="font-medium text-[#444444] text-[13px]">
                         Amount:{" "}
                         <span className="font-normal">
-                          ₦{client?.balance.toLocaleString()}
+                          ₦{client.balance && client.balance.toLocaleString()}
                         </span>
                       </p>
                       <p className="font-medium text-[#444444] text-[13px]">
                         Method:{" "}
-                        <span className="font-normal">
-                          {/*{txn.paymentMethod}*/}
-                        </span>{" "}
+                        <span className="font-normal">{txn.paymentMethod}</span>{" "}
                       </p>
                     </div>
                   </div>
@@ -215,11 +228,11 @@ const ClientDetailsPage: React.FC = () => {
                     </h6>
                     <p className="font-medium text-[#444444] text-[13px]">
                       Staff:
-                      <span className="font-normal"> Jane Smith</span>
+                      <span className="font-normal">{txn.userId.name}</span>
                     </p>
                     <p className="rounded-[2px] bg-[#E2F3EB] p-0.5 text-center">
                       <span className="text-[#3D80FF] text-xs">
-                        INV-2-25-003
+                        {txn.invoiceNumber}
                       </span>
                     </p>
                   </div>

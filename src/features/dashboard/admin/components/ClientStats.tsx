@@ -20,11 +20,6 @@ const ClientStats = () => {
     (prod) => prod.stock <= prod.minStockLevel
   ).length;
 
-  // const totalClients = clients?.length;
-  // const activeClients = getActiveClients();
-  // const newClients = getNewClients();
-  // const clientGrowthPercentage = getClientGrowthPercentage();
-  // const activeClientsPercentage = getActiveClientsPercentage();
   const outstandingBalance = getOutStandingBalanceData();
 
   const ClientsCard = ({
@@ -100,7 +95,7 @@ const ClientStats = () => {
       {/*  */}
       <ClientsCard
         title="Outsanding balances"
-        value={outstandingBalance.clientsWithDebt}
+        value={`₦${outstandingBalance.totalDebt.toLocaleString()}`}
         percentageLabel="from last week"
         percentage={growthPercent}
         showTrend={true}

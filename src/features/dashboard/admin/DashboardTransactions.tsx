@@ -104,7 +104,7 @@ const DashboardTransactions = () => {
         // clientBalance: clientMatch?.balance ?? null,
       };
     });
-  }, [transactions, getClientById, getUserNameById]);
+  }, [transactions, getClientById]);
 
   // remove this on prod
   useEffect(() => {

@@ -44,7 +44,7 @@ export interface Client {
 
 export interface TransactionItem {
   _id: string;
-  type: "Credit" | "partial" | "debit";
+  type: "PURCHASE" | "PICKUP";
   amount: number;
   description?: string;
   date: string;

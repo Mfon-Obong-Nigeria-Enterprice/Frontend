@@ -9,23 +9,30 @@ import {
   DialogOverlay,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useClientStore } from "@/stores/useClientStore";
 import { Button } from "@/components/ui/Button";
+import { useClientMutations } from "@/hooks/useClientMutations";
+import { isAxiosError, type AxiosError } from "axios";
 
 interface AddClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+interface FormData {
+  name: string;
+  phone: string;
+  description: string;
+  balance: number;
+}
 
 export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
-  const { addClient } = useClientStore();
+  const { createMutate } = useClientMutations();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: "",
     phone: "",
-    notes: "",
+    description: "",
     balance: 0,
   });
 
@@ -59,51 +66,39 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
       const clientData = {
         name: formData.name.trim(),
         phone: formData.phone.trim(),
-        notes: formData.notes.trim() || "",
-        balance: Number(formData.balance) || 0,
+        description: formData.description.trim(),
+        balance: Number(formData.balance),
       };
+      await createMutate.mutateAsync(clientData);
 
-      await addClient(clientData);
       onOpenChange(false);
       // Reset form
       setFormData({
         name: "",
         phone: "",
-        notes: "",
+        description: "",
         balance: 0,
       });
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to add client:", err);
 
-      // Handle specific error cases
-      if (err.response?.status === 409) {
-        setError(
-          "A client with this name or phone number already exists. Please use different details."
-        );
-      } else if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else {
-        setError("Failed to add client. Please try again.");
+      if (isAxiosError(err)) {
+        const axiosError = err as AxiosError<{ message: string }>;
+
+        // Handle specific error cases
+        if (axiosError.response?.status === 409) {
+          setError(
+            "A client with this name or phone number already exists. Please use different details."
+          );
+        } else if (axiosError.response?.data?.message) {
+          setError(axiosError.response.data.message);
+        } else {
+          setError("Failed to add client. Please try again.");
+        }
       }
     } finally {
       setIsLoading(false);
     }
-
-    // const clientData = {
-    //   ...formData,
-    //   _id: Date.now().toString(),
-    //   name: formData.name,
-    //   phone: formData.phone,
-    //   email: "", // or undefined if optional
-    //   address: "", // or undefined
-    //   balance: formData.balance,
-    //   transactions: [], // default empty array
-    //   isActive: true,
-    //   isRegistered: true,
-    //   createdAt: new Date().toISOString(),
-    //   updatedAt: new Date().toISOString(),
-    //   lastTransactionDate: undefined,
-    // };
   };
 
   return (
@@ -198,9 +193,12 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
               <Textarea
                 className="mt-2 font-[400] text-sm border border-[#444444]"
                 id="notes"
-                value={formData.notes}
+                value={formData.description}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, notes: e.target.value }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
                 }
                 rows={5}
                 disabled={isLoading}

@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getAllProducts } from "@/services/productService";
 import { getAllCategories } from "@/services/categoryService";
 import { getAllClients } from "@/services/clientService";
@@ -31,7 +31,7 @@ export const InventoryProvider = ({ children }: { children: ReactNode }) => {
     queryFn: getAllTransactions,
   });
 
-  const { data: clients } = useSuspenseQuery({
+  const { data: clients } = useQuery({
     queryKey: ["clients"],
     queryFn: getAllClients,
   });
