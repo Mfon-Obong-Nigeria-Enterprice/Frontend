@@ -69,7 +69,18 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
     } catch (error) {
       console.error("Failed to initialize auth from storage:", error);
-      set({ isInitialized: true });
+      // Clear invalid data
+      await localforage.removeItem("access_token");
+      await localforage.removeItem("user");
+      set({
+        user: null,
+        accessToken: null,
+        isAuthenticated: false,
+        isInitialized: true,
+      });
     }
   },
 }));
+
+// Auto-initialize when store is created
+useAuthStore.getState().initializeAuth();
