@@ -11,10 +11,6 @@ interface clientStore {
   deleteClientLocally: (id: string) => void;
 
   addPayment: (clientId: string, amount: number) => void;
-  // addTransaction: (
-  //   id: string,
-  //   payload: CreateTransactionPayload
-  // ) => Promise<void>;
 
   // Derivative stats
   getClientsWithDebt: () => Client[];
@@ -74,19 +70,6 @@ export const useClientStore = create<clientStore>()(
           ),
         }));
       },
-
-      // addTransaction: async (ClientId, payload) => {
-      //   try {
-      //     const updatedClient = await createTransaction(ClientId, payload);
-      //     set((state) => ({
-      //       clients: state.clients.map((client) =>
-      //         client._id === updatedClient._id ? { ...updatedClient } : client
-      //       ),
-      //     }));
-      //   } catch (err) {
-      //     console.error("Failed to add transaction:", err);
-      //   }
-      // },
 
       getActiveClients: () => {
         const { clients } = get();
