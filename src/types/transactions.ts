@@ -1,4 +1,4 @@
-import type { Client } from "./types";
+import type { Client, TransactionType } from "./types";
 
 export interface Item {
   productName: string;
@@ -22,9 +22,9 @@ export interface BaseUserWithId extends BaseUser {
 
 export interface Transaction {
   _id: string;
-  invoiceNumber: string;
-  type: string;
-  client: Client;
+  invoiceNumber?: string;
+  type: TransactionType;
+  client: Client | null;
   walkInClient?: BaseUser;
   clientId?: BaseUserWithId;
   clientName?: string;
@@ -35,13 +35,16 @@ export interface Transaction {
   };
   userName?: string;
   items: Item[];
-  subtotal: number;
-  discount: number;
+  subtotal?: number;
+  discount?: number;
   total: number;
-  amountPaid: number;
-  paymentMethod: string;
+  amountPaid?: number;
+  paymentMethod?: string;
   status: string;
   createdAt: string;
   notes?: string;
   waybillNumber?: string;
+  amount?: number;
+  description?: string;
+  reference?: string;
 }

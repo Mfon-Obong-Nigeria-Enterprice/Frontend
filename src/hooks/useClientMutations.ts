@@ -24,7 +24,6 @@ export const useClientMutations = () => {
     mutationFn: deleteClient,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
   });
-  console.log(updateMutate);
 
   return { createMutate, updateMutate, deleteMutate };
 };

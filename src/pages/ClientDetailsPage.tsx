@@ -1,10 +1,10 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, ChevronLeft, ChevronUp } from "lucide-react";
+import { ChevronLeft, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import DatePicker from "@/components/DatePicker";
+
 import {
   Select,
   SelectContent,
@@ -18,49 +18,148 @@ import { useClientStore } from "@/stores/useClientStore";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 
 import ClientDetailInfo from "@/components/clients/ClientDetailInfo";
-import { balanceTextClass } from "@/utils/format";
 import { mergeTransactionsWithClients } from "@/utils/mergeTransactionsWithClients";
+import { ClientTransactionDetails } from "@/components/clients/ClientTransactionDetails";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ClientDiscountDetails from "@/components/clients/ClientDiscountDetails";
+import CustomDatePicker from "@/utils/CustomDatePicker";
 
 const ClientDetailsPage: React.FC = () => {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
   const { clients } = useClientStore();
   const { transactions } = useTransactionsStore();
+  // Filter states
+  const [transactionTypeFilter, setTransactionTypeFilter] =
+    useState<string>("all");
+  const [staffFilter, setStaffFilter] = useState<string>("all-staff");
+  const [dateFrom, setDateFrom] = useState<Date | null>(null);
+  const [dateTo, setDateTo] = useState<Date | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    setRefreshKey((prev) => prev + 1);
+  }, [transactions]);
 
   const mergedTransactions = useMemo(() => {
     if (!transactions || !clients) return [];
     return mergeTransactionsWithClients(transactions, clients);
-  }, [transactions, clients]);
+  }, [transactions, clients, refreshKey]);
 
+  //get Clients
+  const client = useMemo(() => {
+    if (!clients || !clientId) return null;
+    return clients.find((c) => c._id === clientId) || null;
+  }, [clients, clientId]);
+  //
+
+  const clientTransactions = useMemo(() => {
+    if (!clientId) return [];
+    let filtered = mergedTransactions.filter((t) => t.client?._id === clientId);
+
+    // Apply transaction type filter
+    if (transactionTypeFilter !== "all") {
+      const typeMap: { [key: string]: string } = {
+        purchase: "PURCHASE",
+        pickup: "PICKUP",
+        deposit: "DEPOSIT",
+      };
+
+      const filterType = typeMap[transactionTypeFilter];
+      if (filterType) {
+        filtered = filtered.filter((t) => t.type === filterType);
+      }
+    }
+
+    if (staffFilter !== "all-staff") {
+      filtered = filtered.filter((t) => t.userId?.name === staffFilter);
+    }
+    if (dateFrom) {
+      filtered = filtered.filter((t) => new Date(t.createdAt) >= dateFrom);
+    }
+    if (dateTo) {
+      filtered = filtered.filter((t) => new Date(t.createdAt) <= dateTo);
+    }
+
+    return filtered.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [
+    clientId,
+    dateFrom,
+    dateTo,
+    mergedTransactions,
+    transactionTypeFilter,
+    staffFilter,
+  ]);
+
+  // Get unique staff members for filter dropdown
+  const staffMembers = useMemo(() => {
+    const uniqueStaff = Array.from(
+      new Set(
+        mergedTransactions
+          .filter((t) => t.client?._id === clientId)
+          .map((t) => t.userId?.name)
+          .filter(Boolean)
+      )
+    );
+    return uniqueStaff;
+  }, [mergedTransactions, clientId]);
+
+  const handleApplyFilters = () => {
+    // Filters are applied automatically via useMemo
+    console.log("Filters applied:", {
+      transactionTypeFilter,
+      staffFilter,
+      dateFrom,
+      dateTo,
+    });
+  };
+
+  // Loading states
   if (!clients || clients.length === 0) {
-    return <div>Loading clients...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2ECC71] mx-auto mb-4"></div>
+          <p>Loading clients...</p>
+        </div>
+      </div>
+    );
   }
 
-  const clientTransactions = mergedTransactions.filter(
-    (t) => t.client?._id === clientId
-  );
-
-  // get client
-  const client = clients.find((c) => c._id === clientId);
   console.log("client", client);
   if (!client) {
-    return <div>Client not found</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-4">Client not found</h2>
+          <p className="text-gray-600 mb-4">
+            The client you're looking for doesn't exist.
+          </p>
+          <Button onClick={() => navigate("/clients")}>Back to Clients</Button>
+        </div>
+      </div>
+    );
   }
 
   return (
     <>
-      <header className="flex justify-between items-center py-3 px-10">
-        <div className="flex gap-10">
+      <header className="grid md:grid-cols-5 grid-cols-1 items-center py-3 md:px-10">
+        <div className="flex gap-5 justify-between md:justify-start col-span-2 md:col-span-2 px-5 md:px-0">
           <button
             onClick={() => navigate(-1)}
-            className="flex gap-1 items-center text-[#7D7D7D]"
+            className="flex gap-1 items-center text-[#7D7D7D] cursor-pointer"
           >
             <ChevronLeft />
             <span>Back</span>
           </button>
-          <p className="text-lg text-[#333333]">Client Account Management</p>
+          <p className="lg:text-lg text-sm text-[#333333]">
+            Client Account Management
+          </p>
         </div>
-        <div className="flex justify-end gap-4 my-4 mx-7">
+        <div className="flex justify-end gap-4 my-4 md:mx-7 col-span-3 md:col-span-3 border-t-[#D9D9D9] md:border-none border-t-2 pt-2 md:pt-0 transition-all px-5 md:px-0">
           <Button className="bg-white hover:bg-gray-100 text-text-dark border border-[#7D7D7D]">
             <ChevronUp />
             <span>Export data</span>
@@ -82,174 +181,146 @@ const ClientDetailsPage: React.FC = () => {
       </header>
 
       {/* main content */}
-      <main className="flex gap-3 bg-[#F5F5F5] py-5 px-12">
+      <main className="grid gap-3 bg-[#F5F5F5] py-5 px-12 grid-cols-1  lg:grid-cols-5">
         {/* section by the left */}
-        <ClientDetailInfo client={client} />
+        <div className=" lg:col-span-2">
+          <ClientDetailInfo client={client} />
+        </div>
+
         {/* section by the right */}
-        <section className="w-full bg-white py-8 px-5 rounded">
-          {/* data */}
-          <div className="flex justify-between items-end gap-5 mb-10">
-            <div>
-              <p className="text-[#7D7D7D] text-[0.625rem] mb-1 ml-1.5">
-                Date from
-              </p>
-              <DatePicker />
-            </div>
-            <div>
-              <p className="text-[#7D7D7D] text-[0.625rem] mb-1 ml-1.5">
-                Date to
-              </p>
-              <DatePicker />
-            </div>
-            <div>
-              <label
-                htmlFor="transaction"
-                className="text-[#7D7D7D] text-[0.625rem] mb-1 ml-1.5"
-              >
-                Transaction type
-              </label>
-              <Select>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="All Transactions" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Select transaction type</SelectLabel>
-                    <SelectItem value="all">All transactions</SelectItem>
-                    <SelectItem value="purchase">Purchase</SelectItem>
-                    <SelectItem value="pick-up">Pick-up</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label
-                htmlFor="transaction"
-                className="text-[#7D7D7D] text-[0.625rem] mb-1 ml-1.5"
-              >
-                Staff member
-              </label>
-              <Select>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="All Staff" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Select staff</SelectLabel>
-                    <SelectItem value="all-staff">All Staff</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button className="bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)] text-white">
-              Apply filters
-            </Button>
-          </div>
-          {/* display data */}
-          {clientTransactions.length === 0 ? (
-            <p className="text-center text-sm text-[#7D7D7D] py-10">
-              No transactions found for this client
-            </p>
-          ) : (
-            clientTransactions.map((txn) => (
-              <div
-                key={txn._id}
-                className="border rounded-lg px-5 py-3 mb-10 shadow"
-              >
-                {/* type, date and time, balance */}
-                <div className="grid grid-cols-[1fr_5fr_1fr] py-4 border-b border-[#d7d7d7]">
-                  <p className="text-xs">{txn.type}</p>
-                  <p className="flex flex-col">
-                    <span className="text-xs">
-                      {new Date(txn.createdAt).toLocaleDateString()}
-                    </span>
-                    <span className="text-xs">
-                      {new Date(txn.createdAt).toLocaleTimeString()}
-                    </span>
-                  </p>
-                  <p className={`${balanceTextClass(client.balance)}`}>
-                    {client.balance && client.balance < 0 ? "-" : ""} ₦
-                    {client.balance &&
-                      Math.abs(Number(client.balance)).toLocaleString()}
-                  </p>
-                </div>
-                {/* details */}
-                <div className="flex justify-between px-2 py-5">
-                  <div className="w-[220px] space-y-3">
-                    <h6 className="text-[#333333] font-normal text-base">
-                      Balance Change
-                    </h6>
+        <section className=" bg-white py-8 px-5 rounded lg:col-span-3">
+          <Tabs className="space-y-4" defaultValue="cards">
+            <TabsList className="flex gap-2 lg:justify-start justify-evenly ">
+              <TabsTrigger value="clientTransaction">Transaction</TabsTrigger>
+              <TabsTrigger value="clientDiscount">Discount</TabsTrigger>
+            </TabsList>
 
-                    <div className="bg-[#F5F5F5] rounded py-2 px-5">
-                      <div className="flex justify-between">
-                        <p className="text-[9px] text-[#7D7D7D]">Previous</p>
-                        <p className="text-[9px] text-[#7D7D7D]">New</p>
-                      </div>
-
-                      <div className="flex justify-between">
-                        <span className="text-[#444444] text-[13px]">
-                          {client.balance &&
-                            `₦ ${(
-                              client.balance + txn.total
-                            ).toLocaleString()}`}
-                        </span>
-                        <span>
-                          <ArrowRight size={13} />
-                        </span>
-                        <span className="text-[#444444] text-[13px]">
-                          ₦{client.balance?.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  {/* transaction details */}
-                  <div className="space-y-3">
-                    <h6 className="text-[#333333] font-normal text-base">
-                      Transaction Details
-                    </h6>
-                    <div>
-                      <p className="font-medium text-[#444444] text-[13px]">
-                        Amount:{" "}
-                        <span className="font-normal">
-                          ₦{client.balance && client.balance.toLocaleString()}
-                        </span>
-                      </p>
-                      <p className="font-medium text-[#444444] text-[13px]">
-                        Method:{" "}
-                        <span className="font-normal">{txn.paymentMethod}</span>{" "}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* process by */}
-                  <div className="space-y-3">
-                    <h6 className="text-[#333333] font-normal text-base">
-                      Process By
-                    </h6>
-                    <p className="font-medium text-[#444444] text-[13px]">
-                      Staff:
-                      <span className="font-normal">{txn.userId.name}</span>
-                    </p>
-                    <p className="rounded-[2px] bg-[#E2F3EB] p-0.5 text-center">
-                      <span className="text-[#3D80FF] text-xs">
-                        {txn.invoiceNumber}
-                      </span>
-                    </p>
+            <TabsContent value="clientTransaction">
+              {/* data */}
+              <div className=" flex justify-start items-center flex-wrap w-full gap-4 md:gap-2  lg:gap-4 mb-10">
+                <div className="flex flex-col sm:w-[230px] md:w-[190px] transition-all w-full ">
+                  <label className="text-xs font-medium text-gray-600 ">
+                    Date from
+                  </label>
+                  <div className="relative sm:w-[230px] md:w-[190px] transition-all w-full  border rounded-lg p-[6px]">
+                    <CustomDatePicker
+                      selected={dateFrom}
+                      onChange={setDateFrom}
+                      className=" "
+                    />
+                    <svg
+                      className="w-5 h-5 text-gray-400 absolute right-2 top-2 pointer-events-none"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
                   </div>
                 </div>
 
-                {/* partial payment block */}
-                <div className="bg-[#F5F5F5] py-4 px-6 rounded-[8px]">
-                  <h6 className="text-base text-[#333333] font-normal">
-                    Partial Payment Received
-                  </h6>
-                  <p className="text-[0.625rem] text-[#333333]">
-                    Payment towards outstanding balance
-                  </p>
+                <div className="flex flex-col sm:w-[230px] md:w-[190px] transition-all w-full   ">
+                  <label className="text-xs font-medium text-gray-600">
+                    Date to
+                  </label>
+                  <div className="relative sm:w-[230px] md:w-[190px] transition-all w-full border rounded-lg p-[6px] ">
+                    <CustomDatePicker
+                      selected={dateTo}
+                      onChange={setDateTo}
+                      className=""
+                    />
+                    <svg
+                      className="w-5 h-5 text-gray-400 absolute right-2 top-2.5 pointer-events-none"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                <div className="flex flex-col  sm:w-[230px] md:w-[190px] transition-all w-full ">
+                  <label className="text-xs font-medium text-gray-600">
+                    Transaction type
+                  </label>
+                  <Select
+                    value={transactionTypeFilter}
+                    onValueChange={setTransactionTypeFilter}
+                  >
+                    <SelectTrigger className="  sm:w-[240px] md:w-[190px] transition-all w-full">
+                      <SelectValue placeholder="All Transactions" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All transactions</SelectItem>
+                      <SelectItem value="purchase">Purchase</SelectItem>
+                      <SelectItem value="pick-up">Pick-up</SelectItem>
+                      <SelectItem value="deposit">Deposit</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col  sm:w-[230px] md:w-[190px] transition-all w-full">
+                  <label className="text-xs font-medium text-gray-600">
+                    Staff member
+                  </label>
+                  <Select value={staffFilter} onValueChange={setStaffFilter}>
+                    <SelectTrigger className="  sm:w-[230px] md:w-[190px] transition-all w-full">
+                      <SelectValue placeholder="All Staff" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all-staff">All Staff</SelectItem>
+                      {staffMembers.map((staff) => (
+                        <SelectItem key={staff} value={staff}>
+                          {staff}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col pt-0 sm:pt-4 items-center sm:w-[230px] md:w-[190px] transition-all w-full">
+                  <Button
+                    className="  bg-[#2ECC71] hover:bg-[#27ae60] text-white font-medium  sm:w-[230px] md:w-[190px] transition-all w-full "
+                    onClick={handleApplyFilters}
+                  >
+                    Apply filters
+                  </Button>
                 </div>
               </div>
-            ))
-          )}
+
+              {/* Transaction summary */}
+              <div className="mb-6 p-4 bg-[#F5F5F5] rounded-lg">
+                <p className="text-sm text-[#7D7D7D]">
+                  Showing {clientTransactions.length} transaction
+                  {clientTransactions.length !== 1 ? "s" : ""}
+                  {transactionTypeFilter !== "all" &&
+                    ` (${transactionTypeFilter})`}
+                  {staffFilter !== "all-staff" && ` by ${staffFilter}`}
+                </p>
+              </div>
+
+              <ClientTransactionDetails
+                client={client}
+                clientTransactions={clientTransactions}
+              />
+            </TabsContent>
+            <TabsContent value="clientDiscount">
+              <ClientDiscountDetails />
+            </TabsContent>
+          </Tabs>
         </section>
       </main>
     </>

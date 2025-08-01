@@ -3,6 +3,7 @@ import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { ArrowRight, MapPin, Phone, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
+import { getDaysSince } from "@/utils/helpersfunction";
 
 const ClientTransactionModal = () => {
   const navigate = useNavigate();
@@ -59,11 +60,12 @@ const ClientTransactionModal = () => {
                   selectedTransaction.client?.balance ?? 0
                 ).toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </p>
-              {/* <div className="bg-[#FFE7A4] py-2 px-2.5 rounded mt-1">
+              <div className="bg-[#FFE7A4] py-2 px-2.5 rounded mt-1">
                 <p className="text-[#444444CC] text-[0.625rem]">
-                  30 days overdue
+                  {getDaysSince(selectedTransaction.client.createdAt)} days
+                  overdue
                 </p>
-              </div> */}
+              </div>
               {selectedTransaction?.createdAt &&
                 (() => {
                   const createdAt = new Date(selectedTransaction.createdAt);

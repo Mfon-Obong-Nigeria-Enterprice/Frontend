@@ -58,7 +58,7 @@ const OutstandingBalance = () => {
                   {data.name}
                 </TableCell>
                 <TableCell className="text-center text-[#F95353] text-xs sm:text-base">
-                  {formatCurrency(data.balance)}
+                  {formatCurrency(Number(data.balance))}
                 </TableCell>
                 <TableCell className="text-center text-[#444444] text-xs sm:text-base">
                   {getDaysSince(data.createdAt)}

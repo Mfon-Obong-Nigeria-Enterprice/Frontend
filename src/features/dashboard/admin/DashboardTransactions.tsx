@@ -26,6 +26,7 @@ import {
 import type { StatCard } from "@/types/stats";
 import type { Transaction } from "@/types/transactions";
 import type { Client } from "@/types/types";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 type BaseSuggestion<T extends "transaction" | "client" | "invoice"> = {
   type: T;
@@ -465,7 +466,7 @@ const DashboardTransactions = () => {
             </span>
           )}
         </h5>
-        <table className="w-full">
+        <table className="w-full overflow-x-scroll">
           <thead className="bg-[#F5F5F5] border border-[#d9d9d9]">
             <tr>
               <th className="py-3 text-base text-[#333333] font-normal text-center">
@@ -535,7 +536,7 @@ const DashboardTransactions = () => {
                     {transaction.status}
                   </td> */}
                   <td className="text-sm text-center">
-                    ₦{transaction.total.toLocaleString()}
+                    {formatCurrency(transaction.total)}
                   </td>
                   <td
                     className={`text-sm text-center ${
@@ -551,7 +552,12 @@ const DashboardTransactions = () => {
                     {transaction.client !== null &&
                     transaction.client.balance !== null ? (
                       <>
-                        {transaction.client.balance < 0 ? "-" : ""}₦
+                        {transaction.client.balance < 0
+                          ? "-"
+                          : transaction.client.balance <= 0
+                          ? ""
+                          : "+"}
+                        ₦
                         {Math.abs(transaction?.client.balance).toLocaleString()}
                       </>
                     ) : (
