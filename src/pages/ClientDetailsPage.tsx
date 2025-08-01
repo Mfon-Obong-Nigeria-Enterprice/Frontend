@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { useNavigate } from "react-router-dom";
@@ -35,16 +35,16 @@ const ClientDetailsPage: React.FC = () => {
   const [staffFilter, setStaffFilter] = useState<string>("all-staff");
   const [dateFrom, setDateFrom] = useState<Date | null>(null);
   const [dateTo, setDateTo] = useState<Date | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  // const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    setRefreshKey((prev) => prev + 1);
-  }, [transactions]);
+  // useEffect(() => {
+  //   setRefreshKey((prev) => prev + 1);
+  // }, [transactions]);
 
   const mergedTransactions = useMemo(() => {
     if (!transactions || !clients) return [];
     return mergeTransactionsWithClients(transactions, clients);
-  }, [transactions, clients, refreshKey]);
+  }, [transactions, clients]);
 
   //get Clients
   const client = useMemo(() => {

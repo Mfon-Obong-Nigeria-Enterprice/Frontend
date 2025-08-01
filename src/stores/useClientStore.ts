@@ -41,7 +41,8 @@ export const useClientStore = create<clientStore>()(
             name: toSentenceCaseName(client.name),
           })),
         }),
-      getClientById: (id) => get().clients.find((client) => client._id === id),
+      getClientById: (id) =>
+        get().clients.filter((client) => client._id === id),
 
       updateClient: (id, updates) => {
         set((state) => ({

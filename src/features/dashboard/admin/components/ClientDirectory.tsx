@@ -27,7 +27,7 @@ import { getBalanceStatus, getTypeDisplay } from "@/utils/helpersfunction";
 
 interface ClientDirectoryProps {
   searchTerm: string;
-  filteredClientsData: [];
+  filteredClientsData: Client[];
   onClientAction?: (client: Client) => void;
   actionLabel?: string;
 }
