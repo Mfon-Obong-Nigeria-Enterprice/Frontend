@@ -22,6 +22,7 @@ interface FormData {
   phone: string;
   description: string;
   balance: number;
+  address: string;
 }
 
 export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
@@ -34,6 +35,7 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
     phone: "",
     description: "",
     balance: 0,
+    address: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,6 +70,7 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
         phone: formData.phone.trim(),
         description: formData.description.trim(),
         balance: Number(formData.balance),
+        address: formData.address.trim(),
       };
       await createMutate.mutateAsync(clientData);
 
@@ -78,6 +81,7 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
         phone: "",
         description: "",
         balance: 0,
+        address: "",
       });
     } catch (err) {
       console.error("Failed to add client:", err);
@@ -160,27 +164,55 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
               </div>
             </div>
 
-            <div>
-              <Label
-                htmlFor="number"
-                className="text-sm text-[#333333] font-[400]"
-              >
-                Balance
-              </Label>
-              <Input
-                className="mt-2 font-[400] text-sm border border-[#444444] "
-                id="number"
-                type="number"
-                required
-                disabled={isLoading}
-                value={formData.balance}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    balance: Number(e.target.value),
-                  }))
-                }
-              />
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="sm:w-[225px] w-full">
+                <Label
+                  htmlFor="address"
+                  className="text-sm text-[#333333] font-[400]"
+                >
+                  Client Address
+                </Label>
+                <Input
+                  className="mt-2 font-[400] text-sm border border-[#444444] "
+                  id="address"
+                  placeholder="Enter Client address"
+                  required
+                  disabled={isLoading}
+                  value={formData.address}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      address: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              {/*  */}
+              <div className="sm:w-[225px] w-full">
+                <Label
+                  htmlFor="number"
+                  className="text-sm text-[#333333] font-[400]"
+                >
+                  Initial Balance(optional)
+                </Label>
+                <Input
+                  className="mt-2 font-[400] text-sm border border-[#444444] "
+                  id="number"
+                  type="number"
+                  step="1"
+                  placeholder="0.00"
+                  required
+                  disabled={isLoading}
+                  value={formData.balance}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      balance: Number.parseFloat(e.target.value),
+                    }))
+                  }
+                />
+              </div>
             </div>
 
             <div>

@@ -49,9 +49,8 @@ const AdminInventory = () => {
   const [priceRange, setPriceRange] = useState("all");
 
   // set the search query from zustand store
-  const setSearchQuery = useInventoryStore((state) => state.setSearchQuery);
 
-  const { products, categories, searchQuery, updateProducts } =
+  const { products, categories, searchQuery, setSearchQuery, updateProducts } =
     useInventoryStore();
 
   const debouncedSearch = useDebouncedCallback((value: string) => {
@@ -76,6 +75,7 @@ const AdminInventory = () => {
     return products;
   }, [products]);
 
+  //
   const handleSave = (updatedProducts: Product[]) => {
     console.log(
       "AdminInventory: Saving updated products to store:",
