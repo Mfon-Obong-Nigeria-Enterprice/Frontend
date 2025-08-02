@@ -36,29 +36,15 @@ import {
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
 import { Button } from "@/components/ui/Button";
 import { formatCurrency } from "@/utils/formatCurrency";
-// import { MoveRight, MoveLeft } from "lucide-react";
 
 interface ClientDirectoryProps {
   searchTerm: string;
 }
-// deleteClient
 
 const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [dialog, setDialog] = useState<"view" | "delete" | null>(null);
   const { clients } = useClientStore();
-
-  // useEffect(() => {
-  //   const initialize = async () => {
-  //     try {
-  //       await initializeStore();
-  //       await fetchClient();
-  //     } catch (error) {
-  //       console.error("failed to initialize store", error);
-  //     }
-  //   };
-  //   initialize();
-  // }, [initializeStore, fetchClient]);
 
   const filteredClients = (clients ?? []).filter(
     (client) =>
@@ -157,7 +143,6 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
   //   }
   // };
 
-  console.log("clients", clients);
   return (
     <div className="mt-7 mb-2 px-4 ">
       <Card>
@@ -203,14 +188,13 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
                     <TableCell>
                       <Badge
                         variant="outline"
-                        className={`uppercase p-2 w-[85px] text-[12px] ${
+                        className={`uppercase p-2 w-[85px] text-[12px] border rounded-2xl ${
                           lastTransaction?.type === "PURCHASE"
-                            ? "border border-[#F95353] bg-[#FFCACA] text-[#F95353] rounded-2xl"
-                            : lastTransaction?.type === "" //will be figured out later
-                            ? "border border-[#FFA500] bg-[#FFE7A4] text-[#FFA500] rounded-2xl"
-                            : lastTransaction?.type === "PICKUP"
-                            ? "border border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71] rounded-2xl"
-                            : "bg-gray-100 rounded-2xl text-gray-300 border border-gray-300 "
+                            ? " border-[#F95353] bg-[#FFCACA] text-[#F95353] "
+                            : lastTransaction?.type === "PICKUP" //will be figured out later
+                            ? "border-[#FFA500] bg-[#FFE7A4] text-[#FFA500]"
+                            : " border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71]"
+                          // : "bg-gray-100 rounded-2xl text-gray-300 border border-gray-300 "
                         }`}
                       >
                         {lastTransaction ? lastTransaction.type : "New Client"}
@@ -232,7 +216,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({ searchTerm }) => {
                     <TableCell>
                       <div>
                         <span className={`font-medium ${balanceStatus.color}`}>
-                          {formatCurrency(Math.abs(client.balance))}
+                          {formatCurrency(Math.abs(Number(client.balance)))}
                         </span>
                       </div>
                     </TableCell>

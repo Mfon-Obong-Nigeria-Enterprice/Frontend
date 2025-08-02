@@ -45,3 +45,7 @@ export interface Transaction {
   notes?: string;
   waybillNumber?: string;
 }
+
+export type MergedTransaction = Transaction & {
+  client?: Client | null;
+};

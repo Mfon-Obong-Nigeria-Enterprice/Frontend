@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import DashboardTitle from "@/components/dashboard/DashboardTitle";
-import Stats from "./components/Stats";
+import Stats from "../shared/Stats";
 import SalesOverview from "./components/SalesOverview";
 import OutstandingBalance from "./components/OutstandingBalance";
 import RecentSales from "./components/RecentSales";
@@ -18,6 +18,7 @@ const DashboardOverview: React.FC = () => {
     getActiveClientsPercentage,
     getOutStandingBalanceData,
   } = useClientStore();
+
   const lowStockCount = products?.filter(
     (prod) => prod.stock <= prod.minStockLevel
   ).length;
@@ -36,7 +37,7 @@ const DashboardOverview: React.FC = () => {
     },
     {
       heading: "Outstanding balances",
-      salesValue: outstandingBalance.totalDebt,
+      salesValue: `${outstandingBalance.totalDebt.toLocaleString()}`,
       format: "currency",
       statValue: "5% from last week",
       statColor: "orange",
@@ -54,7 +55,6 @@ const DashboardOverview: React.FC = () => {
       salesValue: `${activeClients}`,
       statValue: `${activeClientsPercentage}% new clients this week`,
       statColor: "green",
-      // format: "text",
     },
   ];
 

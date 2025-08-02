@@ -2,17 +2,16 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { useDebounce } from "use-debounce";
 
 import DashboardTitle from "@/components/dashboard/DashboardTitle";
-import ClientTransactionModal from "./components/ClientTransactionModal";
-import WalkinTransactionModal from "./components/WalkinTransactionModal";
-import Stats from "./components/Stats";
+import ClientTransactionModal from "../shared/ClientTransactionModal";
+import WalkinTransactionModal from "../shared/WalkinTransactionModal";
+import Stats from "../shared/Stats";
 
-import { Search, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { useClientStore } from "@/stores/useClientStore";
-import { useUserStore } from "@/stores/useUserStore";
 
 import usePagination from "@/hooks/usePagination";
 import {
@@ -22,16 +21,33 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { format } from "date-fns";
 import type { StatCard } from "@/types/stats";
 import type { Transaction } from "@/types/transactions";
-import type { Client } from "@/types/types";
+// import type { Client } from "@/types/types";
+// import type { MergedTransaction } from "@/types/transactions";
+
+import DateRangePicker from "@/components/DateRangePicker";
+import { type DateRange } from "react-day-picker";
+import { toast } from "sonner";
 
 type BaseSuggestion<T extends "transaction" | "client" | "invoice"> = {
   type: T;
   value: string;
   transaction: Transaction;
-  client: Client;
+  // client: Client;
 };
 
 type TransactionSuggestion = BaseSuggestion<"transaction">;
@@ -42,39 +58,13 @@ type InvoiceSuggestion = BaseSuggestion<"invoice">;
 
 type Suggestion = TransactionSuggestion | ClientSuggestion | InvoiceSuggestion;
 
-const stats: StatCard[] = [
-  {
-    heading: "Total Sales (Today)",
-    salesValue: 450000,
-    format: "currency",
-    hideArrow: true,
-  },
-  {
-    heading: "Payments Received",
-    salesValue: 300000,
-    format: "currency",
-    hideArrow: true,
-    salesColor: "green",
-  },
-  {
-    heading: "Outstanding balance",
-    salesValue: 150000,
-    format: "currency",
-    hideArrow: true,
-    salesColor: "orange",
-  },
-  {
-    heading: "Total transactions",
-    salesValue: 10,
-    hideArrow: true,
-  },
-];
-
 const DashboardTransactions = () => {
   const { transactions, open, openModal, selectedTransaction } =
     useTransactionsStore();
-  const { clients, getClientById } = useClientStore();
-  const { getUserNameById } = useUserStore();
+  const { clients, getClientById, getOutStandingBalanceData } =
+    useClientStore();
+  const outstandingBalance = getOutStandingBalanceData();
+
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
@@ -83,6 +73,42 @@ const DashboardTransactions = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const suggestionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const tableRef = useRef<HTMLTableElement>(null);
+  const [clientFilter, setClientFilter] = useState<string | undefined>();
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState<
+    string | undefined
+  >();
+  const [dateRangeFilter, setDateRangeFilter] = useState<DateRange>({
+    from: undefined,
+    to: undefined,
+  });
+
+  const stats: StatCard[] = [
+    {
+      heading: "Total Sales (Today)",
+      salesValue: 450000,
+      format: "currency",
+      hideArrow: true,
+    },
+    {
+      heading: "Payments Received",
+      salesValue: 300000,
+      format: "currency",
+      hideArrow: true,
+      salesColor: "green",
+    },
+    {
+      heading: "Outstanding balance",
+      salesValue: `${outstandingBalance.totalDebt.toLocaleString()}`,
+      format: "currency",
+      hideArrow: true,
+      salesColor: "orange",
+    },
+    {
+      heading: "Total transactions",
+      salesValue: `${transactions?.length}`,
+      hideArrow: true,
+    },
+  ];
 
   // clientId is only available for registered clients.
   const mergedTransactions = useMemo(() => {
@@ -92,38 +118,103 @@ const DashboardTransactions = () => {
         typeof transaction.clientId === "string"
           ? transaction?.clientId
           : transaction.clientId?._id;
-
-      // if (!clientId) {
-      //   return { ...transaction, clientBalance: null }; // for walk-in clients or missing id
-      // }
       const client = clientId ? getClientById(clientId) : null;
 
       return {
         ...transaction,
         client,
-        // clientBalance: clientMatch?.balance ?? null,
       };
     });
   }, [transactions, getClientById]);
 
-  // remove this on prod
-  useEffect(() => {
-    console.log("Transactions", transactions);
-    console.log("Clients", clients);
-    console.log("Users in store:", useUserStore.getState().users);
-  }, [transactions, clients]);
-
   const filteredTransactions = useMemo(() => {
+    if (!mergedTransactions) return [];
+
+    let filtered = [...mergedTransactions];
+
+    // Client filter
+    if (clientFilter === "registeredClient") {
+      filtered = filtered.filter((tx) => tx.clientId && !tx.walkInClient);
+    } else if (clientFilter === "unregisteredClient") {
+      filtered = filtered.filter((tx) => tx.walkInClient && !tx.clientId);
+    } else if (clientFilter === "allClients") {
+      return filtered;
+    }
+
+    // Transaction type filter
+    if (transactionTypeFilter?.toUpperCase() === "PURCHASE") {
+      filtered = filtered.filter((tx) => tx.type === "PURCHASE");
+    } else if (transactionTypeFilter === "PICKUP") {
+      filtered = filtered.filter((tx) => tx.type === "PICKUP");
+    }
+
+    //date filter
+    if (dateRangeFilter.from && dateRangeFilter.to) {
+      filtered = filtered.filter((tx) => {
+        const txDate = new Date(tx.createdAt);
+        return txDate >= dateRangeFilter.from! && txDate <= dateRangeFilter.to!;
+      });
+    }
+
+    // Search term filter
     const lowerTerm = debouncedSearchTerm.toLowerCase();
-    return (mergedTransactions ?? []).filter((transaction) => {
+    return filtered.filter((transaction) => {
       const invoice = transaction.invoiceNumber?.toLowerCase() ?? "";
       const client =
         transaction.clientId?.name?.toLowerCase() ??
         transaction.walkInClient?.name?.toLowerCase() ??
         "";
+
       return invoice.includes(lowerTerm) || client.includes(lowerTerm);
     });
-  }, [debouncedSearchTerm, mergedTransactions]);
+  }, [
+    clientFilter,
+    transactionTypeFilter,
+    dateRangeFilter,
+    debouncedSearchTerm,
+    mergedTransactions,
+  ]);
+
+  // const filteredTransactions = useMemo(() => {
+  //   if (!mergedTransactions) return [];
+
+  //   let filtered = [...mergedTransactions];
+
+  //   // filter by registered or unregistered clients
+  //   if (clientFilter === "registeredClient") {
+  //     filtered = filtered.filter((tx) => tx.clientId && !tx.walkInClient);
+  //   } else if (clientFilter === "unregisteredClient") {
+  //     filtered = filtered.filter((tx) => tx.walkInClient && !tx.clientId);
+  //   }
+
+  //   // filter by transaction type
+  //   if (transactionTypeFilter === "allType") {
+  //     return filtered;
+  //   }
+  //   if (transactionTypeFilter === "purchase") {
+  //     filtered = filtered.filter((tx) => tx.type === "purchase");
+  //   } else if (transactionTypeFilter === "pickup") {
+  //     filtered = filtered.filter((tx) => tx.type === "pickup");
+  //   }
+
+  //   // Apply search term
+  //   const lowerTerm = debouncedSearchTerm.toLowerCase();
+  //   // return (mergedTransactions ?? []).filter((transaction) => {
+  //   return filtered.filter((transaction) => {
+  //     const invoice = transaction.invoiceNumber?.toLowerCase() ?? "";
+  //     const client =
+  //       transaction.clientId?.name?.toLowerCase() ??
+  //       transaction.walkInClient?.name?.toLowerCase() ??
+  //       "";
+
+  //     return invoice.includes(lowerTerm) || client.includes(lowerTerm);
+  //   });
+  // }, [
+  //   clientFilter,
+  //   transactionTypeFilter,
+  //   debouncedSearchTerm,
+  //   mergedTransactions,
+  // ]);
 
   // Generate suggestions based on search term
   const suggestions = useMemo(() => {
@@ -133,57 +224,16 @@ const DashboardTransactions = () => {
     const uniqueSuggestions = new Set<string>();
     const suggestionList: Suggestion[] = [];
 
-    // filteredTransactions.forEach((transaction) => {
-    //   // Add invoice suggestions
-    //   if (transaction.invoiceNumber?.toLowerCase().includes(lowerTerm)) {
-    //     const suggestion = {
-    //       type: "invoice" as const,
-    //       value: transaction.invoiceNumber,
-    //       transaction,
-    //     };
-    //     if (!uniqueSuggestions.has(suggestion.value)) {
-    //       uniqueSuggestions.add(suggestion.value);
-    //       suggestionList.push(suggestion);
-    //     }
-    //   }
-
-    //   // Add client suggestions
-    //   const clientName =
-    //     transaction.clientId?.name ?? transaction.walkInClient?.name;
-    //   if (clientName?.toLowerCase().includes(lowerTerm)) {
-    //     const suggestion = {
-    //       type: "client" as const,
-    //       value: clientName,
-    //       transaction,
-    //     };
-    //     if (!uniqueSuggestions.has(suggestion.value)) {
-    //       uniqueSuggestions.add(suggestion.value);
-    //       suggestionList.push(suggestion);
-    //     }
-    //   }
-    // });
     filteredTransactions.forEach((transaction) => {
-      const invoiceMatch = transaction.invoiceNumber
+      const invoiceMatch = transaction?.invoiceNumber
         ?.toLowerCase()
         .includes(lowerTerm);
-      const clientName =
-        transaction.clientId?.name ?? transaction.walkInClient?.name;
-      const clientMatch = clientName?.toLowerCase().includes(lowerTerm);
 
       if (invoiceMatch && !uniqueSuggestions.has(transaction.invoiceNumber!)) {
         uniqueSuggestions.add(transaction.invoiceNumber!);
         suggestionList.push({
           type: "transaction",
           value: transaction.invoiceNumber!,
-          transaction,
-        });
-      }
-
-      if (clientMatch && clientName && !uniqueSuggestions.has(clientName)) {
-        uniqueSuggestions.add(clientName);
-        suggestionList.push({
-          type: "client",
-          value: clientName,
           transaction,
         });
       }
@@ -310,7 +360,7 @@ const DashboardTransactions = () => {
     goToNextPage,
     canGoPrevious,
     canGoNext,
-  } = usePagination(mergedTransactions.length, 5);
+  } = usePagination(filteredTransactions.length, 5);
 
   const currentTransaction = useMemo(() => {
     const startIndex = (currentPage - 1) * 5;
@@ -345,6 +395,75 @@ const DashboardTransactions = () => {
     );
   }, [suggestions.length]);
 
+  const handleExportExcel = () => {
+    const data = filteredTransactions.map((txn) => ({
+      "Invoice Number": txn.invoiceNumber,
+      Date: txn.createdAt,
+      Name: txn.clientName,
+      "Type of Transaction": txn.type,
+      Status: txn.status,
+      Amount: txn.total,
+      Balance: txn?.client != null ? txn?.client?.balance : "0.00",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory");
+    XLSX.writeFile(workbook, "transaction_export.xlsx");
+    toast.success("Downloaded Successfully!");
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+
+    const columns = [
+      { header: "Invoice Number", dataKey: "invoiceNumber" },
+      { header: "Date", dataKey: "date" },
+      { header: "Name", dataKey: "clientName" },
+      { header: "Type of Transaction", dataKey: "type" },
+      { header: "Status", dataKey: "status" },
+      { header: "Amount", dataKey: "total" },
+      { header: "Balance", dataKey: "balance" },
+    ];
+
+    // const rows = filteredTransactions.map((txn) => ({
+    //   invoiceNumber: txn.invoiceNumber,
+    //   createdAt: txn.createdAt,
+    //   clientName: txn.clientName,
+    //   type: txn.type,
+    //   status: txn.status,
+    //   Amount: txn.total,
+    //   balance: txn.balance ? txn.balance : "0.00",
+    // }));
+    const rows = filteredTransactions.map((t) => [
+      t.invoiceNumber,
+      format(new Date(t.createdAt), "dd/MM/yyyy"),
+      t.clientName,
+      t.type,
+      t.status,
+      t.total.toLocaleString(),
+
+      t.client?.balance != null
+        ? t.client.balance.toLocaleString()
+        : t.clientId?.balance != null
+        ? t.clientId.balance.toLocaleString()
+        : "0.00",
+    ]);
+
+    doc.text("Transaction Export", 14, 16);
+    autoTable(doc, {
+      startY: 22,
+      columns,
+      body: rows,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [44, 204, 113] },
+    });
+    doc.save("transaction_export.pdf");
+    toast.success("Downloaded Successfully!");
+  };
+
+  console.log("filtered transaction", filteredTransactions);
+  console.log("merged transaction", mergedTransactions);
   return (
     <main className="space-y-4">
       <DashboardTitle
@@ -395,7 +514,7 @@ const DashboardTransactions = () => {
                         {suggestion.value}
                       </span>
                       <span className="text-xs text-gray-500">
-                        {suggestion.type === "invoice"
+                        {suggestion.type === "transaction"
                           ? "Invoice Number"
                           : "Client Name"}
                       </span>
@@ -425,35 +544,63 @@ const DashboardTransactions = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <Button className="w-50 h-10 bg-white text-base text-[#444444] border border-[#7d7d7d]">
+          <Button
+            onClick={handleExportExcel}
+            className="w-50 h-10 bg-white text-base text-[#444444] border border-[#7d7d7d]"
+          >
             Download Excel
           </Button>
-          <Button className="w-40 h-10 text-base">Export PDF</Button>
+          <Button onClick={handleExportPDF} className="w-40 h-10 text-base">
+            Export PDF
+          </Button>
         </div>
       </div>
 
       <div className="flex gap-4 ">
+        <Select value={clientFilter} onValueChange={setClientFilter}>
+          <SelectTrigger className="bg-[#d9d9d9]! h-10 w-46 text-[#444444] border-[#7D7D7D]">
+            <SelectValue placeholder="Clients Filter" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="allClients">All Clients</SelectItem>
+              <SelectItem value="registeredClient">
+                Registered Clients
+              </SelectItem>
+              <SelectItem value="unregisteredClient">
+                Unregistered clients
+              </SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
+        <DateRangePicker
+          value={dateRangeFilter}
+          onChange={(range) => setDateRangeFilter(range)}
+        />
         <Button
           variant="secondary"
-          className="bg-[#d9d9d9] h-10 w-40 text-[#444444] border border-[#7D7D7D] justify-between"
+          onClick={() => setDateRangeFilter({ from: undefined, to: undefined })}
+          className="text-sm text-[#3D80FF]"
         >
-          <span>Clients Filter</span>
-          <ChevronUp />
+          Clear
         </Button>
-        <Button
-          variant="secondary"
-          className="bg-[#d9d9d9] h-10 w-40 text-[#444444] border border-[#7D7D7D] justify-between"
+
+        <Select
+          value={transactionTypeFilter}
+          onValueChange={setTransactionTypeFilter}
         >
-          <span>Date Range</span>
-          <ChevronUp />
-        </Button>
-        <Button
-          variant="secondary"
-          className="bg-[#d9d9d9] h-10 w-40 text-[#444444] border border-[#7D7D7D] justify-between"
-        >
-          <span>Transaction Type</span>
-          <ChevronUp />
-        </Button>
+          <SelectTrigger className="!bg-[#d9d9d9] h-10 w-46 text-[#444444] border-[#7D7D7D]">
+            <SelectValue placeholder="Transaction Type"></SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="allType">All Transaction Types</SelectItem>
+              <SelectItem value="PURCHASE">Purchase</SelectItem>
+              <SelectItem value="PICKUP">Pick Up</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="bg-white border mt-7 rounded-xl shadow-xl">
@@ -480,9 +627,9 @@ const DashboardTransactions = () => {
               <th className="py-3 text-base text-[#333333] font-normal text-center">
                 Type
               </th>
-              {/* <th className="py-3 text-base text-[#333333] font-normal text-center">
+              <th className="py-3 text-base text-[#333333] font-normal text-center">
                 Status
-              </th> */}
+              </th>
               <th className="py-3 text-base text-[#333333] font-normal text-center">
                 Amount
               </th>
@@ -497,7 +644,10 @@ const DashboardTransactions = () => {
           <tbody>
             {currentTransaction?.length > 0 ? (
               currentTransaction.map((transaction) => (
-                <tr key={transaction._id} className="border-b border-[#d9d9d9]">
+                <tr
+                  key={transaction._id ?? transaction.invoiceNumber}
+                  className="border-b border-[#d9d9d9]"
+                >
                   <td className=" text-center text-[#444444] text-sm font-normal py-3">
                     {transaction.invoiceNumber}
                   </td>
@@ -510,7 +660,9 @@ const DashboardTransactions = () => {
                     </span>
                   </td>
                   <td className=" text-center text-[#444444] text-sm font-normal py-3">
-                    {transaction.clientName || transaction.walkInClientName}
+                    {transaction.clientId?.name ||
+                      transaction.walkInClientName ||
+                      "Not found"}
                   </td>
                   <td className="text-center">
                     {transaction.type && (
@@ -525,7 +677,7 @@ const DashboardTransactions = () => {
                       </span>
                     )}
                   </td>
-                  {/* <td
+                  <td
                     className={`text-xs text-center ${
                       transaction.status === "COMPLETED"
                         ? "text-[#2ECC71]"
@@ -533,7 +685,7 @@ const DashboardTransactions = () => {
                     }`}
                   >
                     {transaction.status}
-                  </td> */}
+                  </td>
                   <td className="text-sm text-center">
                     ₦{transaction.total.toLocaleString()}
                   </td>
