@@ -1,7 +1,13 @@
-import React from "react";
+/** @format */
+
+import UserList from "./component/UserList";
 
 const UserManagement = () => {
-  return <div>User Management</div>;
+  return (
+    <div className="m-0 p-0 w-full bg-white">
+      <UserList />
+    </div>
+  );
 };
 
 export default UserManagement;
