@@ -5,6 +5,7 @@ import { AdminSidebar } from "@/features/sidebar/AdminSidebar";
 import { Suspense } from "react";
 import { InventoryProvider } from "@/providers/InventoryProvider";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { Toaster } from "@/components/ui/sonner";
 
 const AdminDashboardLayout = () => {
   return (
@@ -28,6 +29,7 @@ const AdminDashboardLayout = () => {
           </div>
         </Suspense>
       </div>
+       <Toaster />
     </SidebarProvider>
   );
 };

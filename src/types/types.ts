@@ -1,11 +1,43 @@
-// @/types/types.ts
 import { z } from "zod";
-import { categorySchema } from "@/schemas/categorySchema"; // Assuming you have this schema
+import { settingsSchema, updateSettingsSchema } from "@/schemas/SettingsSchemas";
 
-export type CategoryData = z.infer<typeof categorySchema>;
-
+// ==================== CORE TYPES ====================
 export type Role = "SUPER_ADMIN" | "MAINTAINER" | "ADMIN" | "STAFF";
 
+export interface PriceHistoryItem {
+  price: number;
+  date: string;
+  _id: string;
+}
+
+// ==================== SETTINGS TYPES ====================
+export type Settings = z.infer<typeof settingsSchema>;
+export type UpdateSettingsPayload = z.infer<typeof updateSettingsSchema>;
+
+// ==================== PRODUCT TYPES ====================
+export interface Product {
+  _id: string;
+  name: string;
+  categoryId: string | { _id: string; name: string; units: string[] };
+  minStockLevel: number;
+  stock: number;
+  unit: string;
+  unitPrice: number;
+  priceHistory?: PriceHistoryItem[];
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ==================== API RESPONSE TYPE ====================
+export interface ApiResponse<T = unknown> {
+  success: never;
+  status: number;
+  message: string;
+  data: T;
+}
+
+// ==================== AUTH TYPES ====================
 export interface User {
   id: string;
   name: string;
@@ -24,7 +56,16 @@ export interface LoginResponse {
     token: string;
   };
 }
-// This file defines the types used in the application, including user roles, setup data, and product categories.
+
+// ==================== CLIENT TYPES ====================
+export interface TransactionItem {
+  _id: string;
+  type: "DEPOSIT";
+  amount: number;
+  description?: string;
+  date: string;
+  reference: string;
+}
 
 export interface Client {
   _id: string;
@@ -41,98 +82,43 @@ export interface Client {
   lastTransactionDate?: string;
 }
 
-export interface TransactionItem {
-  _id: string;
-  type: "DEPOSIT";
-  amount: number;
-  description?: string;
-  date: string;
-  reference: string;
-}
-
-export interface ClientWithTransactions {
-  _id: string;
-  name: string;
-  phone: string;
-  email: string;
-  address: string;
-  balance: number;
-  transactions: TransactionItem[];
-  isActive: boolean;
-  isRegistered: boolean;
-  createdAt: string;
-  updatedAt: string;
-  lastTransactionDate?: string;
-}
-
+// ==================== OTHER TYPES ====================
 export interface CreateTransactionPayload {
   type: "Credit" | "partial" | "debit";
   amount: number;
   description?: string;
 }
 
-export type Category = {
-  _id: string;
-  name: string;
-  units: string[]; // New field
-  description?: string;
-  isActive?: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type Product = {
-  _id: string; // Mongo ID
-  name: string;
-  categoryId: string | { _id: string; name: string; units: string[] }; // Can be string or object, with units
-  minStockLevel: number;
-  stock: number; // Current stock
-  unit: string;
-  unitPrice: number;
-  priceHistory?: Array<{
-    price: number;
-    date: string;
-    _id: string;
-  }>;
-  isActive: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-};
-
-export type UpdateStockProduct = Product & {
-  id: string; // Used for React keys and local identification in UpdateStock
-  newQuantity?: number; // The quantity being updated by the user
-  selected?: boolean; // For checkbox selection
-  category: string; // The category name, derived for display
-  shieldStatus: "high" | "low"; // Standardized to "high" | "low"
-};
-
-export type priceHistory = {
-  price: number;
-  date: string;
-  _id: string;
-};
-
-export type NewProduct = {
+export interface NewProduct {
   name: string;
   categoryId: string;
   unit: string;
   unitPrice: number;
   stock: number;
   minStockLevel: number;
-};
+}
 
-export type ProductImportRow = {
-  "Product Name": string;
-  Category: string;
-  "Stock Quantity": number | string;
-  "Price per unit": number | string;
-};
+export interface ProductUpdatePricePayload {
+  productId: string;
+  newPrice: number;
+}
 
-export type InventoryState = {
-  products: Product[];
-  categories: Category[];
-  searchQuery: string;
-  selectedCategoryId: string;
-  categoryUnits: string[];
-};
+export interface AppSetupResponse {
+  settings: Settings;
+  // ... other app setup data
+}
+
+// ==================== COMPOSITE TYPES ====================
+export interface UpdateStockProduct extends Product {
+  id: string;
+  newQuantity?: number;
+  selected?: boolean;
+  category: string;
+  shieldStatus: "high" | "low";
+}
+
+export interface ClientWithTransactions extends Client {
+  phone: string;
+  email: string;
+  address: string;
+}

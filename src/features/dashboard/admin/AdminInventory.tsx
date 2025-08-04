@@ -64,7 +64,7 @@ const AdminInventory = () => {
 
   const handleSave = (updatedProducts: Product[]) => {
     console.log("AdminInventory: Saving updated products to store:", updatedProducts);
-    updateProducts(updatedProducts); // This now correctly calls the bulk update action
+    updateProducts(updatedProducts);
     setIsModalOpen(false);
   };
 

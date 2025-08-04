@@ -16,7 +16,7 @@ const DashboardOverview: React.FC = () => {
   const products = useInventoryStore((state) => state.products);
 
   const lowStockCount = products.filter(
-    (prod) => prod.stock <= prod.minStockLevel
+    (prod: { stock: number; minStockLevel: number; }) => prod.stock <= prod.minStockLevel
   ).length;
 
   const stats: StatCard[] = [
