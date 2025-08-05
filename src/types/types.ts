@@ -26,6 +26,7 @@ export interface LoginResponse {
 }
 // This file defines the types used in the application, including user roles, setup data, and product categories.
 export type TransactionType = "PURCHASE" | "PICKUP" | "DEPOSIT";
+
 export interface Client {
   _id: string;
   name: string;

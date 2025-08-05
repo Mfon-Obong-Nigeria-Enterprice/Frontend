@@ -7,7 +7,6 @@ import { Search } from "lucide-react";
 import PaymentModal from "./components/PaymentModal";
 import useClientFiltering, {
   type clientBalance,
-  type clientStat,
 } from "@/hooks/useClientFiltering";
 import { Button } from "@/components/ui/Button";
 import {
@@ -41,10 +40,8 @@ const StaffClients: React.FC = () => {
 
   const {
     filteredClients: statusBalanceFilter,
-    clientStatus,
     clientBalance,
     setClientBalance,
-    setClientStatus,
   } = useClientFiltering(clients);
 
   const filteredClients = useMemo(() => {
@@ -94,8 +91,8 @@ const StaffClients: React.FC = () => {
           </div>
 
           {/*  */}
-          <div className="flex items-center gap-4 pt-4 sm:pt-0  md:gap-3 px-4 md:px-0">
-            <Select
+          <div className=" gap-4 pt-4 sm:pt-0  md:gap-3 px-4 md:px-0">
+            {/* <Select
               value={clientStatus}
               onValueChange={(value) => setClientStatus(value as clientStat)}
             >
@@ -107,7 +104,7 @@ const StaffClients: React.FC = () => {
                 <SelectItem value="Registered">Registered</SelectItem>
                 <SelectItem value="Unregistered">Unregistered</SelectItem>
               </SelectContent>
-            </Select>
+            </Select> */}
 
             <Select
               value={clientBalance}
@@ -132,7 +129,8 @@ const StaffClients: React.FC = () => {
           searchTerm={searchTerm}
           filteredClientsData={filteredClients}
           onClientAction={handleProcessPayment}
-          actionLabel="view"
+          actionLabel=""
+          isStaffView={true}
         />
       </section>
 

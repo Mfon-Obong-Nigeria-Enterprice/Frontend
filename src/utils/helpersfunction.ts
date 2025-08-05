@@ -1,3 +1,5 @@
+import { formatCurrency } from "./formatCurrency";
+
 export function getDaysSince(dateString: string) {
   const created = new Date(dateString);
   const now = new Date();
@@ -11,18 +13,21 @@ export const getBalanceStatus = (balance: number) => {
       status: "Deposit",
       variant: "default" as const,
       color: "text-green-500",
+      text: formatCurrency(Math.abs(balance)),
     };
   } else if (balance < 0) {
     return {
       status: "Debt",
       variant: "destructive" as const,
       color: "text-emerald-500",
+      text: formatCurrency(Math.abs(balance)),
     };
   }
   return {
     status: "Zero",
     variant: "secondary" as const,
     color: "text-neutral-700",
+    text: formatCurrency(0),
   };
 };
 

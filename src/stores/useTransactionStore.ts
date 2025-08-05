@@ -65,6 +65,8 @@ export const useTransactionsStore = create<TransactionState>((set) => ({
                 : undefined,
               clientName: transaction.clientId?.name
                 ? toSentenceCaseName(transaction.clientId.name)
+                : transaction.client?.name
+                ? toSentenceCaseName(transaction.client.name)
                 : undefined,
             },
           ]

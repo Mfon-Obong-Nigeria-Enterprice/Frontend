@@ -60,20 +60,20 @@ export const useClientStore = create<clientStore>()(
           clients: state.clients.filter((c) => c._id !== id),
         })),
 
-      addPayment: (clientId, amount) => {
+      addPayment: (clientId: string, newBalance: number) => {
         set((state) => ({
           clients: state.clients.map((client) =>
             client._id === clientId
               ? {
                   ...client,
-                  balance: Number(client.balance) + amount,
+                  balance: newBalance,
                   lastTransactionDate: new Date().toISOString(),
                   transaction: [
                     ...(client.transactions || []),
                     {
                       _id: Date.now().toString(),
                       type: "DEPOSIT",
-                      amount,
+                      amount: Math.abs(client.balance - newBalance),
                       date: new Date().toISOString(),
                       description: "Payment received",
                       reference: `TXN${Date.now()}`,

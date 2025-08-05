@@ -104,7 +104,7 @@ const ClientStats = () => {
       <ClientsCard
         title="Low stock items"
         value={`${lowStockCount} Products`}
-        percentageLabel="Needs attention"
+        percentageLabel={lowStockCount > 0 ? "Needs attention" : ""}
         percentage={growthPercent}
         showTrend={false}
       />
