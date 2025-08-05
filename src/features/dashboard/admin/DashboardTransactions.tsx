@@ -74,7 +74,7 @@ const stats: StatCard[] = [
 const DashboardTransactions = () => {
   const { transactions, open, openModal, selectedTransaction } =
     useTransactionsStore();
-  const { clients, getClientById } = useClientStore();
+  const { getClientById } = useClientStore();
   const { getUserNameById } = useUserStore();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
@@ -108,11 +108,11 @@ const DashboardTransactions = () => {
   }, [transactions, getClientById]);
 
   // remove this on prod
-  useEffect(() => {
-    console.log("Transactions", transactions);
-    console.log("Clients", clients);
-    console.log("Users in store:", useUserStore.getState().users);
-  }, [transactions, clients]);
+  // useEffect(() => {
+  //   console.log("Transactions", transactions);
+  //   console.log("Clients", clients);
+  //   console.log("Users in store:", useUserStore.getState().users);
+  // }, [transactions, clients]);
 
   const filteredTransactions = useMemo(() => {
     const lowerTerm = debouncedSearchTerm.toLowerCase();

@@ -29,7 +29,7 @@ interface ClientProps {
   onClientAction?: (client: Client) => void;
 }
 
-const Clients: React.FC<ClientProps> = ({
+export const Clients: React.FC<ClientProps> = ({
   showExportButtons,
   onClientAction,
 }) => {
@@ -44,6 +44,7 @@ const Clients: React.FC<ClientProps> = ({
     setClientBalance,
     setClientStatus,
   } = useClientFiltering(clients);
+  //
   const handleStatusChange = (value: string) => {
     setClientStatus(value as clientStat);
   };
@@ -266,6 +267,7 @@ const Clients: React.FC<ClientProps> = ({
           filteredClientsData={filteredClients}
           onClientAction={onClientAction}
           actionLabel="view"
+          isStaffView={false}
         />
       </section>
       <AddClientDialog open={showAddDialog} onOpenChange={setShowAddDialog} />

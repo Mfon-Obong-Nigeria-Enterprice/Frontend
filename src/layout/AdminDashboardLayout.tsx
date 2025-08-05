@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/features/sidebar/AdminSidebar";
 // import { Suspense } from "react";
-import { InventoryProvider } from "@/providers/InventoryProvider";
+import { AppProvider } from "@/providers/AppProvider";
 // import LoadingSpinner from "@/components/LoadingSpinner";
 
 const AdminDashboardLayout = () => {
@@ -22,9 +22,9 @@ const AdminDashboardLayout = () => {
           } */}
         {/* > */}
         <div className="bg-[#f5f5f5] pt-10 md:p-10 mt-[3rem] min-h-[90dvh]">
-          <InventoryProvider>
+          <AppProvider>
             <Outlet />
-          </InventoryProvider>
+          </AppProvider>
         </div>
         {/* </Suspense> */}
       </div>

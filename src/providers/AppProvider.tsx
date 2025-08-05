@@ -10,7 +10,7 @@ import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { useClientStore } from "@/stores/useClientStore";
 import { useUserStore } from "@/stores/useUserStore";
 
-export const InventoryProvider = ({ children }: { children: ReactNode }) => {
+export const AppProvider = ({ children }: { children: ReactNode }) => {
   const { setProducts, setCategories } = useInventoryStore();
   const { setTransactions } = useTransactionsStore();
   const { setClients } = useClientStore();
