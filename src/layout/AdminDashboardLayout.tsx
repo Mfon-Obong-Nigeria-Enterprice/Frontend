@@ -19,8 +19,8 @@ const AdminDashboardLayout = () => {
             <div>
               <LoadingSpinner />
             </div>
-          } */}
-        {/* > */}
+          }
+        > */}
         <div className="bg-[#f5f5f5] pt-10 md:p-10 mt-[3rem] min-h-[90dvh]">
           <AppProvider>
             <Outlet />

@@ -1,5 +1,5 @@
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -10,30 +10,47 @@ import {
 } from "@/components/ui/table";
 import Button from "@/components/MyButton";
 import { MdKeyboardArrowRight } from "react-icons/md";
-import ClientDetailModal from "@/components/dashboard/ClientDetailModal";
 import { useClientStore } from "@/stores/useClientStore";
 import { formatCurrency } from "@/utils/formatCurrency";
+import ClientTransactionModal from "../../shared/ClientTransactionModal";
+import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { getDaysSince } from "@/utils/helpersfunction";
 
-// action will be a url to the clients dashboard or page
-
 const OutstandingBalance = () => {
-  const { getClientsWithDebt } = useClientStore();
   const navigate = useNavigate();
-  const [openModal, setOpenModal] = useState(false);
+  const { getClientById } = useClientStore();
 
-  const clientsDebt = getClientsWithDebt();
+  const { transactions, selectedTransaction, open, openModal } =
+    useTransactionsStore();
+
+  const mergedTransactions = useMemo(() => {
+    return (transactions ?? []).map((transaction) => {
+      const clientId =
+        typeof transaction.clientId === "string"
+          ? transaction.clientId
+          : transaction.clientId?._id;
+      const client = clientId ? getClientById(clientId) : null;
+
+      return {
+        ...transaction,
+        client,
+      };
+    });
+  }, [transactions, getClientById]);
+
+  const debtors = mergedTransactions.filter((tx) => tx.client?.balance < 0);
 
   return (
     <div className="bg-white border border-[#D9D9D9] p-4 sm:p-8 mt-5 mx-2 rounded-[8px] font-Inter">
       <h4 className="font-medium text-lg sm:text-xl text-text-dark">
         Outstanding Balance
       </h4>
+
       <div className="mt-5 sm:mt-8 border border-gray-300 rounded-t-xl">
         <Table className="rounded-t-xl overflow-hidden">
           <TableHeader>
-            <TableRow className="bg-[#F0F0F3] border-b border-gray-300  ">
-              <TableHead className="w-[100px] text-left pl-4 font-medium text-[#333333] text-xs sm:text-base">
+            <TableRow className="bg-[#F0F0F3] border-b border-gray-300">
+              <TableHead className="w-[100px] text-center pl-4 font-medium text-[#333333] text-xs sm:text-base">
                 Client
               </TableHead>
               <TableHead className="text-center font-medium text-[#333333] text-xs sm:text-base">
@@ -47,30 +64,40 @@ const OutstandingBalance = () => {
               </TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
-            {clientsDebt.map((data, index) => (
-              <TableRow
-                className={`border-b border-gray-300 ${
-                  index % 2 !== 0 ? "bg-[#F0F0F3]" : ""
-                }`}
-              >
-                <TableCell className="font-medium pl-4 text-[#444444] text-xs sm:text-base">
-                  {data.name}
-                </TableCell>
-                <TableCell className="text-center text-[#F95353] text-xs sm:text-base">
-                  {formatCurrency(Number(data.balance))}
-                </TableCell>
-                <TableCell className="text-center text-[#444444] text-xs sm:text-base">
-                  {getDaysSince(data.createdAt)}
-                </TableCell>
+            {debtors.length === 0 ? (
+              <TableRow>
                 <TableCell
-                  className=" text-center text-blue-400 underline cursor-pointer text-xs sm:text-base"
-                  onClick={() => setOpenModal(true)}
+                  colSpan={4}
+                  className="text-center py-8 text-gray-500"
                 >
-                  View
+                  No outstanding balances.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              debtors.map((entry, index) => (
+                <TableRow
+                  key={entry._id}
+                  className={`border-b border-gray-300 ${
+                    index % 2 !== 0 ? "bg-[#F0F0F3]" : ""
+                  }`}
+                >
+                  <TableCell className="font-medium pl-4 text-[#444444] text-xs sm:text-base">
+                    {entry.client?.name}
+                  </TableCell>
+                  <TableCell className="text-center text-[#F95353] text-xs sm:text-base">
+                    {formatCurrency(Number(entry.client?.balance))}
+                  </TableCell>
+                  <TableCell className="text-center text-[#444444] text-xs sm:text-base">
+                    {getDaysSince(entry.createdAt)}
+                  </TableCell>
+                  <TableCell className="text-center text-blue-400 underline cursor-pointer text-xs sm:text-base">
+                    <button onClick={() => openModal(entry)}>View</button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -85,8 +112,7 @@ const OutstandingBalance = () => {
         <MdKeyboardArrowRight size={24} className="mr-5 text-[#3D80FF]" />
       </div>
 
-      {/* client account modal */}
-      {openModal && <ClientDetailModal setOpenModal={setOpenModal} />}
+      {open && selectedTransaction && <ClientTransactionModal />}
     </div>
   );
 };

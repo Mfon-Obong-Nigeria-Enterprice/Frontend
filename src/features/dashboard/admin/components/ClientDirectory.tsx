@@ -138,7 +138,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                     <TableCell>
                       <Badge
                         variant="outline"
-                        className={`uppercase p-2 w-[85px] text-[12px] ${
+                        className={`uppercase p-2 w-[85px] text-[12px] border rounded-2xl ${
                           lastTransaction?.type === "PURCHASE"
                             ? "border border-[#F95353] bg-[#FFCACA] text-[#F95353] rounded-2xl"
                             : lastTransaction?.type === "PICKUP"

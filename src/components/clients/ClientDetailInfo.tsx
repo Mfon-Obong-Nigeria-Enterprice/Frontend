@@ -1,5 +1,5 @@
 // import { useClientStore } from "@/stores/useClientStore";
-import { balanceClass, balanceTextClass } from "@/utils/format";
+import { balanceClass, balanceTextClass } from "@/utils/styles";
 import type { Client } from "@/types/types";
 import { getDaysSince } from "@/utils/helpersfunction";
 import { useEffect, useMemo, useState } from "react";

@@ -1,4 +1,4 @@
-import DashboardTitle from "@/components/dashboard/DashboardTitle";
+import DashboardTitle from "../shared/DashboardTitle";
 import ClientDirectory from "../admin/components/ClientDirectory";
 import { useMemo, useState } from "react";
 import { useClientStore } from "@/stores/useClientStore";

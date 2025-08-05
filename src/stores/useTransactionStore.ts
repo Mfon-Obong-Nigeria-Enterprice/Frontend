@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { toSentenceCaseName } from "@/utils/format";
+import { toSentenceCaseName } from "@/utils/styles";
 import type { Transaction } from "@/types/transactions";
 
 type TransactionState = {

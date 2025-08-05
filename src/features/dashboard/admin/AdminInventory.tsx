@@ -1,12 +1,10 @@
 /** @format */
-
-// @/pages/AdminInventory.tsx
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDebouncedCallback } from "use-debounce";
 
-import DashboardTitle from "../../../components/dashboard/DashboardTitle";
+import DashboardTitle from "../shared/DashboardTitle";
 import InventoryTab from "./components/InventoryTab";
 import Modal from "@/components/Modal";
 import AddCategory from "@/components/inventory/AddCategory";
@@ -35,7 +33,7 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-import UpdateStock from "./components/UpdateStock"; // Ensure this import path is correct
+import UpdateStock from "./components/UpdateStock";
 
 const AdminInventory = () => {
   const navigate = useNavigate();

@@ -1,7 +1,7 @@
 /** @format */
 
 import React from "react";
-import DashboardTitle from "@/components/dashboard/DashboardTitle";
+import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
 import { Button } from "@/components/ui/Button";
 import StaffStats from "./components/StaffStats";
 import QuickActions from "./components/QuickActions";

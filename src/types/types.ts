@@ -158,3 +158,14 @@ export type InventoryState = {
   selectedCategoryId: string;
   categoryUnits: string[];
 };
+
+// sales for the barchart on admin dashboard
+export interface DailySales {
+  day: string;
+  sales: number;
+}
+
+export type WeeklySales = {
+  week: string;
+  sales: number;
+};

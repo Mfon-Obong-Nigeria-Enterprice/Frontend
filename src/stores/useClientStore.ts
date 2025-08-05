@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Client } from "@/types/types";
 // import { createTransaction } from "@/services/transactionService";
-import { toSentenceCaseName } from "@/utils/format";
+import { toSentenceCaseName } from "@/utils/styles";
 import { useQuery } from "@tanstack/react-query";
 import { getAllClients } from "@/services/clientService";
 import { useEffect } from "react";
@@ -11,7 +11,7 @@ interface clientStore {
   clients: Client[];
 
   setClients: (clients: Client[]) => void;
-  getClientById: (id: string) => Client[];
+  getClientById: (id: string) => Client | null;
   updateClient: (id: string, updates: Partial<Client>) => void;
   deleteClientLocally: (id: string) => void;
 
@@ -41,8 +41,9 @@ export const useClientStore = create<clientStore>()(
             name: toSentenceCaseName(client.name),
           })),
         }),
+
       getClientById: (id) =>
-        get().clients.filter((client) => client._id === id),
+        get().clients.find((client) => client._id === id) || null,
 
       updateClient: (id, updates) => {
         set((state) => ({
