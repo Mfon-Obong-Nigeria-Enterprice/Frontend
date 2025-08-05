@@ -1,0 +1,122 @@
+import type { Transaction, MergedTransaction } from "@/types/transactions";
+import type { Client } from "@/types/types";
+
+export const mergeTransactionsWithClients = (
+  transactions: Transaction[],
+  getClientById: (id: string) => Client | null
+) => {
+  return transactions.map((transaction) => {
+    const clientId =
+      typeof transaction.clientId === "string"
+        ? transaction.clientId
+        : transaction.clientId?._id;
+
+    const client = clientId ? getClientById(clientId) : null;
+
+    return {
+      ...transaction,
+      client,
+    };
+  });
+};
+
+export function getClientsWithDebt(mergedTransaction: MergedTransaction[]) {
+  const clientMap: Record<
+    string,
+    { client: Client; _id: string; createdAt: string }
+  > = {};
+
+  mergedTransaction.forEach((tx) => {
+    const client = tx.client;
+
+    if (!client) return; // Skip walk-in clients
+
+    const clientId = client._id;
+
+    // Assuming 'total' is what they should pay, and 'amountPaid' is what they paid
+    // const amountOwed = tx.total - tx.amountPaid;
+
+    // Only store the first occurrence (for createdAt)
+    if (!clientMap[clientId]) {
+      clientMap[clientId] = {
+        client,
+        _id: clientId,
+        createdAt: tx.createdAt, // use the first transaction's date
+      };
+    }
+  });
+
+  // Filter clients with balance < 0 (i.e., they owe money)
+  return Object.values(clientMap)
+    .filter(({ client }) => client.balance < 0)
+    .map((client, createdAt) => ({
+      name: client.client.name,
+      _id: client._id,
+      balance: client.client.balance,
+      createdAt,
+    }));
+}
+
+export function getTopSellingProducts(
+  transactions: Transaction[],
+  topN = 5
+): {
+  productId: string;
+  productName: string;
+  quantitySold: number;
+  totalRevenue: number;
+}[] {
+  const productSalesMap: Record<
+    string,
+    {
+      productId: string;
+      productName: string;
+      quantitySold: number;
+      totalRevenue: number;
+    }
+  > = {};
+
+  transactions.forEach((tx) => {
+    tx.items.forEach((item) => {
+      const id = item.productId;
+      if (!productSalesMap[id]) {
+        productSalesMap[id] = {
+          productId: id,
+          productName: item.productName,
+          quantitySold: 0,
+          totalRevenue: 0,
+        };
+      }
+      productSalesMap[id].quantitySold += item.quantity;
+      productSalesMap[id].totalRevenue += item.subtotal;
+    });
+  });
+
+  return Object.values(productSalesMap)
+    .sort((a, b) => b.quantitySold - a.quantitySold)
+    .slice(0, topN);
+}
+
+// export function getTopSellingProducts(transactions: Transaction[], topN = 5) {
+//   const productSalesMap = {};
+
+//   transactions.forEach((tx) => {
+//     tx.items.forEach((item) => {
+//       const id = item.productId;
+//       if (!productSalesMap[id]) {
+//         productSalesMap[id] = {
+//           productId: id,
+//           productName: item.productName,
+//           quantitySold: 0,
+//           totalRevenue: 0,
+//         };
+//       }
+//       productSalesMap[id].quantitySold += item.quantity;
+//       productSalesMap[id].totalRevenue += item.subtotal;
+//     });
+//   });
+
+//   return Object.values(productSalesMap)
+//     .sort((a, b) => b.quantitySold - a.quantitySold)
+//     .slice(0, topN);
+// }

@@ -1,4 +1,4 @@
-import DashboardTitle from "../../../components/dashboard/DashboardTitle";
+import DashboardTitle from "../shared/DashboardTitle";
 
 const DashboardSettings = () => {
   return (

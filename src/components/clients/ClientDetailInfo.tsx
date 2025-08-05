@@ -1,12 +1,41 @@
 // import { useClientStore } from "@/stores/useClientStore";
-import { balanceClass, balanceTextClass } from "@/utils/format";
+import { balanceClass, balanceTextClass } from "@/utils/styles";
 import type { Client } from "@/types/types";
+import { getDaysSince } from "@/utils/helpersfunction";
+import { useEffect, useMemo, useState } from "react";
 
-const ClientDetailInfo = ({ client }: { client: Client }) => {
+const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
   //   const { clients } = useClientStore();
+  const [client, setClient] = useState(initialClient);
+  useEffect(() => {
+    setClient(initialClient);
+  }, [initialClient]);
+
+  const daysOverdue = useMemo(() => {
+    if (!client.lastTransactionDate) return 0;
+    return client.balance < 0 ? getDaysSince(client.lastTransactionDate) : 0;
+  }, [client.balance, client.lastTransactionDate]);
+
+  const lifetimeValue = useMemo(() => {
+    if (!client.transactions || client.transactions.length === 0) return "₦0";
+    const total = client.transactions.reduce((sum, txn) => {
+      if (txn.type === "PURCHASE" || txn.type === "DEPOSIT") {
+        return sum + Math.abs(txn.amount);
+      }
+      return sum;
+    }, 0);
+    return `₦${total.toLocaleString()}`;
+  }, [client.transactions]);
+
+  // Get account status
+  const accountStatus = useMemo(() => {
+    if (client.balance > 0) return { text: "Credit", class: "text-[#2ECC71]" };
+    if (client.balance < 0) return { text: "Overdue", class: "text-[#F95353]" };
+    return { text: "Current", class: "text-[#7d7d7d]" };
+  }, [client.balance]);
 
   return (
-    <section className="w-[40%] bg-white py-8 px-5 rounded">
+    <section className=" bg-white py-8 px-5 rounded">
       {client && (
         <div>
           <p className="text-lg text-[#333333] mb-6">
@@ -47,14 +76,16 @@ const ClientDetailInfo = ({ client }: { client: Client }) => {
             <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
               <p>Last activity</p>
               <p>
-                {client.lastTransactionDate &&
-                  new Date(client.lastTransactionDate).toLocaleDateString()}
+                {client.lastTransactionDate
+                  ? new Date(client.lastTransactionDate).toLocaleDateString()
+                  : "No activity"}
               </p>
             </div>
             <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
               <p>Account status</p>
-              <p className={`capitalize ${balanceTextClass(client.balance)}`}>
-                {client.balance && client.balance > 0 ? "credit" : "Overdue"}
+              <p className={`capitalize ${accountStatus.class}`}>
+                {/* {client.balance && client.balance > 0 ? "credit" : "Overdue"} */}
+                {accountStatus.text}
               </p>
             </div>
           </article>
@@ -73,7 +104,7 @@ const ClientDetailInfo = ({ client }: { client: Client }) => {
           <ul className="grid grid-cols-2 gap-5 mt-5">
             <li className="bg-[#F5F5F5] flex flex-col gap-0.5 justify-center items-center rounded-[8px] p-5">
               <span className="text-sm text-[#333333] font-semibold">
-                {client.transactions.length}
+                {client.transactions.length || 0}
               </span>
               <span className="text-xs text-[#444444] font-normal">
                 Total order
@@ -82,7 +113,7 @@ const ClientDetailInfo = ({ client }: { client: Client }) => {
 
             <li className="bg-[#F5F5F5] flex flex-col gap-0.5 justify-center items-center rounded-[8px] p-5">
               <span className="text-sm text-[#333333] font-semibold">
-                ₦1.8M
+                {lifetimeValue}
               </span>
               <span className="text-xs text-[#444444] font-normal">
                 Lifetime value
@@ -90,7 +121,9 @@ const ClientDetailInfo = ({ client }: { client: Client }) => {
             </li>
 
             <li className="bg-[#F5F5F5] flex flex-col gap-0.5 justify-center items-center rounded-[8px] p-5">
-              <span className="text-sm text-[#333333] font-semibold">30</span>
+              <span className="text-sm text-[#333333] font-semibold">
+                {daysOverdue}
+              </span>
               <span className="text-xs text-[#444444] font-normal">
                 Days overdue
               </span>

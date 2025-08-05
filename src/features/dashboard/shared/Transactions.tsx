@@ -1,286 +1,408 @@
-// import React, { useState, useRef, useMemo } from "react";
-// import { useDebounce } from "use-debounce";
+import { useState, useCallback, useMemo } from "react";
 
-// import Stats from "./Stats";
+// libs
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { format } from "date-fns";
+import { toast } from "sonner";
 
-// import { useClientStore } from "@/stores/useClientStore";
-// import { useTransactionsStore } from "@/stores/useTransactionStore";
+// stores
+import { useClientStore } from "@/stores/useClientStore";
+import { useTransactionsStore } from "@/stores/useTransactionStore";
 
-// import type { StatCard } from "@/types/stats";
+// types
+import type { StatCard } from "@/types/stats";
+import type { DateRange } from "react-day-picker";
 
-// import { Button } from "@/components/ui/Button";
+// hooks
+import usePagination from "@/hooks/usePagination";
 
-// import { Search } from "lucide-react";
+// components
+import Stats from "../shared/Stats";
+import SearchBar from "./SearchBar";
+import TransactionTable from "./TransactionTable";
+import DateRangePicker from "@/components/DateRangePicker";
 
-// import { mergeTransactionsWithClients } from "@/utils/mergeTransactionsWithClients";
-// import type { Transaction } from "@/types/transactions";
-// const Transactions = () => {
-//   const { clients, getClientById, getOutStandingBalanceData } =
-//     useClientStore();
-//   const { transactions, open, openModal, selectedTransaction } =
-//     useTransactionsStore();
-//   const [searchTerm, setSearchTerm] = useState<string>("");
-//   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
-//   const searchInputRef = useRef<HTMLInputElement>(null);
-//   const suggestionRefs = useRef<(HTMLDivElement | null)[]>([]);
-//   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
-//   const [selectedSuggestionIndex, setSelectedSuggestionIndex] =
-//     useState<number>(-1);
+// ui
+import { Button } from "@/components/ui/Button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-//   const outstandingBalance = getOutStandingBalanceData();
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
-//   const stats: StatCard[] = [
-//     {
-//       heading: "Total Sales (Today)",
-//       salesValue: 450000,
-//       format: "currency",
-//       hideArrow: true,
-//     },
-//     {
-//       heading: "Payments Received",
-//       salesValue: 300000,
-//       format: "currency",
-//       hideArrow: true,
-//       salesColor: "green",
-//     },
-//     {
-//       heading: "Outstanding balance",
-//       salesValue: `${outstandingBalance.totalDebt.toLocaleString()}`,
-//       format: "currency",
-//       hideArrow: true,
-//       salesColor: "orange",
-//     },
-//     {
-//       heading: "Total transactions",
-//       salesValue: `${transactions?.length}`,
-//       hideArrow: true,
-//     },
-//   ];
+// icons
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-//   const suggestions = useMemo(() => {
-//     if (!searchTerm || searchTerm.length < 1) return [];
+const Transactions = () => {
+  const { getOutStandingBalanceData, getClientById } = useClientStore();
+  const { transactions } = useTransactionsStore();
+  const [clientFilter, setClientFilter] = useState<string | undefined>();
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState<
+    string | undefined
+  >();
+  const [dateRangeFilter, setDateRangeFilter] = useState<DateRange>({
+    from: undefined,
+    to: undefined,
+  });
 
-//     const lowerTerm = searchTerm.toLowerCase();
-//     const uniqueSuggestions = new Set<string>();
-//     const suggestionList: Transaction[] = [];
+  const outstandingBalance = getOutStandingBalanceData();
 
-//     const mergedTransactions = useMemo(() => {
-//       return mergeTransactionsWithClients(transactions, getClientById);
-//     }, []);
+  const stats: StatCard[] = [
+    {
+      heading: "Total Sales (Today)",
+      salesValue: 450000,
+      format: "currency",
+      hideArrow: true,
+    },
+    {
+      heading: "Payments Received",
+      salesValue: 300000,
+      format: "currency",
+      hideArrow: true,
+      salesColor: "green",
+    },
+    {
+      heading: "Outstanding balance",
+      salesValue: `${outstandingBalance.totalDebt.toLocaleString()}`,
+      format: "currency",
+      hideArrow: true,
+      salesColor: "orange",
+    },
+    {
+      heading: "Total transactions",
+      salesValue: `${transactions?.length || 0}`,
+      hideArrow: true,
+    },
+  ];
 
-//     filteredTransactions.forEach((transaction) => {
-//       const invoiceMatch = transaction?.invoiceNumber
-//         ?.toLowerCase()
-//         .includes(lowerTerm);
+  // Fetch Suggestions based on invoice number
+  const mergedTransactions = useMemo(() => {
+    return (transactions ?? []).map((transaction) => {
+      // const clientId = transaction.clientId?._id;
+      const clientId =
+        typeof transaction.clientId === "string"
+          ? transaction.clientId
+          : transaction.clientId?._id;
+      const client = clientId ? getClientById(clientId) : null;
 
-//       if (invoiceMatch && !uniqueSuggestions.has(transaction.invoiceNumber!)) {
-//         uniqueSuggestions.add(transaction.invoiceNumber!);
-//         suggestionList.push({
-//           type: "transaction",
-//           value: transaction.invoiceNumber!,
-//           transaction,
-//         });
-//       }
-//     });
-//     return suggestionList.slice(0, 8); // Limit to 8 suggestions
-//   }, [searchTerm, filteredTransactions]);
+      return {
+        ...transaction,
+        client,
+      };
+    });
+  }, [transactions, getClientById]);
 
-//   const scrollToTransaction = (transactionId: string) => {
-//     // First, ensure the transaction is visible by navigating to the correct page
-//     const transactionIndex = filteredTransactions.findIndex(
-//       (t) => t._id === transactionId
-//     );
-//     if (transactionIndex === -1) return;
+  const filteredTransactions = useMemo(() => {
+    if (!mergedTransactions) return [];
 
-//     const targetPage = Math.floor(transactionIndex / 4) + 1;
+    let filtered = [...mergedTransactions];
 
-//     // If we need to change pages, do it and then scroll after a brief delay
-//     if (targetPage !== currentPage) {
-//       // Navigate to the correct page first
-//       const pageOffset = targetPage - currentPage;
-//       if (pageOffset > 0) {
-//         for (let i = 0; i < pageOffset; i++) {
-//           if (canGoNext) goToNextPage();
-//         }
-//       } else {
-//         for (let i = 0; i < Math.abs(pageOffset); i++) {
-//           if (canGoPrevious) goToPreviousPage();
-//         }
-//       }
+    // Client filter
+    if (clientFilter === "registeredClient") {
+      filtered = filtered.filter((tx) => tx.clientId && !tx.walkInClient);
+    } else if (clientFilter === "unregisteredClient") {
+      filtered = filtered.filter((tx) => tx.walkInClient && !tx.clientId);
+    } else if (clientFilter === "allClients") {
+      return filtered;
+    }
 
-//       // Scroll after page change with delay
-//       setTimeout(() => {
-//         scrollToRow(transactionId);
-//       }, 100);
-//     } else {
-//       // Same page, scroll immediately
-//       scrollToRow(transactionId);
-//     }
-//   };
+    // Transaction type filter
+    if (transactionTypeFilter?.toUpperCase() === "PURCHASE") {
+      filtered = filtered.filter((tx) => tx.type === "PURCHASE");
+    } else if (transactionTypeFilter === "PICKUP") {
+      filtered = filtered.filter((tx) => tx.type === "PICKUP");
+    }
 
-//   const scrollToRow = (transactionId: string) => {
-//     const row = document.querySelector(
-//       `[data-transaction-id="${transactionId}"]`
-//     );
-//     if (row && tableRef.current) {
-//       row.scrollIntoView({
-//         behavior: "smooth",
-//         block: "center",
-//       });
+    //date filter
+    if (dateRangeFilter.from && dateRangeFilter.to) {
+      filtered = filtered.filter((tx) => {
+        const txDate = new Date(tx.createdAt);
+        return txDate >= dateRangeFilter.from! && txDate <= dateRangeFilter.to!;
+      });
+    }
+    return filtered;
+  }, [
+    clientFilter,
+    transactionTypeFilter,
+    dateRangeFilter,
+    // debouncedSearchTerm,
+    mergedTransactions,
+  ]);
 
-//       // Add highlight effect
-//       row.classList.add("bg-blue-50", "border-blue-200");
-//       setTimeout(() => {
-//         row.classList.remove("bg-blue-50", "border-blue-200");
-//       }, 2000);
-//     }
-//   };
+  // Use filteredTransactions for pagination instead of filterByInvoice
+  const {
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    goToPreviousPage,
+    goToNextPage,
+    canGoPrevious,
+    canGoNext,
+  } = usePagination((filteredTransactions ?? []).length, 5);
 
-//   // Scroll selected suggestion into view
-//   useEffect(() => {
-//     if (
-//       selectedSuggestionIndex >= 0 &&
-//       suggestionRefs.current[selectedSuggestionIndex]
-//     ) {
-//       suggestionRefs.current[selectedSuggestionIndex]?.scrollIntoView({
-//         behavior: "smooth",
-//         block: "nearest",
-//       });
-//     }
-//   }, [selectedSuggestionIndex]);
+  const currentTransaction = useMemo(() => {
+    const startIndex = (currentPage - 1) * 5;
+    const endIndex = startIndex + 5;
+    return filteredTransactions?.slice(startIndex, endIndex);
+  }, [filteredTransactions, currentPage]);
 
-//   const handleSuggestionClick = (suggestion: Suggestion) => {
-//     setSearchTerm(suggestion.value);
-//     setShowSuggestions(false);
-//     setSelectedSuggestionIndex(-1);
+  const handleExportExcel = () => {
+    const data =
+      filteredTransactions &&
+      filteredTransactions.map((txn) => ({
+        "Invoice Number": txn.invoiceNumber,
+        Date: txn.createdAt,
+        Name: txn.clientName,
+        "Type of Transaction": txn.type,
+        Status: txn.status,
+        Amount: txn.total,
+        Balance: txn?.client != null ? txn?.client?.balance : "0.00",
+      }));
 
-//     if (suggestion.type === "transaction") {
-//       scrollToTransaction(suggestion.transaction._id);
-//     }
-//     // scrollToTransaction((suggestion.transaction as Transaction)._id);
-//   };
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory");
+    XLSX.writeFile(workbook, "transaction_export.xlsx");
+    toast.success("Downloaded Successfully!");
+  };
 
-//   const handleKeyDown = (e: React.KeyboardEvent) => {
-//     if (!showSuggestions || suggestions.length === 0) return;
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
 
-//     switch (e.key) {
-//       case "ArrowDown":
-//         e.preventDefault();
-//         setSelectedSuggestionIndex((prev) =>
-//           prev < suggestions.length - 1 ? prev + 1 : 0
-//         );
-//         break;
-//       case "ArrowUp":
-//         e.preventDefault();
-//         setSelectedSuggestionIndex((prev) =>
-//           prev > 0 ? prev - 1 : suggestions.length - 1
-//         );
-//         break;
-//       case "Enter":
-//         e.preventDefault();
-//         if (selectedSuggestionIndex >= 0) {
-//           handleSuggestionClick(suggestions[selectedSuggestionIndex]);
-//         }
-//         break;
-//       case "Escape":
-//         setShowSuggestions(false);
-//         setSelectedSuggestionIndex(-1);
-//         searchInputRef.current?.blur();
-//         break;
-//     }
-//   };
+    const columns = [
+      { header: "Invoice Number", dataKey: "invoiceNumber" },
+      { header: "Date", dataKey: "date" },
+      { header: "Name", dataKey: "clientName" },
+      { header: "Type of Transaction", dataKey: "type" },
+      { header: "Status", dataKey: "status" },
+      { header: "Amount", dataKey: "total" },
+      { header: "Balance", dataKey: "balance" },
+    ];
 
-//   return (
-//     <div>
-//       <Stats data={stats} />
+    const rows = (filteredTransactions ?? []).map((t) => [
+      t.invoiceNumber,
+      format(new Date(t.createdAt), "dd/MM/yyyy"),
+      t.clientName,
+      t.type,
+      t.status,
+      t.total.toLocaleString(),
 
-//       {/* Search bar */}
-//       <div className="flex justify-between gap-10 items-center">
-//         {/* search */}
-//         <div className="relative max-w-lg w-full md:w-1/2 search-container">
-//           <div className="relative bg-white flex items-center gap-1 px-4 rounded-md border border-[#d9d9d9]">
-//             <Search size={18} className="text-gray-400" />
-//             <input
-//               type="search"
-//               ref={searchInputRef}
-//               placeholder="Search by invoice..."
-//               value={searchTerm}
-//               onChange={(e) => {
-//                 setSearchTerm(e.target.value);
-//                 setShowSuggestions(true);
-//                 setSelectedSuggestionIndex(-1);
-//               }}
-//               onFocus={() => setShowSuggestions(true)}
-//               onKeyDown={handleKeyDown}
-//               className="py-2 outline-0 w-full"
-//             />
-//           </div>
+      t.client?.balance != null && t.client.balance
+        ? t.client.balance.toLocaleString()
+        : t.clientId?.balance != null
+        ? t.clientId.balance.toLocaleString()
+        : "0.00",
+    ]);
 
-//           {showSuggestions && searchTerm && (
-//             <div className="absolute top-full left-0 z-50 bg-white border rounded-md shadow-lg w-full max-h-64 overflow-y-auto">
-//               {suggestions.length > 0 ? (
-//                 suggestions.map((suggestion, i) => (
-//                   <div
-//                     key={i}
-//                     ref={(el) => {
-//                       suggestionRefs.current[i] = el;
-//                     }}
-//                     onClick={() => handleSuggestionClick(suggestion)}
-//                     onMouseEnter={() => setSelectedSuggestionIndex(i)}
-//                     className={`flex items-center justify-between px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors ${
-//                       selectedSuggestionIndex === i
-//                         ? "bg-blue-50 border-blue-200"
-//                         : "hover:bg-gray-50"
-//                     }`}
-//                   >
-//                     <div className="flex flex-col">
-//                       <span className="text-sm font-medium text-gray-900">
-//                         {suggestion.value}
-//                       </span>
-//                       <span className="text-xs text-gray-500">
-//                         {suggestion.type === "transaction"
-//                           ? "Invoice Number"
-//                           : "Client Name"}
-//                       </span>
-//                     </div>
-//                     <div className="text-xs text-gray-400">
-//                       {suggestion.type === "invoice" && (
-//                         <span className="ml-2">
-//                           {suggestion.transaction.clientId?.name ??
-//                             suggestion.transaction.walkInClient?.name}
-//                         </span>
-//                       )}
-//                     </div>
-//                   </div>
-//                 ))
-//               ) : (
-//                 <div className="p-4 text-center">
-//                   <p className="text-sm text-gray-500">
-//                     No matches found for{" "}
-//                     <span className="font-medium text-gray-700">
-//                       "{searchTerm}"
-//                     </span>
-//                   </p>
-//                 </div>
-//               )}
-//             </div>
-//           )}
-//         </div>
+    doc.text("Transaction Export", 14, 16);
+    autoTable(doc, {
+      startY: 22,
+      columns,
+      body: rows,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [44, 204, 113] },
+    });
+    doc.save("transaction_export.pdf");
+    toast.success("Downloaded Successfully!");
+  };
 
-//         <div className="flex items-center gap-4">
-//           <Button
-//             onClick={handleExportExcel}
-//             className="w-50 h-10 bg-white text-base text-[#444444] border border-[#7d7d7d]"
-//           >
-//             Download Excel
-//           </Button>
-//           <Button onClick={handleExportPDF} className="w-40 h-10 text-base">
-//             Export PDF
-//           </Button>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
+  const fetchSuggestions = useCallback(
+    async (query: string) => {
+      const lowerQuery = query.toLowerCase();
 
-// export default Transactions;
+      const matched = (transactions ?? []).filter((t) =>
+        t.invoiceNumber?.toLowerCase().includes(lowerQuery)
+      );
+
+      return matched.map((t) => ({
+        id: t._id,
+        label: t.invoiceNumber ?? "Unnamed Invoice",
+      }));
+    },
+    [transactions]
+  );
+
+  // 2. Handle selection of a transaction
+  const onSelect = useCallback(
+    (selected: { id: string; label: string }) => {
+      const index = filteredTransactions.findIndex(
+        (t) => t.invoiceNumber === selected.label
+      );
+
+      if (index === -1) return;
+
+      const pageSize = 5;
+      const targetPage = Math.floor(index / pageSize) + 1;
+
+      if (targetPage !== currentPage) {
+        setCurrentPage(targetPage);
+
+        // Wait for page to update, then scroll
+        setTimeout(() => {
+          const target = document.getElementById(`invoice-${selected.label}`);
+          if (target) {
+            target.scrollIntoView({ behavior: "smooth", block: "center" });
+            target.classList.add("ring-2", "ring-blue-400", "rounded-md");
+            setTimeout(() => {
+              target.classList.remove("ring-2", "ring-blue-400", "rounded-md");
+            }, 2000);
+          }
+        }, 300);
+      } else {
+        const target = document.getElementById(`invoice-${selected.label}`);
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "center" });
+          target.classList.add("ring-2", "ring-blue-400", "rounded-md");
+          setTimeout(() => {
+            target.classList.remove("ring-2", "ring-blue-400", "rounded-md");
+          }, 2000);
+        }
+      }
+    },
+    [filteredTransactions, currentPage, setCurrentPage]
+  );
+
+  return (
+    <div>
+      <Stats data={stats} />
+
+      {/* Search bar for invoice number */}
+      <div className="flex flex-col md:flex-row justify-between gap-10 items-center my-10 px-5 md:px-0">
+        <SearchBar
+          type="invoice"
+          fetchSuggestions={fetchSuggestions}
+          onSelect={onSelect}
+          placeholder="Search by invoice..."
+        />
+        <div className="flex justify-between items-center gap-4">
+          <Button
+            onClick={handleExportExcel}
+            variant="secondary"
+            className="w-42 md:w-50 h-10 bg-white text-base text-[#444444] border border-[#7d7d7d]"
+          >
+            Download Excel
+          </Button>
+          <Button onClick={handleExportPDF} className="w-42 md:w-50 h-10">
+            Export PDF
+          </Button>
+        </div>
+      </div>
+
+      {/* filter buttons */}
+      <div className="flex gap-4 px-5 md:px-0 overflow-x-auto">
+        {/* filter by registered or unregisterd clients */}
+        <Select value={clientFilter} onValueChange={setClientFilter}>
+          <SelectTrigger className="bg-[#d9d9d9]! h-10 w-46 text-[#444444] border-[#7D7D7D]">
+            <SelectValue placeholder="Clients Filter" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="allClients">All Clients</SelectItem>
+              <SelectItem value="registeredClient">
+                Registered Clients
+              </SelectItem>
+              <SelectItem value="unregisteredClient">
+                Unregistered clients
+              </SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
+        {/* filter by date */}
+        <DateRangePicker
+          value={dateRangeFilter}
+          onChange={(range) => setDateRangeFilter(range)}
+        />
+        <Button
+          variant="secondary"
+          onClick={() => setDateRangeFilter({ from: undefined, to: undefined })}
+          className="text-sm text-[#3D80FF]"
+        >
+          Clear
+        </Button>
+
+        {/* filter by transaction type */}
+        <Select
+          value={transactionTypeFilter}
+          onValueChange={setTransactionTypeFilter}
+        >
+          <SelectTrigger className="!bg-[#d9d9d9] h-10 w-46 text-[#444444] border-[#7D7D7D]">
+            <SelectValue placeholder="Transaction Type"></SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="allType">All Transaction Types</SelectItem>
+              <SelectItem value="PURCHASE">Purchase</SelectItem>
+              <SelectItem value="PICKUP">Pick Up</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Transaction table */}
+      <div className="my-16 shadow-lg rounded-xl overflow-hidden">
+        <TransactionTable currentTransaction={currentTransaction} />
+        {/* pagination */}
+        {currentTransaction &&
+          currentTransaction?.length > 0 &&
+          totalPages > 1 && (
+            <div className="h-14 bg-[#f5f5f5] text-sm text-[#7D7D7D] flex justify-center items-center gap-3">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={canGoPrevious ? goToPreviousPage : undefined}
+                      className={
+                        !canGoPrevious
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                      aria-label="Go to previous page"
+                    >
+                      <Button
+                        disabled={!canGoPrevious}
+                        className="border border-[#d9d9d9] rounded"
+                      >
+                        <ChevronLeft size={14} />
+                      </Button>
+                    </PaginationPrevious>
+                  </PaginationItem>
+                  <PaginationItem className="px-4 text-sm text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </PaginationItem>
+                  <PaginationNext
+                    onClick={canGoNext ? goToNextPage : undefined}
+                    className={
+                      !canGoNext
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                    aria-label="Go to next page"
+                  >
+                    <Button className="border border-[#d9d9d9] rounded">
+                      <ChevronRight size={14} />
+                    </Button>
+                  </PaginationNext>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+      </div>
+    </div>
+  );
+};
+
+export default Transactions;

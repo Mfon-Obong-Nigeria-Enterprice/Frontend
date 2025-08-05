@@ -1,4 +1,4 @@
-import type { Client } from "./types";
+import type { Client, TransactionType } from "./types";
 
 export interface Item {
   productName: string;
@@ -20,13 +20,17 @@ export interface BaseUserWithId extends BaseUser {
   _id: string;
 }
 
+export interface ClientWithBalance extends BaseUserWithId {
+  balance: number | string;
+}
+
 export interface Transaction {
   _id: string;
-  invoiceNumber: string;
-  type: string;
-  client: Client;
+  invoiceNumber?: string;
+  type: TransactionType;
+  client: Client | null;
   walkInClient?: BaseUser;
-  clientId?: BaseUserWithId;
+  clientId?: ClientWithBalance;
   clientName?: string;
   walkInClientName?: string;
   userId: {
@@ -35,17 +39,20 @@ export interface Transaction {
   };
   userName?: string;
   items: Item[];
-  subtotal: number;
-  discount: number;
+  subtotal?: number;
+  discount?: number;
   total: number;
-  amountPaid: number;
-  paymentMethod: string;
+  amountPaid?: number;
+  paymentMethod?: string;
   status: string;
   createdAt: string;
   notes?: string;
   waybillNumber?: string;
+  amount?: number;
+  description?: string;
+  reference?: string;
 }
 
 export type MergedTransaction = Transaction & {
-  client?: Client | null;
+  client: Client | null;
 };

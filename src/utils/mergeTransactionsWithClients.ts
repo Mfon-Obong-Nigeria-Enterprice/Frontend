@@ -1,46 +1,32 @@
 import type { Transaction } from "@/types/transactions";
 import type { Client } from "@/types/types";
 
-// export function mergeTransactionsWithClients(
-//   transactions: Transaction[],
-//   clients: Client[]
-// ) {
-//   return transactions.map((transaction) => {
-//     const clientId =
-//       typeof transaction.clientId === "string"
-//         ? transaction.clientId
-//         : transaction.clientId?._id;
+export const mergeTransactionsWithClients = (
+  transactions: Transaction[],
+  clients: Client[]
+): Transaction[] => {
+  return transactions.map((txn) => {
+    // For payment transactions, we might not have clientId
+    const client = clients.find(
+      (c) => c._id === txn.clientId?._id || c._id === txn.client?._id
+    );
 
-//     const client = clients.find((c) => c._id === clientId) ?? null;
-
-//     return {
-//       ...transaction,
-//       client,
-//     };
-//   });
-// }
-
-export function mergeTransactionsWithClients(
-  transactions: Transaction[] = [],
-  getClient: ((id: string) => Client | null) | Client[] = []
-) {
-  return transactions.map((transaction) => {
-    const clientId =
-      typeof transaction.clientId === "string"
-        ? transaction.clientId
-        : transaction.clientId?._id;
-
-    let client: Client | null = null;
-
-    if (typeof getClient === "function") {
-      client = getClient(clientId);
-    } else if (Array.isArray(getClient)) {
-      client = getClient.find((c) => c._id === clientId) ?? null;
+    // Handle payment transactions
+    if (txn.type === "DEPOSIT") {
+      return {
+        ...txn,
+        client: client || null,
+        items: txn.items || [],
+        subtotal: txn.subtotal || txn.amount || 0,
+        total: txn.total || txn.amount || 0,
+        amountPaid: txn.amountPaid || txn.amount || 0,
+        discount: txn.discount || 0,
+      };
     }
 
     return {
-      ...transaction,
-      client,
+      ...txn,
+      client: client || null,
     };
   });
-}
+};

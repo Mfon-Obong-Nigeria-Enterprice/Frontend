@@ -1,10 +1,17 @@
 import React from "react";
-import Clients from "./component/Clients";
+import DashboardTitle from "../shared/DashboardTitle";
+import Clients from "../shared/Clients";
 
 const ManagerClients = () => {
-  return <div>
-    <Clients/>
-  </div>;
+  return (
+    <div>
+      <DashboardTitle
+        heading="Clients"
+        description="Manage your client relationships and view outstanding balances"
+      />
+      <Clients />
+    </div>
+  );
 };
 
 export default ManagerClients;

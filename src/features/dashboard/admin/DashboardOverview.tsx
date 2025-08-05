@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import DashboardTitle from "@/components/dashboard/DashboardTitle";
+import DashboardTitle from "../shared/DashboardTitle";
 import Stats from "../shared/Stats";
 import SalesOverview from "./components/SalesOverview";
 import OutstandingBalance from "./components/OutstandingBalance";

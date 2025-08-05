@@ -26,6 +26,7 @@ const usePagination = (totalItems: number, itemsPerPage: number = 4) => {
 
   return {
     currentPage,
+    setCurrentPage,
     totalPages,
     goToPage,
     goToPreviousPage,

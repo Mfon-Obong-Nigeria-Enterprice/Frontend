@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDebouncedCallback } from "use-debounce";
 
-import DashboardTitle from "../../../components/dashboard/DashboardTitle";
+import DashboardTitle from "../shared/DashboardTitle";
 import InventoryTab from "./components/InventoryTab";
 import Modal from "@/components/Modal";
 import AddCategory from "@/components/inventory/AddCategory";
@@ -47,9 +47,8 @@ const AdminInventory = () => {
   const [priceRange, setPriceRange] = useState("all");
 
   // set the search query from zustand store
-  const setSearchQuery = useInventoryStore((state) => state.setSearchQuery);
 
-  const { products, categories, searchQuery, updateProducts } =
+  const { products, categories, searchQuery, setSearchQuery, updateProducts } =
     useInventoryStore();
 
   const debouncedSearch = useDebouncedCallback((value: string) => {
@@ -74,6 +73,7 @@ const AdminInventory = () => {
     return products;
   }, [products]);
 
+  //
   const handleSave = (updatedProducts: Product[]) => {
     console.log(
       "AdminInventory: Saving updated products to store:",
