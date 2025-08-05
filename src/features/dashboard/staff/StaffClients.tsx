@@ -1,138 +1,151 @@
-import React from "react";
-import DashboardTitle from "@/components/dashboard/DashboardTitle";
-import { IoIosArrowUp } from "react-icons/io";
-import { IoIosSearch } from "react-icons/io";
-
-const data = [
-  {
-    date: "5/19/2025",
-    client: "Akpan construction",
-    type: "credit",
-    amount: "₦150,000",
-    balance: "₦150,000",
-  },
-  {
-    date: "5/19/2025",
-    client: "Effiong builder",
-    type: "partial",
-    amount: "-₦50,000",
-    balance: "₦100,000",
-  },
-  {
-    date: "5/20/2025",
-    client: "Udom properties",
-    type: "Debit",
-    amount: "-₦100,000",
-    balance: "₦0.00",
-  },
-];
+import React, { useMemo, useState } from "react";
+import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
+import ClientDirectory from "../admin/components/ClientDirectory";
+import { useSyncClientsWithQuery } from "@/stores/useClientStore";
+import type { Client } from "@/types/types";
+import { Search } from "lucide-react";
+import PaymentModal from "./components/PaymentModal";
+import useClientFiltering, {
+  type clientBalance,
+} from "@/hooks/useClientFiltering";
+import { Button } from "@/components/ui/Button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
+import { getAllClients } from "@/services/clientService";
+import { VscRefresh } from "react-icons/vsc";
+// import { getAllTransactions } from "@/services/transactionService";
 
 const StaffClients: React.FC = () => {
+  useSyncClientsWithQuery();
+  //Get clients from rectQuery not zustand store
+  const { data: clients } = useQuery({
+    queryKey: ["clients"],
+    queryFn: getAllClients,
+    staleTime: 5 * 60 * 1000,
+  });
+  // const { data: transactions } = useQuery({
+  //   queryKey: ["transactions"],
+  //   queryFn: getAllTransactions,
+  // });
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+  const {
+    filteredClients: statusBalanceFilter,
+    clientBalance,
+    setClientBalance,
+  } = useClientFiltering(clients);
+
+  const filteredClients = useMemo(() => {
+    return statusBalanceFilter.filter(
+      (client) =>
+        client.name.includes(searchTerm.toLowerCase()) ||
+        client._id.includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm, statusBalanceFilter]);
+
+  const handleProcessPayment = (client: Client) => {
+    setSelectedClient(client);
+    setShowPaymentModal(true);
+  };
+
   return (
     <main>
-      <DashboardTitle
-        heading="Clients"
-        description="Search, view, and edit client transaction"
-      />
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4 mb-7">
+        <DashboardTitle
+          heading="Clients"
+          description="Search, view, and edit client transaction"
+        />
+        <Button
+          onClick={() => window.location.reload()}
+          className="w-40 bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
+        >
+          <VscRefresh />
+          Refresh
+        </Button>
+      </div>
 
       <section className="bg-white rounded-xl mt-5 overflow-hidden border border-[#d9d9d9] min-h-[66vh]">
-        <div className="py-4 px-5 bg-white">
-          <h3 className="text-xl font-medium text-text-dark">
-            Client Directory
-          </h3>
-        </div>
-        {/* search */}
-        <div className="flex justify-between items-center px-4 py-5">
-          <div className="bg-[#F5F5F5] flex items-center gap-1 w-1/2 px-4 rounded-md">
-            <IoIosSearch size={18} />
+        <h4 className="font-medium text-xl font-Inter text-[#1E1E1E] px-7 pt-4">
+          Client directory
+        </h4>
+        {/* Search Bar */}
+        <div className="flex justify-between items-center px-4 py-5 flex-wrap sm:flex-nowrap sm:px-2 md:px-8 ">
+          <div className="bg-[#F5F5F5] flex items-center gap-1 px-4 rounded-md w-full sm:w-1/2  mx-4">
+            <Search size={18} />
             <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               type="search"
-              placeholder="Search products, categories..."
-              className="py-2 outline-0 w-full"
+              placeholder="Search clients by name or ID..."
+              className="py-2 outline-0 bg-transparent w-full"
             />
           </div>
-          <div className="flex items-center gap-4">
-            <button className="bg-[#D9D9D9] flex gap-1 items-center rounded-md py-2 px-4 border border-[#7d7d7d]">
-              <span>All status</span>
-              <IoIosArrowUp />
-            </button>
-            <button className="bg-[#D9D9D9] flex gap-1 items-center rounded-md py-2 px-4 border border-[#7d7d7d]">
-              <span>All Balances</span>
-              <IoIosArrowUp />
-            </button>
+
+          {/*  */}
+          <div className=" gap-4 pt-4 sm:pt-0  md:gap-3 px-4 md:px-0">
+            {/* <Select
+              value={clientStatus}
+              onValueChange={(value) => setClientStatus(value as clientStat)}
+            >
+              <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d]">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All Status">All Status</SelectItem>
+                <SelectItem value="Registered">Registered</SelectItem>
+                <SelectItem value="Unregistered">Unregistered</SelectItem>
+              </SelectContent>
+            </Select> */}
+
+            <Select
+              value={clientBalance}
+              onValueChange={(value) =>
+                setClientBalance(value as clientBalance)
+              }
+            >
+              <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d]">
+                <SelectValue placeholder="All Balances" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All Balances">All Balances</SelectItem>
+                <SelectItem value="PURCHASE">Purchase</SelectItem>
+                <SelectItem value="PICKUP">Pickup</SelectItem>
+                <SelectItem value="DEPOSIT">Deposit</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        {/* table data */}
-        <table className="w-full mt-3 font-Inter">
-          <thead className="bg-[#F5F5F5] border border-[#D9D9D9] w-full">
-            <tr className="py-5">
-              <th className="text-[#333333] text-base font-medium py-2">
-                Date
-              </th>
-              <th className="text-[#333333] text-base font-medium py-2">
-                Clients
-              </th>
-              <th className="text-[#333333] text-base font-medium py-2">
-                Type
-              </th>
-              <th className="text-[#333333] text-base font-medium py-2">
-                Amount
-              </th>
-              <th className="text-[#333333] text-base font-medium py-2">
-                Balance
-              </th>
-              <th className="text-[#333333] text-base font-medium py-2">
-                Action
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((d, i) => (
-              <tr key={i} className="border border-[#F0F0F3]">
-                <td className="text-center py-3 text-[#444444] text-sm font-normal font-Arial">
-                  {d.date}
-                </td>
-                <td className="text-center py-3 text-[#444444] text-sm font-normal font-Arial">
-                  {d.client}
-                </td>
-                <td className="text-center py-3 text-sm font-normal font-Arial">
-                  <span
-                    className={`border rounded-[6.25rem] py-1.5 px-3 capitalize ${
-                      d.type.toLowerCase() === "credit"
-                        ? "border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71]"
-                        : d.type.toLowerCase() === "debit"
-                        ? "border-[#F95353] bg-[#FFCACA] text-[#F95353]"
-                        : "border-[#FFA500] bg-[#FFE7A4] text-[#FFA500]"
-                    }`}
-                  >
-                    {d.type}
-                  </span>
-                </td>
-                <td
-                  className={`text-center py-3 text-sm font-normal font-Arial ${
-                    d.amount.includes("-") ? "text-[#F95353]" : "text-[#2ECC71]"
-                  }`}
-                >
-                  {d.amount}
-                </td>
-                <td
-                  className={`text-center py-3 text-sm font-normal font-Arial ${
-                    d.balance.startsWith("₦0")
-                      ? "text-[#444444]"
-                      : "text-[#2ECC71]"
-                  }`}
-                >
-                  {d.balance}
-                </td>
-                <td className="text-center underline text-[#3D80FF] text-sm font-normal font-Arial">
-                  View
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ClientDirectory
+          searchTerm={searchTerm}
+          filteredClientsData={filteredClients}
+          onClientAction={handleProcessPayment}
+          actionLabel=""
+          isStaffView={true}
+        />
       </section>
+
+      {/* Payment Modal */}
+      {showPaymentModal && selectedClient && (
+        <PaymentModal
+          client={selectedClient}
+          onClose={() => setShowPaymentModal(false)}
+          onPaymentSuccess={() => {
+            // Refresh data or show success message
+            setShowPaymentModal(false);
+            setSelectedClient(null);
+          }}
+        />
+      )}
     </main>
   );
 };

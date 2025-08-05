@@ -25,6 +25,7 @@ export interface LoginResponse {
   };
 }
 // This file defines the types used in the application, including user roles, setup data, and product categories.
+export type TransactionType = "PURCHASE" | "PICKUP" | "DEPOSIT";
 
 export interface Client {
   _id: string;
@@ -32,7 +33,7 @@ export interface Client {
   phone?: string;
   email?: string;
   address?: string;
-  balance?: number;
+  balance: number;
   description?: string;
   transactions: TransactionItem[];
   isActive: boolean;
@@ -44,7 +45,7 @@ export interface Client {
 
 export interface TransactionItem {
   _id: string;
-  type: "PURCHASE" | "PICKUP";
+  type: "PURCHASE" | "PICKUP" | "DEPOSIT";
   amount: number;
   description?: string;
   date: string;
@@ -55,8 +56,8 @@ export interface ClientWithTransactions {
   _id: string;
   name: string;
   phone: string;
-  email: string;
-  address: string;
+  email?: string;
+  address?: string;
   balance: number;
   transactions: TransactionItem[];
   isActive: boolean;
@@ -65,12 +66,32 @@ export interface ClientWithTransactions {
   updatedAt: string;
   lastTransactionDate?: string;
 }
-
-export interface CreateTransactionPayload {
-  type: "Credit" | "partial" | "debit";
-  amount: number;
+interface BaseTransactionPayload {
+  type: TransactionType;
   description?: string;
+  total: number;
 }
+export interface paymentTransactionPayload extends BaseTransactionPayload {
+  type: "DEPOSIT";
+  amount: number;
+  paymentMethod: string;
+  reference: string;
+}
+
+// Payload for purchase/pickup transactions
+export interface ProductTransactionPayload extends BaseTransactionPayload {
+  type: "PURCHASE" | "PICKUP";
+  items: {
+    productId: string;
+    quantity: number;
+    unitPrice: number;
+    discount?: number;
+  }[];
+}
+
+export type CreateTransactionPayload =
+  | paymentTransactionPayload
+  | ProductTransactionPayload;
 
 export type Category = {
   _id: string;
@@ -136,4 +157,15 @@ export type InventoryState = {
   searchQuery: string;
   selectedCategoryId: string;
   categoryUnits: string[];
+};
+
+// sales for the barchart on admin dashboard
+export interface DailySales {
+  day: string;
+  sales: number;
+}
+
+export type WeeklySales = {
+  week: string;
+  sales: number;
 };

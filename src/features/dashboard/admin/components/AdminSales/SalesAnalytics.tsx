@@ -1,6 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import SalesCategoryChart from "./SalesCategoryChart";
-import { BsArrowUp } from "react-icons/bs";
+// import { BsArrowUp } from "react-icons/bs";
+
+import { useTransactionsStore } from "@/stores/useTransactionStore";
+import { getTopSellingProducts } from "@/utils/transactions";
 
 type SalesMetrics = {
   totalSales: number;
@@ -27,10 +30,10 @@ const salesByCategory = [
   { name: "Equipment rental", value: 23 },
 ];
 
-const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
-  metrics,
-  topProduct,
-}) => {
+const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({ topProduct }) => {
+  const { transactions } = useTransactionsStore();
+  const topProducts = getTopSellingProducts(transactions || [], 5);
+
   // Add loading state or default values
   // if (!metrics) {
   //   return (
@@ -55,7 +58,7 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
   //
   return (
     <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 my-3">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 my-3">
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-normal text-[#7D7D7D]">
@@ -74,7 +77,7 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
             </div>
           </CardContent>
         </Card>
-        {/*  */}
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-normal text-[#7D7D7D]">
@@ -93,7 +96,7 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
             </div>
           </CardContent>
         </Card>
-        {/*  */}
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-normal text-[#7D7D7D]">
@@ -113,7 +116,7 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
           </CardContent>
         </Card>
         {/* Average Transaction Card */}
-        <Card>
+      {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-normal text-[#7D7D7D]">
               Avg. Transactions
@@ -125,14 +128,13 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
                 ₦{metrics.averageTransaction.toLocaleString()}
               </div>
               <p className="text-xs text-[#F95353] flex items-center">
-                {" "}
                 <BsArrowUp />
                 %5 from last week
               </p>
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       {/* top selling sales and category chart */}
       <div className="lg:grid lg:grid-cols-5 gap-2 mb-4">
@@ -168,34 +170,34 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
                   </h4>
                 </div>
               </div>
-              {topProduct && topProduct.length > 0 ? (
+              {topProducts && topProducts.length > 0 ? (
                 <div className="space-y-0 divide-y divide-gray-200 md:divide-y-0 md:divide-x-4">
                   <>
-                    {topProduct.map((product) => (
+                    {topProducts.map((product) => (
                       <div
-                        key={product.prodName}
+                        key={product?.productId}
                         className={`border-b-2 border-gray-100 last:border-b-0 md:border-b-0 `}
                       >
                         {/* Desktop layout */}
                         <div className="hidden py-3 md:grid md:grid-cols-4 first:pl-0">
                           <div>
                             <h4 className="text-sm font-normal text-[#444444]  ">
-                              {product.prodName}
+                              {product?.productName}
                             </h4>
                           </div>
                           <div className="">
                             <p className="text-sm text-[#444444] font-normal">
-                              {product.soldUnit} bags
+                              {product?.quantitySold}
                             </p>
                           </div>
                           <div className="flex items-center ">
                             <p className="text-sm text-[#444444] font-normal">
-                              {product.revenue.toLocaleString()}
+                              {product?.totalRevenue.toLocaleString()}
                             </p>
                           </div>
                           <div>
                             <p className="text-sm text-[#444444] font-normal">
-                              {product.category}
+                              {/* {product.category} */}
                             </p>
                           </div>
                         </div>
@@ -206,24 +208,24 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
                             <div className="grid-cols-4 grid">
                               <div>
                                 <p className="text-sm font-medium text-gray-700">
-                                  {product.prodName}
+                                  {product.productName}
                                 </p>
                               </div>
                               <div>
                                 <p className="text-sm text-gray-600">
-                                  {product.soldUnit} bags
-                                </p>
-                              </div>
-                              {/*  */}
-                              <div>
-                                <p className="text-sm text-gray-600">
-                                  {product.revenue.toLocaleString()}
+                                  {product?.quantitySold}
                                 </p>
                               </div>
                               {/*  */}
                               <div>
                                 <p className="text-sm text-gray-600">
-                                  {product.category}
+                                  ₦{product?.totalRevenue.toLocaleString()}
+                                </p>
+                              </div>
+                              {/*  */}
+                              <div>
+                                <p className="text-sm text-gray-600">
+                                  {/* {product.category} */}
                                 </p>
                               </div>
                             </div>
@@ -243,10 +245,9 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({
           </Card>
         </div>
         <div className="lg:col-span-2">
-          <SalesCategoryChart data={salesByCategory} />
+          {/* <SalesCategoryChart data={salesByCategory} /> */}
         </div>
       </div>
-      {/*  */}
     </div>
   );
 };

@@ -1,34 +1,42 @@
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/Button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogOverlay,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useClientMutations } from "@/hooks/useClientMutations";
-import { isAxiosError, type AxiosError } from "axios";
+import type { Client } from "@/types/types";
+import { AxiosError, isAxiosError } from "axios";
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 
-interface AddClientDialogProps {
+interface EditClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  client: Client;
+  onEditSuccess: () => void; // Optional callback for success handling
 }
-interface FormData {
+
+type FormData = {
   name: string;
   phone: string;
   description: string;
   balance: number;
   address: string;
-}
+};
 
-export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
-  const { createMutate } = useClientMutations();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const EditClientDialog: React.FC<EditClientDialogProps> = ({
+  open,
+  onOpenChange,
+  client,
+  onEditSuccess,
+}) => {
+  const { updateMutate } = useClientMutations();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -38,51 +46,62 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
     address: "",
   });
 
+  useEffect(() => {
+    if (client && open) {
+      setFormData({
+        name: client.name || "",
+        phone: client.phone || "",
+        description: client.description || "",
+        balance: client.balance || 0,
+        address: client.address || "",
+      });
+    }
+  }, [client, open]);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+
+    if (!client._id) {
+      toast.error("Client ID is missing. Cannot update client.");
+      return;
+    }
 
     // Client-side validation
     if (!formData.name.trim()) {
-      setError("Client name is required");
-      setIsLoading(false);
+      toast.error("Client name is required");
       return;
     }
 
     if (!formData.phone.trim()) {
-      setError("Phone number is required");
-      setIsLoading(false);
+      toast.error("Phone number is required");
+
       return;
     }
 
     // Basic phone number validation (adjust regex as needed for your format)
     const phoneRegex = /^[0-9+\-\s()]+$/;
     if (!phoneRegex.test(formData.phone)) {
-      setError("Please enter a valid phone number");
-      setIsLoading(false);
+      toast.error("Please enter a valid phone number");
+
       return;
     }
 
     try {
       const clientData = {
-        name: formData.name.trim(),
-        phone: formData.phone.trim(),
-        description: formData.description.trim(),
-        balance: Number(formData.balance),
-        address: formData.address.trim(),
+        id: client._id,
+        data: formData,
       };
-      await createMutate.mutateAsync(clientData);
-
+      await updateMutate.mutateAsync(clientData);
+      onEditSuccess(); // Call the success callback if provided
+      toast.success("Client updated successfully");
       onOpenChange(false);
-      // Reset form
-      setFormData({
-        name: "",
-        phone: "",
-        description: "",
-        balance: 0,
-        address: "",
-      });
     } catch (err) {
       console.error("Failed to add client:", err);
 
@@ -91,25 +110,41 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
 
         // Handle specific error cases
         if (axiosError.response?.status === 409) {
-          setError(
+          toast.error(
             "A client with this name or phone number already exists. Please use different details."
           );
         } else if (axiosError.response?.data?.message) {
-          setError(axiosError.response.data.message);
+          toast.error(axiosError.response.data.message);
         } else {
-          setError("Failed to add client. Please try again.");
+          toast.error("Failed to add client. Please try again.");
         }
       }
     } finally {
-      setIsLoading(false);
+      setIsUpdating(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (!isUpdating) {
+      onOpenChange(false);
+      // Reset form when closing
+      setFormData({
+        name: "",
+        description: "",
+        balance: 0,
+        phone: "",
+        address: "",
+      });
     }
   };
 
   return (
     <div className="">
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogOverlay className="bg-[#D9D9D9] fixed inset-0 z-50" />
-        <DialogContent aria-describedby="add-client-dialog z-50">
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent
+          aria-describedby="add-client-dialog z-50"
+          className="max-w-md"
+        >
           <DialogHeader>
             <DialogTitle className="font-medium text-xl pb-4 pt-2 text-[#1E1E1E]">
               Register New Client
@@ -117,11 +152,6 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4 pt-3">
-            {error && (
-              <div className="text-red-600 text-sm p-2 bg-red-50 rounded">
-                {error}
-              </div>
-            )}
             <div className="flex items-center gap-3 flex-wrap ">
               <div className="sm:w-[225px] w-full ">
                 <Label
@@ -134,11 +164,9 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                   className="w-full mt-2 font-[400] text-sm border-[#444444] border "
                   id="name"
                   value={formData.name}
-                  disabled={isLoading}
+                  disabled={isUpdating}
                   placeholder="Enter client name..."
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, name: e.target.value }))
-                  }
+                  onChange={(e) => handleInputChange("name", e.target.value)}
                   required
                 />
               </div>
@@ -154,11 +182,9 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                   className="w-full mt-2 font-[400] text-sm border border-[#444444] "
                   id="phone"
                   value={formData.phone}
-                  disabled={isLoading}
+                  disabled={isUpdating}
                   placeholder="080 XXX XXX XX"
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, phone: e.target.value }))
-                  }
+                  onChange={(e) => handleInputChange("phone", e.target.value)}
                   required
                 />
               </div>
@@ -177,14 +203,9 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                   id="address"
                   placeholder="Enter Client address"
                   required
-                  disabled={isLoading}
+                  disabled={isUpdating}
                   value={formData.address}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      address: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => handleInputChange("address", e.target.value)}
                 />
               </div>
 
@@ -203,14 +224,9 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                   step="1"
                   placeholder="0.00"
                   required
-                  disabled={isLoading}
+                  disabled={isUpdating}
                   value={formData.balance}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      balance: Number.parseFloat(e.target.value),
-                    }))
-                  }
+                  onChange={(e) => handleInputChange("balance", e.target.value)}
                 />
               </div>
             </div>
@@ -227,13 +243,10 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                 id="notes"
                 value={formData.description}
                 onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
+                  handleInputChange("description", e.target.value)
                 }
                 rows={5}
-                disabled={isLoading}
+                disabled={isUpdating}
               />
             </div>
 
@@ -247,7 +260,7 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                 Cancel
               </Button>
               <Button type="submit" className="bg-[#2ECC71] p-5">
-                {isLoading ? "Adding..." : "Add Client"}
+                {isUpdating ? "Updating..." : "Update Client"}
               </Button>
             </div>
           </form>
@@ -255,4 +268,6 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
       </Dialog>
     </div>
   );
-}
+};
+
+export default EditClientDialog;

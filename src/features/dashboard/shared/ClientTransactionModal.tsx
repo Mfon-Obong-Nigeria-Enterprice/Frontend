@@ -3,6 +3,8 @@ import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { ArrowRight, MapPin, Phone, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
+import { getDaysSince } from "@/utils/helpersfunction";
+import { formatCurrency } from "@/utils/styles";
 
 const ClientTransactionModal = () => {
   const navigate = useNavigate();
@@ -20,51 +22,44 @@ const ClientTransactionModal = () => {
         <div className="">
           {/* customer information */}
           <div
-            className={`flex justify-between border border-l-[6px] mx-6 ${
-              selectedTransaction.client?.balance !== null &&
-              typeof selectedTransaction.client?.balance === "number" &&
-              selectedTransaction.client?.balance < 0
-                ? "border-[#DA251C] bg-[#FFE9E9] text-[#F95353]"
-                : selectedTransaction.client?.balance > 0
-                ? "border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71]"
-                : "border-[#7d7d7d] bg-[#f6f6f6] text-[#7d7d7d]"
-            } mt-7 mb-5 p-3 rounded-[0.875rem]`}
+            className={`flex justify-between border border-l-[6px] mx-6
+  ${
+    typeof selectedTransaction?.client?.balance === "number"
+      ? selectedTransaction.client.balance < 0
+        ? "border-[#DA251C] bg-[#FFE9E9] text-[#F95353]"
+        : selectedTransaction.client.balance > 0
+        ? "border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71]"
+        : "border-[#7d7d7d] bg-[#f6f6f6] text-[#7d7d7d]"
+      : "border-[#7d7d7d] bg-[#f6f6f6] text-[#7d7d7d]"
+  }
+  mt-7 mb-5 p-3 rounded-[0.875rem]`}
           >
             <div className="space-y-2">
               <p className="text-[#444444] font-medium">
                 {selectedTransaction?.clientName}
-                {/* ||
-                    selectedTransaction?.walkInClientName */}
               </p>
+
               <address className="flex gap-0.5 items-center text-[#444444] text-sm">
                 <MapPin size={14} />
-                <span>{selectedTransaction.client?.address}</span>
+                <span>
+                  {selectedTransaction.client?.address || "No address provided"}
+                </span>
               </address>
               <p className="flex gap-1 items-center text-[#444444] text-sm">
                 <Phone size={14} />
-                <span>
-                  {selectedTransaction.clientId?.phone}
-                  {/* selectedTransaction.walkInClient?.phone} */}
-                </span>
+                <span>{selectedTransaction.clientId?.phone}</span>
               </p>
             </div>
             <div>
               <p className={`font-normal text-base`}>
-                {selectedTransaction.client?.balance &&
-                selectedTransaction.client?.balance < 0
-                  ? "-"
-                  : ""}
-                ₦
-                {Math.abs(
-                  selectedTransaction.client?.balance ?? 0
-                ).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {formatCurrency(Number(selectedTransaction.client?.balance))}
               </p>
-              {/* <div className="bg-[#FFE7A4] py-2 px-2.5 rounded mt-1">
+              <div className="bg-[#FFE7A4] py-2 px-2.5 rounded mt-1">
                 <p className="text-[#444444CC] text-[0.625rem]">
-                  30 days overdue
+                  {getDaysSince(selectedTransaction.createdAt)} days overdue
                 </p>
-              </div> */}
-              {selectedTransaction?.createdAt &&
+              </div>
+              {/* {selectedTransaction?.createdAt &&
                 (() => {
                   const createdAt = new Date(selectedTransaction.createdAt);
                   const today = new Date();
@@ -80,7 +75,7 @@ const ClientTransactionModal = () => {
                       </p>
                     </div>
                   ) : null;
-                })()}
+                })()} */}
             </div>
           </div>
 
@@ -93,15 +88,19 @@ const ClientTransactionModal = () => {
             <div className="px-4 py-6 my-2 border border-[#D9D9D9] rounded-[0.625rem] shadow">
               <div className="flex justify-between border-b bordet-[#d9d9d9] pb-3">
                 <div className="flex gap-6 items-center">
-                  <span
-                    className={`border text-xs rounded-3xl py-1 px-2 capitalize ${
-                      selectedTransaction.type === "PURCHASE"
-                        ? "border-[#F95353] bg-[#FFCACA] text-[#F95353]"
-                        : "border-[#FFA500] bg-[#FFE7A4] text-[#FFA500]"
-                    }`}
-                  >
-                    {selectedTransaction?.type.toLowerCase()}
-                  </span>
+                  {selectedTransaction.type && (
+                    <span
+                      className={`border text-xs rounded-3xl py-1 px-2 capitalize ${
+                        selectedTransaction.type === "PURCHASE"
+                          ? "border-[#F95353] bg-[#FFCACA] text-[#F95353]"
+                          : "border-[#FFA500] bg-[#FFE7A4] text-[#FFA500]"
+                      }`}
+                    >
+                      {typeof selectedTransaction?.type === "string"
+                        ? selectedTransaction.type.toLowerCase()
+                        : ""}
+                    </span>
+                  )}
                   <p className="">
                     <span className="text-[#333333] text-sm">
                       {new Date(selectedTransaction?.createdAt).toDateString()}
@@ -118,22 +117,23 @@ const ClientTransactionModal = () => {
                   </p>
                 </div>
                 <div>
-                  {selectedTransaction.client.balance && (
-                    <p
-                      className={`font-normal text-base ${
-                        selectedTransaction.client.balance > 0
-                          ? "text-[#00C853]"
-                          : "text-[#F95353]"
-                      }`}
-                    >
-                      {selectedTransaction.client?.balance < 0 ? "-" : ""}₦
-                      {Math.abs(
-                        selectedTransaction.client?.balance ?? 0
-                      ).toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                      })}
-                    </p>
-                  )}
+                  {selectedTransaction.client !== null &&
+                    selectedTransaction.client.balance && (
+                      <p
+                        className={`font-normal text-base ${
+                          selectedTransaction.client.balance > 0
+                            ? "text-[#00C853]"
+                            : "text-[#F95353]"
+                        }`}
+                      >
+                        {selectedTransaction.client?.balance < 0 ? "-" : ""}₦
+                        {Math.abs(
+                          selectedTransaction.client?.balance ?? 0
+                        ).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </p>
+                    )}
                 </div>
               </div>
               {/* next part */}
