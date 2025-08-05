@@ -6,23 +6,31 @@ import {
   LinearScale,
   Tooltip,
   Legend,
+  type ChartOptions,
+  type ChartData,
   type TooltipItem,
 } from "chart.js";
+import { getWeeklySales } from "@/utils/getWeeklySales";
+import { useTransactionsStore } from "@/stores/useTransactionStore";
+import type { WeeklySales } from "@/types/types";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-const salesData = [
-  { week: "May 15", sales: "20000" },
-  { week: "May 20", sales: "30000" },
-  { week: "May 26", sales: "60000" },
-  { week: "June 02", sales: "35000" },
-  { week: "June 07", sales: "40000" },
-  { week: "June 13", sales: "31000" },
-  { week: "June 19", sales: "5000" },
-];
+// const salesData = [
+//   { week: "May 15", sales: "20000" },
+//   { week: "May 20", sales: "30000" },
+//   { week: "May 26", sales: "60000" },
+//   { week: "June 02", sales: "35000" },
+//   { week: "June 07", sales: "40000" },
+//   { week: "June 13", sales: "31000" },
+//   { week: "June 19", sales: "5000" },
+// ];
 
 const BarChartWeekly = () => {
-  const data = {
+  const { transactions } = useTransactionsStore();
+  const salesData: WeeklySales[] = getWeeklySales(transactions ?? []);
+
+  const data: ChartData<"bar", number[], string> = {
     labels: salesData.map((item) => item.week),
     datasets: [
       {
