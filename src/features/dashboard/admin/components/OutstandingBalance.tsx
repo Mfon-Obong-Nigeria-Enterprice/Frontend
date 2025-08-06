@@ -11,33 +11,18 @@ import {
 import Button from "@/components/MyButton";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import ClientDetailModal from "@/components/dashboard/ClientDetailModal";
-
-const tableData = [
-  {
-    client: "Okoro builders",
-    balanceDue: "450,000",
-    days: "30",
-    action: "view",
-  },
-  {
-    client: "Lagos interiors",
-    balanceDue: "380,000",
-    days: "15",
-    action: "view",
-  },
-  {
-    client: "Supreme contractors",
-    balanceDue: "275,000",
-    days: "7",
-    action: "view",
-  },
-];
+import { useClientStore } from "@/stores/useClientStore";
+import { formatCurrency } from "@/utils/formatCurrency";
+import { getDaysSince } from "@/utils/helpersfunction";
 
 // action will be a url to the clients dashboard or page
 
 const OutstandingBalance = () => {
+  const { getClientsWithDebt } = useClientStore();
   const navigate = useNavigate();
   const [openModal, setOpenModal] = useState(false);
+
+  const clientsDebt = getClientsWithDebt();
 
   return (
     <div className="bg-white border border-[#D9D9D9] p-4 sm:p-8 mt-5 mx-2 rounded-[8px] font-Inter">
@@ -63,40 +48,40 @@ const OutstandingBalance = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tableData.map((data, index) => (
+            {clientsDebt.map((data, index) => (
               <TableRow
                 className={`border-b border-gray-300 ${
                   index % 2 !== 0 ? "bg-[#F0F0F3]" : ""
                 }`}
               >
                 <TableCell className="font-medium pl-4 text-[#444444] text-xs sm:text-base">
-                  {data.client}
+                  {data.name}
                 </TableCell>
-                <TableCell className="text-center  text-[#F95353] text-xs sm:text-base">
-                  {data.balanceDue}
+                <TableCell className="text-center text-[#F95353] text-xs sm:text-base">
+                  {formatCurrency(Number(data.balance))}
                 </TableCell>
                 <TableCell className="text-center text-[#444444] text-xs sm:text-base">
-                  {data.days}
+                  {getDaysSince(data.createdAt)}
                 </TableCell>
                 <TableCell
                   className=" text-center text-blue-400 underline cursor-pointer text-xs sm:text-base"
                   onClick={() => setOpenModal(true)}
                 >
-                  {data.action}
+                  View
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
-      <div className="flex justify-between items-center bg-[#f0f0f3] mt-[7dvh]">
-        <div>
-          <Button
-            onClick={() => navigate("/admin/dashboard/clients")}
-            text="View all Balances"
-            variant="outline"
-          />
-        </div>
+
+      <div className="bg-[#f0f0f3] items-center mt-[7dvh] flex justify-between">
+        <Button
+          className=" text-start"
+          onClick={() => navigate("/admin/dashboard/clients")}
+          text="View all Balances"
+          variant="outline"
+        />
         <MdKeyboardArrowRight size={24} className="mr-5 text-[#3D80FF]" />
       </div>
 

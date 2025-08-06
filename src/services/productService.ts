@@ -11,7 +11,6 @@ export const getAllProducts = async (): Promise<Product[]> => {
     const response = await api.get("/products", {
       headers: { Authorization: `Bearer ${token}` },
     });
-    console.log("API Response:", response.data);
 
     return response.data;
   } catch (error) {

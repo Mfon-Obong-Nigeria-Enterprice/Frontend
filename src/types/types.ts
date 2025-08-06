@@ -29,9 +29,17 @@ export interface Product {
   updatedAt?: string;
 }
 
+// ==================== CATEGORY TYPE ====================
+export interface Category {
+  description: string | undefined;
+  _id: string;
+  name: string;
+  units: string[];
+}
+
 // ==================== API RESPONSE TYPE ====================
 export interface ApiResponse<T = unknown> {
-  success: never;
+  success: boolean;
   status: number;
   message: string;
   data: T;
@@ -39,13 +47,13 @@ export interface ApiResponse<T = unknown> {
 
 // ==================== AUTH TYPES ====================
 export interface User {
-  id: string;
+  _id: string;
   name: string;
   email: string;
   role: Role;
   branch: string;
   branchId: string;
-  created_at: string;
+  createdAt: string;
 }
 
 export interface LoginResponse {
@@ -57,10 +65,12 @@ export interface LoginResponse {
   };
 }
 
+export type TransactionType = "PURCHASE" | "PICKUP" | "DEPOSIT";
+
 // ==================== CLIENT TYPES ====================
 export interface TransactionItem {
   _id: string;
-  type: "DEPOSIT";
+  type: TransactionType;
   amount: number;
   description?: string;
   date: string;
@@ -74,6 +84,7 @@ export interface Client {
   email?: string;
   address?: string;
   balance: number;
+  description?: string;
   transactions: TransactionItem[];
   isActive: boolean;
   isRegistered: boolean;
@@ -82,13 +93,33 @@ export interface Client {
   lastTransactionDate?: string;
 }
 
-// ==================== OTHER TYPES ====================
-export interface CreateTransactionPayload {
-  type: "Credit" | "partial" | "debit";
-  amount: number;
-  description?: string;
+interface BaseTransactionPayload {
+  type: TransactionType;
 }
 
+// ==================== TRANSACTION PAYLOAD TYPES ====================
+export interface PaymentTransactionPayload extends BaseTransactionPayload {
+  type: "DEPOSIT";
+  amount: number;
+  paymentMethod: string;
+  reference: string;
+}
+
+export interface ProductTransactionPayload extends BaseTransactionPayload {
+  type: "PURCHASE" | "PICKUP";
+  items: {
+    productId: string;
+    quantity: number;
+    unitPrice: number;
+    discount?: number;
+  }[];
+}
+
+export type CreateTransactionPayload = 
+  | PaymentTransactionPayload 
+  | ProductTransactionPayload;
+
+// ==================== PRODUCT RELATED TYPES ====================
 export interface NewProduct {
   name: string;
   categoryId: string;
@@ -98,11 +129,28 @@ export interface NewProduct {
   minStockLevel: number;
 }
 
+export type ProductImportRow = {
+  "Product Name": string;
+  Category: string;
+  "Stock Quantity": number | string;
+  "Price per unit": number | string;
+};
+
 export interface ProductUpdatePricePayload {
   productId: string;
   newPrice: number;
 }
 
+// ==================== INVENTORY STATE TYPE ====================
+export interface InventoryState {
+  products: Product[];
+  categories: Category[];
+  searchQuery: string;
+  selectedCategoryId: string;
+  categoryUnits: string[];
+}
+
+// ==================== APP SETUP TYPE ====================
 export interface AppSetupResponse {
   settings: Settings;
   // ... other app setup data
@@ -110,7 +158,6 @@ export interface AppSetupResponse {
 
 // ==================== COMPOSITE TYPES ====================
 export interface UpdateStockProduct extends Product {
-  id: string;
   newQuantity?: number;
   selected?: boolean;
   category: string;
@@ -118,7 +165,5 @@ export interface UpdateStockProduct extends Product {
 }
 
 export interface ClientWithTransactions extends Client {
-  phone: string;
-  email: string;
-  address: string;
+  transactions: TransactionItem[];
 }

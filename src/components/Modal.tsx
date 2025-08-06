@@ -60,9 +60,9 @@ const Modal = ({
     >
       <div
         className={cn(
-          "relative bg-white rounded-lg shadow-xl py-3 px-6",
+          "relative bg-white rounded-lg shadow-xl",
           sizeClasses[size as ModalSize] ?? size,
-          "w-full max-h-[90vh] overflow-y-auto"
+          "w-full max-h-[98vh] overflow-y-auto hide-scrollbar"
         )}
         onClick={(e) => e.stopPropagation()} //prevent closing on content click
       >
@@ -71,7 +71,7 @@ const Modal = ({
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-black"
         >
-          <X size={20} />{" "}
+          <X size={20} />
         </button>
         {children}
       </div>

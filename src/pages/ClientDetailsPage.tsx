@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
+
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import DatePicker from "@/components/DatePicker";
+
 import {
   Select,
   SelectContent,
@@ -12,368 +14,313 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronDown, MoveRight, MoveLeft } from "lucide-react";
+import { useClientStore } from "@/stores/useClientStore";
+import { useTransactionsStore } from "@/stores/useTransactionStore";
 
-type Transaction = {
-  method: string;
-  items: string[];
-  type: "Debit" | "Credit" | "Partial";
-  amount: string;
-  balance: string;
-  staff: string;
-  date: string;
-  time: string;
-};
-
-const transactionData: Transaction[] = [
-  {
-    method: "Bank transfer",
-    items: ["10x cement", "4x Nails"],
-    type: "Debit",
-    amount: "-₦ 250,000",
-    balance: "-₦ 450,000",
-    staff: "John Doe",
-    date: "5/25/2025",
-    time: "10:45 AM",
-  },
-  {
-    method: "Check payment",
-    items: [
-      "10 bags of cement",
-      "10x 8MM long rod",
-      "15x nails",
-      "20x 4mm rod",
-      "10x 6mm rod",
-    ],
-    type: "Partial",
-    amount: "₦ 100,000",
-    balance: "-₦ 200,000",
-    staff: "Jane Smith",
-    date: "5/21/2025",
-    time: "09:45 PM",
-  },
-  {
-    method: "Cash",
-    items: ["10x cement"],
-    type: "Credit",
-    amount: "₦ 75,000",
-    balance: "-₦750,000",
-    staff: "Mike Johnson",
-    date: "5/25/2025",
-    time: "04:15 PM",
-  },
-  {
-    method: "Cheque",
-    items: ["58x steel rods"],
-    type: "Debit",
-    amount: "-₦ 255,000",
-    balance: "₦0.00",
-    staff: "Sara Wilson",
-    date: "5/04/2025",
-    time: "08:10 AM",
-  },
-];
+import ClientDetailInfo from "@/components/clients/ClientDetailInfo";
+import { mergeTransactionsWithClients } from "@/utils/mergeTransactionsWithClients";
+import { ClientTransactionDetails } from "@/components/clients/ClientTransactionDetails";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ClientDiscountDetails from "@/components/clients/ClientDiscountDetails";
+import CustomDatePicker from "@/utils/CustomDatePicker";
 
 const ClientDetailsPage: React.FC = () => {
+  const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
-  //   const [expandedDesc, setExpandedDesc] = useState<boolean>(false);
-  //   const toggleExpanded = () => setExpandedDesc(!expandedDesc);
-  const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const { clients } = useClientStore();
+  const { transactions } = useTransactionsStore();
+  // Filter states
+  const [transactionTypeFilter, setTransactionTypeFilter] =
+    useState<string>("all");
+  const [staffFilter, setStaffFilter] = useState<string>("all-staff");
+  const [dateFrom, setDateFrom] = useState<Date | null>(null);
+  const [dateTo, setDateTo] = useState<Date | null>(null);
+  // const [refreshKey, setRefreshKey] = useState(0);
 
-  const toggleRow = (index: number) => {
-    setExpandedRow((prev) => (prev === index ? null : index));
+  // useEffect(() => {
+  //   setRefreshKey((prev) => prev + 1);
+  // }, [transactions]);
+
+  const mergedTransactions = useMemo(() => {
+    if (!transactions || !clients) return [];
+    return mergeTransactionsWithClients(transactions, clients);
+  }, [transactions, clients]);
+
+  //get Clients
+  const client = useMemo(() => {
+    if (!clients || !clientId) return null;
+    return clients.find((c) => c._id === clientId) || null;
+  }, [clients, clientId]);
+  //
+
+  const clientTransactions = useMemo(() => {
+    if (!clientId) return [];
+    let filtered = mergedTransactions.filter((t) => t.client?._id === clientId);
+
+    // Apply transaction type filter
+    if (transactionTypeFilter !== "all") {
+      const typeMap: { [key: string]: string } = {
+        purchase: "PURCHASE",
+        pickup: "PICKUP",
+        deposit: "DEPOSIT",
+      };
+
+      const filterType = typeMap[transactionTypeFilter];
+      if (filterType) {
+        filtered = filtered.filter((t) => t.type === filterType);
+      }
+    }
+
+    if (staffFilter !== "all-staff") {
+      filtered = filtered.filter((t) => t.userId?.name === staffFilter);
+    }
+    if (dateFrom) {
+      filtered = filtered.filter((t) => new Date(t.createdAt) >= dateFrom);
+    }
+    if (dateTo) {
+      filtered = filtered.filter((t) => new Date(t.createdAt) <= dateTo);
+    }
+
+    return filtered.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [
+    clientId,
+    dateFrom,
+    dateTo,
+    mergedTransactions,
+    transactionTypeFilter,
+    staffFilter,
+  ]);
+
+  // Get unique staff members for filter dropdown
+  const staffMembers = useMemo(() => {
+    const uniqueStaff = Array.from(
+      new Set(
+        mergedTransactions
+          .filter((t) => t.client?._id === clientId)
+          .map((t) => t.userId?.name)
+          .filter(Boolean)
+      )
+    );
+    return uniqueStaff;
+  }, [mergedTransactions, clientId]);
+
+  const handleApplyFilters = () => {
+    // Filters are applied automatically via useMemo
+    console.log("Filters applied:", {
+      transactionTypeFilter,
+      staffFilter,
+      dateFrom,
+      dateTo,
+    });
   };
+
+  // Loading states
+  if (!clients || clients.length === 0) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2ECC71] mx-auto mb-4"></div>
+          <p>Loading clients...</p>
+        </div>
+      </div>
+    );
+  }
+
+  console.log("client", client);
+  if (!client) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-4">Client not found</h2>
+          <p className="text-gray-600 mb-4">
+            The client you're looking for doesn't exist.
+          </p>
+          <Button onClick={() => navigate("/clients")}>Back to Clients</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
-      <header className="flex justify-between items-center py-3 px-10">
-        <div className="flex gap-10">
+      <header className="grid md:grid-cols-5 grid-cols-1 items-center py-3 md:px-10">
+        <div className="flex gap-5 justify-between md:justify-start col-span-2 md:col-span-2 px-5 md:px-0">
           <button
             onClick={() => navigate(-1)}
-            className="flex gap-1 items-center text-[#7D7D7D]"
+            className="flex gap-1 items-center text-[#7D7D7D] cursor-pointer"
           >
             <ChevronLeft />
             <span>Back</span>
           </button>
-          <p className="text-lg text-[#333333]">Client Account Management</p>
+          <p className="lg:text-lg text-sm text-[#333333]">
+            Client Account Management
+          </p>
         </div>
-        <div className="flex justify-end gap-4 my-4 mx-7">
+        <div className="flex justify-end gap-4 my-4 md:mx-7 col-span-3 md:col-span-3 border-t-[#D9D9D9] md:border-none border-t-2 pt-2 md:pt-0 transition-all px-5 md:px-0">
           <Button className="bg-white hover:bg-gray-100 text-text-dark border border-[#7D7D7D]">
             <ChevronUp />
             <span>Export data</span>
           </Button>
-
-          <Button className="bg-[#FFC761] hover:bg-[#FFA500] text-text-dark">
-            Send Payment Reminder
-          </Button>
-
-          <Button
-            onClick={() => navigate("/client-details")}
-            className="bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)] text-white"
-          >
-            Edit Client
-          </Button>
-          <Button
-            onClick={() => navigate("/client-details")}
-            className="bg-[#F95353] hover:bg-[#f95353e1] text-white"
-          >
-            Suspend account
-          </Button>
+          <Select>
+            <SelectTrigger className="w-[130px]">
+              <SelectValue placeholder="Edit Client"></SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel></SelectLabel>
+                <SelectItem value="edit">Edit Client</SelectItem>
+                <SelectItem value="suspend">Suspend Client</SelectItem>
+                <SelectItem value="delete">Delete Client</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
       </header>
-      <main className="flex gap-3 bg-[#F5F5F5] py-5 px-12">
-        <section className="w-[40%] bg-white py-8 px-5 rounded">
-          <p className="text-lg text-[#333333] mb-6">Okoro builders</p>
-          <div
-            className={`flex flex-col justify-center gap-1 min-h-18 border-l-4 text-xs py-1.5 px-3 rounded-[8px] border-[#F95353] bg-[#FFE9E9]
-            }`}
-          >
-            <p className="text-[#444444] text-xs">Current balance</p>
-            <p className="text-lg text-[#F95353]">-₦ 250,000</p>
-          </div>
 
-          {/* info */}
-          <article className="my-7">
-            <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
-              <p>Phone</p>
-              <p>0814 234 5678</p>
-            </div>
-            <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
-              <p>Address</p>
-              <address>124 Abak Road ( wharehouse 3)</address>
-            </div>
-            <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
-              <p>Registered</p>
-              <p>5/4/2025</p>
-            </div>
-            <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
-              <p>Last activity</p>
-              <p>5/25/2025</p>
-            </div>
-            <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
-              <p>Account status</p>
-              <p className="text-[#F95353] capitalize">Overdue</p>
-            </div>
-          </article>
+      {/* main content */}
+      <main className="grid gap-3 bg-[#F5F5F5] py-5 px-12 grid-cols-1  lg:grid-cols-5">
+        {/* section by the left */}
+        <div className=" lg:col-span-2">
+          <ClientDetailInfo client={client} />
+        </div>
 
-          {/* description */}
-          <div className="bg-[#F5F5F5] p-4 rounded-md border border-[#d9d9d9] mt-5">
-            <p className="text-[0.625rem] text-[#7D7D7D] mb-1">
-              Client Description
-            </p>
-            <p className="text-[0.625rem] text-[#444444]">
-              Major construction company specializing in residential and
-              commercial buildings. Long-term client with multiple ongoing
-              projects. Prefers bulk material orders and has established credit
-              terms. Primary contact: Mr. Okoro (Site Manager).
-            </p>
-          </div>
+        {/* section by the right */}
+        <section className=" bg-white py-8 px-5 rounded lg:col-span-3">
+          <Tabs className="space-y-4" defaultValue="cards">
+            <TabsList className="flex gap-2 lg:justify-start justify-evenly ">
+              <TabsTrigger value="clientTransaction">Transaction</TabsTrigger>
+              <TabsTrigger value="clientDiscount">Discount</TabsTrigger>
+            </TabsList>
 
-          {/* data */}
-          <ul className="grid grid-cols-2 gap-5 mt-5">
-            <li className="bg-[#F5F5F5] flex flex-col gap-0.5 justify-center items-center rounded-[8px] p-5">
-              <span className="text-sm text-[#333333] font-semibold">24</span>
-              <span className="text-xs text-[#444444] font-normal">
-                Total order
-              </span>
-            </li>
-
-            <li className="bg-[#F5F5F5] flex flex-col gap-0.5 justify-center items-center rounded-[8px] p-5">
-              <span className="text-sm text-[#333333] font-semibold">
-                ₦1,8M
-              </span>
-              <span className="text-xs text-[#444444] font-normal">
-                Lifetime value
-              </span>
-            </li>
-
-            <li className="bg-[#F5F5F5] flex flex-col gap-0.5 justify-center items-center rounded-[8px] p-5">
-              <span className="text-sm text-[#333333] font-semibold">30</span>
-              <span className="text-xs text-[#444444] font-normal">
-                Days overdue
-              </span>
-            </li>
-
-            <li className="bg-[#F5F5F5] flex flex-col gap-0.5 justify-center items-center rounded-[8px] p-5">
-              <span className="text-sm text-[#333333] font-semibold">2</span>
-              <span className="text-xs text-[#444444] font-normal">
-                Pending invoices
-              </span>
-            </li>
-          </ul>
-        </section>
-
-        {/* data */}
-        <section className="w-full bg-white py-8 px-5 rounded">
-          <div className="flex justify-between items-end gap-5 mb-10">
-            <div>
-              <p className="text-[#7D7D7D] text-[0.625rem] mb-1 ml-1.5">
-                Date from
-              </p>
-              <DatePicker />
-            </div>
-            <div>
-              <p className="text-[#7D7D7D] text-[0.625rem] mb-1 ml-1.5">
-                Date to
-              </p>
-              <DatePicker />
-            </div>
-            <div>
-              <label
-                htmlFor="transaction"
-                className="text-[#7D7D7D] text-[0.625rem] mb-1 ml-1.5"
-              >
-                Transaction type
-              </label>
-              <Select>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="All Transactions" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Select transaction type</SelectLabel>
-                    <SelectItem value="all">All transactions</SelectItem>
-                    {/* <SelectItem value="banana">Banana</SelectItem>
-                    <SelectItem value="blueberry">Blueberry</SelectItem>
-                    <SelectItem value="grapes">Grapes</SelectItem>
-                    <SelectItem value="pineapple">Pineapple</SelectItem> */}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label
-                htmlFor="transaction"
-                className="text-[#7D7D7D] text-[0.625rem] mb-1 ml-1.5"
-              >
-                Staff member
-              </label>
-              <Select>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="All Staff" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Select staff</SelectLabel>
-                    <SelectItem value="all-staff">All Staff</SelectItem>
-                    {/* <SelectItem value="banana">Banana</SelectItem>
-                    <SelectItem value="blueberry">Blueberry</SelectItem>
-                    <SelectItem value="grapes">Grapes</SelectItem>
-                    <SelectItem value="pineapple">Pineapple</SelectItem> */}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button className="bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)] text-white">
-              Apply filters
-            </Button>
-          </div>
-          {/* data table */}
-          <table className="w-full">
-            <thead className="bg-[#F5F5F5]">
-              <tr>
-                <th className="py-1.5 text-xs text-[#333333] font-normal text-center">
-                  Date/Time
-                </th>
-                <th className="py-3 text-xs text-[#333333] font-normal text-center">
-                  Type
-                </th>
-                <th className="py-3 text-xs text-[#333333] font-normal text-center">
-                  Description
-                </th>
-                <th className="py-3 text-xs text-[#333333] font-normal text-center">
-                  Payment Method
-                </th>
-                <th className="py-3 text-xs text-[#333333] font-normal text-center">
-                  Amount
-                </th>
-                <th className="py-3 text-xs text-[#333333] font-normal text-center">
-                  Balance
-                </th>
-                <th className="py-3 text-xs text-[#333333] font-normal text-center">
-                  Staff
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactionData.map((transaction, i) => {
-                return (
-                  <tr key={i} className="border-b border-[#d9d9d9]">
-                    <td className="flex flex-col text-center text-[#7D7D7D] text-sm font-normal py-3">
-                      <span>{transaction.date}</span>
-                      <span>{transaction.time}</span>
-                    </td>
-                    <td className="text-center">
-                      <span
-                        className={`border text-xs py-1.5 px-3 rounded-[6.25rem] ${
-                          transaction.type === "Debit"
-                            ? "border-[#F95353] bg-[#FFCACA] text-[#F95353]"
-                            : transaction.type === "Credit"
-                            ? "border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71]"
-                            : "border-[#FFA500] bg-[#FFE7A4] text-[#FFA500]"
-                        }`}
-                      >
-                        {transaction.type}
-                      </span>
-                    </td>
-
-                    <td
-                      onClick={() => toggleRow(i)}
-                      className="cursor-pointer text-center text-xs text-[#333] max-w-[120px]"
+            <TabsContent value="clientTransaction">
+              {/* data */}
+              <div className=" flex justify-start items-center flex-wrap w-full gap-4 md:gap-2  lg:gap-4 mb-10">
+                <div className="flex flex-col sm:w-[230px] md:w-[190px] transition-all w-full ">
+                  <label className="text-xs font-medium text-gray-600 ">
+                    Date from
+                  </label>
+                  <div className="relative sm:w-[230px] md:w-[190px] transition-all w-full  border rounded-lg p-[6px]">
+                    <CustomDatePicker
+                      selected={dateFrom}
+                      onChange={setDateFrom}
+                      className=" "
+                    />
+                    <svg
+                      className="w-5 h-5 text-gray-400 absolute right-2 top-2 pointer-events-none"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
-                      <div className="flex items-center justify-center gap-1">
-                        <span>
-                          {expandedRow === i
-                            ? transaction.items.join(", ")
-                            : transaction.items[0]}
-                        </span>
-                        {transaction.items.length > 1 && (
-                          <ChevronDown
-                            className={`w-4 h-4 transition-transform ${
-                              expandedRow === i ? "rotate-180 w-10" : ""
-                            }`}
-                          />
-                        )}
-                      </div>
-                    </td>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                </div>
 
-                    <td className="text-[#333333] text-center text-xs">
-                      {transaction.method}
-                    </td>
-                    <td
-                      className={`text-sm text-center ${
-                        transaction.amount.includes("-")
-                          ? "text-[#F95353]"
-                          : "text-[#2ECC71]"
-                      }`}
+                <div className="flex flex-col sm:w-[230px] md:w-[190px] transition-all w-full   ">
+                  <label className="text-xs font-medium text-gray-600">
+                    Date to
+                  </label>
+                  <div className="relative sm:w-[230px] md:w-[190px] transition-all w-full border rounded-lg p-[6px] ">
+                    <CustomDatePicker
+                      selected={dateTo}
+                      onChange={setDateTo}
+                      className=""
+                    />
+                    <svg
+                      className="w-5 h-5 text-gray-400 absolute right-2 top-2.5 pointer-events-none"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
-                      {transaction.amount}
-                    </td>
-                    <td
-                      className={`text-sm text-center ${
-                        transaction.balance.includes("-")
-                          ? "text-[#F95353]"
-                          : transaction.balance.startsWith("₦0")
-                          ? "text-[#444444]"
-                          : "text-[#2ECC71]"
-                      }`}
-                    >
-                      {transaction.balance}
-                    </td>
-                    <td className="text-[#333333] text-center text-xs">
-                      {transaction.staff}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                </div>
 
-          <div className="flex justify-center items-center gap-2 mt-20">
-            <MoveLeft />
-            <p>Page 1 of 1</p>
-            <MoveRight />
-          </div>
+                <div className="flex flex-col  sm:w-[230px] md:w-[190px] transition-all w-full ">
+                  <label className="text-xs font-medium text-gray-600">
+                    Transaction type
+                  </label>
+                  <Select
+                    value={transactionTypeFilter}
+                    onValueChange={setTransactionTypeFilter}
+                  >
+                    <SelectTrigger className="  sm:w-[240px] md:w-[190px] transition-all w-full">
+                      <SelectValue placeholder="All Transactions" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All transactions</SelectItem>
+                      <SelectItem value="purchase">Purchase</SelectItem>
+                      <SelectItem value="pick-up">Pick-up</SelectItem>
+                      <SelectItem value="deposit">Deposit</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col  sm:w-[230px] md:w-[190px] transition-all w-full">
+                  <label className="text-xs font-medium text-gray-600">
+                    Staff member
+                  </label>
+                  <Select value={staffFilter} onValueChange={setStaffFilter}>
+                    <SelectTrigger className="  sm:w-[230px] md:w-[190px] transition-all w-full">
+                      <SelectValue placeholder="All Staff" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all-staff">All Staff</SelectItem>
+                      {staffMembers.map((staff) => (
+                        <SelectItem key={staff} value={staff}>
+                          {staff}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col pt-0 sm:pt-4 items-center sm:w-[230px] md:w-[190px] transition-all w-full">
+                  <Button
+                    className="  bg-[#2ECC71] hover:bg-[#27ae60] text-white font-medium  sm:w-[230px] md:w-[190px] transition-all w-full "
+                    onClick={handleApplyFilters}
+                  >
+                    Apply filters
+                  </Button>
+                </div>
+              </div>
+
+              {/* Transaction summary */}
+              <div className="mb-6 p-4 bg-[#F5F5F5] rounded-lg">
+                <p className="text-sm text-[#7D7D7D]">
+                  Showing {clientTransactions.length} transaction
+                  {clientTransactions.length !== 1 ? "s" : ""}
+                  {transactionTypeFilter !== "all" &&
+                    ` (${transactionTypeFilter})`}
+                  {staffFilter !== "all-staff" && ` by ${staffFilter}`}
+                </p>
+              </div>
+
+              <ClientTransactionDetails
+                client={client}
+                clientTransactions={clientTransactions}
+              />
+            </TabsContent>
+            <TabsContent value="clientDiscount">
+              <ClientDiscountDetails />
+            </TabsContent>
+          </Tabs>
         </section>
       </main>
     </>
