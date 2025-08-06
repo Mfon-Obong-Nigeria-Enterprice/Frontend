@@ -1,6 +1,6 @@
 /** @format */
 
-import DashboardTitle from "@/components/dashboard/DashboardTitle";
+import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
 import {
   Table,
   TableHeader,

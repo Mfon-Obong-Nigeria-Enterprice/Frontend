@@ -1,4 +1,5 @@
- 
+/** @format */
+
 // @/components/inventory/components/ProductDisplayTab.tsx
 
 import { useState, useEffect } from "react"; // Added useEffect
@@ -9,7 +10,8 @@ import { Pencil, Trash2, MoveUp, MoveDown } from "lucide-react";
 import { useInventoryStore } from "@/stores/useInventoryStore";
 import { updateProduct } from "@/services/productService";
 import { type Product, type NewProduct } from "@/types/types"; // Import Product and Category types
-import { // Shadcn UI components
+import {
+  // Shadcn UI components
   Select,
   SelectContent,
   SelectItem,
@@ -67,7 +69,6 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
     },
     resolver: zodResolver(newProductSchema),
   });
-
 
   // IMPORTANT: Effect to reset form values when entering edit mode or when product prop changes
   useEffect(() => {
@@ -176,7 +177,9 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
             )}
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="categoryId" className="text-xs text-gray-700">Category</label>
+            <label htmlFor="categoryId" className="text-xs text-gray-700">
+              Category
+            </label>
             <Controller
               name="categoryId"
               control={control}
@@ -199,7 +202,9 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
               )}
             />
             {errors.categoryId && (
-              <p className="text-red-500 text-xs">{errors.categoryId.message}</p>
+              <p className="text-red-500 text-xs">
+                {errors.categoryId.message}
+              </p>
             )}
           </div>
         </div>
@@ -207,7 +212,9 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
         {/* Unit and Stock fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="flex flex-col gap-1">
-            <label htmlFor="unit" className="text-xs text-gray-700">Unit</label>
+            <label htmlFor="unit" className="text-xs text-gray-700">
+              Unit
+            </label>
             <Controller
               name="unit"
               control={control}
@@ -227,7 +234,9 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="" disabled>No units for this category</SelectItem>
+                        <SelectItem value="" disabled>
+                          No units for this category
+                        </SelectItem>
                       )}
                     </SelectGroup>
                   </SelectContent>
@@ -257,7 +266,9 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
         {/* Unit Price and Minimum Stock Level fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="flex flex-col gap-1">
-            <label htmlFor="unitPrice" className="text-xs text-gray-700">Unit price</label>
+            <label htmlFor="unitPrice" className="text-xs text-gray-700">
+              Unit price
+            </label>
             <Input
               id="unitPrice"
               type="number"
@@ -269,7 +280,9 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
             )}
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="minStockLevel" className="text-xs text-gray-700">Min stock alert level</label>
+            <label htmlFor="minStockLevel" className="text-xs text-gray-700">
+              Min stock alert level
+            </label>
             <Input
               id="minStockLevel"
               type="number"
@@ -295,7 +308,7 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
             Cancel
           </Button>
           <Button type="submit" className="text-xs" disabled={isLoading}>
-            {isLoading ? <LoadingSpinner/> : "Save"}
+            {isLoading ? <LoadingSpinner /> : "Save"}
           </Button>
         </div>
       </form>
@@ -304,9 +317,7 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
 
   // Display mode
   return (
-    <article
-      className="relative bg-white border border-[var(--cl-border-gray)] rounded p-10 sm:p-4 mt-6 font-Arial hover:shadow-xl hover:border-green-400 transition-all duration-200 ease-in-out"
-    >
+    <article className="relative bg-white border border-[var(--cl-border-gray)] rounded p-10 sm:p-4 mt-6 font-Arial hover:shadow-xl hover:border-green-400 transition-all duration-200 ease-in-out">
       <div className="flex justify-between" id={product._id}>
         <div>
           <h6 className="text-lg font-normal text-[var(--cl-text-gray)]">
@@ -340,13 +351,13 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
         <div>
           <p className="font-medium text-gray-400">Unit Price</p>
           <p className="text-[var(--cl-text-semidark)] text-[0.8125rem]">
-            ₦ {product.unitPrice.toLocaleString('en-NG')}
+            ₦ {product.unitPrice.toLocaleString("en-NG")}
           </p>
         </div>
         <div>
           <p className="font-medium text-gray-400">Total Value</p>
           <p className="text-[var(--cl-text-semidark)] text-[0.8125rem]">
-            ₦ {(product.stock * product.unitPrice).toLocaleString('en-NG')}
+            ₦ {(product.stock * product.unitPrice).toLocaleString("en-NG")}
           </p>
         </div>
         <div>
@@ -388,7 +399,10 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
         size="sm"
       >
         <div className="flex flex-col justify-center items-center gap-3 py-5">
-          <p className="">Are you sure you want to delete <span className="font-semibold">{product.name}</span>?</p>
+          <p className="">
+            Are you sure you want to delete{" "}
+            <span className="font-semibold">{product.name}</span>?
+          </p>
           <div className="flex gap-3 items-center">
             <Button
               variant="outline"

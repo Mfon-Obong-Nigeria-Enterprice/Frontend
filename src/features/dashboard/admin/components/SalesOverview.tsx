@@ -44,7 +44,7 @@ const SalesOverview = () => {
           </TabsList>
         </div>
 
-        <TabsContent value="title">
+        <TabsContent value="">
           <BarChartDaily />
         </TabsContent>
         <TabsContent value="daily">

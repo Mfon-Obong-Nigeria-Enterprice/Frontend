@@ -2,7 +2,7 @@ export interface StatCard {
   heading: string;
   salesValue: number | string;
   statValue?: string;
-  color?: "green" | "orange" | "red";
+  color?: "green" | "orange" | "red" | "blue";
   statColor?: string;
   salesColor?: string;
   format?: "currency" | "number" | "text";

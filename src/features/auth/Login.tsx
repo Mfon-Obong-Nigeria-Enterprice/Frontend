@@ -1,10 +1,12 @@
+/** @format */
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "@/schemas/authSchema";
 import { IoEyeOffOutline, IoEyeOutline } from "react-icons/io5";
-import Button from "../../components/MyButton";
+import { Button } from "@/components/ui/Button";
 import MobileError from "./MobileError";
 import SupportFeedback from "../../components/SupportFeedback";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -144,20 +146,13 @@ const Login = () => {
           </p>
 
           <div className="mt-10">
-            <Button
-              text={
-                Object.keys(formErrors).length > 0
-                  ? "Retry"
-                  : isSubmitting
-                  ? "Logging in..."
-                  : "Login"
-              }
-              type="submit"
-              variant={
-                Object.keys(formErrors).length > 0 ? "secondary" : "primary"
-              }
-              disabled={isSubmitting}
-            />
+            <Button type="submit" disabled={isSubmitting}>
+              {Object.keys(formErrors).length > 0
+                ? "Retry"
+                : isSubmitting
+                ? "Logging in..."
+                : "Login"}
+            </Button>
           </div>
         </form>
 

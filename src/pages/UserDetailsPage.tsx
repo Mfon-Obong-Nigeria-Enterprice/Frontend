@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/Button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ExternalLink, ArrowLeft } from "lucide-react";
 
@@ -15,6 +14,7 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
+import { Button } from "@/components/ui/Button";
 
 const UserDetailsPage = () => {
   const [deleteModal, setDeleteModal] = useState(false);
@@ -146,7 +146,11 @@ const UserDetailsPage = () => {
             <ManagerSidebar activeMenu="user-management" />
           </div>
           {/* Mobile sidebar as fixed drawer, no overlay */}
-          <div className={`${sidebarVisible ? 'block' : 'hidden'} fixed top-0 left-0 h-full w-[260px] bg-white shadow-xl z-[120] lg:hidden`}>
+          <div
+            className={`${
+              sidebarVisible ? "block" : "hidden"
+            } fixed top-0 left-0 h-full w-[260px] bg-white shadow-xl z-[120] lg:hidden`}
+          >
             <ManagerSidebar activeMenu="user-management" />
           </div>
         </div>

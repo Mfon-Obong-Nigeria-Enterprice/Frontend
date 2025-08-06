@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import DashboardTitle from "@/components/dashboard/DashboardTitle";
+import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
 import ClientDirectory from "../admin/components/ClientDirectory";
 import { useSyncClientsWithQuery } from "@/stores/useClientStore";
 import type { Client } from "@/types/types";
@@ -7,8 +7,8 @@ import { Search } from "lucide-react";
 import PaymentModal from "./components/PaymentModal";
 import useClientFiltering, {
   type clientBalance,
-  type clientStat,
 } from "@/hooks/useClientFiltering";
+import { Button } from "@/components/ui/Button";
 import {
   Select,
   SelectContent,
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { getAllClients } from "@/services/clientService";
+import { VscRefresh } from "react-icons/vsc";
 // import { getAllTransactions } from "@/services/transactionService";
 
 const StaffClients: React.FC = () => {
@@ -39,10 +40,8 @@ const StaffClients: React.FC = () => {
 
   const {
     filteredClients: statusBalanceFilter,
-    clientStatus,
     clientBalance,
     setClientBalance,
-    setClientStatus,
   } = useClientFiltering(clients);
 
   const filteredClients = useMemo(() => {
@@ -60,10 +59,19 @@ const StaffClients: React.FC = () => {
 
   return (
     <main>
-      <DashboardTitle
-        heading="Clients"
-        description="Search, view, and edit client transaction"
-      />
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4 mb-7">
+        <DashboardTitle
+          heading="Clients"
+          description="Search, view, and edit client transaction"
+        />
+        <Button
+          onClick={() => window.location.reload()}
+          className="w-40 bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
+        >
+          <VscRefresh />
+          Refresh
+        </Button>
+      </div>
 
       <section className="bg-white rounded-xl mt-5 overflow-hidden border border-[#d9d9d9] min-h-[66vh]">
         <h4 className="font-medium text-xl font-Inter text-[#1E1E1E] px-7 pt-4">
@@ -83,8 +91,8 @@ const StaffClients: React.FC = () => {
           </div>
 
           {/*  */}
-          <div className="flex items-center gap-4 pt-4 sm:pt-0  md:gap-3 px-4 md:px-0">
-            <Select
+          <div className=" gap-4 pt-4 sm:pt-0  md:gap-3 px-4 md:px-0">
+            {/* <Select
               value={clientStatus}
               onValueChange={(value) => setClientStatus(value as clientStat)}
             >
@@ -96,7 +104,7 @@ const StaffClients: React.FC = () => {
                 <SelectItem value="Registered">Registered</SelectItem>
                 <SelectItem value="Unregistered">Unregistered</SelectItem>
               </SelectContent>
-            </Select>
+            </Select> */}
 
             <Select
               value={clientBalance}
@@ -121,7 +129,8 @@ const StaffClients: React.FC = () => {
           searchTerm={searchTerm}
           filteredClientsData={filteredClients}
           onClientAction={handleProcessPayment}
-          actionLabel="view"
+          actionLabel=""
+          isStaffView={true}
         />
       </section>
 

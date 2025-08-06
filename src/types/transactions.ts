@@ -20,13 +20,17 @@ export interface BaseUserWithId extends BaseUser {
   _id: string;
 }
 
+export interface ClientWithBalance extends BaseUserWithId {
+  balance: number | string;
+}
+
 export interface Transaction {
   _id: string;
   invoiceNumber?: string;
   type: TransactionType;
   client: Client | null;
   walkInClient?: BaseUser;
-  clientId?: BaseUserWithId;
+  clientId?: ClientWithBalance;
   clientName?: string;
   walkInClientName?: string;
   userId: {
@@ -48,3 +52,7 @@ export interface Transaction {
   description?: string;
   reference?: string;
 }
+
+export type MergedTransaction = Transaction & {
+  client: Client | null;
+};

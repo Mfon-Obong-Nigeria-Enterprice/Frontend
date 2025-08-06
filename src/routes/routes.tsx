@@ -12,6 +12,7 @@ import ImportStockPage from "@/features/import/ImportStockPage";
 import ManagerDashboardLayout from "@/layout/ManagerDashboardLayout";
 import ManagerDashboardOverview from "@/features/dashboard/manager/ManagerDashboardOverview";
 import BusinessReport from "@/features/dashboard/manager/BusinessReport";
+import ManagerTransactions from "@/features/dashboard/manager/ManagerTransactions";
 import ManagerClients from "@/features/dashboard/manager/ManagerClients";
 import RevenueAnalytics from "@/features/dashboard/manager/RevenueAnalytics";
 import UserManagement from "@/features/dashboard/manager/UserManagement";
@@ -53,7 +54,7 @@ const router = createBrowserRouter([
       { path: "manage-clients", element: <ManagerClients /> },
       {
         path: "manage-transactions",
-        element: <ManagerClients />,
+        element: <ManagerTransactions />,
       },
       {
         path: "revenue-analytics",

@@ -26,6 +26,7 @@ export interface LoginResponse {
 }
 // This file defines the types used in the application, including user roles, setup data, and product categories.
 export type TransactionType = "PURCHASE" | "PICKUP" | "DEPOSIT";
+
 export interface Client {
   _id: string;
   name: string;
@@ -156,4 +157,20 @@ export type InventoryState = {
   searchQuery: string;
   selectedCategoryId: string;
   categoryUnits: string[];
+};
+
+// sales for the barchart on admin dashboard
+export interface DailySales {
+  day: string;
+  sales: number;
+}
+
+export type WeeklySales = {
+  week: string;
+  sales: number;
+};
+
+export type MonthlySales = {
+  month: string;
+  sales: number;
 };

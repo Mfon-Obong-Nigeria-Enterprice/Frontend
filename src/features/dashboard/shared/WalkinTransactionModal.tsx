@@ -1,3 +1,5 @@
+/** @format */
+
 import Modal from "@/components/Modal";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { Button } from "@/components/ui/Button";
@@ -109,7 +111,9 @@ const WalkinTransactionModal = () => {
                       : "border-[#FFA500] bg-[#FFE7A4] text-[#FFA500]"
                   }`}
                 >
-                  {selectedTransaction.type.toLowerCase()}
+                  {typeof selectedTransaction?.type === "string"
+                    ? selectedTransaction.type.toLowerCase()
+                    : "N/A"}
                 </span>
               </p>
               {/* amount */}

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { toSentenceCaseName } from "@/utils/format";
+import { toSentenceCaseName } from "@/utils/styles";
 import type { Transaction } from "@/types/transactions";
 
 type TransactionState = {
@@ -65,6 +65,8 @@ export const useTransactionsStore = create<TransactionState>((set) => ({
                 : undefined,
               clientName: transaction.clientId?.name
                 ? toSentenceCaseName(transaction.clientId.name)
+                : transaction.client?.name
+                ? toSentenceCaseName(transaction.client.name)
                 : undefined,
             },
           ]
