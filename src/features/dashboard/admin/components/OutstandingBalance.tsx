@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Button from "@/components/MyButton";
+import { Button } from "@/components/ui/button";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import { useClientStore } from "@/stores/useClientStore";
 import { formatCurrency } from "@/utils/formatCurrency";
@@ -108,9 +108,10 @@ const OutstandingBalance = () => {
         <Button
           className=" text-start"
           onClick={() => navigate("/admin/dashboard/clients")}
-          text="View all Balances"
           variant="outline"
-        />
+        >
+          View all Balances
+        </Button>
         <MdKeyboardArrowRight size={24} className="mr-5 text-[#3D80FF]" />
       </div>
 
