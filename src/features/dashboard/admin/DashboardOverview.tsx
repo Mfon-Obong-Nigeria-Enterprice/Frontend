@@ -4,7 +4,7 @@ import Stats from "../shared/Stats";
 import SalesOverview from "./components/SalesOverview";
 import OutstandingBalance from "./components/OutstandingBalance";
 import RecentSales from "./components/RecentSales";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { VscRefresh } from "react-icons/vsc";
 import { Plus } from "lucide-react";
 import { useInventoryStore } from "@/stores/useInventoryStore";

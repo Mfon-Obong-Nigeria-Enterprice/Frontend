@@ -38,7 +38,9 @@ const OutstandingBalance = () => {
     });
   }, [transactions, getClientById]);
 
-  const debtors = mergedTransactions.filter((tx) => tx.client?.balance < 0);
+  const debtors = mergedTransactions.filter(
+    (tx) => tx.client && tx.client?.balance < 0
+  );
 
   return (
     <div className="bg-white border border-[#D9D9D9] p-4 sm:p-8 mt-5 mx-2 rounded-[8px] font-Inter">

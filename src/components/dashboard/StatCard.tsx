@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
-import { title } from "process";
-import { StatCardProps } from "@/types/stats";
+import type { StatCardProps } from "@/types/stats";
 
 export const StatCard = ({
   title,

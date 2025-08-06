@@ -169,3 +169,8 @@ export type WeeklySales = {
   week: string;
   sales: number;
 };
+
+export type MonthlySales = {
+  month: string;
+  sales: number;
+};

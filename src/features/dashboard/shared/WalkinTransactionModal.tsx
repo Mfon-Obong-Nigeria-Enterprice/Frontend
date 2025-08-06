@@ -1,6 +1,6 @@
 import Modal from "@/components/Modal";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ChevronUp } from "lucide-react";
 
 const WalkinTransactionModal = () => {

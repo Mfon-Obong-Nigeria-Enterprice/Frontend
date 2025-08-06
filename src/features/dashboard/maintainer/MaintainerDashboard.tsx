@@ -4,22 +4,10 @@ import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
 import Stats, {
   type StatCard,
 } from "@/features/dashboard/maintainer/components/Stats";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import OutstandingBalance from "@/features/dashboard/maintainer/components/OutstandingBalance";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
-
-type Transaction = {
-  invoice: string;
-  client: string;
-  type: "Debit" | "Credit" | "Partial";
-  amount: string;
-  location: string;
-  balance: string;
-  staff: string;
-  date: string;
-  time: string;
-};
 
 const MaintainerDashboard = () => {
   const navigate = useNavigate();

@@ -6,23 +6,20 @@ import {
   LinearScale,
   Tooltip,
   Legend,
-  type TooltipItem,
+  type ChartOptions,
+  type ChartData,
 } from "chart.js";
+import { useTransactionsStore } from "@/stores/useTransactionStore";
+import { getMonthlySales } from "@/utils/getMonthlySales";
+import type { MonthlySales } from "@/types/types";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-const salesData = [
-  { month: "May", sales: "1.5" },
-  { month: "June", sales: "3" },
-  { month: "July", sales: "2.5" },
-  { month: "August", sales: "3.5" },
-  { month: "September", sales: "4" },
-  { month: "October", sales: "3.1" },
-  { month: "November", sales: "5" },
-];
-
 const BarChartMonthly = () => {
-  const data = {
+  const { transactions } = useTransactionsStore();
+  const salesData: MonthlySales[] = getMonthlySales(transactions ?? []);
+
+  const data: ChartData<"bar", number[], string> = {
     labels: salesData.map((item) => item.month),
     datasets: [
       {
@@ -33,13 +30,13 @@ const BarChartMonthly = () => {
     ],
   };
 
-  const options = {
+  const options: ChartOptions<"bar"> = {
     responsive: true,
     plugins: {
       legend: { display: false },
       tooltip: {
         callbacks: {
-          label: (context: TooltipItem<"bar">) => `${context.parsed.y} m`,
+          label: (context) => `${context.parsed.y} m`,
         },
       },
     },
@@ -47,18 +44,18 @@ const BarChartMonthly = () => {
       x: {
         grid: {
           display: false,
-          drawBorder: false,
+          // drawBorder: false,
         },
       },
       y: {
         ticks: {
-          callback: (value: number) => `${value} million`,
-          stepSize: 1,
+          callback: (value) => `${value.toLocaleString()} million`,
+          stepSize: 500000,
         },
         beginAtZero: false,
         grid: {
           display: false,
-          drawBorder: false,
+          // drawBorder: false,
         },
       },
     },

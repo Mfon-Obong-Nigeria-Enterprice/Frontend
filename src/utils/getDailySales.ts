@@ -1,5 +1,4 @@
 import type { Transaction } from "@/types/transactions";
-// import type { DailySales } from "@/types/types";
 
 export const getDailySales = (transactions: Transaction[]) => {
   const today = new Date();

@@ -16,16 +16,6 @@ import type { DailySales } from "@/types/types";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-// const salesData = [
-//   { day: "May 15", sales: "200" },
-//   { day: "May 16", sales: "300" },
-//   { day: "May 17", sales: "250" },
-//   { day: "May 18", sales: "350" },
-//   { day: "May 19", sales: "400" },
-//   { day: "May 20", sales: "310" },
-//   { day: "May 21", sales: "500" },
-// ];
-
 const BarChartDaily = () => {
   const { transactions } = useTransactionsStore();
   const salesData: DailySales[] = getDailySales(transactions ?? []);
@@ -71,9 +61,6 @@ const BarChartDaily = () => {
       },
     },
   };
-  //  callback: function (tickValue: string | number) {
-  //           return `₦${tickValue}`;
-  //         },
 
   return (
     <div className="bg-[#F5F5F5] p-2 sm:p-6 rounded-lg shadow-md">
