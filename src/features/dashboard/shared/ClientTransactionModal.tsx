@@ -266,14 +266,17 @@ ${selectedTransaction.discount.toLocaleString()}`
             {/* <Button className="bg-[#FFC761] hover:bg-[#FFE7A4] text-[#444444]">
               Send Payment Reminder
             </Button> */}
-            <Button
-              onClick={() =>
-                navigate(`/clients/${selectedTransaction?.clientId._id}`)
-              }
-              className="bg-white text-[#444444] border border-[#7D7D7D]"
-            >
-              View Full Details
-            </Button>
+            {selectedTransaction?.clientId &&
+              selectedTransaction?.clientId?._id && (
+                <Button
+                  onClick={() =>
+                    navigate(`/clients/${selectedTransaction.clientId?._id}`)
+                  }
+                  className="bg-white text-[#444444] border border-[#7D7D7D]"
+                >
+                  View Full Details
+                </Button>
+              )}
           </div>
         </div>
       )}
