@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-
+import type { Client } from "@/types/types";
 import {
   createClient,
   updateClient,
@@ -15,7 +15,7 @@ export const useClientMutations = () => {
   });
 
   const updateMutate = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) =>
+    mutationFn: ({ id, data }: { id: string; data: Client }) =>
       updateClient(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
   });

@@ -48,8 +48,13 @@ const AdminInventory = () => {
 
   // set the search query from zustand store
 
-  const { products, categories, searchQuery, setSearchQuery, updatedProducts } =
-    useInventoryStore();
+  const {
+    products,
+    categories,
+    searchQuery,
+    setSearchQuery,
+    updateProductsBulk,
+  } = useInventoryStore();
 
   const debouncedSearch = useDebouncedCallback((value: string) => {
     setSearchQuery(value);
@@ -79,7 +84,7 @@ const AdminInventory = () => {
       "AdminInventory: Saving updated products to store:",
       updatedProducts
     );
-    updatedProducts(updatedProducts); // This now correctly calls the bulk update action
+    updateProductsBulk(updatedProducts); // This now correctly calls the bulk update action
     setIsModalOpen(false);
   };
 
@@ -133,13 +138,19 @@ const AdminInventory = () => {
 
   const filteredProducts = useMemo(
     () =>
-      products.filter(
-        (product) =>
+      products.filter((product) => {
+        const categoryName =
+          typeof product.categoryId === "object"
+            ? product.categoryId.name.toLowerCase()
+            : "";
+
+        return (
           (product.name.toLowerCase().includes(searchQuery) ||
-            product.categoryId?.name?.toLowerCase().includes(searchQuery)) &&
+            categoryName.includes(searchQuery)) &&
           filterByStockStatus(product) &&
           filterByPriceRange(product)
-      ),
+        );
+      }),
     [products, searchQuery, stockStatus, priceRange]
   );
 

@@ -1,7 +1,7 @@
 import React from "react";
 import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
 import { Button } from "@/components/ui/button";
-import InventoryTab from "../admin/components/InventoryTab";
+// import InventoryTab from "../admin/components/InventoryTab";
 import { IoIosSearch } from "react-icons/io";
 
 const Stock: React.FC = () => {
@@ -32,7 +32,12 @@ const Stock: React.FC = () => {
 
         {/* tabbed section */}
         <div className="my-5 px-4">
-          <InventoryTab />
+          {/* <InventoryTab
+            products={filteredProducts}
+            categories={categories}
+            stockStatus={stockStatus}
+            priceRange={priceRange}
+          /> */}
         </div>
       </section>
     </main>
