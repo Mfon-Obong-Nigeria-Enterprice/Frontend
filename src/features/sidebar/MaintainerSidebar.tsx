@@ -3,14 +3,12 @@
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
-  Book,
-  UserRound,
   UserRoundCog,
-  Settings,
-  CreditCard,
+  // Settings,
+  // CreditCard,
   LogOut,
 } from "lucide-react";
-import { HiMiniChartBar } from "react-icons/hi2";
+// import { HiMiniChartBar } from "react-icons/hi2";
 
 import Logo from "@/components/Logo";
 import { useLogout } from "@/hooks/uselogout";
@@ -28,40 +26,22 @@ import {
 
 const items = [
   {
-      title: "Dashboard",
-      url: "/maintainer/dashboard/overview",
-      icon: LayoutDashboard,
+    title: "Dashboard",
+    url: "/maintainer/dashboard/overview",
+    icon: LayoutDashboard,
   },
-  {
-    title: "Business Report",
-    url: "/manager/dashboard/business-report",
-    icon: Book,
-  },
-  {
-    title: "Clients",
-    url: "/manager/dashboard/manage-clients",
-    icon: UserRound,
-  },
-  {
-    title: "Transaction",
-    url: "/manager/dashboard/manage-transactions",
-    icon: CreditCard,
-  },
-  {
-    title: "Revenue Analytics",
-    url: "/manager/dashboard/revenue-analytics",
-    icon: HiMiniChartBar,
-  },
+
   {
     title: "User Management",
-    url: "/manager/dashboard/manage-user",
+    url: "#",
     icon: UserRoundCog,
   },
-  {
-    title: "Settings",
-    url: "/manager/dashboard/manager-settings",
-    icon: Settings,
-  },
+  // /manager/dashboard/manage-user
+  // {
+  //   title: "Settings",
+  //   url: "/manager/dashboard/manager-settings",
+  //   icon: Settings,
+  // },
 ];
 
 const MaintainerSidebar = () => {
