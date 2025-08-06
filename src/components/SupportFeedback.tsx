@@ -1,5 +1,5 @@
 import { GoCheck } from "react-icons/go";
-import Button from "./MyButton";
+import { Button } from "./ui/button";
 
 const SupportFeedback = ({ onClose }: { onClose: () => void }) => {
   return (
@@ -18,12 +18,9 @@ const SupportFeedback = ({ onClose }: { onClose: () => void }) => {
             <GoCheck size={48} className="fill-white" />
           </div>
 
-          <Button
-            text="Close"
-            fullWidth={true}
-            variant="secondary"
-            onClick={onClose}
-          />
+          <Button variant="secondary" onClick={onClose}>
+            Close
+          </Button>
         </div>
       </div>
     </section>

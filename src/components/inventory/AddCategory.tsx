@@ -8,7 +8,7 @@ import { type CategoryData } from "@/types/types";
 import { createCategory } from "@/services/categoryService";
 import TagInput from "../TagInput";
 import InputField from "../InputField";
-import Button from "../MyButton";
+import { Button } from "../ui/button";
 import { toast } from "sonner";
 import LoadingSpinner from "../LoadingSpinner";
 
@@ -118,14 +118,17 @@ const AddCategory = ({ closeBothModals }: Props) => {
       <div className="flex justify-end items-center gap-4 mt-6">
         <div className="w-full lg:w-[30%]">
           <Button
-            text="Cancel"
-            variant="custom"
-            className="border px-6 py-3"
+            variant="ghost"
             onClick={closeBothModals}
-          />
+            className="border px-6 py-3"
+          >
+            Cancel
+          </Button>
         </div>
         <div className="w-full lg:w-[30%]">
-          <Button text="Add Category" type="submit" disabled={isLoading} />
+          <Button type="submit" disabled={isLoading}>
+            Add Category
+          </Button>
         </div>
       </div>
       {isLoading && <LoadingSpinner />}
