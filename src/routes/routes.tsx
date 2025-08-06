@@ -3,6 +3,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import Login from "@/features/auth/Login";
 import Notfound from "@/components/Notfound";
+import UserDetailsPage from "@/pages/UserDetailsPage";
 import AddProduct from "@/components/inventory/AddProduct";
 import ClientDetailsPage from "@/pages/ClientDetailsPage";
 import ImportStockPage from "@/features/import/ImportStockPage";
@@ -117,6 +118,7 @@ const router = createBrowserRouter([
     element: <ClientDetailsPage />,
   },
   { path: "import-stock", element: <ImportStockPage /> },
+  { path: "user-management/:userId", element: <UserDetailsPage /> },
   {
     path: "*",
     element: <Notfound />,
