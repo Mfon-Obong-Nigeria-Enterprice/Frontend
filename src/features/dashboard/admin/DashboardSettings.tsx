@@ -77,7 +77,7 @@ export function DashboardSettings() {
           <p className="text-gray-600">Manage your system preferences</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="">
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">Alert Settings</h2>
@@ -96,8 +96,6 @@ export function DashboardSettings() {
                 isReadOnly={!canModifySettings}
               />
             </div>
-          </div>
-
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <PriceUpdateTableSection
               products={products || []}
@@ -109,6 +107,8 @@ export function DashboardSettings() {
               isReadOnly={!canModifyPrices}
             />
           </div>
+          </div>
+
         </div>
       </div>
       </div>

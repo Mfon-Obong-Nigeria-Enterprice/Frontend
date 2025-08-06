@@ -6,7 +6,7 @@ import type { DragEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Form,
@@ -33,12 +33,12 @@ const passwordSchema = z
   });
 
 type AdminData = {
-  _id: string; // Changed from 'id' to match your API
+  _id: string; 
   email: string;
   lastLogin: string;
   userRole: string;
   adminName: string;
-  profilePicture?: string; // Changed from avatarUrl
+  profilePicture?: string; 
 };
 
 type AdminUserModalProps = {
@@ -149,12 +149,11 @@ export default function AdminUserModal({
             >
               {profileImage ? (
                 <img
-                  src={profileImage || "/public/images/admin-avatar.svg"} 
-                  alt="Profile"
+                  src={`/images/${adminData.userRole}-avatar.png`}
+                  alt=""
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      "/public/images/admin-avatar.svg";
+                    (e.target as HTMLImageElement).style.display = "none";
                   }}
                 />
               ) : (

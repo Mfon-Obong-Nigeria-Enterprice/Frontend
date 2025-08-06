@@ -48,7 +48,7 @@ const AdminInventory = () => {
 
   // set the search query from zustand store
 
-  const { products, categories, searchQuery, setSearchQuery, updatedProducts } =
+  const { products, categories, searchQuery, setSearchQuery } =
     useInventoryStore();
 
   const debouncedSearch = useDebouncedCallback((value: string) => {
@@ -79,7 +79,7 @@ const AdminInventory = () => {
       "AdminInventory: Saving updated products to store:",
       updatedProducts
     );
-    updatedProducts(updatedProducts); // This now correctly calls the bulk update action
+    updatedProducts(updatedProducts); 
     setIsModalOpen(false);
   };
 
