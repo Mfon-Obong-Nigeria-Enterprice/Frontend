@@ -58,7 +58,6 @@ const ClientDiscountDetails: React.FC<ClientDiscountDetailsProps> = ({
                 </p>
                 {txn?.total ? (
                   <p className="text-[#7D7D7D] text-sm font-Inter">
-                    {" "}
                     {(
                       ((txn?.discount ?? 0) / (txn?.subtotal ?? 0)) *
                       100

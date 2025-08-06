@@ -2,7 +2,7 @@ import Modal from "@/components/Modal";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { ArrowRight, MapPin, Phone, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { getDaysSince } from "@/utils/helpersfunction";
 import { formatCurrency } from "@/utils/styles";
 

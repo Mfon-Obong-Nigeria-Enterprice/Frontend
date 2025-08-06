@@ -1,11 +1,9 @@
-// import { useClientStore } from "@/stores/useClientStore";
 import { balanceClass, balanceTextClass } from "@/utils/styles";
 import type { Client } from "@/types/types";
 import { getDaysSince } from "@/utils/helpersfunction";
 import { useEffect, useMemo, useState } from "react";
 
 const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
-  //   const { clients } = useClientStore();
   const [client, setClient] = useState(initialClient);
   useEffect(() => {
     setClient(initialClient);

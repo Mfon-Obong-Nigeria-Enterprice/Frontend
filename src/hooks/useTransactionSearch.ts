@@ -1,5 +1,10 @@
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 
+type Suggestion = {
+  id: string;
+  label: string;
+};
+
 export const useTransactionSearch = ({
   type = "client", // "client" or "invoice"
   pageSize = 10, // default page size
@@ -7,7 +12,7 @@ export const useTransactionSearch = ({
 }) => {
   const { transactions } = useTransactionsStore();
 
-  const fetchSuggestions = async (query) => {
+  const fetchSuggestions = async (query: string): Promise<Suggestion[]> => {
     const lowerQuery = query.toLowerCase();
 
     const matched = (transactions ?? []).filter((t) => {
@@ -24,8 +29,8 @@ export const useTransactionSearch = ({
       id: t._id,
       label:
         type === "client"
-          ? t.clientId?.name || t.walkInClient?.name || "Unnamed Client"
-          : t.invoiceNumber,
+          ? t.clientId?.name || t.walkInClient?.name || ""
+          : t.invoiceNumber ?? "",
     }));
   };
 

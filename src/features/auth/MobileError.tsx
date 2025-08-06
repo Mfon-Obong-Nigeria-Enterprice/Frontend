@@ -1,6 +1,6 @@
 import { IoIosArrowBack } from "react-icons/io";
 import { BiErrorCircle } from "react-icons/bi";
-import Button from "../../components/MyButton";
+import { Button } from "@/components/ui/button";
 
 const MobileError = ({
   onClose,
@@ -39,14 +39,13 @@ const MobileError = ({
         Error code: AUTH-401
       </span>
 
-      <Button
-        onClick={onClose}
-        text="Retry"
-        variant="secondary"
-        fullWidth={false}
-      />
+      <Button variant="secondary" onClick={onClose}>
+        Retry
+      </Button>
 
-      <Button text="Contact Support" variant="outline" onClick={onSupport} />
+      <Button variant="outline" onClick={onSupport}>
+        Contact Support
+      </Button>
     </div>
   );
 };

@@ -20,7 +20,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { useNavigate } from "react-router-dom";
 import { getTypeDisplay } from "@/utils/helpersfunction";

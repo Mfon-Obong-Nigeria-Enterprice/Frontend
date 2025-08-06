@@ -1,7 +1,7 @@
 /** @format */
 
 import { useGoBack } from "@/hooks/useGoBack";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { useImportStore } from "@/stores/useImportStore";
 import { X, TriangleAlert } from "lucide-react";
 
