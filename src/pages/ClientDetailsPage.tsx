@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronUp } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 import {
   Select,
@@ -23,27 +23,54 @@ import { ClientTransactionDetails } from "@/components/clients/ClientTransaction
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ClientDiscountDetails from "@/components/clients/ClientDiscountDetails";
 import CustomDatePicker from "@/utils/CustomDatePicker";
+import { useAuthStore } from "@/stores/useAuthStore";
+import DeleteClientDialog from "@/features/dashboard/manager/component/DeleteClientDialog";
+import { toast } from "sonner";
+import EditClientDialog from "@/features/dashboard/manager/component/EditClientDialog";
 
-const ClientDetailsPage: React.FC = () => {
+interface ClientDetailsPageProps {
+  isManagerView?: boolean;
+}
+
+const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
+  isManagerView = false,
+}) => {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
+  //store
   const { clients } = useClientStore();
   const { transactions } = useTransactionsStore();
+  // Get user from auth store
+  const { user } = useAuthStore();
+
+  // Determine if current user is a manager/super_admin
+  const isManager = useMemo(() => {
+    if (isManagerView) return true;
+    if (!user || !user.role) return false;
+
+    const normalizedRole = user.role.toString().trim().toUpperCase();
+    return normalizedRole === "SUPER_ADMIN";
+  }, [user, isManagerView]);
   // Filter states
   const [transactionTypeFilter, setTransactionTypeFilter] =
     useState<string>("all");
   const [staffFilter, setStaffFilter] = useState<string>("all-staff");
   const [dateFrom, setDateFrom] = useState<Date | null>(null);
   const [dateTo, setDateTo] = useState<Date | null>(null);
-  // const [refreshKey, setRefreshKey] = useState(0);
-
-  // useEffect(() => {
-  //   setRefreshKey((prev) => prev + 1);
-  // }, [transactions]);
+  const [showDialog, setShowDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const mergedTransactions = useMemo(() => {
     if (!transactions || !clients) return [];
-    return mergeTransactionsWithClients(transactions, clients);
+    console.log(
+      "🔄 Merging transactions:",
+      transactions.length,
+      "clients:",
+      clients.length
+    );
+    const merged = mergeTransactionsWithClients(transactions, clients);
+    console.log("✅ Merged transactions:", merged.length);
+    return merged;
   }, [transactions, clients]);
 
   //get Clients
@@ -61,6 +88,7 @@ const ClientDetailsPage: React.FC = () => {
     if (transactionTypeFilter !== "all") {
       const typeMap: { [key: string]: string } = {
         purchase: "PURCHASE",
+        "pick-up": "PICKUP",
         pickup: "PICKUP",
         deposit: "DEPOSIT",
       };
@@ -107,6 +135,27 @@ const ClientDetailsPage: React.FC = () => {
     return uniqueStaff;
   }, [mergedTransactions, clientId]);
 
+  const handleSelection = (value: string) => {
+    switch (value) {
+      case "edit":
+        setShowEditDialog(true);
+        break;
+      case "delete":
+        setShowDialog(true);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleDeleteSuccess = () => {
+    toast.success("Client deleted successfully");
+    navigate(-1);
+  };
+  const handleEditSuccess = () => {
+    toast.success("Client updated successfully");
+  };
+
   const handleApplyFilters = () => {
     // Filters are applied automatically via useMemo
     console.log("Filters applied:", {
@@ -129,7 +178,6 @@ const ClientDetailsPage: React.FC = () => {
     );
   }
 
-  console.log("client", client);
   if (!client) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -164,19 +212,21 @@ const ClientDetailsPage: React.FC = () => {
             <ChevronUp />
             <span>Export data</span>
           </Button>
-          <Select>
-            <SelectTrigger className="w-[130px]">
-              <SelectValue placeholder="Edit Client"></SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel></SelectLabel>
-                <SelectItem value="edit">Edit Client</SelectItem>
-                <SelectItem value="suspend">Suspend Client</SelectItem>
-                <SelectItem value="delete">Delete Client</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          {isManager && (
+            <Select onValueChange={handleSelection}>
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="Edit Client"></SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel></SelectLabel>
+                  <SelectItem value="edit">Edit Client</SelectItem>
+                  <SelectItem value="suspend">Suspend Client</SelectItem>
+                  <SelectItem value="delete">Delete Client</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </header>
 
@@ -189,7 +239,7 @@ const ClientDetailsPage: React.FC = () => {
 
         {/* section by the right */}
         <section className=" bg-white py-8 px-5 rounded lg:col-span-3">
-          <Tabs className="space-y-4" defaultValue="cards">
+          <Tabs className="space-y-4" defaultValue="clientTransaction">
             <TabsList className="flex gap-2 lg:justify-start justify-evenly ">
               <TabsTrigger value="clientTransaction">Transaction</TabsTrigger>
               <TabsTrigger value="clientDiscount">Discount</TabsTrigger>
@@ -318,11 +368,24 @@ const ClientDetailsPage: React.FC = () => {
               />
             </TabsContent>
             <TabsContent value="clientDiscount">
-              <ClientDiscountDetails />
+              <ClientDiscountDetails clientTransactions={clientTransactions} />
             </TabsContent>
           </Tabs>
         </section>
       </main>
+      <DeleteClientDialog
+        open={showDialog}
+        onOpenChange={setShowDialog}
+        client={client}
+        onDeleteSuccess={handleDeleteSuccess}
+      />
+      {/* Edit Client Dialog can be implemented similarly */}
+      <EditClientDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        client={client}
+        onEditSuccess={handleEditSuccess}
+      />
     </>
   );
 };

@@ -20,16 +20,17 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { useNavigate } from "react-router-dom";
-import { getBalanceStatus, getTypeDisplay } from "@/utils/helpersfunction";
+import { getTypeDisplay } from "@/utils/helpersfunction";
 
 interface ClientDirectoryProps {
   searchTerm: string;
   filteredClientsData: Client[];
   onClientAction?: (client: Client) => void;
   actionLabel?: string;
+  isStaffView?: boolean;
 }
 
 const ClientDirectory: React.FC<ClientDirectoryProps> = ({
@@ -37,6 +38,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
   filteredClientsData,
   onClientAction,
   actionLabel = "view",
+  isStaffView = false,
 }) => {
   const { clients } = useClientStore();
   const navigate = useNavigate();
@@ -89,8 +91,6 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
     }
   };
 
-  console.log("clients", clients);
-
   return (
     <div className="mt-7 mb-2 px-4 ">
       <Card>
@@ -109,7 +109,8 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
             <TableBody className="text-center">
               {currentClient.map((client) => {
                 const lastTransaction = getClientTransaction(client);
-                const balanceStatus = getBalanceStatus(client?.balance);
+
+                const isOwing = client.balance < 0;
                 return (
                   <TableRow key={client._id} className="text-center">
                     <TableCell>
@@ -137,18 +138,19 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                     <TableCell>
                       <Badge
                         variant="outline"
-                        className={`uppercase p-2 w-[85px] text-[12px] ${
+                        className={`uppercase p-2 w-[85px] text-[12px] border rounded-2xl ${
                           lastTransaction?.type === "PURCHASE"
                             ? "border border-[#F95353] bg-[#FFCACA] text-[#F95353] rounded-2xl"
-                            : lastTransaction?.type === "PICKUP" //will be figured out later
+                            : lastTransaction?.type === "PICKUP"
                             ? "border border-[#FFA500] bg-[#FFE7A4] text-[#FFA500] rounded-2xl"
                             : lastTransaction?.type === "DEPOSIT"
                             ? "border border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71] rounded-2xl"
                             : "bg-gray-100 rounded-2xl text-gray-300 border border-gray-300 "
                         }`}
                       >
-                        {lastTransaction &&
-                          getTypeDisplay(lastTransaction.type)}
+                        {lastTransaction
+                          ? getTypeDisplay(lastTransaction.type)
+                          : "New Client"}
                       </Badge>
                     </TableCell>
 
@@ -157,7 +159,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                       <div>
                         <p className={`font-[400] text-[#444444] text-sm `}>
                           {lastTransaction
-                            ? formatCurrency(lastTransaction.amount)
+                            ? formatCurrency(Math.abs(lastTransaction.amount))
                             : "₦0"}
                         </p>
                       </div>
@@ -166,21 +168,46 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                     {/* client balance */}
                     <TableCell>
                       <div>
-                        <span className={`font-medium  ${balanceStatus.color}`}>
-                          {formatCurrency(Math.abs(Number(client.balance)))}
+                        <span
+                          className={`font-medium ${
+                            client.balance > 0
+                              ? "text-green-400"
+                              : client.balance < 0
+                              ? "text-red-400"
+                              : "text-gray-300"
+                          } `}
+                        >
+                          {client.balance < 0
+                            ? "-"
+                            : client.balance > 0
+                            ? "+"
+                            : ""}
+                          ₦{Math.abs(client.balance).toLocaleString()}
                         </span>
                       </div>
                     </TableCell>
 
                     <TableCell>
-                      <Button
-                        variant="link"
-                        size="icon"
-                        className="text-[#3D80FF] text-sm underline ring-offset-1 font-[400] cursor-pointer"
-                        onClick={() => handleViewClient(client)}
-                      >
-                        {actionLabel}
-                      </Button>
+                      {isStaffView ? (
+                        isOwing ? (
+                          <Button
+                            variant="ghost"
+                            className="border-[#3D80FF] border text-[#3D80FF] cursor-pointer hover:text-[#3D80FF] transition-colors duration-200 ease-in-out"
+                            onClick={() => handleViewClient(client)}
+                          >
+                            Add payment
+                          </Button>
+                        ) : null
+                      ) : (
+                        <Button
+                          variant="link"
+                          size="icon"
+                          className="text-[#3D80FF] text-sm underline ring-offset-1 font-[400] cursor-pointer"
+                          onClick={() => handleViewClient(client)}
+                        >
+                          {actionLabel}
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 );

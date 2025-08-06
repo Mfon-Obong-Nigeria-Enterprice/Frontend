@@ -1,9 +1,8 @@
-import DashboardTitle from "@/components/dashboard/DashboardTitle";
+import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
 import Stats1 from "./Stats1";
-import { type StatCard} from "./Stats1"
+import { type StatCard } from "./Stats1";
 
-
-const BusinessReport1 : React.FC =() => {
+const BusinessReport1: React.FC = () => {
   const stats: StatCard[] = [
     {
       heading: "Total Sales (This week)",
@@ -24,17 +23,17 @@ const BusinessReport1 : React.FC =() => {
       color: "orange",
     },
   ];
-  return <div className="">
+  return (
+    <div className="">
       <main className="flex flex-col gap-4 mb-7">
         <DashboardTitle
           heading="Business Report"
           description="Here’s is a breakdown of your business performance"
         />
         <Stats1 data={stats} />
-      
       </main>
-    </div>;
+    </div>
+  );
 };
-
 
 export default BusinessReport1;

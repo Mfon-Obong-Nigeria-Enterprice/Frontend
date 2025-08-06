@@ -1,7 +1,16 @@
-import React from "react";
+import DashboardTitle from "../shared/DashboardTitle";
+import Transactions from "../shared/Transactions";
 
 const ManagerTransactions = () => {
-  return <div>Manager Transactions</div>;
+  return (
+    <section>
+      <DashboardTitle
+        heading="Transaction"
+        description="Oversee All Payments, Credits & Alerts"
+      />
+      <Transactions />
+    </section>
+  );
 };
 
 export default ManagerTransactions;

@@ -5,7 +5,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: ("SUPER_ADMIN" | "ADMIN" | "STAFF")[];
+  allowedRoles?: ("SUPER_ADMIN" | "MAINTAINER" | "ADMIN" | "STAFF")[];
   redirectTo?: string;
 }
 
@@ -29,12 +29,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       case "SUPER_ADMIN":
         return <Navigate to="/manager/dashboard" replace />;
       case "ADMIN":
-        return (
-          <Navigate
-            to={user.isSetupComplete ? "/admin/dashboard" : "/admin/setup"}
-            replace
-          />
-        );
+        return <Navigate to="/admin/dashboard" replace />;
       case "STAFF":
         return <Navigate to="/staff/dashboard" replace />;
       default:

@@ -67,6 +67,7 @@ export interface LoginResponse {
 
 export type TransactionType = "PURCHASE" | "PICKUP" | "DEPOSIT";
 
+
 // ==================== CLIENT TYPES ====================
 export interface TransactionItem {
   _id: string;
@@ -148,22 +149,20 @@ export interface InventoryState {
   searchQuery: string;
   selectedCategoryId: string;
   categoryUnits: string[];
+};
+
+// sales for the barchart on admin dashboard
+export interface DailySales {
+  day: string;
+  sales: number;
 }
 
-// ==================== APP SETUP TYPE ====================
-export interface AppSetupResponse {
-  settings: Settings;
-  // ... other app setup data
-}
+export type WeeklySales = {
+  week: string;
+  sales: number;
+};
 
-// ==================== COMPOSITE TYPES ====================
-export interface UpdateStockProduct extends Product {
-  newQuantity?: number;
-  selected?: boolean;
-  category: string;
-  shieldStatus: "high" | "low";
-}
-
-export interface ClientWithTransactions extends Client {
-  transactions: TransactionItem[];
-}
+export type MonthlySales = {
+  month: string;
+  sales: number;
+};

@@ -1,64 +1,61 @@
 import { useEffect, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { getAllProducts } from "@/services/productService";
 import { getAllCategories } from "@/services/categoryService";
 import { getAllClients } from "@/services/clientService";
 import { getAllTransactions } from "@/services/transactionService";
-import { getAllUsers } from "@/services/userService";
+// import { getAllUsers } from "@/services/userService";
 import { useInventoryStore } from "@/stores/useInventoryStore";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { useClientStore } from "@/stores/useClientStore";
-import { useUserStore } from "@/stores/useUserStore";
+// import { useUserStore } from "@/stores/useUserStore";
 
-export const InventoryProvider = ({ children }: { children: ReactNode }) => {
+export const AppProvider = ({ children }: { children: ReactNode }) => {
   const { setProducts, setCategories } = useInventoryStore();
   const { setTransactions } = useTransactionsStore();
   const { setClients } = useClientStore();
-  const { setUsers } = useUserStore();
+  // const { setUsers } = useUserStore();
 
-  const { data: categories } = useQuery({
+  const { data: categories = [] } = useSuspenseQuery({
     queryKey: ["categories"],
     queryFn: getAllCategories,
   });
 
-  const { data: products } = useQuery({
+  const { data: products = [] } = useSuspenseQuery({
     queryKey: ["products"],
     queryFn: getAllProducts,
   });
 
-  const { data: transactions } = useQuery({
+  const { data: transactions = [] } = useSuspenseQuery({
     queryKey: ["transactions"],
     queryFn: getAllTransactions,
   });
 
-  const { data: clients } = useQuery({
+  const { data: clients = [] } = useSuspenseQuery({
     queryKey: ["clients"],
     queryFn: getAllClients,
   });
 
-  const { data: users } = useQuery({
-    queryKey: ["users"],
-    queryFn: getAllUsers,
-  });
+  // const { data: users } = useQuery({
+  //   queryKey: ["users"],
+  //   queryFn: getAllUsers,
+  // });
 
   // save to zustand store
   useEffect(() => {
-    setProducts(products ?? []);
-    setCategories(categories ?? []);
-    setTransactions(transactions ?? []);
-    setClients(clients ?? []);
-    setUsers(users ?? []);
+    if (products) setProducts(products);
+    if (categories) setCategories(categories);
+    if (transactions) setTransactions(transactions);
+    if (clients) setClients(clients);
   }, [
     products,
     categories,
     transactions,
     clients,
-    users,
     setProducts,
     setCategories,
     setTransactions,
     setClients,
-    setUsers,
   ]);
 
   return <>{children}</>;

@@ -9,17 +9,13 @@ import {
 } from "@/components/ui/table";
 import Button from "@/components/MyButton";
 import { MdKeyboardArrowRight } from "react-icons/md";
-
-const tableData = [
-  { client: "Walk-in client", amount: "-₦12,750", time: "11:40 AM" },
-  { client: "Akpan construction", amount: "+₦150,000", time: "11:25 AM" },
-  { client: "Ade properties", amount: "+₦225,000", time: "9:15 AM" },
-  { client: "Walk-in client", amount: "-₦7,500", time: "8:10 AM" },
-];
+import { useTransactionsStore } from "@/stores/useTransactionStore";
+import { toSentenceCaseName } from "@/utils/styles";
 
 // this is recent sales for the admin dashboard
 const RecentSales: React.FC = () => {
   const navigate = useNavigate();
+  const { transactions } = useTransactionsStore();
 
   return (
     <div className="bg-white p-4 sm:px-8 sm:py-6 mx-2 rounded-lg font-Inter">
@@ -38,25 +34,40 @@ const RecentSales: React.FC = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tableData.map((data, index) => (
-            <TableRow className={index % 2 !== 0 ? "bg-[#F0F0F3]" : ""}>
-              <TableCell className="font-medium pl-4 text-xs text-[var(--cl-secondary)]">
-                {data.client}
-              </TableCell>
-              <TableCell
-                className={`text-center text-xs  ${
-                  data.amount.includes("+")
-                    ? "text-green-400"
-                    : "text-[#F95353]"
-                }`}
+          {[...(transactions || [])]
+            .sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime()
+            )
+            .slice(0, 5)
+            .map((txn, index) => (
+              <TableRow
+                key={txn._id}
+                className={index % 2 !== 0 ? "bg-[#F0F0F3]" : ""}
               >
-                {data.amount}
-              </TableCell>
-              <TableCell className="text-center text-xs text-[var(--cl-secondary)]">
-                {data.time}
-              </TableCell>
-            </TableRow>
-          ))}
+                <TableCell className="font-medium pl-4 text-xs text-[var(--cl-secondary)]">
+                  {toSentenceCaseName(
+                    typeof txn?.clientId === "object" && txn?.clientId?.name
+                      ? txn.clientId.name
+                      : txn?.walkInClient?.name || ""
+                  )}
+                </TableCell>
+                <TableCell
+                  className={`text-center text-xs  ${
+                    txn.total > 0 ? "text-green-400" : "text-[#F95353]"
+                  }`}
+                >
+                  ₦{txn.total.toLocaleString()}
+                </TableCell>
+                <TableCell className="text-center text-xs text-[var(--cl-secondary)]">
+                  {new Date(txn.createdAt).toLocaleTimeString([], {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </TableCell>
+              </TableRow>
+            ))}
         </TableBody>
       </Table>
       <div className="flex justify-between items-center bg-[#f0f0f3] mt-10 sm:mt-[13dvh]">

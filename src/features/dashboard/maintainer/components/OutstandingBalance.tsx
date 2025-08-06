@@ -26,7 +26,7 @@ const OutstandingBalance = () => {
           Outstanding Balance
         </h4>
         <TableBody>
-          {tableData.map((data, index) => (
+          {tableData.map((data) => (
             <TableRow className={`border-b `}>
               <TableCell className="font-medium text-left text-[#444444] text-xs sm:text-base">
                 {data.client}

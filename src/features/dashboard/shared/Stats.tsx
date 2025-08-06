@@ -16,14 +16,15 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
         return "#F39C12";
       case "red":
         return "#F95353";
-
+      case "blue":
+        return "#3D80FF";
       default:
         return "#7d7d7d";
     }
   };
 
   return (
-    <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mt-5 px-3">
+    <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mt-5 px-3 md:px-0">
       {data.map((stat, index) => (
         <div
           key={index}

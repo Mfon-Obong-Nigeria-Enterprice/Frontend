@@ -1,9 +1,8 @@
-import DashboardTitle from "@/components/dashboard/DashboardTitle";
-import Stats1 from "./Stats1";
-import { type StatCard} from "./Stats1"
+import Stats from "./Stats";
 
-
-const Clients : React.FC =() => {
+// types
+import type { StatCard } from "@/types/stats";
+const Clients: React.FC = () => {
   const stats: StatCard[] = [
     {
       heading: "Total Clients",
@@ -24,17 +23,13 @@ const Clients : React.FC =() => {
       color: "orange",
     },
   ];
-  return <div className="">
+  return (
+    <div className="">
       <main className="flex flex-col gap-4 mb-7">
-        <DashboardTitle
-          heading="Clients"
-          description="Manage your client relationships and view outstanding balances"
-        />
-        <Stats1 data={stats} />
-      
+        <Stats data={stats} />
       </main>
-    </div>;
+    </div>
+  );
 };
-
 
 export default Clients;

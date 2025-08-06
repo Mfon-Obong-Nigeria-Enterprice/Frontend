@@ -1,3 +1,6 @@
+import { useTransactionsStore } from "@/stores/useTransactionStore";
+import { getDailySales } from "@/utils/getDailySales";
+
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -6,23 +9,18 @@ import {
   LinearScale,
   Tooltip,
   Legend,
-  type TooltipItem,
+  type ChartOptions,
+  type ChartData,
 } from "chart.js";
+import type { DailySales } from "@/types/types";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-const salesData = [
-  { day: "May 15", sales: "200" },
-  { day: "May 16", sales: "300" },
-  { day: "May 17", sales: "250" },
-  { day: "May 18", sales: "350" },
-  { day: "May 19", sales: "400" },
-  { day: "May 20", sales: "310" },
-  { day: "May 21", sales: "500" },
-];
-
 const BarChartDaily = () => {
-  const data = {
+  const { transactions } = useTransactionsStore();
+  const salesData: DailySales[] = getDailySales(transactions ?? []);
+
+  const data: ChartData<"bar", number[], string> = {
     labels: salesData.map((item) => item.day),
     datasets: [
       {
@@ -33,13 +31,13 @@ const BarChartDaily = () => {
     ],
   };
 
-  const options = {
+  const options: ChartOptions<"bar"> = {
     responsive: true,
     plugins: {
       legend: { display: false },
       tooltip: {
         callbacks: {
-          label: (context: TooltipItem<"bar">) => `₦${context.parsed.y}`,
+          label: (context) => `₦${context.parsed.y}`,
         },
       },
     },
@@ -47,25 +45,22 @@ const BarChartDaily = () => {
       x: {
         grid: {
           display: false,
-          drawBorder: false,
+          // drawBorder: false,
         },
       },
       y: {
         ticks: {
-          callback: (value: number) => `₦${value.toLocaleString()}`,
+          callback: (value) => `₦${value.toLocaleString()}`,
           stepSize: 100,
         },
         beginAtZero: true,
         grid: {
           display: false,
-          drawBorder: false,
+          // drawBorder: false,
         },
       },
     },
   };
-  //  callback: function (tickValue: string | number) {
-  //           return `₦${tickValue}`;
-  //         },
 
   return (
     <div className="bg-[#F5F5F5] p-2 sm:p-6 rounded-lg shadow-md">

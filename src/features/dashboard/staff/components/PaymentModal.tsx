@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,11 +6,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { createTransaction } from "@/services/transactionService";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useClientStore } from "@/stores/useClientStore";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
+import type { Transaction } from "@/types/transactions";
 import type { Client, CreateTransactionPayload } from "@/types/types";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type FormEvent } from "react";
+import { toast } from "sonner";
 
 type PaymentModalProps = {
   client: Client;
@@ -23,8 +27,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   onClose,
   onPaymentSuccess,
 }) => {
-  //   const { addPayment } = useClientStore();
+  const { addPayment } = useClientStore();
   const { addTransaction } = useTransactionsStore();
+  const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [amount, setAmount] = useState(0);
   const [reference, setReference] = useState("");
@@ -35,7 +40,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     const currentBalance = client?.balance ?? 0;
     const paymentAmount = Number(amount) || 0;
 
-    return currentBalance + paymentAmount;
+    return currentBalance - paymentAmount;
   }, [client?.balance, amount]);
 
   //Mutation to create transaction via API
@@ -47,20 +52,65 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       clientId: string;
       transaction: CreateTransactionPayload;
     }) => createTransaction(clientId, transaction),
-    onSuccess: () => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+
+      //
+      if (response) {
+        const newTransaction: Transaction = {
+          userId: {
+            _id: user?.id || "",
+            name: user?.name || "",
+          },
+          _id: response._id,
+          type: "DEPOSIT" as const,
+          status: "completed",
+          items: [],
+          amount: Number(amount),
+          total: Number(amount),
+          paymentMethod,
+          clientId: {
+            _id: client._id,
+            phone: client.phone || "",
+            name: client.name,
+          },
+          client: client,
+          createdAt: new Date().toISOString(),
+        };
+        addTransaction(newTransaction);
+        if (addPayment) {
+          addPayment(client._id, newBalance);
+        }
+      }
+      toast.success(
+        `Payment of ₦${formatCurrency(amount)} processed successfully!`
+      );
       onPaymentSuccess();
+      onClose();
+    },
+    onError: (error) => {
+      console.error("Error creating transaction:", error);
+      toast.error("Failed to process payment. Please try again.");
     },
   });
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!amount) return;
-    setIsProcessing(true);
-    try {
-      //   addPayment(client._id, Number(amount));
+    if (!amount || amount <= 0) return;
+    if (amount > Math.abs(client.balance) && client.balance > 0) {
+      const proceed = confirm(
+        `Payment amount (${formatCurrency(
+          amount
+        )}) is greater than the outstanding balance (${formatCurrency(
+          client.balance
+        )}). This will result in a credit balance. Continue?`
+      );
+      if (!proceed) return;
+      setIsProcessing(true);
+    }
 
+    try {
       const transactionData: CreateTransactionPayload = {
         type: "DEPOSIT",
         amount: Number(amount),
@@ -73,28 +123,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         clientId: client._id,
         transaction: transactionData,
       });
-      // Add to transactions store
-      addTransaction({
-        ...transactionData,
-        clientId: {
-          _id: client._id,
-          phone: client.phone,
-          name: client.name,
-        },
-        createdAt: new Date().toISOString(),
-        status: "COMPLETED",
-        type: "DEPOSIT",
-        total: Number(amount),
-
-        // Add other required fields based on your Transaction type
-      });
 
       setAmount(0);
       setReference("");
       setPaymentMethod("Cash");
+      console.log("Payment processed successfully");
     } catch (error) {
       console.error("Payment processing failed:", error);
-      alert("Failed to process payment. Please try again.");
+      toast.error("Failed to process payment. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -138,7 +174,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               </div>
 
               <address className="flex gap-0.5 items-center text-[#444444] text-sm">
-                {/* <MapPin size={14} /> */}
                 <span>{client.address || "No address Provided"}</span>
               </address>
             </div>
@@ -167,6 +202,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 disabled={isProcessing}
                 required
                 type="number"
+                min="0.01"
+                step="0.01"
                 value={amount || ""}
                 onChange={(e) => setAmount(Number(e.target.value))}
                 className="w-full p-2 border rounded-lg"
@@ -187,6 +224,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 <option value="Cash">Cash</option>
                 <option value="Transfer">Transfer</option>
                 <option value="POS">POS</option>
+                <option value="Cheque">Cheque</option>
               </select>
             </div>
 
@@ -196,7 +234,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               </label>
               <textarea
                 disabled={isProcessing}
-                rows={4}
+                rows={3}
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
                 className="w-full p-2 border rounded-lg"
@@ -236,7 +274,17 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               </div>
               <div className="flex justify-between items-center">
                 <p>New Balance:</p>
-                <p>{formatCurrency(newBalance)}</p>
+                <p
+                  className={`${
+                    newBalance < 0
+                      ? " text-[#F95353]"
+                      : newBalance > 0
+                      ? " text-[#2ECC71]"
+                      : " text-[#7d7d7d]"
+                  }`}
+                >
+                  {formatCurrency(newBalance)}
+                </p>
               </div>
             </div>
 
