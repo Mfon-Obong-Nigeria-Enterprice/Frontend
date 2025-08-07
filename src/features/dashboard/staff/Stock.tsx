@@ -2,7 +2,7 @@
 
 import React from "react";
 import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 // import InventoryTab from "../admin/components/InventoryTab";
 import { IoIosSearch } from "react-icons/io";
 

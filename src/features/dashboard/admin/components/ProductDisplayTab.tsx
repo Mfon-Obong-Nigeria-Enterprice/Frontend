@@ -21,7 +21,7 @@ import {
   SelectGroup,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Modal from "@/components/Modal"; // Assuming this Modal component exists
 import { newProductSchema } from "@/schemas/productSchema";

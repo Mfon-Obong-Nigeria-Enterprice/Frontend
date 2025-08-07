@@ -1,3 +1,5 @@
+/** @format */
+
 //components
 import DashboardTitle from "../shared/DashboardTitle";
 import SalesAnalytics from "./components/AdminSales/SalesAnalytics";

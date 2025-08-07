@@ -14,7 +14,7 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 const UserDetailsPage = () => {
   const [deleteModal, setDeleteModal] = useState(false);

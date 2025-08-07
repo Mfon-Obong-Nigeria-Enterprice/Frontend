@@ -27,7 +27,7 @@ import TransactionTable from "./TransactionTable";
 import DateRangePicker from "@/components/DateRangePicker";
 
 // ui
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
