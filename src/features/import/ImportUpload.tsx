@@ -4,7 +4,7 @@ import React, { useRef, useState } from "react";
 import Papa from "papaparse";
 import ExcelJS from "exceljs";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { useGoBack } from "@/hooks/useGoBack";
 import { X, FolderOpen } from "lucide-react";
 import { useImportStore } from "@/stores/useImportStore";

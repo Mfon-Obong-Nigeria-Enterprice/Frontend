@@ -55,11 +55,11 @@ const DateRangePicker: React.FC<Props> = ({
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
-          //   initialFocus
           mode="range"
           selected={value}
           onSelect={onChange}
           numberOfMonths={2}
+          required
         />
       </PopoverContent>
     </Popover>

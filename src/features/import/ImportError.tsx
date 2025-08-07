@@ -1,20 +1,20 @@
 /** @format */
 
 import { useGoBack } from "@/hooks/useGoBack";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { useImportStore } from "@/stores/useImportStore";
 import { X, TriangleAlert } from "lucide-react";
 
-const importErrorData = [
-  { title: "Invalid price format for “Steel Wire”", quantity: 15 },
-  { title: "Missing product name", quantity: 23 },
-  { title: "Duplicate product “Cement Block”", quantity: 67 },
-  { title: "Category “Tool” doesn’t exist", quantity: 89 },
-  { title: "Negative stock quantity not allowed", quantity: 134 },
-  { title: "Negative stock quantity not allowed", quantity: 134 },
-  { title: "Negative stock quantity not allowed", quantity: 134 },
-  { title: "Negative stock quantity not allowed", quantity: 134 },
-];
+// const importErrorData = [
+//   { title: "Invalid price format for “Steel Wire”", quantity: 15 },
+//   { title: "Missing product name", quantity: 23 },
+//   { title: "Duplicate product “Cement Block”", quantity: 67 },
+//   { title: "Category “Tool” doesn’t exist", quantity: 89 },
+//   { title: "Negative stock quantity not allowed", quantity: 134 },
+//   { title: "Negative stock quantity not allowed", quantity: 134 },
+//   { title: "Negative stock quantity not allowed", quantity: 134 },
+//   { title: "Negative stock quantity not allowed", quantity: 134 },
+// ];
 
 const ImportError = () => {
   const goBack = useGoBack();

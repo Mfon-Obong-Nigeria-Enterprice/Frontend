@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Button } from "../ui/Button";
+import { Button } from "../ui/button";
 import LoadingSpinner from "../LoadingSpinner";
 
 const AddProduct = () => {

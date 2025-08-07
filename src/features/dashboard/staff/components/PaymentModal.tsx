@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -74,6 +74,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             _id: client._id,
             phone: client.phone || "",
             name: client.name,
+            balance: "",
           },
           client: client,
           createdAt: new Date().toISOString(),

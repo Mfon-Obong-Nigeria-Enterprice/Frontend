@@ -1,4 +1,3 @@
-import React from "react";
 import DashboardTitle from "../shared/DashboardTitle";
 import Transactions from "../shared/Transactions";
 

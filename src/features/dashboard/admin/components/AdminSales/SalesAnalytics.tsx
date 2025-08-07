@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import SalesCategoryChart from "./SalesCategoryChart";
+// import SalesCategoryChart from "./SalesCategoryChart";
 // import { BsArrowUp } from "react-icons/bs";
 
 import { useTransactionsStore } from "@/stores/useTransactionStore";
@@ -24,13 +24,7 @@ interface SalesAnalyticsProps {
   topProduct: TopProduct[];
 }
 
-const salesByCategory = [
-  { name: "Building Materials", value: 45 },
-  { name: "Construction services", value: 32 },
-  { name: "Equipment rental", value: 23 },
-];
-
-const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({ topProduct }) => {
+const SalesAnalytics: React.FC<SalesAnalyticsProps> = () => {
   const { transactions } = useTransactionsStore();
   const topProducts = getTopSellingProducts(transactions || [], 5);
 

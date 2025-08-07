@@ -2,7 +2,7 @@
 
 import DashboardTitle from "../shared/DashboardTitle";
 import ClientStats from "./components/ClientStats";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
 import ClientDirectory from "./components/ClientDirectory";
 import { useState } from "react";

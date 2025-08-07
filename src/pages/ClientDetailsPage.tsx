@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronUp } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 import {
   Select,

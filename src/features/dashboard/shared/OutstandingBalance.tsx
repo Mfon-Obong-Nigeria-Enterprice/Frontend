@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Table,
@@ -8,37 +7,39 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Button from "@/components/MyButton";
+
 import { MdKeyboardArrowRight } from "react-icons/md";
-import { useClientStore } from "@/stores/useClientStore";
 import { formatCurrency } from "@/utils/formatCurrency";
-import ClientTransactionModal from "../../shared/ClientTransactionModal";
+import ClientTransactionModal from "./ClientTransactionModal";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { getDaysSince } from "@/utils/helpersfunction";
 
+import { useAuthStore } from "@/stores/useAuthStore";
+
+import { useMergedTransactions } from "@/hooks/useMergedTransactions";
+
 const OutstandingBalance = () => {
   const navigate = useNavigate();
-  const { getClientById } = useClientStore();
-
+  const { user } = useAuthStore();
   const { transactions, selectedTransaction, open, openModal } =
     useTransactionsStore();
+  const mergedTransactions = useMergedTransactions(transactions ?? []);
 
-  const mergedTransactions = useMemo(() => {
-    return (transactions ?? []).map((transaction) => {
-      const clientId =
-        typeof transaction.clientId === "string"
-          ? transaction.clientId
-          : transaction.clientId?._id;
-      const client = clientId ? getClientById(clientId) : null;
+  const debtors = mergedTransactions.filter(
+    (tx) => tx.client && tx.client?.balance < 0
+  );
 
-      return {
-        ...transaction,
-        client,
-      };
-    });
-  }, [transactions, getClientById]);
+  // get user role
+  const role = user?.role;
 
-  const debtors = mergedTransactions.filter((tx) => tx.client?.balance < 0);
+  // button to navigate
+  const handleButtonNavigate = () => {
+    if (role === "SUPER_ADMIN") {
+      navigate("/manager/dashboard/manage-clients");
+    } else if (role === "ADMIN") {
+      navigate("/admin/dashboard/clients");
+    }
+  };
 
   return (
     <div className="bg-white border border-[#D9D9D9] p-4 sm:p-8 mt-5 mx-2 rounded-[8px] font-Inter">
@@ -102,14 +103,14 @@ const OutstandingBalance = () => {
         </Table>
       </div>
 
-      <div className="bg-[#f0f0f3] items-center mt-[7dvh] flex justify-between">
-        <Button
-          className=" text-start"
-          onClick={() => navigate("/admin/dashboard/clients")}
-          text="View all Balances"
-          variant="outline"
-        />
-        <MdKeyboardArrowRight size={24} className="mr-5 text-[#3D80FF]" />
+      <div className="mt-[7dvh] ">
+        <button
+          className="bg-[#f0f0f3] w-full flex justify-between px-5 cursor-pointer text-start text-[#3D80FF] hover:text-[#3D80FF]/80 py-4"
+          onClick={handleButtonNavigate}
+        >
+          View all Balances
+          <MdKeyboardArrowRight size={24} className="mr-5 text-[#3D80FF]" />
+        </button>
       </div>
 
       {open && selectedTransaction && <ClientTransactionModal />}

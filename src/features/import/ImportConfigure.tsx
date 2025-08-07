@@ -3,7 +3,7 @@
 import React from "react";
 import { useGoBack } from "@/hooks/useGoBack";
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { useImportStore } from "@/stores/useImportStore";
 
 const ImportConfigure: React.FC = () => {

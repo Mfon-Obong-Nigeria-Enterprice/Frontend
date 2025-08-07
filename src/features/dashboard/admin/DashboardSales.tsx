@@ -22,7 +22,7 @@ import { useMemo } from "react";
 import usePagination from "@/hooks/usePagination";
 
 // ui
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import {
   Pagination,
   PaginationContent,
@@ -159,13 +159,26 @@ const DashboardSales = () => {
       { header: "Staff", dataKey: "staff" },
     ];
 
-    const rows = (mergedTransactions ?? []).map((txn) => [
-      new Date(txn.createdAt).toTimeString(),
-      txn.clientId?.name || txn.walkInClient?.name,
-      txn.items,
-      txn.total.toLocaleString(),
-      txn.userId.name,
-    ]);
+    const rows = (mergedTransactions ?? []).map((txn) => ({
+      time: new Date(txn.createdAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      clientName: txn.clientId?.name || txn.walkInClient?.name || "N/A",
+      items: txn.items
+        .map((item) => `${item.quantity}x ${item.productName}`)
+        .join(", "),
+      amount: txn.total.toLocaleString(),
+      staff: txn.userId.name || "N/A",
+    }));
+
+    // const rows = (mergedTransactions ?? []).map((txn) => [
+    //   new Date(txn.createdAt).toTimeString(),
+    //   txn.clientId?.name || txn.walkInClient?.name,
+    //   txn.items,
+    //   txn.total.toLocaleString(),
+    //   txn.userId.name,
+    // ]);
 
     doc.text("Sales Export", 14, 16);
     autoTable(doc, {

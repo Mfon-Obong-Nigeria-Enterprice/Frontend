@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Button from "@/components/MyButton";
+import { Button } from "@/components/ui/button";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { toSentenceCaseName } from "@/utils/styles";
@@ -35,7 +35,11 @@ const RecentSales: React.FC = () => {
         </TableHeader>
         <TableBody>
           {[...(transactions || [])]
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime()
+            )
             .slice(0, 5)
             .map((txn, index) => (
               <TableRow
@@ -70,10 +74,10 @@ const RecentSales: React.FC = () => {
         <div>
           <Button
             onClick={() => navigate("/admin/dashboard/sales")}
-            text="View all Sales"
             variant="outline"
-            fullWidth={false}
-          />
+          >
+            View all Sales
+          </Button>
         </div>
         <MdKeyboardArrowRight size={24} className="text-[#3D80FF] mr-5" />
       </div>
