@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import MobileError from "./MobileError";
 import SupportFeedback from "../../components/SupportFeedback";
 import { useAuthStore } from "@/stores/useAuthStore";
-import DevRoleSwitcher from "../../components/RoleSwitcher";
+// import DevRoleSwitcher from "../../components/RoleSwitcher";
 
 type LoginFormInputs = {
   username: string;
@@ -187,11 +187,11 @@ const Login = () => {
       </section>
 
       {/* ✅ Dev Role Switcher (only visible in development) */}
-      {import.meta.env.DEV && (
+      {/** {import.meta.env.DEV && (
         <div className="mt-4">
           <DevRoleSwitcher />
         </div>
-      )}
+      )}**/}
     </main>
   );
 };
