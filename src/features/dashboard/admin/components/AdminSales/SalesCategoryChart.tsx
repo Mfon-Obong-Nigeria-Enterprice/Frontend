@@ -8,16 +8,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 // } from "@/components/ui/chart";
 // import { Cell, Pie, PieChart } from "recharts";
 
-// interface CategoryData {
-//   name: string;
-//   value: number;
-// }
+interface CategoryData {
+  name: string;
+  value: number;
+}
 
-// interface SalesCategoryChartProps {
-//   data: CategoryData[];
-// }
+interface SalesCategoryChartProps {
+  data: CategoryData[];
+}
 
-// const COLORS = ["#3D80FF", "#FFA500", "#F95353"];
+const COLORS = ["#3D80FF", "#FFA500", "#F95353"];
 
 const SalesCategoryChart: React.FC<SalesCategoryChartProps> = ({ data }) => {
   //   const chartConfig = {

@@ -1,11 +1,11 @@
 /** @format */
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ExternalLink, ArrowLeft } from "lucide-react";
-
+import * as XLSX from "xlsx"; // Add this import if not already present
 import Header from "@/components/header/Header";
 import ManagerSidebar from "@/features/sidebar/ManagerSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -16,18 +16,140 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 
+// TypeScript interfaces
+interface Activity {
+  activity: string;
+  time: string;
+}
+
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  location?: string;
+  profilePicture?: string;
+  createdAt?: string;
+  lastLogin?: string;
+  permissions?: string[];
+  passwordChanged?: boolean;
+  isActive?: boolean;
+  userId?: string;
+  totalLogins?: number;
+  sessionDuration?: string;
+  address?: string;
+  salesRecorded?: number;
+  phone?: string;
+  mobile?: string;
+  department?: string;
+}
+
 const UserDetailsPage = () => {
+  // API action handlers
+  const token = localStorage.getItem("token") || "";
+
+  const [user, setUser] = useState<User | null>(null); // Define user state
+
   const [deleteModal, setDeleteModal] = useState(false);
   const [suspendModal, setSuspendModal] = useState(false);
   const [enableModal, setEnableModal] = useState(false);
-  const [user, setUser] = useState(null);
-  const [activities, setActivities] = useState([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [activeTab, setActiveTab] = useState<"account" | "activities">(
     "account"
   );
   const { userId } = useParams();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token") || "";
+    fetch(`https://mfon-obong-enterprise.onrender.com/api/users/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Failed to fetch user data");
+        const data = await res.json();
+        setUser(data); // Set the user data
+      })
+      .catch(() => setUser(null)); // Handle errors
+  }, [userId]);
+
+  const handleExportUserReport = () => {
+    if (!user) return; // Ensure user data is available
+    const wb = XLSX.utils.book_new(); // Create a new workbook
+    const ws = XLSX.utils.json_to_sheet([user]); // Convert user data to a worksheet (wrap in an array)
+    XLSX.utils.book_append_sheet(wb, ws, "User Report"); // Append the worksheet to the workbook
+    XLSX.writeFile(wb, `${user.name}_report.csv`); // Export the workbook to a CSV file with the user's name
+  };
+
+  async function handleSuspendUser() {
+    try {
+      const res = await fetch(
+        `https://mfon-obong-enterprise.onrender.com/api/users/${userId}/suspend`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!res.ok) throw new Error("Failed to suspend user");
+      setSuspendModal(false);
+      // Optionally refresh user data
+      window.location.reload();
+    } catch (err) {
+      alert("Error suspending user");
+      setSuspendModal(false);
+    }
+  }
+
+  async function handleEnableUser() {
+    try {
+      const res = await fetch(
+        `https://mfon-obong-enterprise.onrender.com/api/users/${userId}/enable`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!res.ok) throw new Error("Failed to enable user");
+      setEnableModal(false);
+      window.location.reload();
+    } catch (err) {
+      alert("Error enabling user");
+      setEnableModal(false);
+    }
+  }
+
+  async function handleDeleteUser() {
+    try {
+      const res = await fetch(
+        `https://mfon-obong-enterprise.onrender.com/api/users/${userId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!res.ok) throw new Error("Failed to delete user");
+      setDeleteModal(false);
+      // Redirect to user list after delete
+      navigate(-1);
+    } catch (err) {
+      alert("Error deleting user");
+      setDeleteModal(false);
+    }
+  }
 
   useEffect(() => {
     const token = localStorage.getItem("token") || "";
@@ -143,7 +265,7 @@ const UserDetailsPage = () => {
         <div className={sidebarVisible ? "lg:block" : "hidden lg:hidden"}>
           {/* Desktop sidebar only */}
           <div className="hidden lg:block">
-            <ManagerSidebar activeMenu="user-management" />
+            <ManagerSidebar />
           </div>
           {/* Mobile sidebar as fixed drawer, no overlay */}
           <div
@@ -151,7 +273,7 @@ const UserDetailsPage = () => {
               sidebarVisible ? "block" : "hidden"
             } fixed top-0 left-0 h-full w-[260px] bg-white shadow-xl z-[120] lg:hidden`}
           >
-            <ManagerSidebar activeMenu="user-management" />
+            <ManagerSidebar />
           </div>
         </div>
         <main className="flex-1 flex flex-col gap-6 mb-0">
@@ -569,6 +691,7 @@ const UserDetailsPage = () => {
                 variant="outline"
                 size="sm"
                 className="flex items-center gap-2 py-5"
+                onClick={handleExportUserReport} // Call the export function on click
               >
                 <ExternalLink className="size-4" /> Export User Report
               </Button>
@@ -594,7 +717,7 @@ const UserDetailsPage = () => {
                     </button>
                     <button
                       className="px-6 py-2 rounded-lg bg-red-600 text-white font-medium"
-                      onClick={() => setDeleteModal(false)}
+                      onClick={handleDeleteUser}
                     >
                       Delete
                     </button>
@@ -624,7 +747,7 @@ const UserDetailsPage = () => {
                     </button>
                     <button
                       className="px-6 py-2 rounded-lg bg-green-600 text-white font-medium"
-                      onClick={() => setSuspendModal(false)}
+                      onClick={handleSuspendUser}
                     >
                       Confirm
                     </button>
@@ -654,7 +777,7 @@ const UserDetailsPage = () => {
                     </button>
                     <button
                       className="px-6 py-2 rounded-lg bg-blue-600 text-white font-medium"
-                      onClick={() => setEnableModal(false)}
+                      onClick={handleEnableUser}
                     >
                       Confirm
                     </button>

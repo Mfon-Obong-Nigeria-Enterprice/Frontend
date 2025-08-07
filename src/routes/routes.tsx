@@ -17,6 +17,7 @@ import ManagerClients from "@/features/dashboard/manager/ManagerClients";
 import RevenueAnalytics from "@/features/dashboard/manager/RevenueAnalytics";
 import UserManagement from "@/features/dashboard/manager/UserManagement";
 import ManagerSettings from "@/features/dashboard/manager/ManagerSettings";
+import ActivityLogPage from "@/pages/ActivityLogPage";
 
 // maintainer
 import MaintainerLayout from "@/layout/MaintainerLayout";
@@ -47,27 +48,13 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="m-overview" replace /> },
       { path: "m-overview", element: <ManagerDashboardOverview /> },
-      {
-        path: "business-report",
-        element: <BusinessReport />,
-      },
+      { path: "business-report", element: <BusinessReport /> },
       { path: "manage-clients", element: <ManagerClients /> },
-      {
-        path: "manage-transactions",
-        element: <ManagerTransactions />,
-      },
-      {
-        path: "revenue-analytics",
-        element: <RevenueAnalytics />,
-      },
-      {
-        path: "manage-user",
-        element: <UserManagement />,
-      },
-      {
-        path: "manager-settings",
-        element: <ManagerSettings />,
-      },
+      { path: "manage-transactions", element: <ManagerTransactions /> },
+      { path: "activity-log", element: <ActivityLogPage /> },
+      { path: "revenue-analytics", element: <RevenueAnalytics /> },
+      { path: "manage-user", element: <UserManagement /> },
+      { path: "manager-settings", element: <ManagerSettings /> },
     ],
   },
   {

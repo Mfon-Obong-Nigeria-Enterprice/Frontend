@@ -1,6 +1,7 @@
 /** @format */
 
 import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
+import ManagerSidebar from "@/features/sidebar/ManagerSidebar";
 import {
   Table,
   TableHeader,
@@ -10,13 +11,11 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-import SuspendConfirmationModal from "./SuspendConfirmationModal";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -26,8 +25,8 @@ import {
   SelectGroup,
   SelectItem,
 } from "@/components/ui/select";
+import * as XLSX from 'xlsx';
 import {
-  ListChecks,
   Search,
   ExternalLink,
   MoreVertical,
@@ -37,6 +36,38 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+
+// TypeScript interfaces
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  location?: string;
+  profilePicture?: string;
+  createdAt?: string;
+  lastLogin?: string;
+  permissions?: string[];
+  passwordChanged?: boolean;
+  isActive?: boolean;
+  userId?: string;
+}
+
+interface Role {
+  _id?: string;
+  id?: string;
+  name: string;
+}
+
+interface Location {
+  _id?: string;
+  id?: string;
+  name: string;
+}
+
+type RoleType = Role | string;
+type LocationType = Location | string;
 
 const UserList: React.FC = () => {
   const [deleteModal, setDeleteModal] = useState<{
@@ -66,32 +97,83 @@ const UserList: React.FC = () => {
   const handleCloseSuspendModal = () =>
     setSuspendModal({ open: false, name: null });
   const handleConfirmSuspend = () => {
-    // Add suspend logic here
-    setSuspendModal({ open: false, name: null });
+    // Find user by name
+    const user = users.find((u) => u.name === suspendModal.name);
+    if (!user) return setSuspendModal({ open: false, name: null });
+    const token = localStorage.getItem("token") || "";
+    fetch(
+      `https://mfon-obong-enterprise.onrender.com/api/users/${user._id}/suspend`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    )
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to suspend user");
+        // Refresh users
+        setSuspendModal({ open: false, name: null });
+        window.location.reload();
+      })
+      .catch(() => {
+        alert("Error suspending user");
+        setSuspendModal({ open: false, name: null });
+      });
   };
 
   const handleEnableClick = (name: string) => {
     setEnableModal({ open: true, name });
   };
+
+  const handleExportAllUsers = () => {
+  const wb = XLSX.utils.book_new(); // Create a new workbook
+  const ws = XLSX.utils.json_to_sheet(users); // Convert users data to a worksheet
+  XLSX.utils.book_append_sheet(wb, ws, "Users"); // Append the worksheet to the workbook
+  XLSX.writeFile(wb, "users_export.csv"); // Export the workbook to a CSV file
+};
+
   const handleCloseEnableModal = () =>
     setEnableModal({ open: false, name: null });
   const handleConfirmEnable = () => {
-    // Add enable logic here
-    setEnableModal({ open: false, name: null });
+    // Find user by name
+    const user = users.find((u) => u.name === enableModal.name);
+    if (!user) return setEnableModal({ open: false, name: null });
+    const token = localStorage.getItem("token") || "";
+    fetch(
+      `https://mfon-obong-enterprise.onrender.com/api/users/${user._id}/enable`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    )
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to enable user");
+        setEnableModal({ open: false, name: null });
+        window.location.reload();
+      })
+      .catch(() => {
+        alert("Error enabling user");
+        setEnableModal({ open: false, name: null });
+      });
   };
-  const [users, setUsers] = useState([]);
-  const defaultRoles = [
+  const [users, setUsers] = useState<User[]>([]);
+  const defaultRoles: Role[] = [
     { name: "Admin" },
     { name: "Staff" },
     { name: "Maintainer" },
   ];
-  const defaultLocations = [
+  const defaultLocations: Location[] = [
     { name: "Main Office" },
     { name: "Warehouse" },
     { name: "Plaza" },
   ];
-  const [roles, setRoles] = useState([]);
-  const [locations, setLocations] = useState([]);
+  const [roles, setRoles] = useState<RoleType[]>([]);
+  const [locations, setLocations] = useState<LocationType[]>([]);
   const [selectedRole, setSelectedRole] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -161,11 +243,17 @@ const UserList: React.FC = () => {
         }
       })
       .catch(() => setLocations(defaultLocations));
-  }, []);
+  });
   const navigate = useNavigate();
+
+  // Determine sidebar highlight
+  // If on activity log or user details, highlight user-management
+  // This assumes the route contains 'activity-log' or 'user-management'
+  // Note: ManagerSidebar now uses useLocation() internally to determine active menu
 
   return (
     <div className="bg-white w-full m-0 p-0">
+      <ManagerSidebar />
       <main className="flex flex-col gap-6 mb-0">
         <div className="flex items-center justify-between px-4 pt-6">
           <DashboardTitle heading="User List" description="" />
@@ -191,13 +279,16 @@ const UserList: React.FC = () => {
                 className="w-64 p-0 rounded-lg shadow-lg border border-[#F0F0F0]"
               >
                 <>
-                  <button className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-t-lg font-medium">
+                  <button className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-t-lg font-medium" onClick= {handleExportAllUsers}>
                     <span className="flex-1 text-left">
                       {">  "} Export All Users
                     </span>
                   </button>
                   <hr className="border-[#F0F0F0]" />
-                  <button className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] font-medium">
+                  <button
+                    className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] font-medium"
+                    onClick={() => navigate("/manager/dashboard/activity-log")}
+                  >
                     <span className="flex-1 text-left">User Audit Log</span>
                     <ExternalLink className="size-4 text-muted-foreground" />
                   </button>
@@ -215,13 +306,13 @@ const UserList: React.FC = () => {
         <div className="flex flex-col lg:flex-row justify-between gap-6 px-4 py-5 font-sans w-full">
           {/* Search Input with Icon - full width on large screens, smaller height */}
           <div className="relative w-full mb-2 lg:mb-0 flex-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground ">
               <Search className="size-5" />
             </span>
             <Input
               type="text"
               placeholder="Search"
-              className="pl-10 pr-2 py-5 rounded-lg border border-[#E0E0E0] w-full text-sm bg-[#F9F9F9] text-[#444] placeholder:text-[#B0B0B0]"
+              className="pl-10 pr-4 py-5 rounded-lg border border-[#E0E0E0] w-full text-sm bg-[#F9F9F9] text-[#444] placeholder:text-[#B0B0B0]"
               style={{ fontFamily: "inherit" }}
             />
           </div>
@@ -240,10 +331,10 @@ const UserList: React.FC = () => {
                     <SelectItem value="all">All Roles</SelectItem>
                     {roles.map((role) => (
                       <SelectItem
-                        key={role.id || role._id || role.name || role}
-                        value={role.name || role}
+                        key={typeof role === 'string' ? role : (role.id || role._id || role.name)}
+                        value={typeof role === 'string' ? role : role.name}
                       >
-                        {role.name || role}
+                        {typeof role === 'string' ? role : role.name}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -266,10 +357,10 @@ const UserList: React.FC = () => {
                     <SelectItem value="all">All Locations</SelectItem>
                     {locations.map((loc) => (
                       <SelectItem
-                        key={loc.id || loc._id || loc.name || loc}
-                        value={loc.name || loc}
+                        key={typeof loc === 'string' ? loc : (loc.id || loc._id || loc.name)}
+                        value={typeof loc === 'string' ? loc : loc.name}
                       >
-                        {loc.name || loc}
+                        {typeof loc === 'string' ? loc : loc.name}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -409,11 +500,12 @@ const UserList: React.FC = () => {
                   if (filtered.length > 0) {
                     return filtered.map((user, idx, arr) => {
                       // ...existing code...
-                      let roleColor = "bg-blue-100 text-blue-700";
+                      // Match role colors to Activity Log
+                      let roleColor = "bg-[#E6F4F1] text-[#2CA89A]"; // Maintainer
                       if (user.role?.toLowerCase() === "staff")
-                        roleColor = "bg-green-100 text-green-700";
+                        roleColor = "bg-[#F5EAEA] text-[#B0B0B0]";
                       if (user.role?.toLowerCase() === "admin")
-                        roleColor = "bg-yellow-100 text-yellow-700";
+                        roleColor = "bg-[#E6F4F1] text-[#2CA89A]";
                       let statusColor = "bg-green-100 text-green-700";
                       let statusText = "Active";
                       if (user.isActive === false) {
