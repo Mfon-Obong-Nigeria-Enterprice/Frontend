@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../ui/Button";
+import { Button } from "../ui/button";
 import { X, MapPin, Phone } from "lucide-react";
 
 type Props = {

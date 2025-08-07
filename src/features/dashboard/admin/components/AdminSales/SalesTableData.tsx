@@ -1,5 +1,3 @@
-/** @format */
-
 // components
 import ClientTransactionModal from "@/features/dashboard/shared/ClientTransactionModal";
 import WalkinTransactionModal from "@/features/dashboard/shared/WalkinTransactionModal";
@@ -42,14 +40,14 @@ const SalesTableData = ({
   setCurrentPage,
 }: {
   currentTransaction: Transaction[];
-  setCurrentPage: () => void;
+  setCurrentPage: (page: number) => void;
 }) => {
   const { open, openModal, selectedTransaction } = useTransactionsStore();
 
   const { fetchSuggestions, onSelect } = useTransactionSearch({
     type: "client",
     pageSize: 5,
-    onPageChange: () => setCurrentPage(),
+    onPageChange: (page: number) => setCurrentPage(page),
   });
 
   const formatCurrency = (value: number) => `₦${value.toLocaleString()}`;

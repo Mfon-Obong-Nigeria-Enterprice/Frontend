@@ -76,6 +76,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             _id: client._id,
             phone: client.phone || "",
             name: client.name,
+            balance: "",
           },
           client: client,
           createdAt: new Date().toISOString(),

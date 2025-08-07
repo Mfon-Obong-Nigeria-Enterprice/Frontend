@@ -1,5 +1,3 @@
-/** @format */
-
 //components
 import DashboardTitle from "../shared/DashboardTitle";
 import SalesAnalytics from "./components/AdminSales/SalesAnalytics";
@@ -24,7 +22,7 @@ import { useMemo } from "react";
 import usePagination from "@/hooks/usePagination";
 
 // ui
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import {
   Pagination,
   PaginationContent,
@@ -162,13 +160,16 @@ const DashboardSales = () => {
     ];
 
     const rows = (mergedTransactions ?? []).map((txn) => ({
-      time: new Date(txn.createdAt).toTimeString(),
-      clientName: txn.clientId?.name || txn.walkInClient?.name,
+      time: new Date(txn.createdAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      clientName: txn.clientId?.name || txn.walkInClient?.name || "N/A",
       items: txn.items
         .map((item) => `${item.quantity}x ${item.productName}`)
         .join(", "),
       amount: txn.total.toLocaleString(),
-      staff: txn.userId.name,
+      staff: txn.userId.name || "N/A",
     }));
 
     // const rows = (mergedTransactions ?? []).map((txn) => [

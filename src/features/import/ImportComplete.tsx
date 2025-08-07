@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGoBack } from "@/hooks/useGoBack";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { useImportStore } from "@/stores/useImportStore";
 import { X, Check } from "lucide-react";
 import { motion } from "framer-motion";

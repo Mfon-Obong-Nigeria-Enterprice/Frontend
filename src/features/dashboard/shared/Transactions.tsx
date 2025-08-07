@@ -195,19 +195,32 @@ const Transactions = () => {
     ];
 
     const rows = (filteredTransactions ?? []).map((t) => [
-      t.invoiceNumber,
+      t.invoiceNumber ?? "N/A",
       format(new Date(t.createdAt), "dd/MM/yyyy"),
-      t.clientName,
-      t.type,
-      t.status,
-      t.total.toLocaleString(),
-
-      t.client?.balance != null && t.client.balance
-        ? t.client.balance.toLocaleString()
-        : t.clientId?.balance != null
-        ? t.clientId.balance.toLocaleString()
-        : "0.00",
+      t.clientName ?? "N/A",
+      t.type ?? "N/A",
+      t.status ?? "N/A",
+      t.total?.toLocaleString() ?? "0.00",
+      (t.client?.balance != null
+        ? t.client.balance
+        : t.clientId?.balance ?? 0
+      ).toLocaleString(),
     ]);
+
+    // const rows = (filteredTransactions ?? []).map((t) => [
+    //   t.invoiceNumber,
+    //   format(new Date(t.createdAt), "dd/MM/yyyy"),
+    //   t.clientName,
+    //   t.type,
+    //   t.status,
+    //   t.total.toLocaleString(),
+
+    //   t.client?.balance != null && t.client.balance
+    //     ? t.client.balance.toLocaleString()
+    //     : t.clientId?.balance != null
+    //     ? t.clientId.balance.toLocaleString()
+    //     : "0.00",
+    // ]);
 
     doc.text("Transaction Export", 14, 16);
     autoTable(doc, {

@@ -9,6 +9,7 @@ import useClientFiltering, {
   type clientBalance,
 } from "@/hooks/useClientFiltering";
 import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,

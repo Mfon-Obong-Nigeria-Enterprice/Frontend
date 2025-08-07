@@ -1,5 +1,3 @@
-/** @format */
-
 import DashboardTitle from "../shared/DashboardTitle";
 import ClientDirectory from "../admin/components/ClientDirectory";
 import { useMemo, useState } from "react";
@@ -8,7 +6,7 @@ import useClientFiltering, {
   type clientBalance,
   type clientStat,
 } from "@/hooks/useClientFiltering";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
 import autoTable from "jspdf-autotable";
 import type { Client, TransactionItem } from "@/types/types";

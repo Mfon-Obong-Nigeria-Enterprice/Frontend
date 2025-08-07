@@ -1,4 +1,4 @@
-import Button from "@/components/MyButton";
+import { Button } from "@/components/ui/button";
 
 type modalProps = {
   setOpenModal: () => void;
@@ -26,13 +26,9 @@ modalProps) => {
       >
         <div className="flex justify-between">
           <h3 className="font-bold text-lg">{categoryName}</h3>
-          <Button
-            text="X"
-            variant="custom"
-            className="w-fit p-0"
-            fullWidth={false}
-            onClick={setOpenModal}
-          />
+          <Button variant="ghost" className="w-fit p-0" onClick={setOpenModal}>
+            X
+          </Button>
         </div>
         <div className="mt-[5dvh]">
           <p className="text-center leading-relaxed text-[var(--cl-text-semidark)]">

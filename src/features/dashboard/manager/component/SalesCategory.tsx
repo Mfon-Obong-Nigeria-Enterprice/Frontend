@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
-import { Cell, Pie, PieChart } from "recharts";
+
+// import { Cell, Pie, PieChart } from "recharts";
 
 interface CategoryData {
   name: string;
-  value: number; 
+  value: number;
 }
 
 interface ChartConfig {
@@ -29,29 +29,28 @@ const chartConfig: ChartConfig = {
 };
 
 const SalesCategory: React.FC<SalesCategoryChartProps> = ({ data }) => {
-
   const getCategoryColor = (categoryName: string, index: number): string => {
     return chartConfig[categoryName]?.color || COLORS[index % COLORS.length];
   };
 
-  const renderCustomTooltip = ({
-    active,
-    payload,
-  }: {
-    active?: boolean;
-    payload?: { value: number | string; name: string }[];
-  }) => {
-    if (active && payload && payload.length > 0) {
-      const { name, value } = payload[0];
-      const parsed = typeof value === "number" ? value : parseFloat(value);
-      return (
-        <div className="bg-white p-2 rounded shadow text-sm text-gray-700">
-          {name}: {parsed}%
-        </div>
-      );
-    }
-    return null;
-  };
+  // const renderCustomTooltip = ({
+  //   active,
+  //   payload,
+  // }: {
+  //   active?: boolean;
+  //   payload?: { value: number | string; name: string }[];
+  // }) => {
+  //   if (active && payload && payload.length > 0) {
+  //     const { name, value } = payload[0];
+  //     const parsed = typeof value === "number" ? value : parseFloat(value);
+  //     return (
+  //       <div className="bg-white p-2 rounded shadow text-sm text-gray-700">
+  //         {name}: {parsed}%
+  //       </div>
+  //     );
+  //   }
+  //   return null;
+  // };
 
   return (
     <div className="mt-4 lg:mt-0">
@@ -62,8 +61,7 @@ const SalesCategory: React.FC<SalesCategoryChartProps> = ({ data }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-         
-          <ChartContainer config={chartConfig} className="h-49.5 block md:hidden">
+          {/* <ChartContainer config={chartConfig} className="h-49.5 block md:hidden">
             <PieChart>
               <Pie
                 data={data}
@@ -83,10 +81,9 @@ const SalesCategory: React.FC<SalesCategoryChartProps> = ({ data }) => {
               </Pie>
               <ChartTooltip content={renderCustomTooltip} />
             </PieChart>
-          </ChartContainer>
+          </ChartContainer> */}
 
-         
-          <ChartContainer config={chartConfig} className="h-49.5 hidden md:block">
+          {/* <ChartContainer config={chartConfig} className="h-49.5 hidden md:block">
             <PieChart>
               <Pie
                 data={data}
@@ -106,16 +103,18 @@ const SalesCategory: React.FC<SalesCategoryChartProps> = ({ data }) => {
               </Pie>
               <ChartTooltip content={renderCustomTooltip} />
             </PieChart>
-          </ChartContainer>
+          </ChartContainer> */}
 
-          
           <div className="mt-4 space-y-2 absolute right-1 bottom-0.5 flex flex-wrap sm:block">
             {data.map((category, index) => {
               const color = getCategoryColor(category.name, index);
               const label = chartConfig[category.name]?.label || category.name;
 
               return (
-                <div key={category.name} className="flex items-center bg-transparent p-1">
+                <div
+                  key={category.name}
+                  className="flex items-center bg-transparent p-1"
+                >
                   <div className="flex items-center pr-1">
                     <div
                       className="mr-2 h-3 w-3 rounded-full"

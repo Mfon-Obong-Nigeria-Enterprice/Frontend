@@ -4,7 +4,7 @@ import Modal from "@/components/Modal";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { ArrowRight, MapPin, Phone, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { getDaysSince } from "@/utils/helpersfunction";
 import { formatCurrency } from "@/utils/styles";
 
@@ -268,14 +268,17 @@ ${selectedTransaction.discount.toLocaleString()}`
             {/* <Button className="bg-[#FFC761] hover:bg-[#FFE7A4] text-[#444444]">
               Send Payment Reminder
             </Button> */}
-            <Button
-              onClick={() =>
-                navigate(`/clients/${selectedTransaction?.clientId._id}`)
-              }
-              className="bg-white text-[#444444] border border-[#7D7D7D]"
-            >
-              View Full Details
-            </Button>
+            {selectedTransaction?.clientId &&
+              selectedTransaction?.clientId?._id && (
+                <Button
+                  onClick={() =>
+                    navigate(`/clients/${selectedTransaction.clientId?._id}`)
+                  }
+                  className="bg-white text-[#444444] border border-[#7D7D7D]"
+                >
+                  View Full Details
+                </Button>
+              )}
           </div>
         </div>
       )}

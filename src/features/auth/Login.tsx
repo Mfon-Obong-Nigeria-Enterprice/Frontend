@@ -146,7 +146,11 @@ const Login = () => {
           </p>
 
           <div className="mt-10">
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full h-12"
+            >
               {Object.keys(formErrors).length > 0
                 ? "Retry"
                 : isSubmitting

@@ -11,7 +11,7 @@ import {
   DialogOverlay,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { useClientMutations } from "@/hooks/useClientMutations";
 import { isAxiosError, type AxiosError } from "axios";
 

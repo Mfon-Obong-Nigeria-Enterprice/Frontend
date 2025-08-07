@@ -9,6 +9,10 @@ export const useTransactionSearch = ({
   type = "client", // "client" or "invoice"
   pageSize = 10, // default page size
   onPageChange, // function to move to new page
+}: {
+  type?: "client" | "invoice";
+  pageSize?: number;
+  onPageChange: (page: number) => void;
 }) => {
   const { transactions } = useTransactionsStore();
 
@@ -34,7 +38,7 @@ export const useTransactionSearch = ({
     }));
   };
 
-  const onSelect = (selected) => {
+  const onSelect = (selected: { label: string }) => {
     const match = (transactions ?? []).find((t) => {
       const value =
         type === "client"
