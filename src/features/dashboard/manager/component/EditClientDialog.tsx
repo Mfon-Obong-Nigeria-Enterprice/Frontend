@@ -94,11 +94,30 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
     }
 
     try {
-      const clientData = {
+      //   const clientData = {
+      //     id: client._id,
+      //     name: formData.name.trim(),
+      //     phone: formData.phone.trim(),
+      //     description: formData.description.trim(),
+      //     balance: Number(formData.balance),
+      //     address: formData.address.trim(),
+      //   };
+      await updateMutate.mutateAsync({
         id: client._id,
-        data: formData,
-      };
-      await updateMutate.mutateAsync(clientData);
+        data: {
+          name: formData.name.trim(),
+          phone: formData.phone.trim(),
+          description: formData.description.trim(),
+          balance: Number(formData.balance),
+          address: formData.address.trim(),
+          _id: "",
+          transactions: [],
+          isActive: false,
+          isRegistered: false,
+          createdAt: "",
+          updatedAt: "",
+        },
+      });
       onEditSuccess(); // Call the success callback if provided
       toast.success("Client updated successfully");
       onOpenChange(false);
