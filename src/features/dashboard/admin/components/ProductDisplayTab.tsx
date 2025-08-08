@@ -5,7 +5,8 @@
 import { useState, useEffect } from "react"; // Added useEffect
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
+// import { toast } from "sonner";
+import { toast } from "react-toastify";
 import { Pencil, Trash2, MoveUp, MoveDown } from "lucide-react";
 import { useInventoryStore } from "@/stores/useInventoryStore";
 import { updateProduct } from "@/services/productService";
