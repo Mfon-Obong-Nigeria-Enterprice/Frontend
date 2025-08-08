@@ -1,3 +1,5 @@
+/** @format */
+
 import api from "./baseApi";
 import { type User } from "@/types/types";
 
@@ -14,7 +16,7 @@ export const login = async (
     console.error("Login response missing token or user", response.data);
     throw new Error("Invalid login response");
   }
-
+  localStorage.setItem("token", accessToken);
   return { accessToken, user };
 };
 

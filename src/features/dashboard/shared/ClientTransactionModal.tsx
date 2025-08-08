@@ -1,3 +1,5 @@
+/** @format */
+
 import Modal from "@/components/Modal";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { ArrowRight, MapPin, Phone, X } from "lucide-react";

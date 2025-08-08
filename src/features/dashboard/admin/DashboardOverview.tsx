@@ -1,3 +1,5 @@
+/** @format */
+
 import { Link } from "react-router-dom";
 import DashboardTitle from "../shared/DashboardTitle";
 import Stats from "../shared/Stats";
