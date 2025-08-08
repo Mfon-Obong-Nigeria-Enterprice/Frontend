@@ -1,3 +1,5 @@
+/** @format */
+
 // @/components/inventory/components/ProductDisplayTab.tsx
 
 import { useState, useEffect } from "react"; // Added useEffect
