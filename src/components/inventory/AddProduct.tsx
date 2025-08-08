@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { type AxiosError } from "axios";
-import { toast } from "sonner";
+// import { toast } from "sonner";
+import { toast } from "react-toastify";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useInventoryStore } from "@/stores/useInventoryStore";
