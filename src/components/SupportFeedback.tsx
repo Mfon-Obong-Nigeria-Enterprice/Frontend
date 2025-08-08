@@ -1,3 +1,5 @@
+/** @format */
+
 import { GoCheck } from "react-icons/go";
 import { Button } from "./ui/button";
 
