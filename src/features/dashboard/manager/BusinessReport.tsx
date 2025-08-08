@@ -1,5 +1,7 @@
 import React from "react";
-import BusinessReport1 from "./component/BusinessReport1";
+import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
+import Stats from "../shared/Stats";
+import type { StatCard } from "@/types/stats";
 import TotalRevenueTrends from "./component/TotalRevenueTrends";
 import SalesAnalytic from "./component/SalesAnalytic";
 
@@ -10,7 +12,26 @@ interface Product {
   category: string;
 }
 
-
+const stats: StatCard[] = [
+  {
+    heading: "Total Sales (This week)",
+    salesValue: "8",
+    statValue: "3% more than last week",
+    color: "blue",
+  },
+  {
+    heading: "Total Sales (This month)",
+    salesValue: "₦ 2,235,600",
+    statValue: "12% more than last month",
+    color: "green",
+  },
+  {
+    heading: "Total Transaction logged",
+    salesValue: "42",
+    statValue: "5% more than last month",
+    color: "orange",
+  },
+];
 
 const topProducts: Product[] = [
   {
@@ -33,17 +54,18 @@ const topProducts: Product[] = [
   },
 ];
 
-
-
 const BusinessReport: React.FC = () => {
   return (
-    <div>
-      <BusinessReport1 />
-      <TotalRevenueTrends />
-      <SalesAnalytic 
-        topProduct={topProducts}
+    <main className="flex flex-col gap-4 mb-7">
+      <DashboardTitle
+        heading="Business Report"
+        description="Here’s is a breakdown of your business performance"
       />
-    </div>
+      <Stats data={stats} />
+
+      <TotalRevenueTrends />
+      <SalesAnalytic topProduct={topProducts} />
+    </main>
   );
 };
 

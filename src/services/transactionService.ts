@@ -27,8 +27,6 @@ export const getAllTransactions = async (): Promise<Transaction[]> => {
   }
 };
 
-//
-//
 export const createTransaction = async (
   clientId: string,
   transaction: CreateTransactionPayload
@@ -67,4 +65,25 @@ export const createTransaction = async (
     );
     throw error;
   }
+};
+
+export const getRevenue = async () => {
+  const response = api.get("/transactions/revenue/total");
+  return response;
+};
+
+export const getDailyRevenue = async () => {
+  const response = await api.get("/transactions/revenue/daily");
+  return response.data.breakdown;
+};
+
+export const getMonthlyRevenue = async () => {
+  const response = await api.get("/transactions/revenue/monthly");
+
+  return response.data.breakdown;
+};
+
+export const getYearlyRevenue = async () => {
+  const response = await api.get("/transactions/revenue/yearly");
+  return response.data.breakdown;
 };
