@@ -37,34 +37,6 @@ import {
 // icons
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const todaysMetrics = {
-  totalSales: 475200,
-  transactionCount: 28,
-  activeClients: 42,
-  averageTransaction: 16971,
-};
-
-const topProducts = [
-  {
-    prodName: "cement",
-    soldUnit: 320,
-    revenue: 960000,
-    category: "construction",
-  },
-  {
-    prodName: "Rod",
-    soldUnit: 190,
-    revenue: 285000,
-    category: "Reinforcement",
-  },
-  {
-    prodName: "Tiles",
-    soldUnit: 100,
-    revenue: 280000,
-    category: "Finishing",
-  },
-];
-
 const DashboardSales = () => {
   const { transactions } = useTransactionsStore();
   const { getClientById, getActiveClients } = useClientStore();
@@ -175,14 +147,6 @@ const DashboardSales = () => {
       staff: txn.userId.name || "N/A",
     }));
 
-    // const rows = (mergedTransactions ?? []).map((txn) => [
-    //   new Date(txn.createdAt).toTimeString(),
-    //   txn.clientId?.name || txn.walkInClient?.name,
-    //   txn.items,
-    //   txn.total.toLocaleString(),
-    //   txn.userId.name,
-    // ]);
-
     doc.text("Sales Export", 14, 16);
     autoTable(doc, {
       startY: 22,
@@ -217,7 +181,7 @@ const DashboardSales = () => {
         <Stats data={stats} />
 
         <div className="mt-10">
-          <SalesAnalytics metrics={todaysMetrics} topProduct={topProducts} />
+          <SalesAnalytics />
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl">

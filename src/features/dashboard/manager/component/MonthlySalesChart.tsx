@@ -1,7 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import SalesPerformanceChart from "./SalesPerformanceChart"; // your chart component
 
-export default function MonthlySalesChart({ selectedMonth }) {
+export default function MonthlySalesChart({
+  selectedMonth,
+}: {
+  selectedMonth: string;
+}) {
   // Fetch monthly revenue
   const { data, isLoading, isError } = useQuery({
     queryKey: ["monthly-revenue", selectedMonth],
@@ -14,7 +18,7 @@ export default function MonthlySalesChart({ selectedMonth }) {
 
   // Transform breakdown → chart format
   const chartData =
-    data?.breakdown?.map((item) => ({
+    data?.breakdown?.map((item: { date: string; total: number }) => ({
       day: new Date(item.date).getDate(), // 1..31
       sales: item.total,
     })) || [];

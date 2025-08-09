@@ -1,38 +1,14 @@
 import useTransactionWithCategories from "@/hooks/useTransactionWithCategories";
-// import { useTransactionsStore } from "@/stores/useTransactionStore";
-// import { getTopSellingProducts } from "@/utils/transactions";
+import { isCategoryObject } from "@/utils/helpers";
 
-type SalesMetrics = {
-  totalSales: number;
-  transactionCount: number;
-  activeClients: number;
-  averageTransaction: number;
-};
-
-type TopProduct = {
-  prodName: string;
-  soldUnit: number;
-  revenue: number;
-  category: string;
-};
-
-interface SalesAnalyticsProps {
-  metrics: SalesMetrics;
-  topProduct: TopProduct[];
-}
-
-const TopSellingProducts: React.FC<SalesAnalyticsProps> = () => {
-  // const { transactions } = useTransactionsStore();
+const TopSellingProducts = () => {
   const allItems = useTransactionWithCategories();
-  // const topProducts = getTopSellingProducts(transactions || [], 5);
   const lastFive = allItems
     .sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
     .slice(0, 5);
-
-  console.log(allItems);
 
   return (
     <div className="bg-white p-7 border border-[#d9d9d9] rounded-md">
@@ -74,7 +50,9 @@ const TopSellingProducts: React.FC<SalesAnalyticsProps> = () => {
                   ₦{(product.subtotal ?? 0).toLocaleString()}
                 </td>
                 <td className="text-xs md:text-sm text-[#333333] font-normal p-2 text-center">
-                  {product.category.name}
+                  {isCategoryObject(product.category)
+                    ? product.category.name
+                    : product.category}
                 </td>
               </tr>
             ))

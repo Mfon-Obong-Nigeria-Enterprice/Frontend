@@ -45,14 +45,14 @@ export default function SalesByCategoryChart() {
   }));
 
   return (
-    <PieChart width={300} height={200}>
+    <PieChart width={450} height={200}>
       <Pie
         data={chartData}
         dataKey="value"
         nameKey="name"
         cx="50%"
         cy="50%"
-        outerRadius={100}
+        outerRadius={70}
         label={({ name, payload }) =>
           `${name} (${payload.percent.toFixed(0)}%)`
         }
@@ -69,20 +69,27 @@ export default function SalesByCategoryChart() {
         align="right"
         content={({ payload }) => (
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-            {payload?.map((entry, index) => (
-              <li key={`item-${index}`} style={{ marginBottom: 8 }}>
-                <span
-                  style={{
-                    display: "inline-block",
-                    width: 10,
-                    height: 10,
-                    backgroundColor: entry.color,
-                    marginRight: 8,
-                  }}
-                />
-                {entry.value} ({entry.payload?.percent?.toFixed(0) ?? 0}%)
-              </li>
-            ))}
+            {payload?.map((entry, index) => {
+              const payloadWithPercent = entry.payload as {
+                percent?: number;
+                value: string;
+              };
+              return (
+                <li key={`item-${index}`} style={{ marginBottom: 8 }}>
+                  <span
+                    style={{
+                      display: "inline-block",
+                      width: 10,
+                      height: 10,
+                      backgroundColor: entry.color,
+                      marginRight: 8,
+                    }}
+                  />
+                  {entry.value} ({payloadWithPercent?.percent?.toFixed(0) ?? 0}
+                  %)
+                </li>
+              );
+            })}
           </ul>
         )}
       />
