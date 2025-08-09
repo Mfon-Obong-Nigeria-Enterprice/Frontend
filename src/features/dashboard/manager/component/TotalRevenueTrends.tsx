@@ -1,5 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getRevenue } from "@/services/transactionService";
+import { mapRevenueToChartData } from "@/utils/revenueMapper";
+import type { Period } from "@/types/revenue";
 import {
   LineChart,
   Line,
@@ -10,28 +13,8 @@ import {
   ResponsiveContainer,
   LabelList,
 } from "recharts";
-import {
-  getDailyRevenue,
-  getYearlyRevenue,
-  getMonthlyRevenue,
-} from "@/services/transactionService";
 
 import type { DotProps } from "recharts";
-
-// API data shape
-interface RevenueData {
-  date: string;
-  year?: string;
-  revenue: number;
-  transactions: number;
-  amountPaid: number;
-}
-
-// Chart data shape after processing
-interface ChartDataPoint {
-  name: string;
-  revenue: number;
-}
 
 type CustomTooltipProps = {
   active?: boolean;
@@ -42,16 +25,6 @@ type CustomTooltipProps = {
     };
   }[];
   label?: string;
-};
-
-// Periods
-type Period = "daily" | "monthly" | "yearly";
-
-// Fetch revenue based on selected period
-const fetchRevenue = (period: Period): Promise<RevenueData[]> => {
-  if (period === "daily") return getDailyRevenue();
-  if (period === "monthly") return getMonthlyRevenue();
-  return getYearlyRevenue();
 };
 
 // Custom Tooltip
@@ -83,19 +56,12 @@ const formatYAxis = (value: number) => `₦${value / 1000}k`;
 export default function RevenueTrendsChart() {
   const [selected, setSelected] = useState<Period>("daily");
 
-  const fetchRevenueMapped = async (
-    period: Period
-  ): Promise<ChartDataPoint[]> => {
-    const raw = await fetchRevenue(period); // returns RevenueData[]
-    return raw.map((item) => ({
-      name: item.date || item.year || "Unknown",
-      revenue: item.revenue || item.amountPaid || 0,
-    }));
-  };
-
-  const { data, isLoading, error } = useQuery<ChartDataPoint[], Error>({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["revenue", selected],
-    queryFn: () => fetchRevenueMapped(selected),
+    queryFn: async () => {
+      const raw = await getRevenue(selected);
+      return mapRevenueToChartData(raw, selected);
+    },
   });
 
   const hasData = data && data.length > 0;

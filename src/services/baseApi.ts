@@ -1,10 +1,10 @@
+// services/baseApi.ts
 import axios, { type AxiosInstance } from "axios";
 import { useAuthStore } from "@/stores/useAuthStore";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+import { toast } from "react-toastify";
 
 const api: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: import.meta.env.VITE_API_URL,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -21,15 +21,23 @@ api.interceptors.request.use(
 );
 
 // Handle 401 errors (unauthorized)
-// api.interceptors.response.use(
-//   (response) => response,
-//   async (error) => {
-//     if (error.response?.status === 401) {
-//       console.warn("Unauthorized. Logging out...");
-//       await useAuthStore.getState().logout();
-//     }
-//     return Promise.reject(error);
-//   }
-// );
+export const setupInterceptors = (navigate?: (path: string) => void) => {
+  api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      if (error.response?.status === 401) {
+        toast.error("Unauthorized. Logging out...");
+        await useAuthStore.getState().logout();
+
+        if (navigate) {
+          navigate("/"); // SPA navigation
+        } else {
+          window.location.href = "/"; // Fallback
+        }
+      }
+      return Promise.reject(error);
+    }
+  );
+};
 
 export default api;

@@ -1,6 +1,7 @@
 import localforage from "localforage";
 import api from "./baseApi";
 import type { Transaction } from "@/types/transactions";
+import type { Period } from "@/types/revenue";
 import { AxiosError } from "axios";
 import type {
   // TransactionItem,
@@ -67,23 +68,7 @@ export const createTransaction = async (
   }
 };
 
-export const getRevenue = async () => {
-  const response = api.get("/transactions/revenue/total");
-  return response;
-};
-
-export const getDailyRevenue = async () => {
-  const response = await api.get("/transactions/revenue/daily");
-  return response.data.breakdown;
-};
-
-export const getMonthlyRevenue = async () => {
-  const response = await api.get("/transactions/revenue/monthly");
-
-  return response.data.breakdown;
-};
-
-export const getYearlyRevenue = async () => {
-  const response = await api.get("/transactions/revenue/yearly");
-  return response.data.breakdown;
+export const getRevenue = async (period: Period) => {
+  const { data } = await api.get(`/transactions/revenue/${period}`);
+  return data;
 };
