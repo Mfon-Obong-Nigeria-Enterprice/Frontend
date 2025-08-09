@@ -1,7 +1,4 @@
 /** @format */
-
-// @/components/inventory/components/ProductDisplayTab.tsx
-
 import { useState, useEffect } from "react"; // Added useEffect
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";

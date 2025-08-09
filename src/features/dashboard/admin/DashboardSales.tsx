@@ -2,7 +2,7 @@
 
 //components
 import DashboardTitle from "../shared/DashboardTitle";
-import SalesAnalytics from "./components/AdminSales/SalesAnalytics";
+import SalesAnalytics from "../shared/TopSellingProducts";
 import SalesTableData from "./components/AdminSales/SalesTableData";
 import Stats from "../shared/Stats";
 
