@@ -1,14 +1,93 @@
+// import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
+// import Stats1 from "./Stats1";
+// import { type StatCard } from "./Stats1";
+// import { useTransactionsStore } from "@/stores/useTransactionStore";
+// import { ArrowDown, ArrowUp } from "lucide-react";
+
+// const DashboardOverview1: React.FC = () => {
+//   const { getTodaysSales, getSalesPercentageChange } = useTransactionsStore();
+
+//   const todaysSales = getTodaysSales();
+//   const { percentage, direction } = getSalesPercentageChange();
+
+//   const salesChange =
+//     direction === "increase"
+//       ? `${(<ArrowUp />)} +${percentage}%`
+//       : `${(<ArrowDown />)}${Math.abs(percentage)}%`;
+
+//   const stats: StatCard[] = [
+//     {
+//       heading: "Total Sales (Today)",
+//       salesValue: `₦${todaysSales.toLocaleString()}`,
+//       statValue: `${salesChange} from yesterday`,
+//       color: "green",
+//     },
+//     {
+//       heading: "Monthly Revenue",
+//       salesValue: "₦ 446,850",
+//       statValue: "8% from last month",
+//       color: "green",
+//     },
+//     {
+//       heading: "Outstanding balances",
+//       salesValue: "₦ 1,355,800",
+//       statValue: "5% Clients with overdue balances",
+//       color: "orange",
+//     },
+//   ];
+//   return (
+//     <div className="">
+//       <main className="flex flex-col gap-4 mb-7">
+//         <DashboardTitle
+//           heading="Manager Dashboard"
+//           description="welcome back! Here’s an overview of your business"
+//         />
+//         <Stats1 data={stats} />
+//       </main>
+//     </div>
+//   );
+// };
+
+// export default DashboardOverview1;
+
 import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
 import Stats1 from "./Stats1";
 import { type StatCard } from "./Stats1";
+import { useTransactionsStore } from "@/stores/useTransactionStore";
+import { useClientStore } from "@/stores/useClientStore";
+import { useClientStats } from "@/hooks/useClientStats";
 
 const DashboardOverview1: React.FC = () => {
+  const { getTodaysSales, getSalesPercentageChange } = useTransactionsStore();
+  const { growthPercent } = useClientStats();
+  const { getOutStandingBalanceData } = useClientStore();
+  const todaysSales = getTodaysSales();
+  const outstandingBalance = getOutStandingBalanceData();
+  const { percentage, direction } = getSalesPercentageChange();
+
+  // Create the sales change text (assuming StatVslue expects string)
+  const getSalesChangeText = () => {
+    switch (direction) {
+      case "increase":
+        return `↑ +${percentage}% from yesterday`;
+      case "decrease":
+        return `↓ -${Math.abs(percentage)}% from yesterday`;
+      default:
+        return `0% from yesterday`;
+    }
+  };
+
   const stats: StatCard[] = [
     {
       heading: "Total Sales (Today)",
-      salesValue: "₦ 135,500",
-      statValue: "15% from yesterday",
-      color: "green",
+      salesValue: `₦${todaysSales.toLocaleString()}`,
+      statValue: getSalesChangeText(),
+      color:
+        direction === "increase"
+          ? "green"
+          : direction === "decrease"
+          ? "red"
+          : "blue",
     },
     {
       heading: "Monthly Revenue",
@@ -18,17 +97,18 @@ const DashboardOverview1: React.FC = () => {
     },
     {
       heading: "Outstanding balances",
-      salesValue: "₦ 1,355,800",
-      statValue: "5% Clients with overdue balances",
+      salesValue: `₦${outstandingBalance.totalDebt.toLocaleString()}`,
+      statValue: ` ${growthPercent}% Clients with overdue balances`,
       color: "orange",
     },
   ];
+
   return (
     <div className="">
       <main className="flex flex-col gap-4 mb-7">
         <DashboardTitle
           heading="Manager Dashboard"
-          description="welcome back! Here’s an overview of your business"
+          description="welcome back! Here's an overview of your business"
         />
         <Stats1 data={stats} />
       </main>

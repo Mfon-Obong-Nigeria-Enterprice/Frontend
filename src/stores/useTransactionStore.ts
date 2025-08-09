@@ -11,9 +11,15 @@ type TransactionState = {
   addTransaction: (transactions: Transaction) => void;
   openModal: (transaction: Transaction) => void;
   closeModal: () => void;
+  getTodaysSales: () => number;
+  getYesterdaysSales: () => number;
+  getSalesPercentageChange: () => {
+    percentage: number;
+    direction: "increase" | "decrease" | "no-change";
+  };
 };
 
-export const useTransactionsStore = create<TransactionState>((set) => ({
+export const useTransactionsStore = create<TransactionState>((set, get) => ({
   transactions: [],
   selectedTransaction: null,
   open: false,
@@ -76,4 +82,68 @@ export const useTransactionsStore = create<TransactionState>((set) => ({
   openModal: (transaction) =>
     set({ open: true, selectedTransaction: transaction }),
   closeModal: () => set({ open: false, selectedTransaction: null }),
+
+  getTodaysSales: () => {
+    const { transactions } = get();
+    if (!transactions) return 0;
+
+    const today = new Date().toDateString();
+
+    return transactions
+      .filter((t) => {
+        const transactionDate = new Date(t.createdAt).toDateString();
+        return t.type === "DEPOSIT" && transactionDate === today;
+      })
+      .reduce((total, t) => {
+        // Handle multiple possible amount fields with fallbacks
+        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+        return total + amount;
+      }, 0);
+  },
+
+  getYesterdaysSales: () => {
+    const { transactions } = get();
+    if (!transactions) return 0;
+
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString();
+
+    return transactions
+      .filter((t) => {
+        const transactionDate = new Date(t.createdAt).toDateString();
+        return t.type === "DEPOSIT" && transactionDate === yesterday;
+      })
+      .reduce((total, t) => {
+        // Handle multiple possible amount fields with fallbacks
+        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+        return total + amount;
+      }, 0);
+  },
+
+  // Calculate percentage change in sales
+
+  getSalesPercentageChange: () => {
+    const todaysSales = get().getTodaysSales();
+    const yesterdaysSales = get().getYesterdaysSales();
+    if (yesterdaysSales === 0 && todaysSales === 0) {
+      return { percentage: 0, direction: "no-change" };
+    }
+    if (yesterdaysSales === 0 && todaysSales > 0) {
+      return { percentage: 100, direction: "increase" as const };
+    }
+    if (yesterdaysSales > 0 && todaysSales === 0) {
+      return { percentage: -100, direction: "decrease" as const };
+    }
+
+    const percentageChange =
+      ((todaysSales - yesterdaysSales) / yesterdaysSales) * 100;
+    return {
+      percentage: Math.abs(percentageChange * 100) / 100,
+      direction:
+        percentageChange > 0
+          ? "increase"
+          : percentageChange < 0
+          ? "decrease"
+          : "no-change",
+    };
+  },
 }));

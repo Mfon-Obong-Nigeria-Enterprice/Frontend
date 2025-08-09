@@ -1,11 +1,9 @@
-import { BsArrowUp } from "react-icons/bs";
-
 // type statDataProp = { heading: string; salesValue: string; statValue: string };
 
 export type StatCard = {
   heading: string;
   salesValue: string;
-  statValue: string;
+  statValue: string | number;
   color?: "green" | "orange" | "red" | "blue";
   hideArrow?: boolean;
 };
@@ -13,7 +11,6 @@ export type StatCard = {
 type StatsProps = {
   data: StatCard[];
 };
-
 
 const Stats1 = ({ data }: StatsProps) => {
   return (
@@ -37,10 +34,10 @@ const Stats1 = ({ data }: StatsProps) => {
                 ? "text-[#F95353]"
                 : stat.color === "blue"
                 ? "text-[#3D80FF]"
-                : "text-[#1AD410]" 
+                : "text-[#1AD410]"
             } `}
-            >
-            {!stat.hideArrow && <BsArrowUp />}
+          >
+            {/* {!stat.hideArrow && <BsArrowUp />} */}
             <span className="font-Arial leading-tight">{stat.statValue}</span>
           </p>
         </div>
