@@ -1,3 +1,5 @@
+/** @format */
+
 //components
 import DashboardTitle from "../shared/DashboardTitle";
 import SalesAnalytics from "./components/AdminSales/SalesAnalytics";
@@ -5,10 +7,11 @@ import SalesTableData from "./components/AdminSales/SalesTableData";
 import Stats from "../shared/Stats";
 
 // libs
-import { toast } from "sonner";
+// import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { toast } from "react-toastify";
 
 // stores
 import { useTransactionsStore } from "@/stores/useTransactionStore";

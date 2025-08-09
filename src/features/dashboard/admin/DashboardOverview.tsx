@@ -1,9 +1,11 @@
+/** @format */
+
 import { Link } from "react-router-dom";
 import DashboardTitle from "../shared/DashboardTitle";
 import Stats from "../shared/Stats";
 import SalesOverview from "./components/SalesOverview";
-import OutstandingBalance from "./components/OutstandingBalance";
-import RecentSales from "./components/RecentSales";
+import OutstandingBalance from "../shared/OutstandingBalance";
+import RecentSales from "../shared/RecentSales";
 import { Button } from "@/components/ui/button";
 import { VscRefresh } from "react-icons/vsc";
 import { Plus } from "lucide-react";

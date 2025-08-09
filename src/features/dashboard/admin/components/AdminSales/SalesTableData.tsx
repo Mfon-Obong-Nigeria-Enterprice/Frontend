@@ -1,9 +1,11 @@
+/** @format */
+
 // components
 import ClientTransactionModal from "@/features/dashboard/shared/ClientTransactionModal";
 import WalkinTransactionModal from "@/features/dashboard/shared/WalkinTransactionModal";
 import SearchBar from "@/features/dashboard/shared/SearchBar";
 
-// ui
+// ui@/components/ui/button
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
