@@ -9,6 +9,8 @@ import OutstandingBalance from "@/features/dashboard/maintainer/components/Outst
 import { MdKeyboardArrowRight } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
+
+
 const MaintainerDashboard = () => {
   const navigate = useNavigate();
   const stats: StatCard[] = [
@@ -189,6 +191,7 @@ const MaintainerDashboard = () => {
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-[60fr_40fr] gap-5 mt-5"></div>
+     
       <OutstandingBalance />
     </main>
   );
