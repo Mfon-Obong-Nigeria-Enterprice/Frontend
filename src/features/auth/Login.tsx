@@ -1,3 +1,5 @@
+/** @format */
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -8,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 import MobileError from "./MobileError";
 import SupportFeedback from "../../components/SupportFeedback";
 import { useAuthStore } from "@/stores/useAuthStore";
-import DevRoleSwitcher from "../../components/RoleSwitcher";
+import { toast } from "react-toastify";
 
 type LoginFormInputs = {
   username: string;
@@ -41,7 +43,8 @@ const Login = () => {
       if (!user || !user.role) {
         throw new Error("User info is missing after login");
       }
-
+      toast.success("Login Successful!");
+      // toast.success(`Welcome back, ${user.user || "User"}!`);
       // Normalize the role to handle any case or whitespace issues
       const normalizedRole = user.role?.toString().trim().toUpperCase();
 
@@ -187,11 +190,11 @@ const Login = () => {
       </section>
 
       {/* ✅ Dev Role Switcher (only visible in development) */}
-      {import.meta.env.DEV && (
+      {/** {import.meta.env.DEV && (
         <div className="mt-4">
           <DevRoleSwitcher />
         </div>
-      )}
+      )}**/}
     </main>
   );
 };

@@ -1,3 +1,5 @@
+/** @format */
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 // import {
 //   ChartContainer,
@@ -72,7 +74,7 @@ const SalesCategoryChart: React.FC<SalesCategoryChartProps> = ({ data }) => {
                       style={{ backgroundColor: COLORS[index % COLORS.length] }}
                     />
                     <span className="text-sm font-medium">{category.name}</span>
-                  </div>
+                  </div>  
                   <div>
                     <p className="text-sm">({category.value}%)</p>
                   </div>

@@ -1,3 +1,5 @@
+/** @format */
+
 import React from "react";
 import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
 import { Button } from "@/components/ui/button";

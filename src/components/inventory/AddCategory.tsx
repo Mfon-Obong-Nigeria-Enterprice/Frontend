@@ -1,3 +1,5 @@
+/** @format */
+
 import { useState } from "react";
 import { type AxiosError } from "axios";
 import { useQueryClient } from "@tanstack/react-query";
@@ -9,7 +11,8 @@ import { createCategory } from "@/services/categoryService";
 import TagInput from "../TagInput";
 import InputField from "../InputField";
 import { Button } from "../ui/button";
-import { toast } from "sonner";
+// import { toast } from "sonner";
+import { toast } from "react-toastify";
 import LoadingSpinner from "../LoadingSpinner";
 
 type Props = {

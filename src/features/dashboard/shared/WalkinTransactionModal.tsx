@@ -1,3 +1,5 @@
+/** @format */
+
 import Modal from "@/components/Modal";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { Button } from "@/components/ui/button";

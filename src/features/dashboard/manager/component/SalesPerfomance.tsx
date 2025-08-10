@@ -1,5 +1,3 @@
-// components/TotalRevenueTrends.tsx
-
 import { useState } from "react";
 import {
   LineChart,
@@ -72,7 +70,6 @@ function TotalRevenueTrends() {
         </div>
       </div>
 
-      
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={getData()}>
