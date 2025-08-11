@@ -12,6 +12,7 @@ import { toast } from "sonner";
 // stores
 import { useClientStore } from "@/stores/useClientStore";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
+import { useBranchStore } from "@/stores/useBranchStore";
 
 // types
 import type { StatCard } from "@/types/stats";
@@ -21,9 +22,10 @@ import type { DateRange } from "react-day-picker";
 import usePagination from "@/hooks/usePagination";
 
 // components
+import TransactionsTableMobile from "./mobile/TransactionsTableMobile";
 import Stats from "../shared/Stats";
 import SearchBar from "./SearchBar";
-import TransactionTable from "./TransactionTable";
+import TransactionTable from "./desktop/TransactionTable";
 import DateRangePicker from "@/components/DateRangePicker";
 
 // ui
@@ -51,6 +53,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 const Transactions = () => {
   const { getOutStandingBalanceData, getClientById } = useClientStore();
   const { transactions } = useTransactionsStore();
+  const { branches } = useBranchStore();
   const [clientFilter, setClientFilter] = useState<string | undefined>();
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<
     string | undefined
@@ -93,19 +96,27 @@ const Transactions = () => {
   // Fetch Suggestions based on invoice number
   const mergedTransactions = useMemo(() => {
     return (transactions ?? []).map((transaction) => {
-      // const clientId = transaction.clientId?._id;
+      // get client id
       const clientId =
         typeof transaction.clientId === "string"
           ? transaction.clientId
           : transaction.clientId?._id;
       const client = clientId ? getClientById(clientId) : null;
 
+      // get branch
+      const branchId =
+        typeof transaction.branchId === "string"
+          ? transaction.branchId
+          : transaction.branchId;
+      const branch = branchId ? branches.find((b) => b._id === branchId) : null;
+
       return {
         ...transaction,
         client,
+        branchName: branch?.name ?? "Unknown",
       };
     });
-  }, [transactions, getClientById]);
+  }, [transactions, getClientById, branches]);
 
   const filteredTransactions = useMemo(() => {
     if (!mergedTransactions) return [];
@@ -166,8 +177,8 @@ const Transactions = () => {
       filteredTransactions &&
       filteredTransactions.map((txn) => ({
         "Invoice Number": txn.invoiceNumber,
-        Date: txn.createdAt,
-        Name: txn.clientName,
+        Date: new Date(txn.createdAt).toLocaleDateString("en-NG"),
+        Name: txn.clientName || "Unregistered",
         "Type of Transaction": txn.type,
         Status: txn.status,
         Amount: txn.total,
@@ -206,21 +217,6 @@ const Transactions = () => {
         : t.clientId?.balance ?? 0
       ).toLocaleString(),
     ]);
-
-    // const rows = (filteredTransactions ?? []).map((t) => [
-    //   t.invoiceNumber,
-    //   format(new Date(t.createdAt), "dd/MM/yyyy"),
-    //   t.clientName,
-    //   t.type,
-    //   t.status,
-    //   t.total.toLocaleString(),
-
-    //   t.client?.balance != null && t.client.balance
-    //     ? t.client.balance.toLocaleString()
-    //     : t.clientId?.balance != null
-    //     ? t.clientId.balance.toLocaleString()
-    //     : "0.00",
-    // ]);
 
     doc.text("Transaction Export", 14, 16);
     autoTable(doc, {
@@ -341,13 +337,6 @@ const Transactions = () => {
           value={dateRangeFilter}
           onChange={(range) => setDateRangeFilter(range)}
         />
-        <Button
-          variant="secondary"
-          onClick={() => setDateRangeFilter({ from: undefined, to: undefined })}
-          className="text-sm text-[#3D80FF]"
-        >
-          Clear
-        </Button>
 
         {/* filter by transaction type */}
         <Select
@@ -368,8 +357,14 @@ const Transactions = () => {
       </div>
 
       {/* Transaction table */}
-      <div className="my-16 shadow-lg rounded-xl overflow-hidden">
-        <TransactionTable currentTransaction={currentTransaction} />
+      <div className="my-16 xl:shadow-lg rounded-xl overflow-hidden">
+        <div className="xl:bg-white xl:border">
+          <h5 className="bg-white text-[#1E1E1E] text-xl font-medium py-3 my-4 pl-8 rounded-xl">
+            All Transactions
+          </h5>
+          <TransactionTable currentTransaction={currentTransaction} />
+          <TransactionsTableMobile currentTransaction={currentTransaction} />
+        </div>
         {/* pagination */}
         {currentTransaction &&
           currentTransaction?.length > 0 &&
