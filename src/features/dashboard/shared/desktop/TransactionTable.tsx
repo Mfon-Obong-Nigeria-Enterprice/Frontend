@@ -1,16 +1,29 @@
 // components
-import ClientTransactionModal from "./ClientTransactionModal";
-import WalkinTransactionModal from "./WalkinTransactionModal";
+import ClientTransactionModal from "../ClientTransactionModal";
+import WalkinTransactionModal from "../WalkinTransactionModal";
 
 //utils
 import { balanceClass } from "@/utils/styles";
 import { getTypeStyles } from "@/utils/helpersfunction";
-import { formatCurrency } from "@/utils/styles";
+import { formatCurrency, toSentenceCaseName } from "@/utils/styles";
+
 // types
 import type { Transaction } from "@/types/transactions";
 
 // stores
 import { useTransactionsStore } from "@/stores/useTransactionStore";
+import { useAuthStore } from "@/stores/useAuthStore";
+
+// ui
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+
+//  icons
+import { ChevronDown } from "lucide-react";
 
 const TransactionTable = ({
   currentTransaction,
@@ -18,24 +31,28 @@ const TransactionTable = ({
   currentTransaction: Transaction[];
 }) => {
   const { open, openModal, selectedTransaction } = useTransactionsStore();
+  const { user } = useAuthStore();
 
   return (
-    <div className="bg-white border">
-      <h5 className="text-[#1E1E1E] text-xl font-medium py-6 pl-8">
-        All Transactions
-      </h5>
-      <table className="w-full overflow-x-scroll">
+    <div className="hidden xl:block">
+      <table className=" w-full overflow-x-scroll">
         <thead className="bg-[#F5F5F5] border border-[#d9d9d9]">
           <tr>
             <th className="py-3 text-base text-[#333333] font-normal text-center">
-              Invoice
+              Payment ID
             </th>
             <th className="py-3 text-base text-[#333333] font-normal text-center">
-              Date
+              Date/Time
             </th>
-            <th className="py-3 text-base text-[#333333] font-normal text-center">
-              Clients
-            </th>
+            {user?.role === "SUPER_ADMIN" ? (
+              <th className="py-3 text-base text-[#333333] font-normal text-center">
+                Items
+              </th>
+            ) : (
+              <th className="py-3 text-base text-[#333333] font-normal text-center">
+                Clients
+              </th>
+            )}
             <th className="py-3 text-base text-[#333333] font-normal text-center">
               Type
             </th>
@@ -45,6 +62,11 @@ const TransactionTable = ({
             <th className="py-3 text-base text-[#333333] font-normal text-center">
               Amount
             </th>
+            {user?.role === "SUPER_ADMIN" && (
+              <th className="py-3 text-base text-[#333333] font-normal text-center">
+                Location
+              </th>
+            )}
             <th className="py-3 text-base text-[#333333] font-normal text-center">
               Balance
             </th>
@@ -73,9 +95,51 @@ const TransactionTable = ({
                   </span>
                 </td>
                 <td className=" text-center text-[#444444] text-sm font-normal py-3">
-                  {transaction.clientId?.name ||
-                    transaction.walkInClientName ||
-                    "Not found"}
+                  {user?.role === "SUPER_ADMIN" ? (
+                    <div className="flex items-center justify-center text-[#444444] text-xs font-normal py-3">
+                      {transaction.items.length > 0 && (
+                        <>
+                          <span>
+                            {transaction.items[0].quantity}x{" "}
+                            {transaction.items[0].productName}
+                          </span>
+                          {transaction.items.length > 1 && (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="ml-1"
+                                >
+                                  <ChevronDown className="w-4 h-4" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="text-sm max-w-60">
+                                {transaction.items
+                                  .slice(1)
+                                  .map(
+                                    (item, index) =>
+                                      `${item.quantity}x ${item.productName}${
+                                        index < transaction.items.length - 2
+                                          ? ", "
+                                          : ""
+                                      }`
+                                  )}
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <p>
+                      {toSentenceCaseName(
+                        transaction.clientId?.name ||
+                          transaction.walkInClientName ||
+                          "Not found"
+                      )}
+                    </p>
+                  )}
                 </td>
                 <td className="text-center">
                   {transaction.type && (
@@ -101,7 +165,11 @@ const TransactionTable = ({
                 <td className={balanceClass(transaction.total)}>
                   {formatCurrency(transaction.total ?? 0).toLocaleString()}
                 </td>
-
+                {user?.role === "SUPER_ADMIN" && (
+                  <td className=" text-center text-[#444444] text-sm font-normal py-3">
+                    {transaction.branchName}
+                  </td>
+                )}
                 <td className={balanceClass(transaction.client?.balance)}>
                   {formatCurrency(transaction.client?.balance ?? 0)}
                 </td>
