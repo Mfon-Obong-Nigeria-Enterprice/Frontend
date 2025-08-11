@@ -188,18 +188,53 @@ function Sidebar({
           data-slot="sidebar"
           data-mobile="true"
           className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
-          style={
-            {
-              "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-            } as React.CSSProperties
-          }
+          style={{
+            "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+          } as React.CSSProperties}
           side={side}
+          onOpenAutoFocus={(e) => {
+            // Prevent focus from being stolen from the sheet content
+            e.preventDefault();
+          }}
+          onCloseAutoFocus={(e) => {
+            // Prevent focus from being moved to the trigger when closing
+            e.preventDefault();
+          }}
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Sidebar</SheetTitle>
             <SheetDescription>Displays the mobile sidebar.</SheetDescription>
           </SheetHeader>
-          <div className="flex h-full w-full flex-col">{children}</div>
+          <div
+            onKeyDown={(e) => {
+              // Trap focus inside the sidebar when open
+              if (e.key === "Tab") {
+                const focusableElements =
+                  "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+                const focusableContent = e.currentTarget.querySelectorAll(
+                  focusableElements
+                );
+                const firstFocusableElement =
+                  focusableContent[0] as HTMLElement;
+                const lastFocusableElement =
+                  focusableContent[focusableContent.length - 1] as HTMLElement;
+
+                if (e.shiftKey) {
+                  if (document.activeElement === firstFocusableElement) {
+                    lastFocusableElement.focus();
+                    e.preventDefault();
+                  }
+                } else {
+                  if (document.activeElement === lastFocusableElement) {
+                    firstFocusableElement.focus();
+                    e.preventDefault();
+                  }
+                }
+              }
+            }}
+          >
+            {children}
+          </div>
         </SheetContent>
       </Sheet>
     );

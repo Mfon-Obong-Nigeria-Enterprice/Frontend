@@ -63,20 +63,29 @@ const items = [
   },
 ];
 
-const ManagerSidebar = () => {
+interface ManagerSidebarProps {
+  hideHamburger?: boolean;
+}
+
+const ManagerSidebar = ({ hideHamburger = false }: ManagerSidebarProps) => {
   const { pathname } = useLocation();
   const { logout } = useLogout();
 
   return (
     <Sidebar>
-      <SidebarHeader />
+      {!hideHamburger && <SidebarHeader />}
       <Logo />
       <SidebarContent className="pt-8">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
-                const isActive = pathname.startsWith(item.url);
+                // Check if current path starts with item URL or if it's a user detail/activity log path and this is the User Management item
+                const isActive = 
+                  pathname.startsWith(item.url) ||
+                  (item.title === 'User Management' && 
+                   (pathname.includes('/user-management/') || 
+                    pathname.endsWith('/activity-log')));
 
                 return (
                   <SidebarMenuItem key={item.title} className="">

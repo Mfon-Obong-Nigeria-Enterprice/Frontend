@@ -1,8 +1,33 @@
 /** @format */
 
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+// import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import Header from "@/components/header/Header";
+import ManagerSidebar from "@/features/sidebar/ManagerSidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import * as XLSX from "xlsx";
+import { ArrowLeft } from "lucide-react";
+import {
+  ExternalLink,
+  Users,
+  MapPin,
+  CalendarDays,
+  Zap,
+  Search,
+  ChevronDown,
+} from "lucide-react";
+// import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 // TypeScript interfaces
 interface User {
@@ -20,68 +45,59 @@ interface User {
   isActive?: boolean;
   userId?: string;
 }
-import Header from "@/components/header/Header";
-import ManagerSidebar from "@/features/sidebar/ManagerSidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import * as XLSX from "xlsx"; // Import XLSX for exporting
-import {
-  ExternalLink,
-  Users,
-  MapPin,
-  CalendarDays,
-  Zap,
-  Search,
-  ChevronDown,
-} from "lucide-react";
 
 const ActivityLogPage = () => {
-  const [logs, setLogs] = useState<User[]>([]);
   const [roleFilter, setRoleFilter] = useState("All Roles");
   const [locationFilter, setLocationFilter] = useState("All Locations");
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [locationMenuOpen, setLocationMenuOpen] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+  const [dateMenuOpen, setDateMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [sidebarVisible] = useState(true);
-  const [error, setError] = useState("");
-  const handleExportActivityLog = (activities: any[]) => {
-    if (!activities || activities.length === 0) return; // Ensure activity data is available
-    const wb = XLSX.utils.book_new(); // Create a new workbook
-    const ws = XLSX.utils.json_to_sheet(activities); // Convert activity data to a worksheet
-    XLSX.utils.book_append_sheet(wb, ws, "Activity Log"); // Append the worksheet to the workbook
-    XLSX.writeFile(wb, "activity_log_report.csv"); // Export the workbook to a CSV file
-  };
+    const navigate = useNavigate();
+  // Date range state
+  const [startDate, setStartDate] = useState<string | null>(null);
+  const [endDate, setEndDate] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Fetch logs from the users endpoint
-    fetch("https://mfon-obong-enterprise.onrender.com/api/users", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-        "Content-Type": "application/json",
-      },
-    })
-      .then(async (res) => {
-        const text = await res.text();
-        if (!res.ok) {
-          setError(
-            res.status === 401
-              ? "You are not authorized to view activity logs. Please login."
-              : `Error ${res.status}: ${text}`
-          );
-          setLogs([]);
-          return;
-        }
-        const data = JSON.parse(text);
-        setLogs(Array.isArray(data) ? data : []);
-        setError("");
-      })
-      .catch(() => {
-        setError("Unable to fetch activity logs. Please try again later.");
-        setLogs([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 9;
+
+  // Fetch logs using React Query
+  const { data: logs = [] } = useQuery<User[]>({
+    queryKey: ['activityLogs'],
+    queryFn: async () => {
+      const apiUrl = import.meta.env.VITE_API_BASE_URL;
+      const token = localStorage.getItem("token") || "";
+      
+      const response = await fetch(`${apiUrl}/api/users`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
-  }, []);
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("You are not authorized to view activity logs. Please login.");
+        }
+        throw new Error(`Error ${response.status}: ${await response.text()}`);
+      }
+      
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    },
+    retry: 1,
+  });
+
+  const handleExportActivityLog = (activities: User[]) => {
+    if (!activities || activities.length === 0) return;
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(activities);
+    XLSX.utils.book_append_sheet(wb, ws, "Activity Log");
+    XLSX.writeFile(wb, "activity_log_report.csv");
+  };
 
   // Get unique options from logs
   const roleOptions = [
@@ -118,8 +134,43 @@ const ActivityLogPage = () => {
       )
     )
       return false;
+    // Date range filter (inclusive)
+    if (startDate || endDate) {
+      if (!user.createdAt) return false;
+      const created = new Date(user.createdAt);
+      if (isNaN(created.getTime())) return false;
+      if (startDate) {
+        const s = new Date(startDate);
+        if (created < s) return false;
+      }
+      if (endDate) {
+        const e = new Date(endDate);
+        // include entire end day
+        e.setHours(23, 59, 59, 999);
+        if (created > e) return false;
+      }
+    }
     return true;
   });
+
+  // Pagination calculations (page size is 9)
+  const totalFiltered = filteredLogs.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
+  const start = totalFiltered === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const end = Math.min(currentPage * pageSize, totalFiltered);
+  const paginatedLogs = filteredLogs.slice(start - 1, end);
+
+  // Reset to first page when filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [roleFilter, locationFilter, statusFilter, searchTerm, startDate, endDate]);
+
+  // Clamp current page if it exceeds total pages (e.g., after filters reduce results)
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
 
   return (
     <SidebarProvider>
@@ -138,33 +189,42 @@ const ActivityLogPage = () => {
             <ManagerSidebar />
           </div>
         </div>
-        <main className="flex-1 flex flex-col gap-6 mb-0">
+        <main className="flex-1 min-h-0 flex flex-col gap-6 mb-0 overflow-y-auto">
           <Header userRole="manager" />
-          <div className="w-full bg-white px-8 pt-6 pb-2 border-b border-[#F0F0F0]">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-16 mb-4">
+          <div className="w-full px-0 md:px-8 pt-4 md:pt-6 pb-2 border-b border-[#F0F0F0]">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
               <span className="font-semibold text-[#333]">User management</span>
-              <span className="mx-1">&gt;</span>
-              <span className="font-semibold text-[#333]">
-                System Activity Log
-              </span>
+                <span className="mx-1">&gt;</span>
+                <span className="font-semibold text-[#333]">
+                  System Activity Log
+                </span>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <h1 className="text-2xl font-bold text-[#333]">
                 System Activity Log
               </h1>
-              <Button
-     variant="outline"
-     size="sm"
-     className="flex items-center gap-2 py-5"
-     onClick={() => handleExportActivityLog(logs)} // Call the export function on click
-   >
-     <ExternalLink className="size-4" /> Export User Report
-   </Button>
+              <div className="flex gap-2 mt-2 md:mt-0">
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 py-5 md:py-5 bg-white w-full md:w-auto"
+                  size="sm"
+                  onClick={() => navigate(-1)}
+                >
+                  <ArrowLeft className="size-4" /> Back to User List
+                </Button>
+                <Button
+                variant="outline"
+                size="sm"
+                className="hidden md:inline-flex items-center gap-2 py-3 md:py-5 bg-white"
+                onClick={() => handleExportActivityLog(logs)}
+              >
+                <ExternalLink className="size-4 " /> Export Activity Log
+              </Button></div>
             </div>
           </div>
           {/* Filter & Controls */}
-          <div className="w-full bg-white rounded-xl shadow p-6 border border-[#F0F0F0] mt-6 mb-4 flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="relative w-full md:w-1/3">
+          <div className="w-full bg-white rounded-xl shadow p-3 md:p-6 border border-[#F0F0F0] mt-6 mb-4 flex flex-col lg:flex-row gap-4 items-stretch lg:items-center lg:justify-between">
+            <div className="relative w-full flex-grow min-w-0">
               <span className="absolute left-4 top-1/2 transform -translate-y-1/2 flex items-center justify-center">
                 <Search className="size-5 text-[#B0B0B0]" />
               </span>
@@ -176,138 +236,190 @@ const ActivityLogPage = () => {
                 className="py-3 pl-12 pr-4 border border-[#E0E0E0] rounded-md w-full focus:outline-none focus:ring-2 focus:ring-[#E0E0E0] text-sm"
               />
             </div>
-            <div className="flex gap-2 w-full md:w-auto relative">
+            <div className="flex flex-nowrap gap-2 w-full lg:w-auto lg:flex-nowrap lg:justify-end relative overflow-x-auto overflow-y-visible lg:overflow-visible -mx-0 px-0 lg:-mx-6 lg:px-6 lg:snap-x lg:snap-mandatory">
               {/* Role Filter Dropdown */}
-              <div className="relative">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2 text-[#333] border-[#E0E0E0] bg-white py-5"
-                  onClick={() => setRoleMenuOpen((open) => !open)}
-                  type="button"
-                >
-                  <Users className="size-4 text-[#B0B0B0]" />
-                  {roleFilter}
-                  <ChevronDown className="size-4 text-[#B0B0B0]" />
-                </Button>
-                {roleMenuOpen && (
-                  <div className="absolute left-0 top-full mt-2 w-40 bg-white border border-[#E0E0E0] rounded shadow z-50">
+              <div className="relative snap-start">
+                <DropdownMenu open={roleMenuOpen} onOpenChange={setRoleMenuOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2 text-[#333] border-[#E0E0E0] bg-white py-3 lg:py-5 flex-shrink-0"
+                      type="button"
+                    >
+                      <Users className="size-4 text-[#B0B0B0]" />
+                      {roleFilter}
+                      <ChevronDown className="size-4 text-[#B0B0B0]" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" sideOffset={8} className="z-50 w-40">
                     {roleOptions.map((option) => (
-                      <button
+                      <DropdownMenuItem
                         key={option}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-[#F5F5F5] ${
-                          roleFilter === option
-                            ? "bg-[#F5F5F5] font-semibold"
-                            : ""
-                        }`}
-                        onClick={() => {
+                        className={`text-sm ${roleFilter === option ? "font-semibold" : ""}`}
+                        onSelect={() => {
                           setRoleFilter(option);
                           setRoleMenuOpen(false);
                         }}
                       >
                         {option}
-                      </button>
+                      </DropdownMenuItem>
                     ))}
-                  </div>
-                )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               {/* Location Filter Dropdown */}
               <div className="relative">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2 text-[#333] border-[#E0E0E0] bg-white py-5"
-                  onClick={() => setLocationMenuOpen((open) => !open)}
-                  type="button"
-                >
-                  <MapPin className="size-4 text-[#B0B0B0]" />
-                  {locationFilter}
-                  <ChevronDown className="size-4 text-[#B0B0B0]" />
-                </Button>
-                {locationMenuOpen && (
-                  <div className="absolute left-0 top-full mt-2 w-40 bg-white border border-[#E0E0E0] rounded shadow z-50">
+                <DropdownMenu open={locationMenuOpen} onOpenChange={setLocationMenuOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2 text-[#333] border-[#E0E0E0] bg-white py-3 md:py-5 flex-shrink-0"
+                      type="button"
+                    >
+                      <MapPin className="size-4 text-[#B0B0B0]" />
+                      {locationFilter}
+                      <ChevronDown className="size-4 text-[#B0B0B0]" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" sideOffset={8} className="z-50 w-40 max-h-60 overflow-auto">
                     {locationOptions.length > 1 ? (
                       locationOptions.map((option) => (
-                        <button
+                        <DropdownMenuItem
                           key={option}
-                          className={`w-full text-left px-4 py-2 text-sm hover:bg-[#F5F5F5] ${
-                            locationFilter === option
-                              ? "bg-[#F5F5F5] font-semibold"
-                              : ""
-                          }`}
-                          onClick={() => {
+                          className={`text-sm ${locationFilter === option ? "font-semibold" : ""}`}
+                          onSelect={() => {
                             setLocationFilter(option);
                             setLocationMenuOpen(false);
                           }}
                         >
                           {option}
-                        </button>
+                        </DropdownMenuItem>
                       ))
                     ) : (
-                      <div className="px-4 py-2 text-sm text-[#888]">
-                        No locations found
-                      </div>
+                      <div className="px-4 py-2 text-sm text-[#888]">No locations found</div>
                     )}
-                  </div>
-                )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               {/* Status Filter Dropdown */}
               <div className="relative">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2 text-[#333] border-[#E0E0E0] bg-white py-5"
-                  onClick={() => setStatusMenuOpen((open) => !open)}
-                  type="button"
-                >
-                  <Zap className="size-4 text-[#B0B0B0]" />
-                  {statusFilter}
-                  <ChevronDown className="size-4 text-[#B0B0B0]" />
-                </Button>
-                {statusMenuOpen && (
-                  <div className="absolute left-0 top-full mt-2 w-40 bg-white border border-[#E0E0E0] rounded shadow z-50">
+                <DropdownMenu open={statusMenuOpen} onOpenChange={setStatusMenuOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2 text-[#333] border-[#E0E0E0] bg-white py-3 md:py-5 flex-shrink-0"
+                      type="button"
+                    >
+                      <Zap className="size-4 text-[#B0B0B0]" />
+                      {statusFilter}
+                      <ChevronDown className="size-4 text-[#B0B0B0]" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" sideOffset={8} className="z-50 w-40 max-h-60 overflow-auto">
                     {statusOptions.length > 1 ? (
                       statusOptions.map((option) => (
-                        <button
+                        <DropdownMenuItem
                           key={option}
-                          className={`w-full text-left px-4 py-2 text-sm hover:bg-[#F5F5F5] ${
-                            statusFilter === option
-                              ? "bg-[#F5F5F5] font-semibold"
-                              : ""
-                          }`}
-                          onClick={() => {
+                          className={`text-sm ${statusFilter === option ? "font-semibold" : ""}`}
+                          onSelect={() => {
                             setStatusFilter(option);
                             setStatusMenuOpen(false);
                           }}
                         >
                           {option}
-                        </button>
+                        </DropdownMenuItem>
                       ))
                     ) : (
-                      <div className="px-4 py-2 text-sm text-[#888]">
-                        No statuses found
-                      </div>
+                      <div className="px-4 py-2 text-sm text-[#888]">No statuses found</div>
                     )}
-                  </div>
-                )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-              {/* Date Range filter not implemented, just icon */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2 text-[#333] border-[#E0E0E0] bg-white py-5"
-                type="button"
-              >
-                <CalendarDays className="size-4 text-[#B0B0B0]" /> Date Range{" "}
-                <ChevronDown className="size-4 text-[#B0B0B0]" />
-              </Button>
+              {/* Date Range filter */}
+              <DropdownMenu open={dateMenuOpen} onOpenChange={setDateMenuOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2 text-[#333] border-[#E0E0E0] bg-white py-3 md:py-5 flex-shrink-0"
+                    type="button"
+                  >
+                    <CalendarDays className="size-4 text-[#B0B0B0]" />
+                    {startDate || endDate ? (
+                      <span className="text-xs md:text-sm text-[#555]">
+                        {startDate ? new Date(startDate).toLocaleDateString() : "..."} - {endDate ? new Date(endDate).toLocaleDateString() : "..."}
+                      </span>
+                    ) : (
+                      <>Date Range</>
+                    )}
+                    <ChevronDown className="size-4 text-[#B0B0B0]" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" sideOffset={8} className="z-50 w-64 p-3">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs text-[#666] w-16">From</label>
+                      <input
+                        type="date"
+                        value={startDate ?? ""}
+                        onChange={(e) => setStartDate(e.target.value || null)}
+                        className="flex-1 border border-[#E0E0E0] rounded px-2 py-1 text-sm"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs text-[#666] w-16">To</label>
+                      <input
+                        type="date"
+                        value={endDate ?? ""}
+                        onChange={(e) => setEndDate(e.target.value || null)}
+                        className="flex-1 border border-[#E0E0E0] rounded px-2 py-1 text-sm"
+                      />
+                    </div>
+                    <div className="flex justify-between gap-2 pt-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="px-3 py-1"
+                        onClick={() => {
+                          setStartDate(null);
+                          setEndDate(null);
+                        }}
+                      >
+                        Clear
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="px-3 py-1"
+                        onClick={() => setDateMenuOpen(false)}
+                      >
+                        Close
+                      </Button>
+                    </div>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
+          {/* Mobile Export Button */}
+          <div className="md:hidden px-4 md:px-0">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full flex items-center justify-center gap-2 py-5 md:py-5 bg-white"
+              onClick={() => handleExportActivityLog(logs)}
+            >
+              <ExternalLink className="size-4" /> Export Activity Log
+            </Button>
+          </div>
           {/* Activity Log Table with error handling */}
-          <div className="w-full bg-white rounded-xl shadow p-6 border border-[#F0F0F0]">
-            {error ? (
+          <div className="w-full bg-white rounded-xl shadow p-3 md:p-6 border border-[#F0F0F0]">
+            {false ? (
               <div className="py-8 text-center text-red-500 text-base font-medium">
-                {error}
+                An error occurred
               </div>
             ) : (
               <>
@@ -337,7 +449,7 @@ const ActivityLogPage = () => {
                     </thead>
                     <tbody>
                       {filteredLogs.length > 0 ? (
-                        filteredLogs.map((user, idx) => {
+                        paginatedLogs.map((user, idx) => {
                           // Synthesize log row from user fields
                           // Format timestamp as in image: Month Day, Year \n HH:MM AM/PM
                           let timestamp = "-";
@@ -440,21 +552,25 @@ const ActivityLogPage = () => {
                 {/* Pagination */}
                 <div className="flex items-center justify-between mt-4 text-xs text-[#888]">
                   <span>
-                    Showing 1-{filteredLogs.length} of {logs.length} users
+                    {totalFiltered === 0
+                      ? "Showing 0-0 of 0 users"
+                      : `Showing ${start}-${end} of ${totalFiltered} users`}
                   </span>
                   <div className="flex items-center gap-2">
                     <button
                       className="w-8 h-8 flex items-center justify-center rounded border border-[#E0E0E0] bg-white text-[#B0B0B0] text-base"
-                      disabled
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1 || totalFiltered === 0}
                     >
                       &#60;
                     </button>
-                    <button className="w-8 h-8 flex items-center justify-center rounded border border-[#E0E0E0] bg-[#F5EAEA] text-[#B0B0B0] font-semibold text-base">
-                      1
-                    </button>
+                    <span className="px-2 text-[#333]">
+                      Page {totalFiltered === 0 ? 0 : currentPage} of {totalFiltered === 0 ? 0 : totalPages}
+                    </span>
                     <button
                       className="w-8 h-8 flex items-center justify-center rounded border border-[#E0E0E0] bg-white text-[#B0B0B0] text-base"
-                      disabled={logs.length < 7}
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages || totalFiltered === 0}
                     >
                       &#62;
                     </button>

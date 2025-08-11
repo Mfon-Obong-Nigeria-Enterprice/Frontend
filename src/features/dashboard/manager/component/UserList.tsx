@@ -16,7 +16,10 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { useUsers, useUpdateUserStatus } from "../hooks/useUsers";
 import { useNavigate } from "react-router-dom";
 import {
   Select,
@@ -37,37 +40,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
-// TypeScript interfaces
-interface User {
-  _id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: string;
-  location?: string;
-  profilePicture?: string;
-  createdAt?: string;
-  lastLogin?: string;
-  permissions?: string[];
-  passwordChanged?: boolean;
-  isActive?: boolean;
-  userId?: string;
-}
-
-interface Role {
-  _id?: string;
-  id?: string;
-  name: string;
-}
-
-interface Location {
-  _id?: string;
-  id?: string;
-  name: string;
-}
-
-type RoleType = Role | string;
-type LocationType = Location | string;
+// User type is defined in the API types file
 
 const UserList: React.FC = () => {
   const [deleteModal, setDeleteModal] = useState<{
@@ -94,33 +67,25 @@ const UserList: React.FC = () => {
   const handleSuspendClick = (name: string) => {
     setSuspendModal({ open: true, name });
   };
-  const handleCloseSuspendModal = () =>
+  
+  const handleCloseSuspendModal = () => {
     setSuspendModal({ open: false, name: null });
-  const handleConfirmSuspend = () => {
-    // Find user by name
+  };
+  
+  const handleConfirmSuspend = async () => {
     const user = users.find((u) => u.name === suspendModal.name);
-    if (!user) return setSuspendModal({ open: false, name: null });
-    const token = localStorage.getItem("token") || "";
-    fetch(
-      `https://mfon-obong-enterprise.onrender.com/api/users/${user._id}/suspend`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    )
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to suspend user");
-        // Refresh users
-        setSuspendModal({ open: false, name: null });
-        window.location.reload();
-      })
-      .catch(() => {
-        alert("Error suspending user");
-        setSuspendModal({ open: false, name: null });
-      });
+    if (!user) return handleCloseSuspendModal();
+    
+    try {
+      await suspendUser(user._id);
+      toast.success("User suspended successfully");
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      handleCloseSuspendModal();
+    } catch (error) {
+      console.error("Error suspending user:", error);
+      toast.error("Failed to suspend user");
+      handleCloseSuspendModal();
+    }
   };
 
   const handleEnableClick = (name: string) => {
@@ -128,137 +93,70 @@ const UserList: React.FC = () => {
   };
 
   const handleExportAllUsers = () => {
-  const wb = XLSX.utils.book_new(); // Create a new workbook
-  const ws = XLSX.utils.json_to_sheet(users); // Convert users data to a worksheet
-  XLSX.utils.book_append_sheet(wb, ws, "Users"); // Append the worksheet to the workbook
-  XLSX.writeFile(wb, "users_export.csv"); // Export the workbook to a CSV file
-};
-
-  const handleCloseEnableModal = () =>
-    setEnableModal({ open: false, name: null });
-  const handleConfirmEnable = () => {
-    // Find user by name
-    const user = users.find((u) => u.name === enableModal.name);
-    if (!user) return setEnableModal({ open: false, name: null });
-    const token = localStorage.getItem("token") || "";
-    fetch(
-      `https://mfon-obong-enterprise.onrender.com/api/users/${user._id}/enable`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    )
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to enable user");
-        setEnableModal({ open: false, name: null });
-        window.location.reload();
-      })
-      .catch(() => {
-        alert("Error enabling user");
-        setEnableModal({ open: false, name: null });
-      });
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(users);
+    XLSX.utils.book_append_sheet(wb, ws, "Users");
+    XLSX.writeFile(wb, "users_export.csv");
   };
-  const [users, setUsers] = useState<User[]>([]);
-  const defaultRoles: Role[] = [
+
+  const queryClient = useQueryClient();
+  const { data: users = [] } = useUsers();
+  const { suspendUser, enableUser } = useUpdateUserStatus();
+  
+  const handleCloseEnableModal = () => {
+    setEnableModal({ open: false, name: null });
+  };
+  
+  const handleConfirmEnable = async () => {
+    const user = users.find((u) => u.name === enableModal.name);
+    if (!user) return handleCloseEnableModal();
+    
+    try {
+      await enableUser(user._id);
+      toast.success("User enabled successfully");
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      handleCloseEnableModal();
+    } catch (error) {
+      console.error("Error enabling user:", error);
+      toast.error("Failed to enable user");
+      handleCloseEnableModal();
+    }
+  };
+  
+  const defaultRoles = [
     { name: "Admin" },
+    { name: "Manager" },
+    { name: "Supervisor" },
     { name: "Staff" },
-    { name: "Maintainer" },
-  ];
-  const defaultLocations: Location[] = [
+  ] as const;
+
+  const defaultLocations = [
     { name: "Main Office" },
     { name: "Warehouse" },
     { name: "Plaza" },
-  ];
-  const [roles, setRoles] = useState<RoleType[]>([]);
-  const [locations, setLocations] = useState<LocationType[]>([]);
+  ] as const;
+  
   const [selectedRole, setSelectedRole] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedDateRange, setSelectedDateRange] = useState("all");
-
-  useEffect(() => {
-    const token = localStorage.getItem("token") || "";
-    // Fetch users
-    fetch("https://mfon-obong-enterprise.onrender.com/api/users", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    })
-      .then(async (res) => {
-        const text = await res.text();
-        if (!res.ok) throw new Error(`Error ${res.status}: ${text}`);
-        const data = JSON.parse(text);
-        if (Array.isArray(data)) {
-          setUsers(data);
-        } else if (Array.isArray(data.users)) {
-          setUsers(data.users);
-        } else {
-          setUsers([]);
-        }
-      })
-      .catch(() => setUsers([]));
-
-    // Fetch roles
-    fetch("https://mfon-obong-enterprise.onrender.com/api/roles", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    })
-      .then(async (res) => {
-        const text = await res.text();
-        if (!res.ok) throw new Error(`Error ${res.status}: ${text}`);
-        const data = JSON.parse(text);
-        if (Array.isArray(data) && data.length > 0) {
-          setRoles(data);
-        } else if (Array.isArray(data.roles) && data.roles.length > 0) {
-          setRoles(data.roles);
-        } else {
-          setRoles(defaultRoles);
-        }
-      })
-      .catch(() => setRoles(defaultRoles));
-
-    // Fetch locations
-    fetch("https://mfon-obong-enterprise.onrender.com/api/locations", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    })
-      .then(async (res) => {
-        const text = await res.text();
-        if (!res.ok) throw new Error(`Error ${res.status}: ${text}`);
-        const data = JSON.parse(text);
-        if (Array.isArray(data) && data.length > 0) {
-          setLocations(data);
-        } else if (Array.isArray(data.locations) && data.locations.length > 0) {
-          setLocations(data.locations);
-        } else {
-          setLocations(defaultLocations);
-        }
-      })
-      .catch(() => setLocations(defaultLocations));
-  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 9;
+  
+  const roles = defaultRoles;
+  const locations = defaultLocations;
   const navigate = useNavigate();
 
-  // Determine sidebar highlight
-  // If on activity log or user details, highlight user-management
-  // This assumes the route contains 'activity-log' or 'user-management'
-  // Note: ManagerSidebar now uses useLocation() internally to determine active menu
 
   return (
-    <div className="bg-white w-full m-0 p-0">
-      <ManagerSidebar />
-      <main className="flex flex-col gap-6 mb-0">
-        <div className="flex items-center justify-between px-4 pt-6">
+    <div className="bg-white w-full m-0 p-0 ">
+      <ManagerSidebar hideHamburger={true} />
+      <main className="flex flex-col gap-6 mb-0 rounded-xl">
+        <div className="flex items-center justify-between px-3 md:px-6 pt-6 rounded-lg">
           <DashboardTitle heading="User List" description="" />
           {/* Auto Refresh Toggle */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 rounded-lg">
             <span className="text-sm text-muted-foreground">Auto Refresh</span>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" className="sr-only peer" defaultChecked />
@@ -311,9 +209,11 @@ const UserList: React.FC = () => {
             </span>
             <Input
               type="text"
-              placeholder="Search"
+              placeholder="Search by name, email, role, or ID"
               className="pl-10 pr-4 py-5 rounded-lg border border-[#E0E0E0] w-full text-sm bg-[#F9F9F9] text-[#444] placeholder:text-[#B0B0B0]"
               style={{ fontFamily: "inherit" }}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           {/* Filters row - below search on tablet, beside on desktop */}
@@ -331,7 +231,7 @@ const UserList: React.FC = () => {
                     <SelectItem value="all">All Roles</SelectItem>
                     {roles.map((role) => (
                       <SelectItem
-                        key={typeof role === 'string' ? role : (role.id || role._id || role.name)}
+                        key={typeof role === 'string' ? role : role.name}
                         value={typeof role === 'string' ? role : role.name}
                       >
                         {typeof role === 'string' ? role : role.name}
@@ -357,7 +257,7 @@ const UserList: React.FC = () => {
                     <SelectItem value="all">All Locations</SelectItem>
                     {locations.map((loc) => (
                       <SelectItem
-                        key={typeof loc === 'string' ? loc : (loc.id || loc._id || loc.name)}
+                        key={typeof loc === 'string' ? loc : loc.name}
                         value={typeof loc === 'string' ? loc : loc.name}
                       >
                         {typeof loc === 'string' ? loc : loc.name}
@@ -443,8 +343,29 @@ const UserList: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {(() => {
-                  // Filter users by selected filters
+                  // Filter users by search and selected filters
                   let filtered = Array.isArray(users) ? users : [];
+                  // Reset to page 1 if current page would be out of range after filtering
+                  const totalFiltered = filtered.length;
+                  const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
+                  const safePage = Math.min(Math.max(currentPage, 1), totalPages);
+                  
+                  // Apply search filter
+                  if (searchTerm) {
+                    const searchLower = searchTerm.toLowerCase();
+                    filtered = filtered.filter(
+                      (user) =>
+                        user.name?.toLowerCase().includes(searchLower) ||
+                        user.email?.toLowerCase().includes(searchLower) ||
+                        user.role?.toLowerCase().includes(searchLower) ||
+                        user.location?.toLowerCase().includes(searchLower) ||
+                        user.status?.toLowerCase().includes(searchLower) ||
+                        user.userId?.toLowerCase().includes(searchLower) ||
+                        user._id?.toLowerCase().includes(searchLower)
+                    );
+                  }
+                  
+                  // Apply role filter
                   if (selectedRole !== "all") {
                     filtered = filtered.filter(
                       (u) =>
@@ -497,8 +418,11 @@ const UserList: React.FC = () => {
                       return true;
                     });
                   }
-                  if (filtered.length > 0) {
-                    return filtered.map((user, idx, arr) => {
+                  const startIndex = (safePage - 1) * pageSize;
+                  const endIndex = Math.min(startIndex + pageSize, totalFiltered);
+                  const paginated = filtered.slice(startIndex, endIndex);
+                  if (paginated.length > 0) {
+                    return paginated.map((user, idx, arr) => {
                       // ...existing code...
                       // Match role colors to Activity Log
                       let roleColor = "bg-[#E6F4F1] text-[#2CA89A]"; // Maintainer
@@ -691,7 +615,7 @@ const UserList: React.FC = () => {
         {/* Delete Confirmation Modal (rendered outside main for stacking) */}
         {deleteModal.open && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-xl p-8 w-full max-w-md mx-auto text-center">
+            <div className="bg-white rounded-xl shadow-xl p-6 md:p-8 w-full max-w-md mx-auto text-center">
               <h2 className="text-xl font-bold mb-4 ">Confirm Action</h2>
               <p className="mb-6 text-base text-[#444]">
                 You are about to delete{" "}
@@ -720,7 +644,7 @@ const UserList: React.FC = () => {
         {/* Suspend Confirmation Modal (customized) */}
         {suspendModal.open && suspendModal.name && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-xl p-8 w-full max-w-md mx-auto text-center">
+            <div className="bg-white rounded-xl shadow-xl p-6 md:p-8 w-full max-w-md mx-auto text-center">
               <h2 className="text-xl font-bold mb-4 ">Confirm Action</h2>
               <p className="mb-6 text-base text-[#444]">
                 You are about to suspend{" "}
@@ -752,7 +676,7 @@ const UserList: React.FC = () => {
         {/* Enable Confirmation Modal (customized) */}
         {enableModal.open && enableModal.name && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-xl p-8 w-full max-w-md mx-auto text-center">
+            <div className="bg-white rounded-xl shadow-xl p-6 md:p-8 w-full max-w-md mx-auto text-center">
               <h2 className="text-xl font-bold mb-4 ">Confirm Action</h2>
               <p className="mb-6 text-base text-[#444]">
                 You are about to enable{" "}
@@ -781,38 +705,48 @@ const UserList: React.FC = () => {
           </div>
         )}
         {/* Pagination Bar */}
-        <div className="flex items-center justify-between px-6 py-6 text-sm text-muted-foreground border-t border-[#F0F0F0] bg-white w-full">
-          {/* Calculate actual range */}
+        <div className="flex items-center justify-between px-3 md:px-6 py-4 md:py-6 text-sm text-muted-foreground border-t border-[#F0F0F0] bg-white w-full">
+          {/* Calculate actual range based on filtered users */}
           {(() => {
-            const pageSize = 9;
-            const page = 1; // static for now
-            const total = users.length;
-            const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
-            const end = Math.min(page * pageSize, total);
+            // Reproduce filter length minimally for footer (fallback to users.length if unavailable)
+            const total = Array.isArray(users) ? users.length : 0;
+            const start = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+            const end = Math.min(currentPage * pageSize, total);
             return (
               <span className="font-medium text-[#444]">
                 {`Showing ${start}-${end} of ${total} users`}
               </span>
             );
           })()}
-          <div className="flex items-center gap-3">
-            <button
-              className="w-10 h-10 flex items-center justify-center rounded-lg border border-[#E0E0E0] bg-white text-[#B0B0B0] text-sm font-bold transition hover:bg-[#F5F5F5]"
-              disabled
-              aria-label="Previous page"
-            >
-              &#60;
-            </button>
-            <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-[#E0E0E0] bg-[#F5EAEA] text-[#B0B0B0] text-sm font-bold transition hover:bg-[#F5F5F5]">
-              1
-            </button>
-            <button
-              className="w-10 h-10 flex items-center justify-center rounded-lg border border-[#E0E0E0] bg-white text-[#B0B0B0] text-sm font-bold transition hover:bg-[#F5F5F5]"
-              aria-label="Next page"
-            >
-              &#62;
-            </button>
-          </div>
+          {(() => {
+            const total = Array.isArray(users) ? users.length : 0;
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            const canPrev = currentPage > 1;
+            const canNext = currentPage < totalPages;
+            return (
+              <div className="flex items-center gap-3">
+                <button
+                  className="w-10 h-10 flex items-center justify-center rounded-lg border border-[#E0E0E0] bg-white text-[#B0B0B0] text-sm font-bold transition hover:bg-[#F5F5F5] disabled:opacity-50"
+                  disabled={!canPrev}
+                  aria-label="Previous page"
+                  onClick={() => canPrev && setCurrentPage((p) => Math.max(1, p - 1))}
+                >
+                  &#60;
+                </button>
+                <button className="min-w-10 h-10 px-3 flex items-center justify-center rounded-lg border border-[#E0E0E0] bg-[#F5EAEA] text-[#B0B0B0] text-sm font-bold">
+                  {currentPage}
+                </button>
+                <button
+                  className="w-10 h-10 flex items-center justify-center rounded-lg border border-[#E0E0E0] bg-white text-[#B0B0B0] text-sm font-bold transition hover:bg-[#F5F5F5] disabled:opacity-50"
+                  aria-label="Next page"
+                  disabled={!canNext}
+                  onClick={() => canNext && setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  &#62;
+                </button>
+              </div>
+            );
+          })()}
         </div>
       </main>
     </div>
