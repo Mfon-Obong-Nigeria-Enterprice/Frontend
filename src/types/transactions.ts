@@ -50,6 +50,8 @@ export interface Transaction {
   waybillNumber?: string;
   amount?: number;
   description?: string;
+  branchId?: string;
+  branchName?: string;
   reference?: string;
 }
 

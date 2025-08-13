@@ -117,10 +117,7 @@ const RecentTransactionsMobile = () => {
                 {/* next */}
                 <div className="flex justify-between items-center py-2">
                   {/* location */}
-                  <p>
-                    Location
-                    {/* {transaction.location} */}
-                  </p>
+                  <p>{transaction.branchName}</p>
 
                   {/* balance */}
                   <p>{formatCurrency(transaction.client?.balance ?? 0)}</p>
