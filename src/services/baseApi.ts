@@ -1,4 +1,3 @@
-// services/baseApi.ts
 import axios, { type AxiosInstance } from "axios";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "react-toastify";
@@ -12,8 +11,18 @@ const api: AxiosInstance = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().accessToken;
+    const user = useAuthStore.getState().user;
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // If role is staff, add id
+    if (user?.role === "STAFF" && user.branchId) {
+      config.params = {
+        ...config.params,
+        branchId: user.branchId,
+      };
     }
     return config;
   },
