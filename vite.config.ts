@@ -15,7 +15,7 @@ export default defineConfig({
         target:"https://mfon-obong-enterprise.onrender.com/api",
         changeOrigin:true,
         secure:true,
-      }
+      }}
   },
   plugins: [react(), tailwindcss()],
   resolve: {
