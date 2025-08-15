@@ -1,7 +1,11 @@
-import React from "react";
+import Transactions from "../shared/Transactions";
 
 const StaffSales = () => {
-  return <div></div>;
+  return (
+    <div>
+      <Transactions />
+    </div>
+  );
 };
 
 export default StaffSales;
