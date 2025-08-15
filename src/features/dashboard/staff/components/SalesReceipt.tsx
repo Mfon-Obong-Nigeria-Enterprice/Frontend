@@ -1,6 +1,4 @@
 import React from "react";
-import type { Row } from "../NewSales";
-import type { Client } from "@/types/types";
 import type { Transaction } from "@/types/transactions";
 import { Button } from "@/components/ui/button";
 

@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 // components
 import ClientSearch from "./components/ClientSearch";
 import AddSaleProduct from "./components/AddSaleProduct";
-import ClientDisplayBox from "./components/clientdisplaybox";
+import ClientDisplayBox from "./components/ClientDisplayBox";
 import WalkinClientDetailBox from "./components/WalkinClientDetailBox";
 import SalesReceipt from "./components/SalesReceipt";
 

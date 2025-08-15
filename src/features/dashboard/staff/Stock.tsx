@@ -1,6 +1,6 @@
 /** @format */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useRef, useMemo } from "react";
+import { useRef, useMemo } from "react";
 import { useDebouncedCallback } from "use-debounce";
 
 import DashboardTitle from "../shared/DashboardTitle";
@@ -14,8 +14,6 @@ import type { Product } from "@/types/types";
 
 const Stock = () => {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [stockStatus, setStockStatus] = useState("all");
-  const [priceRange, setPriceRange] = useState("all");
 
   // set the search query from zustand store
 
@@ -61,28 +59,6 @@ const Stock = () => {
     }
   };
 
-  // Filtering logic for stock status
-  function filterByStockStatus(product: Product) {
-    if (stockStatus === "all") return true;
-    if (stockStatus === "high") return product.stock >= product.minStockLevel;
-    if (stockStatus === "low")
-      return product.stock > 0 && product.stock < product.minStockLevel;
-    if (stockStatus === "out") return product.stock === 0;
-    return true;
-  }
-
-  // Filtering logic for price range
-  function filterByPriceRange(product: Product) {
-    if (priceRange === "all") return true;
-    const price = product.unitPrice;
-    if (priceRange === "under-1000") return price < 1000;
-    if (priceRange === "1000-5000") return price >= 1000 && price <= 5000;
-    if (priceRange === "5000-10000") return price > 5000 && price <= 10000;
-    if (priceRange === "10000-50000") return price > 10000 && price <= 50000;
-    if (priceRange === "above-50000") return price > 50000;
-    return true;
-  }
-
   const filteredProducts = useMemo(
     () =>
       products.filter((product) => {
@@ -92,13 +68,11 @@ const Stock = () => {
             : "";
 
         return (
-          (product.name.toLowerCase().includes(searchQuery) ||
-            categoryName.includes(searchQuery)) &&
-          filterByStockStatus(product) &&
-          filterByPriceRange(product)
+          product.name.toLowerCase().includes(searchQuery) ||
+          categoryName.includes(searchQuery)
         );
       }),
-    [products, searchQuery, stockStatus, priceRange]
+    [products, searchQuery]
   );
 
   return (
@@ -152,8 +126,8 @@ const Stock = () => {
           <InventoryTab
             products={filteredProducts}
             categories={categories}
-            stockStatus={stockStatus}
-            priceRange={priceRange}
+            stockStatus={""}
+            priceRange={""}
           />
         </div>
       </section>
