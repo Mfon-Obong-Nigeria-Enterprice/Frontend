@@ -174,3 +174,8 @@
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
+
+/* hide arrow for datalist */
+.no-arrow input::-webkit-calendar-picker-indicator {
+  display: none !important;
+}

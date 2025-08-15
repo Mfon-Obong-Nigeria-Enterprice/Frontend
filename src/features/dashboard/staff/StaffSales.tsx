@@ -1,7 +1,7 @@
 import React from "react";
 
-const StaffSales: React.FC = () => {
-  return <div>Staff sales</div>;
+const StaffSales = () => {
+  return <div></div>;
 };
 
 export default StaffSales;

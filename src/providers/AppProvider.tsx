@@ -71,7 +71,7 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   }, [transactionsQuery.dataUpdatedAt, setTransactions]);
 
   useEffect(() => {
-    if (clientsQuery.data?.length > 0) {
+    if (clientsQuery.data ?? []) {
       setClients(clientsQuery.data);
     }
   }, [clientsQuery.dataUpdatedAt, setClients]);
