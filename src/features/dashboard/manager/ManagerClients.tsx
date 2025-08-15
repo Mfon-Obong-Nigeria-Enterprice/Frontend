@@ -8,7 +8,7 @@ import useClientFiltering, {
   type clientBalance,
   type clientStat,
 } from "@/hooks/useClientFiltering";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import * as XLSX from "xlsx";
 import autoTable from "jspdf-autotable";
 import type { Client, TransactionItem } from "@/types/types";

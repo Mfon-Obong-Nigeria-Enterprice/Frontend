@@ -6,7 +6,7 @@ import type { DragEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Form,
@@ -131,7 +131,7 @@ export function ManagerUsersModal({
     console.log("Uploading profile picture...");
 
     try {
-      // The browser will automatically set the correct 'Content-Type' header
+    
       const response = await api.patch(
         `/users/${userData._id}/profile-picture`,
         formData
@@ -160,7 +160,7 @@ export function ManagerUsersModal({
   const handleFileInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      
+    
       setProfileImage(URL.createObjectURL(file));
       handleProfilePictureUpload(file);
     }

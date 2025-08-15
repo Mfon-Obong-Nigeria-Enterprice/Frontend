@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import OutstandingBalance from "@/features/dashboard/maintainer/components/OutstandingBalance";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
+import { SystemHealth } from "./components/SystemHealth";
 
 
 
@@ -191,6 +192,7 @@ const MaintainerDashboard = () => {
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-[60fr_40fr] gap-5 mt-5"></div>
+       <SystemHealth/>
      
       <OutstandingBalance />
     </main>

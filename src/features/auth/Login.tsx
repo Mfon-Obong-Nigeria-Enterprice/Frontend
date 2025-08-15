@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "@/schemas/authSchema";
 import { IoEyeOffOutline, IoEyeOutline } from "react-icons/io5";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import MobileError from "./MobileError";
 import SupportFeedback from "../../components/SupportFeedback";
 import { useAuthStore } from "@/stores/useAuthStore";
