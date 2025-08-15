@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // src/features/notifications/store.ts
 import { create } from 'zustand';
 import type { Notification } from '@/types/types';
@@ -5,6 +6,9 @@ import type { Notification } from '@/types/types';
 interface NotificationStore {
   notifications: Notification[];
   unreadCount: number;
+  isLoading: boolean;
+  error: string | null;
+  fetchNotifications: () => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   deleteNotification: (id: string) => void;
@@ -37,22 +41,45 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
       type: 'alert'
     }
   ],
-  unreadCount: 2, // Matches the mock data
+  unreadCount: 2,
+  isLoading: false,
+  error: null,
   
-  markAsRead: (id) => set((state) => ({
-    notifications: state.notifications.map(n => 
+  fetchNotifications: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      // Simulated API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      set({ isLoading: false });
+    } catch (err) {
+      set({ 
+        error: 'Failed to fetch notifications',
+        isLoading: false 
+      });
+    }
+  },
+  
+  markAsRead: (id) => set((state) => {
+    const updatedNotifications = state.notifications.map(n => 
       n.id === id ? { ...n, read: true } : n
-    ),
-    unreadCount: state.notifications.filter(n => !n.read && n.id !== id).length
-  })),
+    );
+    
+    return {
+      notifications: updatedNotifications,
+      unreadCount: updatedNotifications.filter(n => !n.read).length
+    };
+  }),
   
   markAllAsRead: () => set((state) => ({
     notifications: state.notifications.map(n => ({ ...n, read: true })),
     unreadCount: 0
   })),
   
-  deleteNotification: (id) => set((state) => ({
-    notifications: state.notifications.filter(n => n.id !== id),
-    unreadCount: state.notifications.filter(n => !n.read && n.id !== id).length
-  }))
+  deleteNotification: (id) => set((state) => {
+    const updatedNotifications = state.notifications.filter(n => n.id !== id);
+    return {
+      notifications: updatedNotifications,
+      unreadCount: updatedNotifications.filter(n => !n.read).length
+    };
+  })
 }));
