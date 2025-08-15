@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
-import ClientDirectory from "../admin/components/ClientDirectory";
+import ClientDirectory from "../shared/ClientDirectory";
 import { useSyncClientsWithQuery } from "@/stores/useClientStore";
 import type { Client } from "@/types/types";
 import { Search } from "lucide-react";
@@ -95,20 +95,6 @@ const StaffClients: React.FC = () => {
 
           {/*  */}
           <div className=" gap-4 pt-4 sm:pt-0  md:gap-3 px-4 md:px-0">
-            {/* <Select
-              value={clientStatus}
-              onValueChange={(value) => setClientStatus(value as clientStat)}
-            >
-              <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d]">
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All Status">All Status</SelectItem>
-                <SelectItem value="Registered">Registered</SelectItem>
-                <SelectItem value="Unregistered">Unregistered</SelectItem>
-              </SelectContent>
-            </Select> */}
-
             <Select
               value={clientBalance}
               onValueChange={(value) =>

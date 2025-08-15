@@ -12,7 +12,7 @@ const StaffDashboardLayout: React.FC = () => {
       <div className="w-full">
         <Header userRole="staff" />
         <SidebarTrigger className="fixed z-50" />
-        <div className="bg-[#f5f5f5] p-10 mt-[3rem] min-h-[90dvh]">
+        <div className="bg-[#f5f5f5] p-4 md:p-10 mt-[3rem] min-h-[90dvh]">
           <AppProvider>
             <Outlet />
           </AppProvider>
