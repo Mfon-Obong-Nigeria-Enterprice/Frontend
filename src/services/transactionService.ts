@@ -2,12 +2,13 @@ import localforage from "localforage";
 import api from "./baseApi";
 import type { Transaction } from "@/types/transactions";
 import type { Period } from "@/types/revenue";
-import { AxiosError } from "axios";
+import { handleApiError } from "./errorhandler";
 import type {
-  // TransactionItem,
   CreateTransactionPayload,
   ClientWithTransactions,
 } from "@/types/types";
+import type { TransactionCreate } from "@/types/transactions";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 export const getAllTransactions = async (): Promise<Transaction[]> => {
   const token = await localforage.getItem<string>("access_token");
@@ -19,11 +20,27 @@ export const getAllTransactions = async (): Promise<Transaction[]> => {
     });
     return response.data;
   } catch (error) {
-    const err = error as AxiosError;
-    console.error(
-      "Error fetching products:",
-      err.response?.data || err.message
-    );
+    handleApiError(error, "Error fetching products");
+    throw error;
+  }
+};
+
+export const AddTransaction = async (
+  data: TransactionCreate
+): Promise<Transaction[]> => {
+  try {
+    const { user } = useAuthStore.getState();
+    if (!user?.branchId) throw new Error("Branch ID missing");
+
+    const response = await api.post("/transactions", {
+      ...data,
+      branchId: user.branchId,
+    });
+
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Failed to create transaction");
+
     throw error;
   }
 };
@@ -59,11 +76,7 @@ export const createTransaction = async (
     console.log("Transaction created:", response.data);
     return response.data;
   } catch (error) {
-    const err = error as AxiosError;
-    console.error(
-      "Error creating transaction:",
-      err.response?.data || err.message
-    );
+    handleApiError(error, "Error creating transaction:");
     throw error;
   }
 };

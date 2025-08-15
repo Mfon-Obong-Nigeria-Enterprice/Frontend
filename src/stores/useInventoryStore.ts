@@ -15,13 +15,13 @@ type InventoryActions = {
   setCategories: (categories: Category[]) => void;
   setSearchQuery: (query: string) => void;
   setSelectedCategoryId: (id: string) => void;
-  setProductsLoaded: (loaded: boolean) => void; // Added
-  setCategoriesLoaded: (loaded: boolean) => void; // Added
+  setProductsLoaded: (loaded: boolean) => void;
+  setCategoriesLoaded: (loaded: boolean) => void;
   updateProduct: (updated: Product) => void;
-  updateProductsBulk: (updatedProducts: Product[]) => void; // Renamed for clarity
+  updateProductsBulk: (updatedProducts: Product[]) => void;
   addProduct: (product: Product) => void;
   addCategory: (category: Category) => void;
-  removeProduct: (productId: string) => void; // Added
+  removeProduct: (productId: string) => void;
 };
 
 export const useInventoryStore = create<InventoryStoreState & InventoryActions>(
@@ -31,18 +31,18 @@ export const useInventoryStore = create<InventoryStoreState & InventoryActions>(
     searchQuery: "",
     selectedCategoryId: "",
     categoryUnits: [],
-    isCategoriesLoaded: false, // Added
-    isProductsLoaded: false, // Added
+    isCategoriesLoaded: false,
+    isProductsLoaded: false,
 
     setProducts: (products) => {
-      set({ products, isProductsLoaded: true }); // Set loaded flag
+      set({ products, isProductsLoaded: true });
     },
     setCategories: (categories) => {
-      set({ categories, isCategoriesLoaded: true }); // Set loaded flag
+      set({ categories, isCategoriesLoaded: true });
     },
     setSearchQuery: (query) => set({ searchQuery: query }),
-    setProductsLoaded: (loaded) => set({ isProductsLoaded: loaded }), // Added
-    setCategoriesLoaded: (loaded) => set({ isCategoriesLoaded: loaded }), // Added
+    setProductsLoaded: (loaded) => set({ isProductsLoaded: loaded }),
+    setCategoriesLoaded: (loaded) => set({ isCategoriesLoaded: loaded }),
 
     setSelectedCategoryId: (id) =>
       set((state) => {

@@ -1,5 +1,3 @@
-/** @format */
-
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -134,8 +132,7 @@ const RecentTransactions = () => {
                   </td>
 
                   <td className="text-center text-[#444444] text-sm font-normal py-3">
-                    location
-                    {/* {transaction.location} */}
+                    {transaction.branchName}
                   </td>
 
                   <td

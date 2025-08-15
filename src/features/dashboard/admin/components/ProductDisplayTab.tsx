@@ -1,7 +1,4 @@
 /** @format */
-
-// @/components/inventory/components/ProductDisplayTab.tsx
-
 import { useState, useEffect } from "react"; // Added useEffect
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Modal from "@/components/Modal"; // Assuming this Modal component exists
 import { newProductSchema } from "@/schemas/productSchema";
-
+import { useAuthStore } from "@/stores/useAuthStore"; // Import useAuthStore hook
 interface ProductDisplayProps {
   product: Product; // IMPORTANT: Use the Product type directly from types.ts
 }
@@ -39,6 +36,7 @@ const getShieldStatus = (product: Product): "high" | "low" => {
 };
 
 const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
+  const { user } = useAuthStore();
   const {
     categories,
     updateProduct: updateProductInStore,
@@ -328,18 +326,35 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
             {categoryDisplayName}
           </p>
         </div>
-        <div className="flex gap-3">
-          <Pencil
-            size={16}
-            className="text-orange-500 cursor-pointer"
-            onClick={() => setEditMode(true)}
-          />
-          <Trash2
-            size={16}
-            className="text-[#7d7d7d] cursor-pointer"
-            onClick={() => setIsDeleteModalOpen(true)}
-          />
-        </div>
+
+        {user?.role !== "STAFF" ? (
+          <div className="flex gap-3">
+            <Pencil
+              size={16}
+              className="text-orange-500 cursor-pointer"
+              onClick={() => setEditMode(true)}
+            />
+            <Trash2
+              size={16}
+              className="text-[#7d7d7d] cursor-pointer"
+              onClick={() => setIsDeleteModalOpen(true)}
+            />
+          </div>
+        ) : (
+          <div
+            className={`mt-10 border rounded-lg px-2 py-1 text-[.75rem] flex gap-0.5 items-center ${
+              shieldStatus === "high" // Use shieldStatus directly
+                ? "border-[var(--cl-bg-green)] bg-[var(--cl-bg-light-green)] text-[var(--cl-bg-green)]"
+                : "border-[#F95353] bg-[#FFE4E2] text-[#F95353]"
+            }`}
+          >
+            {shieldStatus === "high" ? (
+              <p className="flex gap-1 items-center">Good</p>
+            ) : (
+              <p className="flex gap-1 items-center">Low</p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-2 mt-4 text-sm">

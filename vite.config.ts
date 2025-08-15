@@ -6,6 +6,24 @@ import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "/",
+  server: {
+    port: 3000,
+    open: true,
+    proxy: {
+      "/api": {
+        target: "https://mfon-obong-enterprise.onrender.com",
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
+    },
+    hmr: {
+      protocol: "ws",
+      host: "localhost",
+      port: 3000,
+    },
+  },
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

@@ -1,5 +1,3 @@
-/** @format */
-
 // components
 import ClientTransactionModal from "@/features/dashboard/shared/ClientTransactionModal";
 import WalkinTransactionModal from "@/features/dashboard/shared/WalkinTransactionModal";

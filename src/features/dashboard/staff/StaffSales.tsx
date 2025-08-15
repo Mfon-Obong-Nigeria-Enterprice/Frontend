@@ -1,7 +1,11 @@
-import React from "react";
+import Transactions from "../shared/Transactions";
 
-const StaffSales: React.FC = () => {
-  return <div>Staff sales</div>;
+const StaffSales = () => {
+  return (
+    <div>
+      <Transactions />
+    </div>
+  );
 };
 
 export default StaffSales;
