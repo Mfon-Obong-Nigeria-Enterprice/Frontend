@@ -1,7 +1,7 @@
 /** @format */
 
 import DashboardTitle from "../shared/DashboardTitle";
-import ClientStats from "./components/ClientStats";
+// import ClientStats from "./components/ClientStats";
 import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
 import ClientDirectory from "./components/ClientDirectory";
@@ -23,6 +23,7 @@ import useClientFiltering, {
   type clientBalance,
   type clientStat,
 } from "@/hooks/useClientFiltering";
+import ClientStats from "./components/ClientStats";
 
 interface ClientProps {
   showExportButtons?: boolean;
@@ -34,6 +35,7 @@ export const Clients: React.FC<ClientProps> = ({
   onClientAction,
 }) => {
   const { clients } = useClientStore();
+
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -191,6 +193,7 @@ export const Clients: React.FC<ClientProps> = ({
         heading="Client Management"
         description="Manage client accounts & relationships"
       />
+
       <ClientStats />
 
       {/* client directory */}

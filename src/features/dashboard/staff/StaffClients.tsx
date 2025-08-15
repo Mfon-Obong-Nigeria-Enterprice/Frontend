@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
 import ClientDirectory from "../admin/components/ClientDirectory";
-import { useSyncClientsWithQuery } from "@/stores/useClientStore";
+// import { useSyncClientsWithQuery } from "@/stores/useClientStore";
 import type { Client } from "@/types/types";
 import { Search } from "lucide-react";
 import PaymentModal from "./components/PaymentModal";
@@ -22,20 +22,15 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { getAllClients } from "@/services/clientService";
 import { VscRefresh } from "react-icons/vsc";
-// import { getAllTransactions } from "@/services/transactionService";
 
 const StaffClients: React.FC = () => {
-  useSyncClientsWithQuery();
+  // useSyncClientsWithQuery();
   //Get clients from rectQuery not zustand store
   const { data: clients } = useQuery({
     queryKey: ["clients"],
     queryFn: getAllClients,
     staleTime: 5 * 60 * 1000,
   });
-  // const { data: transactions } = useQuery({
-  //   queryKey: ["transactions"],
-  //   queryFn: getAllTransactions,
-  // });
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);

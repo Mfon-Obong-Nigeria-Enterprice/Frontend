@@ -50,7 +50,13 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const Transactions = () => {
   const { getOutStandingBalanceData, getClientById } = useClientStore();
-  const { transactions } = useTransactionsStore();
+  const {
+    transactions,
+    getTodaysSales,
+    getTodaysPayments, // New function
+    getPaymentsPercentageChange, // New function
+  } = useTransactionsStore();
+
   const [clientFilter, setClientFilter] = useState<string | undefined>();
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<
     string | undefined
@@ -60,26 +66,55 @@ const Transactions = () => {
     to: undefined,
   });
 
-  const outstandingBalance = getOutStandingBalanceData();
+  const outstandingBalance = getOutStandingBalanceData() || {
+    totalDebt: 0,
+    clientsWithDebt: 0,
+  };
+  const todaysSales = getTodaysSales();
+  const todaysPayments = getTodaysPayments();
+  const paymentsChange = getPaymentsPercentageChange();
+
+  // Format change text helper
+  const formatChangeText = (change: {
+    percentage: number;
+    direction: "increase" | "decrease" | "no-change";
+  }) => {
+    switch (change.direction) {
+      case "increase":
+        return `↑${change.percentage}% from yesterday`;
+      case "decrease":
+        return `↓${change.percentage}% from yesterday`;
+      default:
+        return "—No change from yesterday";
+    }
+  };
 
   const stats: StatCard[] = [
     {
       heading: "Total Sales (Today)",
-      salesValue: 450000,
+      salesValue: `${todaysSales.toLocaleString()}`,
       format: "currency",
       hideArrow: true,
     },
     {
       heading: "Payments Received",
-      salesValue: 300000,
+      salesValue: `${todaysPayments.toLocaleString()}`,
       format: "currency",
-      hideArrow: true,
+      statValue: formatChangeText(paymentsChange),
+      color:
+        paymentsChange.direction === "increase"
+          ? "green"
+          : paymentsChange.direction === "decrease"
+          ? "red"
+          : "blue",
+      hideArrow: false,
       salesColor: "green",
     },
     {
       heading: "Outstanding balance",
       salesValue: `${outstandingBalance.totalDebt.toLocaleString()}`,
       format: "currency",
+      statValue: `${outstandingBalance.clientsWithDebt} clients with overdue balances`,
       hideArrow: true,
       salesColor: "orange",
     },

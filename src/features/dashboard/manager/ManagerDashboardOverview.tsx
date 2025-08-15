@@ -13,15 +13,36 @@ import type { StatCard } from "@/types/stats";
 
 // ui
 import { Button } from "@/components/ui/button";
+import { useClientStats } from "@/hooks/useClientStats";
+import { useClientStore } from "@/stores/useClientStore";
+import { useTransactionsStore } from "@/stores/useTransactionStore";
 
 const ManagerDashboardOverview = () => {
+  const { getTodaysSales, getSalesPercentageChange } = useTransactionsStore();
+  const { growthPercent } = useClientStats();
+  const { getOutStandingBalanceData } = useClientStore();
+  const todaysSales = getTodaysSales();
+  const outstandingBalance = getOutStandingBalanceData();
+  const { percentage, direction } = getSalesPercentageChange();
+
+  // Create the sales change text (assuming StatVslue expects string)
+  const getSalesChangeText = () => {
+    switch (direction) {
+      case "increase":
+        return `↑ +${percentage}% from yesterday`;
+      case "decrease":
+        return `↓ -${Math.abs(percentage)}% from yesterday`;
+      default:
+        return `0% from yesterday`;
+    }
+  };
   const navigate = useNavigate();
 
   const stats: StatCard[] = [
     {
       heading: "Total Sales (Today)",
-      salesValue: "₦ 135,500",
-      statValue: "15% from yesterday",
+      salesValue: `₦${todaysSales.toLocaleString()}`,
+      statValue: getSalesChangeText(),
       color: "green",
     },
     {
@@ -32,8 +53,8 @@ const ManagerDashboardOverview = () => {
     },
     {
       heading: "Outstanding balances",
-      salesValue: "₦ 1,355,800",
-      statValue: "5% Clients with overdue balances",
+      salesValue: `₦${outstandingBalance.totalDebt.toLocaleString()}`,
+      statValue: ` ${growthPercent}% Clients with overdue balances`,
       color: "orange",
     },
   ];

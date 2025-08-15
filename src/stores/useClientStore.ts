@@ -1,11 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Client } from "@/types/types";
-// import { createTransaction } from "@/services/transactionService";
 import { toSentenceCaseName } from "@/utils/styles";
-import { useQuery } from "@tanstack/react-query";
-import { getAllClients } from "@/services/clientService";
-import { useEffect } from "react";
 
 interface clientStore {
   clients: Client[];
@@ -14,7 +10,6 @@ interface clientStore {
   getClientById: (id: string) => Client | null;
   updateClient: (id: string, updates: Partial<Client>) => void;
   deleteClientLocally: (id: string) => void;
-
   addPayment: (clientId: string, amount: number) => void;
 
   // Derivative stats
@@ -27,7 +22,44 @@ interface clientStore {
     clientsWithDebt: number;
     totalDebt: number;
   };
+
+  // New functions
+  getNewClientsThisMonth: () => number;
+  getNewClientsLastMonth: () => number;
+  getNewClientsPercentageChange: () => {
+    percentage: number;
+    direction: "increase" | "decrease" | "no-change";
+  };
+  getTotalClientsLastMonth: () => number;
+  getTotalClientsPercentageChange: () => {
+    percentage: number;
+    direction: "increase" | "decrease" | "no-change";
+  };
 }
+
+// Helper function to calculate percentage change
+const calculatePercentageChange = (current: number, previous: number) => {
+  if (previous === 0 && current === 0) {
+    return { percentage: 0, direction: "no-change" as const };
+  }
+  if (previous === 0 && current > 0) {
+    return { percentage: 100, direction: "increase" as const };
+  }
+  if (previous > 0 && current === 0) {
+    return { percentage: -100, direction: "decrease" as const };
+  }
+
+  const percentageChange = ((current - previous) / previous) * 100;
+  return {
+    percentage: Math.round(Math.abs(percentageChange) * 100) / 100,
+    direction:
+      percentageChange > 0
+        ? ("increase" as const)
+        : percentageChange < 0
+        ? ("decrease" as const)
+        : ("no-change" as const),
+  };
+};
 
 export const useClientStore = create<clientStore>()(
   persist(
@@ -68,7 +100,7 @@ export const useClientStore = create<clientStore>()(
                   ...client,
                   balance: newBalance,
                   lastTransactionDate: new Date().toISOString(),
-                  transaction: [
+                  transactions: [
                     ...(client.transactions || []),
                     {
                       _id: Date.now().toString(),
@@ -85,27 +117,28 @@ export const useClientStore = create<clientStore>()(
         }));
       },
 
+      // Active clients (clients with transactions in last 30 days)
       getActiveClients: () => {
         const { clients } = get();
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-        const activeClientIds = new Set(
-          clients
-            ?.filter((t) => new Date(t.createdAt) >= thirtyDaysAgo)
-            .map((t) => t._id)
-        );
-        return activeClientIds.size;
+
+        return clients.filter((client) => {
+          if (!client.lastTransactionDate) return false;
+          return new Date(client.lastTransactionDate) >= thirtyDaysAgo;
+        }).length;
       },
 
+      // New clients (registered in last 30 days)
       getNewClients: () => {
         const { clients } = get();
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-        return clients?.filter(
+        return clients.filter(
           (client) => new Date(client.createdAt) >= thirtyDaysAgo
         ).length;
       },
 
       getActiveClientsPercentage: () => {
-        const total = get().clients?.length;
+        const total = get().clients.length;
         const active = get().getActiveClients();
         return total === 0 ? 0 : Math.round((active / total) * 100);
       },
@@ -120,7 +153,7 @@ export const useClientStore = create<clientStore>()(
         );
 
         const currentTotal = clients.length;
-        const lastMonthTotal = clients?.filter(
+        const lastMonthTotal = clients.filter(
           (client) => new Date(client.createdAt) <= lastMonth
         ).length;
 
@@ -131,42 +164,85 @@ export const useClientStore = create<clientStore>()(
       },
 
       getClientsWithDebt: () => {
-        return get().clients?.filter((c) => c.balance < 0);
+        return get().clients.filter((c) => c.balance < 0);
       },
 
       getOutStandingBalanceData: () => {
         const { clients } = get();
-        const clientsWithDebt = clients?.filter((client) => client.balance < 0);
-        const totalDebt = clientsWithDebt?.reduce(
+        const clientsWithDebt = clients.filter((client) => client.balance < 0);
+        const totalDebt = clientsWithDebt.reduce(
           (sum, client) => sum + Math.abs(client.balance),
           0
         );
         return {
-          clientsWithDebt: clientsWithDebt?.length,
+          clientsWithDebt: clientsWithDebt.length,
           totalDebt,
         };
       },
+
+      // NEW FUNCTIONS
+
+      // New clients this month
+      getNewClientsThisMonth: () => {
+        const { clients } = get();
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+        return clients.filter((client) => {
+          const createdDate = new Date(client.createdAt);
+          return createdDate >= startOfMonth && createdDate <= endOfMonth;
+        }).length;
+      },
+
+      // New clients last month
+      getNewClientsLastMonth: () => {
+        const { clients } = get();
+        const now = new Date();
+        const startOfLastMonth = new Date(
+          now.getFullYear(),
+          now.getMonth() - 1,
+          1
+        );
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+        return clients.filter((client) => {
+          const createdDate = new Date(client.createdAt);
+          return (
+            createdDate >= startOfLastMonth && createdDate <= endOfLastMonth
+          );
+        }).length;
+      },
+
+      getNewClientsPercentageChange: () => {
+        const thisMonth = get().getNewClientsThisMonth();
+        const lastMonth = get().getNewClientsLastMonth();
+        return calculatePercentageChange(thisMonth, lastMonth);
+      },
+
+      // Total clients growth (current total vs last month's total)
+      getTotalClientsLastMonth: () => {
+        const { clients } = get();
+        const now = new Date();
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0); // Last day of previous month
+
+        return clients.filter((client) => {
+          const createdDate = new Date(client.createdAt);
+          return createdDate <= lastMonthEnd;
+        }).length;
+      },
+
+      getTotalClientsPercentageChange: () => {
+        const currentTotal = get().clients.length;
+        const lastMonthTotal = get().getTotalClientsLastMonth();
+        return calculatePercentageChange(currentTotal, lastMonthTotal);
+      },
     }),
     {
-      name: "inventory-store",
+      name: "client-store",
       partialize: (state) => ({
         clients: state.clients,
       }),
     }
   )
 );
-
-export const useSyncClientsWithQuery = () => {
-  const { data: queryClients } = useQuery({
-    queryKey: ["clients"],
-    queryFn: getAllClients,
-  });
-
-  const setClients = useClientStore((state) => state.setClients);
-
-  useEffect(() => {
-    if (queryClients) {
-      setClients(queryClients);
-    }
-  }, [queryClients, setClients]);
-};

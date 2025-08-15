@@ -5,6 +5,7 @@ import type { StatCard } from "@/types/stats";
 import TotalRevenueTrends from "./component/TotalRevenueTrends";
 import SalesAnalytic from "./component/SalesAnalytic";
 import MonthlySalesChart from "./component/MonthlySalesChart";
+import { useTransactionsStore } from "@/stores/useTransactionStore";
 
 interface Product {
   prodName: string;
@@ -13,49 +14,104 @@ interface Product {
   category: string;
 }
 
-const stats: StatCard[] = [
-  {
-    heading: "Total Sales (This week)",
-    salesValue: "8",
-    statValue: "3% more than last week",
-    color: "blue",
-  },
-  {
-    heading: "Total Sales (This month)",
-    salesValue: "₦ 2,235,600",
-    statValue: "12% more than last month",
-    color: "green",
-  },
-  {
-    heading: "Total Transaction logged",
-    salesValue: "42",
-    statValue: "5% more than last month",
-    color: "orange",
-  },
-];
-
-const topProducts: Product[] = [
-  {
-    prodName: "cement",
-    soldUnit: 320,
-    revenue: 960000,
-    category: "construction",
-  },
-  {
-    prodName: "Rod",
-    soldUnit: 190,
-    revenue: 285000,
-    category: "Reinforcement",
-  },
-  {
-    prodName: "Tiles",
-    soldUnit: 100,
-    revenue: 280000,
-    category: "Finishing",
-  },
-];
-
 const BusinessReport: React.FC = () => {
+  const {
+    getThisWeekSales,
+    getWeeklySalesPercentageChange,
+    getThisMonthSales,
+    getMonthlySalesPercentageChange,
+    getTotalTransactionsCount,
+    getTransactionsCountPercentageChange,
+  } = useTransactionsStore();
+
+  // Get dynamic data
+  const thisWeekSales = getThisWeekSales();
+  const weeklyChange = getWeeklySalesPercentageChange();
+
+  const thisMonthSales = getThisMonthSales();
+  const monthlyChange = getMonthlySalesPercentageChange();
+
+  const totalTransactions = getTotalTransactionsCount();
+  const transactionChange = getTransactionsCountPercentageChange();
+
+  // Format change text helper
+  const formatChangeText = (
+    change: {
+      percentage: number;
+      direction: "increase" | "decrease" | "no-change";
+    },
+    period: string
+  ) => {
+    switch (change.direction) {
+      case "increase":
+        return `↑${change.percentage}% more than ${period}`;
+      case "decrease":
+        return `↓${change.percentage}% less than ${period}`;
+      default:
+        return `—No change from ${period}`;
+    }
+  };
+
+  const stats: StatCard[] = [
+    {
+      heading: "Total Sales (This week)",
+      salesValue: thisWeekSales,
+      format: "currency",
+      statValue: formatChangeText(weeklyChange, "last week"),
+      color:
+        weeklyChange.direction === "increase"
+          ? "green"
+          : weeklyChange.direction === "decrease"
+          ? "red"
+          : "blue",
+    },
+    {
+      heading: "Total Sales (This month)",
+      salesValue: thisMonthSales,
+      format: "currency",
+      statValue: formatChangeText(monthlyChange, "last month"),
+      color:
+        monthlyChange.direction === "increase"
+          ? "green"
+          : monthlyChange.direction === "decrease"
+          ? "red"
+          : "blue",
+    },
+    {
+      heading: "Total Transaction logged",
+      salesValue: totalTransactions,
+      format: "number",
+      statValue: formatChangeText(transactionChange, "last month"),
+      color:
+        transactionChange.direction === "increase"
+          ? "green"
+          : transactionChange.direction === "decrease"
+          ? "red"
+          : "orange",
+    },
+  ];
+
+  const topProducts: Product[] = [
+    {
+      prodName: "cement",
+      soldUnit: 320,
+      revenue: 960000,
+      category: "construction",
+    },
+    {
+      prodName: "Rod",
+      soldUnit: 190,
+      revenue: 285000,
+      category: "Reinforcement",
+    },
+    {
+      prodName: "Tiles",
+      soldUnit: 100,
+      revenue: 280000,
+      category: "Finishing",
+    },
+  ];
+
   // Dynamically create selectedMonth in format YYYY-MM
   const now = new Date();
   const selectedMonth = `${now.getFullYear()}-${String(
