@@ -6,7 +6,7 @@ import { AxiosError } from "axios";
 import type {
   // TransactionItem,
   CreateTransactionPayload,
-  ClientWithTransactions,
+  // ClientWithTransactions,
 } from "@/types/types";
 
 export const getAllTransactions = async (): Promise<Transaction[]> => {
@@ -26,6 +26,14 @@ export const getAllTransactions = async (): Promise<Transaction[]> => {
     );
     throw error;
   }
+};
+
+type ClientWithTransactions = {
+  // Define the structure here or import from the correct file if it exists elsewhere
+  // Example:
+  id: string;
+  name: string;
+  transactions: Transaction[];
 };
 
 export const createTransaction = async (
