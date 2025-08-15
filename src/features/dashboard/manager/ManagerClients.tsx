@@ -1,7 +1,7 @@
 /** @format */
 
 import DashboardTitle from "../shared/DashboardTitle";
-import ClientDirectory from "../admin/components/ClientDirectory";
+import ClientDirectory from "../shared/ClientDirectory";
 import { useMemo, useState } from "react";
 import { useClientStore } from "@/stores/useClientStore";
 import useClientFiltering, {
