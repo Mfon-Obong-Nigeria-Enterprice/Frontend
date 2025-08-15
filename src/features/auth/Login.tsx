@@ -43,7 +43,7 @@ const Login = () => {
       if (!user || !user.role) {
         throw new Error("User info is missing after login");
       }
-      toast.success("Login Successful!");
+
       // toast.success(`Welcome back, ${user.user || "User"}!`);
       // Normalize the role to handle any case or whitespace issues
       const normalizedRole = user.role?.toString().trim().toUpperCase();
@@ -62,7 +62,7 @@ const Login = () => {
           break;
 
         case "STAFF":
-          navigate("/staff/dashboard");
+          navigate("/staff/dashboard/s-overview");
           break;
 
         default:
@@ -73,6 +73,8 @@ const Login = () => {
           });
           throw new Error(`Unknown user role: ${user.role}`);
       }
+
+      toast.success("Login Successful!");
     } catch (error) {
       console.error("Login failed", error);
       openModal("error");
