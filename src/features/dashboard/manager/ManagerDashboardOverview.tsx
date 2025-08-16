@@ -12,7 +12,7 @@ import { ChevronRight } from "lucide-react";
 import type { StatCard } from "@/types/stats";
 
 // ui
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 const ManagerDashboardOverview = () => {
   const navigate = useNavigate();
