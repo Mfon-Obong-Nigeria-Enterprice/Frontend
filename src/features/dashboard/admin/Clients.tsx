@@ -4,7 +4,7 @@ import DashboardTitle from "../shared/DashboardTitle";
 import ClientStats from "./components/ClientStats";
 import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
-import ClientDirectory from "./components/ClientDirectory";
+import ClientDirectory from "../shared/ClientDirectory";
 import { useState } from "react";
 import { AddClientDialog } from "./components/AddClientDialog";
 import {

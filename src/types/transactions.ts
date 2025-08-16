@@ -58,3 +58,20 @@ export interface Transaction {
 export type MergedTransaction = Transaction & {
   client: Client | null;
 };
+
+export type TransactionCreate = {
+  bankName?: string;
+  type: "PURCHASE" | "PICKUP";
+  items: {
+    productId: string;
+    quantity: number;
+    unit: string;
+    discount?: number;
+  }[];
+  amountPaid: number;
+  discount: number;
+  paymentMethod: string;
+  notes: string;
+  branchId?: string;
+  clientId?: string;
+};

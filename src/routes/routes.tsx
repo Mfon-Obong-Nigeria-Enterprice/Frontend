@@ -39,6 +39,7 @@ import StaffSales from "@/features/dashboard/staff/StaffSales";
 import NewSales from "@/features/dashboard/staff/NewSales";
 import Stock from "@/features/dashboard/staff/Stock";
 import StaffClients from "@/features/dashboard/staff/StaffClients";
+import ManagerNotifications from "@/features/dashboard/manager/ManagerNotifications";
 
 const router = createBrowserRouter([
   {
@@ -59,6 +60,7 @@ const router = createBrowserRouter([
           { path: "activity-log", element: <ActivityLogPage /> },
           { path: "revenue-analytics", element: <RevenueAnalytics /> },
           { path: "manage-user", element: <UserManagement /> },
+          { path: "manager-notifications", element: <ManagerNotifications/>},
           { path: "manager-settings", element: <ManagerSettings /> },
         ],
       },

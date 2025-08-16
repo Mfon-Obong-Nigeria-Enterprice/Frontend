@@ -1,6 +1,6 @@
 // src/features/dashboard/admin/NotificationModal.tsx
-import { useNotificationStore } from "@/stores/useNotificationStore";
-import { Button } from "@/components/ui/Button";
+import { useNotificationStore } from '@/stores/useNotificationStore';
+import { Button } from '@/components/ui/button';
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Check } from "lucide-react";
 import { useEffect } from "react";
@@ -73,18 +73,18 @@ export const NotificationModal = ({ open, onOpenChange }: NotificationModalProps
               {notifications.map((notification) => (
                 <div key={notification.id} className="space-y-2">
                   <div 
-                    className={`p-3 rounded-lg ${!notification.isRead ? 'bg-blue-50' : ''}`}
-                    onClick={() => !notification.isRead && markAsRead(notification.id)}
+                    className={`p-3 rounded-lg ${!notification.read ? 'bg-blue-50' : ''}`}
+                    onClick={() => !notification.read && markAsRead(notification.id)}
                   >
                     <div className="flex justify-between">
                       <div>
                         <h4 className="font-medium">{notification.title}</h4>
                         <p className="text-sm text-gray-600">{notification.message}</p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {new Date(notification.createdAt).toLocaleString()}
+                          {new Date(notification.date).toLocaleString()}
                         </p>
                       </div>
-                      {!notification.isRead && (
+                      {!notification.read && (
                         <span className="h-2 w-2 rounded-full bg-blue-500 mt-2" />
                       )}
                     </div>

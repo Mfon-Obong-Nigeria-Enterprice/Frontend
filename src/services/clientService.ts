@@ -1,19 +1,30 @@
 import localforage from "localforage";
 import api from "./baseApi";
 import { type AxiosError } from "axios";
+
+// type
+import type { QueryFunctionContext } from "@tanstack/react-query";
 import type { Client } from "@/types/types";
 
 type CreateClientPayload = Pick<Client, "name" | "phone" | "email" | "address">;
 
-export const getAllClients = async (): Promise<Client[]> => {
+export const getAllClients = async ({
+  queryKey,
+  signal,
+}: QueryFunctionContext<[string, string?]>): Promise<Client[]> => {
   try {
     const token = await localforage.getItem<string>("access_token");
     if (!token) {
       throw new Error("No access token found");
     }
-    //
+
+    // extract search from queryKey
+    const search = queryKey[1]; // second element of queryKey
     const response = await api.get("/clients", {
-      headers: { Authorization: `Bearer ${token}` },
+      params: search ? { search } : {},
+      signal,
+      //  {
+      // headers: { Authorization: `Bearer ${token}` },
     });
 
     return response.data;

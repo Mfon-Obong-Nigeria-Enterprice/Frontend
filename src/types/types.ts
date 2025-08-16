@@ -214,3 +214,15 @@ export interface HealthState {
     environment: string;
   };
 }
+
+// src/features/notifications/types.ts
+export type NotificationType = 'info' | 'alert' | 'message' | 'warning';
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  read: boolean;
+  date: Date;
+  type?: NotificationType;
+}

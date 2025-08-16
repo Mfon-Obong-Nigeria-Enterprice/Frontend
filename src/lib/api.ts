@@ -5,10 +5,15 @@ import type {
   Product,
   ApiResponse,
   ProductUpdatePricePayload,
-  AppSetupResponse,
-  UpdateSettingsPayload
+  UpdateSettingsPayload,
 } from '@/types/types';
 import { toast } from 'sonner';
+
+// Define AppSetupResponse type if not already imported
+type AppSetupResponse = {
+  settings: Settings;
+  // add other properties if needed
+};
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://mfon-obong-enterprise.onrender.com/api';
 

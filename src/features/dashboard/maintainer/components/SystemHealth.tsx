@@ -1,0 +1,295 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// SystemHealth.tsx
+import React, { useEffect, useMemo } from 'react';
+import { Button } from '@/components/ui/button';
+import { RefreshCw, AlertTriangle } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { create } from 'zustand';
+import { HealthService, type BasicHealthResponse, type DetailedHealthResponse } from '@/services/healthService';
+
+type HealthState = {
+  basic: BasicHealthResponse | null;
+  detailed: DetailedHealthResponse | null;
+  loading: boolean;
+  error: Error | null;
+  lastUpdated: Date | null;
+  fetchHealth: () => Promise<void>;
+};
+
+const useHealthStore = create<HealthState>((set) => ({
+  basic: null,
+  detailed: null,
+  loading: false,
+  error: null,
+  lastUpdated: null,
+
+  fetchHealth: async () => {
+    set({ loading: true, error: null });
+    try {
+      const { basic, detailed } = await HealthService.getAllHealthData();
+      set({
+        basic,
+        detailed,
+        loading: false,
+        lastUpdated: new Date(),
+      });
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err : new Error('Failed to fetch health data'),
+        loading: false,
+      });
+    }
+  },
+}));
+
+const BAR_COLORS = {
+  normal: '#2ECC71',
+  high: '#FFA500',
+  critical: '#F95353',
+};
+
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded-md shadow-sm">
+        <p className="font-medium text-gray-900">{data.name}</p>
+        <p className="text-gray-700">
+          {data.name === 'Database' 
+            ? `${data.value}ms` 
+            : `${data.value}%`}
+        </p>
+        <p className="text-xs text-gray-500">
+          Status: <span className={data.status === 'up' || data.status === 'healthy' ? 'text-green-500' : 'text-red-500'}>
+            {data.status.toUpperCase()}
+          </span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+export const SystemHealth: React.FC = () => {
+  const { basic, detailed, loading, error, lastUpdated, fetchHealth } = useHealthStore();
+
+  useEffect(() => {
+    fetchHealth();
+    const interval = setInterval(fetchHealth, 30000); 
+    return () => clearInterval(interval);
+  }, [fetchHealth]);
+
+  const getBarColor = (value: number) => {
+    if (value >= 90) return BAR_COLORS.critical;
+    if (value >= 80) return BAR_COLORS.high;
+    return BAR_COLORS.normal;
+  };
+
+  const barChartData = useMemo(() => {
+    if (!detailed) return [];
+
+    return [
+      { 
+        name: 'Database', 
+        value: detailed.checks.database.responseTime,
+        status: detailed.checks.database.status,
+        threshold: 100
+      },
+      { 
+        name: 'Memory', 
+        value: detailed.checks.memory.percentage,
+        status: detailed.checks.memory.status,
+        threshold: 100
+      }
+    ];
+  }, [detailed]);
+
+  const showMemoryAlert = useMemo(() => {
+    const memoryPercentage = detailed?.checks.memory?.percentage;
+    return typeof memoryPercentage === 'number' && memoryPercentage >= 80;
+  }, [detailed]);
+
+  const renderContent = useMemo(() => {
+    if (loading && !basic) {
+      return (
+        <div className="flex justify-center items-center h-48 md:h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="p-4">
+          <div className="text-red-500 mb-4">Error: {error.message}</div>
+          <Button onClick={fetchHealth}>
+            <RefreshCw className="mr-2" /> Retry
+          </Button>
+        </div>
+      );
+    }
+
+    if (!basic || !detailed) {
+      return <div className="text-center py-8 text-gray-600">No health data available. Please refresh.</div>;
+    }
+
+    return (
+      <div className="bg-white p-4 rounded-lg shadow-md">
+        <div className="mb-4">
+          <h2 className="text-lg font-normal pb-2 md:pb-4">System Health</h2>
+          <div className="flex flex-wrap gap-2 md:gap-4 text-xs md:text-sm">
+            <div className="flex items-center">
+              <span className="h-3 w-3 rounded-full bg-[#2ECC71] mr-1 md:mr-2"></span>
+              <span>Normal (0-79%)</span>
+            </div>
+            <div className="flex items-center">
+              <span className="h-3 w-3 rounded-full bg-[#FFA500] mr-1 md:mr-2"></span>
+              <span>High (80-89%)</span>
+            </div>
+            <div className="flex items-center">
+              <span className="h-3 w-3 rounded-full bg-[#F95353] mr-1 md:mr-2"></span>
+              <span>Critical (90%+)</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="h-48 sm:h-64 md:h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={barChartData}
+              margin={{ top: 15, right: 15, left: 5, bottom: 15 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis 
+                dataKey="name" 
+                axisLine={false} 
+                tickLine={false}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis
+                domain={[0, 100]}
+                tickFormatter={(value) => `${value}`}
+                tickCount={5}
+                tick={{ fontSize: 12 }}
+              />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+              />
+              <Bar dataKey="value" minPointSize={5}>
+                {barChartData.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={getBarColor(entry.value)} 
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {showMemoryAlert && (
+          <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-3 rounded-md mt-4 md:mt-6 flex items-center text-sm">
+            <AlertTriangle className="mr-2 h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
+            <span className="font-semibold">
+              High Usage: Memory at {detailed.checks.memory.percentage}% - Monitor closely
+            </span>
+          </div>
+        )}
+        
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div className="bg-gray-50 p-3 rounded-md">
+            <h3 className="font-medium text-gray-700 mb-1">Node Version</h3>
+            <p>{detailed.checks.environment.nodeVersion}</p>
+          </div>
+          <div className="bg-gray-50 p-3 rounded-md">
+            <h3 className="font-medium text-gray-700 mb-1">Platform</h3>
+            <p>{detailed.checks.environment.platform}</p>
+          </div>
+          <div className="bg-gray-50 p-3 rounded-md">
+            <h3 className="font-medium text-gray-700 mb-1">Environment</h3>
+            <p>{detailed.checks.environment.environment}</p>
+          </div>
+        </div>
+        
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div className="bg-blue-50 p-3 rounded-md border border-blue-100">
+            <h3 className="font-medium text-blue-700 mb-1">Database Status</h3>
+            <p className="flex items-center">
+              <span className={`h-3 w-3 rounded-full mr-2 ${
+                detailed.checks.database.status === 'up' 
+                  ? 'bg-green-500' 
+                  : 'bg-red-500'
+              }`}></span>
+              {detailed.checks.database.status.toUpperCase()} - {detailed.checks.database.responseTime}ms
+            </p>
+          </div>
+          <div className="bg-blue-50 p-3 rounded-md border border-blue-100">
+            <h3 className="font-medium text-blue-700 mb-1">Memory Status</h3>
+            <p className="flex items-center">
+              <span className={`h-3 w-3 rounded-full mr-2 ${
+                detailed.checks.memory.status === 'healthy' || detailed.checks.memory.status === 'up'
+                  ? 'bg-green-500' 
+                  : 'bg-red-500'
+              }`}></span>
+              {detailed.checks.memory.status.toUpperCase()} - {detailed.checks.memory.percentage}%
+            </p>
+          </div>
+        </div>
+        
+        {/* Overall System Status */}
+        <div className={`mt-6 p-4 rounded-md flex items-center ${
+          basic.status === 'healthy' || basic.status === 'up'
+            ? 'bg-green-100 border border-green-200'
+            : 'bg-red-100 border border-red-200'
+        }`}>
+          <div className={`h-4 w-4 rounded-full mr-3 ${
+            basic.status === 'healthy' || basic.status === 'up' 
+              ? 'bg-green-500' 
+              : 'bg-red-500'
+          }`}></div>
+          <div>
+            <h3 className="font-medium text-lg">
+              System Status: <span className={
+                basic.status === 'healthy' || basic.status === 'up' 
+                  ? 'text-green-700' 
+                  : 'text-red-700'
+              }>
+                {basic.status.toUpperCase()}
+              </span>
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Last checked at {new Date(basic.timestamp).toLocaleTimeString()}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }, [basic, detailed, error, loading, fetchHealth, barChartData, showMemoryAlert]);
+
+  return (
+    <div className="container mx-auto p-4 bg-gray-100 min-h-screen">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-2">
+        <div className="flex items-center gap-2">
+          {lastUpdated && (
+            <span className="text-xs sm:text-sm text-gray-500">
+              Last updated: {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
+        </div>
+        <Button
+          onClick={fetchHealth}
+          variant="outline"
+          size="sm"
+          disabled={loading}
+          className="text-gray-700 border-gray-300 hover:bg-gray-100 w-full sm:w-auto"
+        >
+          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+      </div>
+      {renderContent}
+    </div>
+  );
+};

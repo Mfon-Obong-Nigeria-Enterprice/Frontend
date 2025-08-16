@@ -1,10 +1,11 @@
-import { FaRegBell } from "react-icons/fa";
+import { Bell, BellDot } from 'lucide-react';
 import Logo from "../Logo";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 import { useState } from "react";
 import AdminUserModal from "@/features/dashboard/admin/AdminUserModal";
-import { NotificationModal } from "@/features/dashboard/admin/NotificationModal";
 import { ManagerUsersModal } from "@/features/dashboard/manager/component/ManagerUsersModal";
+import { Link } from "react-router-dom";
+import { useNotificationStore } from "@/stores/useNotificationStore";
 
 type HeaderProps = {
   userRole?: 'admin' | 'staff' | 'manager' | 'maintainer' | 'superadmin';
@@ -13,10 +14,9 @@ type HeaderProps = {
 
 const Header = ({ userRole = "staff", userName = "User" }: HeaderProps) => {
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const unreadCount = useNotificationStore(state => state.unreadCount);
 
   const getAvatarImage = () => {
-    
     return `/images/${userRole}-avatar.png`;
   };
 
@@ -40,13 +40,23 @@ const Header = ({ userRole = "staff", userName = "User" }: HeaderProps) => {
         </div>
 
         <div className="flex gap-4 items-center">
-          <button
-            onClick={() => setIsNotificationModalOpen(true)}
-            className="border border-[#F5F5F5] rounded-full p-2 hover:bg-gray-100 transition-colors"
-            aria-label="Notifications"
-          >
-            <FaRegBell className="text-gray-600" />
-          </button>
+          <Link to="/manager/dashboard/manager-notifications" className="relative">
+            <button
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              aria-label="Notifications"
+            >
+              {unreadCount > 0 ? (
+                <BellDot className="h-5 w-5 text-gray-700" />
+              ) : (
+                <Bell className="h-5 w-5 text-gray-500" />
+              )}
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+          </Link>
 
           <div className="hidden sm:flex items-center gap-2">
             <span className="capitalize font-medium text-gray-700">{userName}</span>
@@ -56,10 +66,7 @@ const Header = ({ userRole = "staff", userName = "User" }: HeaderProps) => {
           </div>
 
           <button
-            onClick={() => {
-              console.log(`Opening modal for ${userRole}`);
-              setIsUserModalOpen(true);
-            }}
+            onClick={() => setIsUserModalOpen(true)}
             className="focus:outline-none"
             aria-label="User settings"
           >
@@ -68,7 +75,6 @@ const Header = ({ userRole = "staff", userName = "User" }: HeaderProps) => {
                 src={getAvatarImage()} 
                 alt={`${userRole} avatar`}
                 onError={(e) => {
-                  // Fallback if image fails to load
                   (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
@@ -80,7 +86,6 @@ const Header = ({ userRole = "staff", userName = "User" }: HeaderProps) => {
         </div>
       </header>
 
-    
       {['admin', 'staff'].includes(userRole) ? (
         <AdminUserModal
           open={isUserModalOpen}
@@ -109,15 +114,9 @@ const Header = ({ userRole = "staff", userName = "User" }: HeaderProps) => {
           }}
           onProfileUpdate={(updatedData) => {
             console.log('Profile updated:', updatedData);
-          
           }}
         />
       )}
-
-      <NotificationModal
-        open={isNotificationModalOpen}
-        onOpenChange={setIsNotificationModalOpen}
-      />
     </>
   );
 };
