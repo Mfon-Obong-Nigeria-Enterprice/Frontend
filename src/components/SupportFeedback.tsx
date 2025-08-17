@@ -23,7 +23,7 @@ const SupportFeedback = ({ onClose }: { onClose: () => void }) => {
           <Button
             variant="secondary"
             onClick={onClose}
-            className="w-full bg-[#D9D9D9] h-12 mt-5"
+            className="w-full bg-[#D9D9D9] hover:bg-[#D9D9D9]/90 h-12 mt-5"
           >
             Close
           </Button>

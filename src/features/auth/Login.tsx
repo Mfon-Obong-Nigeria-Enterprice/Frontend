@@ -165,7 +165,11 @@ const Login = () => {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12"
+              className={`w-full h-12 ${
+                Object.keys(formErrors).length > 0
+                  ? "bg-[#D9D9D9] hover:bg-[#D9D9D9]/90 text-[#444444]"
+                  : "bg-[#2ECC71] hover:bg-[#27ae60]"
+              }`}
             >
               {Object.keys(formErrors).length > 0
                 ? "Retry"
@@ -174,25 +178,26 @@ const Login = () => {
                 : "Login"}
             </Button>
           </div>
+
+          <div className="flex gap-2.5 justify-center items-center mt-5">
+            {!formErrors && (
+              <span className="text-[var(--cl-blue)] border-b border-[var(--cl-blue)] text-sm">
+                need help?
+              </span>
+            )}
+            <span
+              className="text-[var(--cl-blue)] hover:text-blue-700 text-sm"
+              // onClick={() => {
+              //   openModal("support");
+              //   reset();
+              // }}
+              onClick={openSupportModal}
+            >
+              {isSupportLoading && <LoadingSpinner />}
+              Contact Support
+            </span>
+          </div>
         </form>
-
-        <div className="flex gap-2.5 justify-center items-center mt-5">
-          <span className="text-[var(--cl-blue)] border-b border-[var(--cl-blue)] text-sm">
-            need help?
-          </span>
-          <span
-            className="text-[var(--cl-blue)] hover:text-blue-700 text-sm"
-            // onClick={() => {
-            //   openModal("support");
-            //   reset();
-            // }}
-            onClick={openSupportModal}
-          >
-            {isSupportLoading && <LoadingSpinner />}
-            Contact Support
-          </span>
-        </div>
-
         {activeModal === "error" && (
           <MobileError
             onClose={closeModalAndReset}
