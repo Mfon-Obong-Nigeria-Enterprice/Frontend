@@ -37,16 +37,16 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormInputs) => {
     try {
-      await login(data.username, data.password);
-      const { user } = useAuthStore.getState();
+      const user = await login(data.username, data.password);
+      // const { user } = useAuthStore.getState();
 
-      if (!user || !user.role) {
-        throw new Error("User info is missing after login");
+      if (!user.role) {
+        throw new Error("User role is missing after login");
       }
 
       // toast.success(`Welcome back, ${user.user || "User"}!`);
       // Normalize the role to handle any case or whitespace issues
-      const normalizedRole = user.role?.toString().trim().toUpperCase();
+      const normalizedRole = user.role.toString().trim().toUpperCase();
 
       switch (normalizedRole) {
         case "SUPER_ADMIN":
@@ -74,7 +74,7 @@ const Login = () => {
           throw new Error(`Unknown user role: ${user.role}`);
       }
 
-      toast.success("Login Successful!");
+      toast.success(`Welcome back, ${user.name || "User"}!`);
     } catch (error) {
       console.error("Login failed", error);
       openModal("error");
@@ -111,7 +111,7 @@ const Login = () => {
           <input
             type="text"
             {...register("username")}
-            placeholder="Username"
+            placeholder="Email address"
             aria-invalid={!!formErrors.username}
             className={`bg-transparent border px-4 py-3 rounded-[0.625rem] text-base w-full ${
               formErrors.username

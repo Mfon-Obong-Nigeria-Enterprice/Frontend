@@ -1,4 +1,3 @@
-import localforage from "localforage";
 import api from "./baseApi";
 import type { Transaction } from "@/types/transactions";
 import type { Period } from "@/types/revenue";
@@ -11,13 +10,8 @@ import type { TransactionCreate } from "@/types/transactions";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 export const getAllTransactions = async (): Promise<Transaction[]> => {
-  const token = await localforage.getItem<string>("access_token");
-  if (!token) throw new Error("No access token found");
-
   try {
-    const response = await api.get("/transactions", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await api.get("/transactions");
     return response.data;
   } catch (error) {
     handleApiError(error, "Error fetching products");
@@ -57,9 +51,6 @@ export const createTransaction = async (
   clientId: string,
   transaction: CreateTransactionPayload
 ): Promise<ClientWithTransactions> => {
-  const token = await localforage.getItem<string>("access_token");
-  if (!token) throw new Error("No access token found");
-
   try {
     //handling payment transactions specifically
     const payload =
@@ -76,10 +67,7 @@ export const createTransaction = async (
         : transaction;
     const response = await api.post<ClientWithTransactions>(
       `/clients/${clientId}/transactions`,
-      payload,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
+      payload
     );
     console.log("Transaction created:", response.data);
     return response.data;
