@@ -30,7 +30,7 @@ import AdminInventory from "@/features/dashboard/admin/AdminInventory";
 import Clients from "@/features/dashboard/admin/Clients";
 import DashboardSales from "@/features/dashboard/admin/DashboardSales";
 import DashboardTransactions from "@/features/dashboard/admin/DashboardTransactions";
-import DashboardSettings from "@/features/dashboard/admin/DashboardSettings";
+import { DashboardSettings } from "@/features/dashboard/admin/DashboardSettings";
 
 // staff
 import StaffDashboardLayout from "@/layout/StaffDashboardLayout";

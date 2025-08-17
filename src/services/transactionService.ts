@@ -4,7 +4,7 @@ import type { Period } from "@/types/revenue";
 import { handleApiError } from "./errorhandler";
 import type {
   CreateTransactionPayload,
-  ClientWithTransactions,
+  // ClientWithTransactions,
 } from "@/types/types";
 import type { TransactionCreate } from "@/types/transactions";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -37,6 +37,14 @@ export const AddTransaction = async (
 
     throw error;
   }
+};
+
+type ClientWithTransactions = {
+  // Define the structure here or import from the correct file if it exists elsewhere
+  // Example:
+  id: string;
+  name: string;
+  transactions: Transaction[];
 };
 
 export const createTransaction = async (

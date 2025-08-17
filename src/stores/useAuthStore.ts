@@ -13,7 +13,7 @@ type AuthState = {
 
   setAccessToken: (token: string | null) => void;
   setUser: (user: User | null) => void;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   initializeAuth: () => Promise<void>;
 };
@@ -49,6 +49,7 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             loading: false,
           });
+          return user;
         } catch (error) {
           console.error("Login failed", error);
           set({ loading: false });

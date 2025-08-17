@@ -5,13 +5,13 @@ import { type AxiosError } from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod"; // Add this import
 import { categorySchema } from "@/schemas/categorySchema";
-import { type CategoryData } from "@/types/types";
+import { type Category } from "@/types/types";
 import { createCategory } from "@/services/categoryService";
 import TagInput from "../TagInput";
 import InputField from "../InputField";
 import { Button } from "../ui/button";
-// import { toast } from "sonner";
 import { toast } from "react-toastify";
 import LoadingSpinner from "../LoadingSpinner";
 
@@ -19,16 +19,21 @@ type Props = {
   closeBothModals: () => void;
 };
 
+// Create a type from the schema for better type safety
+type CategoryFormData = z.infer<typeof categorySchema>;
+
 const AddCategory = ({ closeBothModals }: Props) => {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Use CategoryFormData for the form type
   const {
     register,
     handleSubmit,
     control,
     formState: { errors },
     reset,
-  } = useForm<CategoryData>({
+  } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
     mode: "onBlur",
     defaultValues: {
@@ -38,20 +43,17 @@ const AddCategory = ({ closeBothModals }: Props) => {
     },
   });
 
-  const onSubmit = async (data: CategoryData) => {
+  const onSubmit = async (data: CategoryFormData) => {
     setIsLoading(true);
     try {
-      await createCategory(data);
-      // invalidate the categories query so it's refetched automatically
+      await createCategory(data as Category);
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-
       toast.success("Category created successfully");
       reset();
       closeBothModals();
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
-      const message =
-        err?.response?.data.message || "Failed to create category";
+      const message = err?.response?.data.message || "Failed to create category";
       toast.error(message);
       console.error("API Error:", error);
     } finally {
@@ -66,7 +68,6 @@ const AddCategory = ({ closeBothModals }: Props) => {
       </h3>
 
       <div className="flex flex-col gap-5 lg:grid lg:grid-cols-2 mt-6 border border-[#D9D9D9] p-4 rounded-[0.625rem]">
-        {/* Category name */}
         <div>
           <InputField
             label="Category name"
@@ -78,7 +79,6 @@ const AddCategory = ({ closeBothModals }: Props) => {
           />
         </div>
 
-        {/* Units (Tag input) */}
         <div>
           <label className="block mb-3 font-Inter font-normal text-[var(--cl-text-gray)] text-sm">
             Measurement Units
@@ -104,7 +104,6 @@ const AddCategory = ({ closeBothModals }: Props) => {
           />
         </div>
 
-        {/* Optional Description */}
         <div className="md:col-span-2">
           <InputField
             label="Description (Optional)"
@@ -117,7 +116,6 @@ const AddCategory = ({ closeBothModals }: Props) => {
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex justify-end items-center gap-4 mt-6">
         <div className="w-full lg:w-[30%]">
           <Button
@@ -130,7 +128,7 @@ const AddCategory = ({ closeBothModals }: Props) => {
         </div>
         <div className="w-full lg:w-[30%]">
           <Button type="submit" disabled={isLoading}>
-            Add Category
+            {isLoading ? "Creating..." : "Add Category"}
           </Button>
         </div>
       </div>
@@ -140,25 +138,3 @@ const AddCategory = ({ closeBothModals }: Props) => {
 };
 
 export default AddCategory;
-
-//   const onSubmit = async () => {
-//     // const onSubmit = async (data: CategoryData) => {
-//     // const duplicate = categories.some(
-//     //   (cat) =>
-//     //     cat.categoryName.toLowerCase() === data.categoryName.toLowerCase()
-//     // );
-//     // if (duplicate) {
-//     //   alert("This category already exists!");
-//     //   return;
-//     // }
-//     // addCategory(data);
-//     try {
-//       await createCategory();
-//       // await createCategory(data);
-//       alert("Product created successfully");
-//       reset();
-//     } catch (error) {
-//       alert("Failed to create category");
-//       console.error(error);
-//     }
-//   };
