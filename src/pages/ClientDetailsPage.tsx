@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { useNavigate } from "react-router-dom";
@@ -82,6 +82,22 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   }, [clients, clientId]);
   //
 
+  // Fix auto-scroll issue
+  useEffect(() => {
+    // Prevent auto-scroll on page load
+    const preventAutoScroll = () => {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    };
+
+    // Run immediately
+    preventAutoScroll();
+
+    // Also run after a short delay to catch any delayed scrolling
+    const timeoutId = setTimeout(preventAutoScroll, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [clientId]); //reruns when clientId changes
+
   const clientTransactions = useMemo(() => {
     if (!clientId) return [];
     let filtered = mergedTransactions.filter((t) => t.client?._id === clientId);
@@ -92,7 +108,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         purchase: "PURCHASE",
         "pick-up": "PICKUP",
         pickup: "PICKUP",
-        deposit: "DEPOSIT",
       };
 
       const filterType = typeMap[transactionTypeFilter];
@@ -233,7 +248,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       </header>
 
       {/* main content */}
-      <main className="grid gap-3 bg-[#F5F5F5] py-5 px-12 grid-cols-1  lg:grid-cols-5">
+      <main className="grid gap-3 bg-[#F5F5F5] py-5 px-3 md:px-9 grid-cols-1  lg:grid-cols-5">
         {/* section by the left */}
         <div className=" lg:col-span-2">
           <ClientDetailInfo client={client} />
@@ -249,12 +264,12 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
             <TabsContent value="clientTransaction">
               {/* data */}
-              <div className=" flex justify-start items-center flex-wrap w-full gap-4 md:gap-2  lg:gap-4 mb-10">
-                <div className="flex flex-col sm:w-[230px] md:w-[190px] transition-all w-full ">
+              <div className=" flex justify-start items-center flex-wrap w-full gap-4 md:gap-1  lg:gap-4 mb-10">
+                <div className="flex flex-col sm:w-[230px] md:w-[210px] transition-all w-full ">
                   <label className="text-xs font-medium text-gray-600 ">
                     Date from
                   </label>
-                  <div className="relative sm:w-[230px] md:w-[190px] transition-all w-full  border rounded-lg p-[6px]">
+                  <div className="relative sm:w-[230px] md:w-[210px] transition-all w-full  border rounded-lg p-[6px]">
                     <CustomDatePicker
                       selected={dateFrom}
                       onChange={setDateFrom}
@@ -277,11 +292,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:w-[230px] md:w-[190px] transition-all w-full   ">
+                <div className="flex flex-col sm:w-[230px] md:w-[210px] transition-all w-full   ">
                   <label className="text-xs font-medium text-gray-600">
                     Date to
                   </label>
-                  <div className="relative sm:w-[230px] md:w-[190px] transition-all w-full border rounded-lg p-[6px] ">
+                  <div className="relative sm:w-[230px] md:w-[210px] transition-all w-full border rounded-lg p-[6px] ">
                     <CustomDatePicker
                       selected={dateTo}
                       onChange={setDateTo}
@@ -304,7 +319,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                   </div>
                 </div>
 
-                <div className="flex flex-col  sm:w-[230px] md:w-[190px] transition-all w-full ">
+                <div className="flex flex-col  sm:w-[230px] md:w-[210px] transition-all w-full ">
                   <label className="text-xs font-medium text-gray-600">
                     Transaction type
                   </label>
@@ -312,24 +327,23 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                     value={transactionTypeFilter}
                     onValueChange={setTransactionTypeFilter}
                   >
-                    <SelectTrigger className="  sm:w-[240px] md:w-[190px] transition-all w-full">
+                    <SelectTrigger className="  sm:w-[240px] md:w-[210px] transition-all w-full">
                       <SelectValue placeholder="All Transactions" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All transactions</SelectItem>
                       <SelectItem value="purchase">Purchase</SelectItem>
                       <SelectItem value="pick-up">Pick-up</SelectItem>
-                      <SelectItem value="deposit">Deposit</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="flex flex-col  sm:w-[230px] md:w-[190px] transition-all w-full">
+                <div className="flex flex-col  sm:w-[230px] md:w-[210px] transition-all w-full">
                   <label className="text-xs font-medium text-gray-600">
                     Staff member
                   </label>
                   <Select value={staffFilter} onValueChange={setStaffFilter}>
-                    <SelectTrigger className="  sm:w-[230px] md:w-[190px] transition-all w-full">
+                    <SelectTrigger className="  sm:w-[230px] md:w-[210px] transition-all w-full">
                       <SelectValue placeholder="All Staff" />
                     </SelectTrigger>
                     <SelectContent>
@@ -343,9 +357,9 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                   </Select>
                 </div>
 
-                <div className="flex flex-col pt-0 sm:pt-4 items-center sm:w-[230px] md:w-[190px] transition-all w-full">
+                <div className="flex flex-col pt-0 sm:pt-4 items-center sm:w-[230px] md:w-[210px] transition-all w-full">
                   <Button
-                    className="  bg-[#2ECC71] hover:bg-[#27ae60] text-white font-medium  sm:w-[230px] md:w-[190px] transition-all w-full "
+                    className="  bg-[#2ECC71] hover:bg-[#27ae60] text-white font-medium  sm:w-[230px] md:w-[210px] transition-all w-full "
                     onClick={handleApplyFilters}
                   >
                     Apply filters

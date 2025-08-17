@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import Stats from "../shared/Stats";
 import type { StatCard } from "@/types/stats";
+import ClientDirectoryMobile from "../shared/mobile/ClientDirectoryMobile";
 
 const ManagerClients = () => {
   const {
@@ -322,6 +323,13 @@ const ManagerClients = () => {
           <ClientDirectory
             searchTerm={searchTerm}
             filteredClientsData={filteredClients}
+            actionLabel="view"
+            isStaffView={false}
+          />
+          <ClientDirectoryMobile
+            searchTerm={searchTerm}
+            filteredClientsData={filteredClients}
+            // onClientAction={onClientAction}
             actionLabel="view"
             isStaffView={false}
           />

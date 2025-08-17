@@ -56,6 +56,13 @@ type TransactionState = {
     percentage: number;
     direction: "increase" | "decrease" | "no-change";
   };
+
+  getTodaysTransactionCount: () => number;
+  getYesterdaysTransactionCount: () => number;
+  getTodaysTransactionCountPercentageChange: () => {
+    percentage: number;
+    direction: "increase" | "decrease" | "no-change";
+  };
 };
 
 // Helper function to get start of week (Monday)
@@ -179,7 +186,8 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt).toDateString();
-        return t.type === "DEPOSIT" && transactionDate === today;
+        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+        return t.type === "PURCHASE" && transactionDate === today;
       })
       .reduce((total, t) => {
         // Handle multiple possible amount fields with fallbacks
@@ -197,7 +205,8 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt).toDateString();
-        return t.type === "DEPOSIT" && transactionDate === yesterday;
+        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+        return t.type === "PURCHASE" && transactionDate === yesterday;
       })
       .reduce((total, t) => {
         // Handle multiple possible amount fields with fallbacks
@@ -213,6 +222,39 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return calculatePercentageChange(todaysSales, yesterdaysSales);
   },
 
+  // Get today's transaction count
+  getTodaysTransactionCount: () => {
+    const { transactions } = get();
+    if (!transactions) return 0;
+
+    const today = new Date().toDateString();
+
+    return transactions.filter((t) => {
+      const transactionDate = new Date(t.createdAt).toDateString();
+      return transactionDate === today;
+    }).length;
+  },
+
+  // Get yesterday's transaction count
+  getYesterdaysTransactionCount: () => {
+    const { transactions } = get();
+    if (!transactions) return 0;
+
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString();
+
+    return transactions.filter((t) => {
+      const transactionDate = new Date(t.createdAt).toDateString();
+      return transactionDate === yesterday;
+    }).length;
+  },
+
+  // Calculate percentage change in today's transactions vs yesterday
+  getTodaysTransactionCountPercentageChange: () => {
+    const todaysCount = get().getTodaysTransactionCount();
+    const yesterdaysCount = get().getYesterdaysTransactionCount();
+    return calculatePercentageChange(todaysCount, yesterdaysCount);
+  },
+
   // Weekly sales functions
   getThisWeekSales: () => {
     const { transactions } = get();
@@ -225,8 +267,9 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt);
+        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
         return (
-          t.type === "DEPOSIT" &&
+          t.type === "PURCHASE" &&
           isDateInRange(transactionDate, startOfWeek, endOfWeek)
         );
       })
@@ -249,8 +292,9 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt);
+        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
         return (
-          t.type === "DEPOSIT" &&
+          t.type === "PURCHASE" &&
           isDateInRange(transactionDate, lastWeekStart, lastWeekEnd)
         );
       })
@@ -278,8 +322,9 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt);
+        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
         return (
-          t.type === "DEPOSIT" &&
+          t.type === "PURCHASE" &&
           isDateInRange(transactionDate, startOfMonth, endOfMonth)
         );
       })
@@ -300,8 +345,9 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt);
+        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
         return (
-          t.type === "DEPOSIT" &&
+          t.type === "PURCHASE" &&
           isDateInRange(transactionDate, startOfLastMonth, endOfLastMonth)
         );
       })
@@ -354,14 +400,18 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
 
   getTodaysPayments: () => {
     const { transactions } = get();
-    if (!transactions) return 0;
+    if (!transactions || transactions.length === 0) return 0;
 
     const today = new Date().toDateString();
 
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt).toDateString();
-        return t.type === "DEPOSIT" && transactionDate === today;
+        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+        return (
+          (t.type === "PURCHASE" || t.type === "DEPOSIT") &&
+          transactionDate === today
+        );
       })
       .reduce((total, t) => {
         const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
@@ -379,7 +429,8 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt).toDateString();
-        return t.type === "DEPOSIT" && transactionDate === yesterday;
+        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+        return t.type === "PURCHASE" && transactionDate === yesterday;
       })
       .reduce((total, t) => {
         const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
@@ -406,8 +457,9 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt);
+        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
         return (
-          t.type === "DEPOSIT" &&
+          t.type === "PURCHASE" &&
           isDateInRange(transactionDate, startOfWeek, endOfWeek)
         );
       })
@@ -431,8 +483,9 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt);
+        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
         return (
-          t.type === "DEPOSIT" &&
+          t.type === "PURCHASE" &&
           isDateInRange(transactionDate, lastWeekStart, lastWeekEnd)
         );
       })
@@ -461,8 +514,9 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt);
+        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
         return (
-          t.type === "DEPOSIT" &&
+          t.type === "PURCHASE" &&
           isDateInRange(transactionDate, startOfMonth, endOfMonth)
         );
       })
@@ -484,8 +538,9 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt);
+        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
         return (
-          t.type === "DEPOSIT" &&
+          t.type === "PURCHASE" &&
           isDateInRange(transactionDate, startOfLastMonth, endOfLastMonth)
         );
       })

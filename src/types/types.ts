@@ -76,6 +76,7 @@ export interface paymentTransactionPayload extends BaseTransactionPayload {
   amount: number;
   paymentMethod: string;
   reference: string;
+  amountPaid?: number; // Optional, used for payments
 }
 
 // Payload for purchase/pickup transactions

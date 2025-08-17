@@ -16,34 +16,34 @@ import { Button } from "@/components/ui/button";
 import { useClientStats } from "@/hooks/useClientStats";
 import { useClientStore } from "@/stores/useClientStore";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
+import { getChangeText } from "@/utils/helpersfunction";
 
 const ManagerDashboardOverview = () => {
-  const { getTodaysSales, getSalesPercentageChange } = useTransactionsStore();
+  const { getTodaysSales, getWeeklySalesPercentageChange } =
+    useTransactionsStore();
   const { growthPercent } = useClientStats();
   const { getOutStandingBalanceData } = useClientStore();
   const todaysSales = getTodaysSales();
   const outstandingBalance = getOutStandingBalanceData();
-  const { percentage, direction } = getSalesPercentageChange();
+  const weeklyChange = getWeeklySalesPercentageChange();
 
-  // Create the sales change text (assuming StatVslue expects string)
-  const getSalesChangeText = () => {
-    switch (direction) {
-      case "increase":
-        return `↑ +${percentage}% from yesterday`;
-      case "decrease":
-        return `↓ -${Math.abs(percentage)}% from yesterday`;
-      default:
-        return `0% from yesterday`;
-    }
-  };
   const navigate = useNavigate();
 
   const stats: StatCard[] = [
     {
       heading: "Total Sales (Today)",
       salesValue: `₦${todaysSales.toLocaleString()}`,
-      statValue: getSalesChangeText(),
-      color: "green",
+      statValue: getChangeText(
+        weeklyChange.percentage,
+        weeklyChange.direction,
+        "week"
+      ),
+      color:
+        weeklyChange.direction === "increase"
+          ? "green"
+          : weeklyChange.direction === "decrease"
+          ? "red"
+          : "orange",
     },
     {
       heading: "Monthly Revenue",

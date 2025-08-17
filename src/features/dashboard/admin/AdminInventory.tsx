@@ -13,7 +13,7 @@ import { useInventoryStore } from "@/stores/useInventoryStore";
 
 import { IoIosArrowUp, IoIosSearch } from "react-icons/io";
 import { CiImport } from "react-icons/ci";
-import { Plus, ChevronRight, RotateCcw } from "lucide-react";
+import { Plus, ChevronRight, RotateCcw, MoreVertical } from "lucide-react";
 
 import type { Product } from "@/types/types";
 import {
@@ -34,6 +34,13 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 import UpdateStock from "./components/UpdateStock";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 const AdminInventory = () => {
   const navigate = useNavigate();
@@ -262,11 +269,12 @@ const AdminInventory = () => {
         description="Manage your products and categories"
       />
       <section className="bg-white xl:rounded-xl mt-5">
-        <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center py-5 px-4 sm:px-5 bg-[#f0f0f3] border-b border-[#d9d9d9] md:border-0">
+        <div className="flex  gap-4 justify-between items-center py-5 px-4 sm:px-5 bg-[#f0f0f3] border-b border-[#d9d9d9] md:border-0">
           <h3 className="text-xl font-medium text-text-dark">
             Product & Categories
           </h3>
-          <div className="flex gap-4">
+          {/*  */}
+          <div className="hidden lg:flex items-center gap-3 pt-5 lg:pt-0">
             <Popover>
               <PopoverTrigger asChild>
                 <button className="w-40 bg-white text-[#333333] flex gap-1.5 items-center justify-center rounded-md py-2 px-4 border border-[#7d7d7d]">
@@ -305,6 +313,57 @@ const AdminInventory = () => {
               <CiImport size={24} />
               <span>Import Stock</span>
             </button>
+          </div>
+          {/*  */}
+          <div className="lg:hidden pt-5 lg:pt-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)]"
+                >
+                  <MoreVertical className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-48 bg-white border border-[#D9D9D9] shadow-lg"
+              >
+                <div className="flex flex-col gap-1 p-1">
+                  <DropdownMenuItem
+                    onClick={handleExportPDF}
+                    className="cursor-pointer hover:bg-[#f5f5f5] focus:bg-[#f5f5f5] p-3 rounded-md w-full text-left px-4 py-2 "
+                  >
+                    <span className="text-[#333333] font-Inter font-medium">
+                      Export as PDF
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={handleExportExcel}
+                    className="cursor-pointer hover:bg-[#f5f5f5] focus:bg-[#f5f5f5] p-3 rounded-md  w-full text-left px-4 py-2"
+                  >
+                    <span className="text-[#333333] font-Inter font-medium ">
+                      Export as Excel
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={handleOpenModal}
+                    className="w-full bg-white text-[#333333] flex gap-1.5 items-center rounded-md py-2 px-4 border border-[#7d7d7d]"
+                  >
+                    <RotateCcw size={24} />
+                    Update Stock
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => navigate("/import-stock")}
+                    className="w-full bg-white text-[#333333] flex gap-1.5 items-center rounded-md py-2 px-4 border border-[#7d7d7d]"
+                  >
+                    <CiImport size={24} />
+                    <span>Import Stock</span>
+                  </DropdownMenuItem>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 

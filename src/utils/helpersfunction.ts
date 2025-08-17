@@ -58,3 +58,37 @@ export const getTypeStyles = (type: string) => {
       return "bg-gray-100 text-gray-300 border border-gray-300";
   }
 };
+
+// Helper function to create change text
+export const getChangeText = (
+  percentage: number,
+  direction: string,
+  period: string
+) => {
+  switch (direction) {
+    case "increase":
+      return `↑ ${percentage}% from last ${period}`;
+    case "decrease":
+      return `↓ ${Math.abs(percentage)}% from last ${period}`;
+    default:
+      return `0% from last ${period}`;
+  }
+};
+
+// Format change text helper
+export const formatChangeText = (
+  change: {
+    percentage: number;
+    direction: "increase" | "decrease" | "no-change";
+  },
+  period: string
+) => {
+  switch (change.direction) {
+    case "increase":
+      return `↑${change.percentage}% more than ${period}`;
+    case "decrease":
+      return `↓${change.percentage}% less than ${period}`;
+    default:
+      return `—No change from ${period}`;
+  }
+};

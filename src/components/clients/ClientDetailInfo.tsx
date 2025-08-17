@@ -40,7 +40,7 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
             {client.name ?? "Unknown"}
           </p>
           <div
-            className={`flex flex-col justify-center gap-1 min-h-18 border-l-4 text-xs py-1.5 px-3 rounded-[8px] ${balanceClass(
+            className={`flex flex-col items-start gap-1 min-h-18 border-l-4 text-xs py-6 px-3 rounded-[8px] ${balanceClass(
               client.balance
             )}
                  
