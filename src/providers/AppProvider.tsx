@@ -5,12 +5,12 @@ import { getAllCategories } from "@/services/categoryService";
 import { getAllClients } from "@/services/clientService";
 import { getAllTransactions } from "@/services/transactionService";
 import { getAllBranches } from "@/services/branchService";
-// import { getAllUsers } from "@/services/userService";
+import { getAllUsers } from "@/services/userService";
 import { useInventoryStore } from "@/stores/useInventoryStore";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { useClientStore } from "@/stores/useClientStore";
 import { useBranchStore } from "@/stores/useBranchStore";
-// import { useUserStore } from "@/stores/useUserStore";
+import { useUserStore } from "@/stores/useUserStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
@@ -22,6 +22,7 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   const setTransactions = useTransactionsStore(
     (state) => state.setTransactions
   );
+  const setUsers = useUserStore((state) => state.setUsers);
   const setClients = useClientStore((state) => state.setClients);
   const setBranches = useBranchStore((state) => state.setBranches);
 
@@ -48,7 +49,13 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   const branchesQuery = useQuery({
     queryKey: ["branches"],
     queryFn: getAllBranches,
-    enabled: user?.role !== "STAFF",
+    enabled: user?.role !== "STAFF" && user?.role !== "ADMIN",
+  });
+
+  const usersQuery = useQuery({
+    queryKey: ["clients"],
+    queryFn: getAllUsers,
+    enabled: user?.role !== "STAFF" && user?.role !== "ADMIN",
   });
 
   // Sync immediately when data is successfully fetched
@@ -80,12 +87,23 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
     if (
       branchesQuery.data &&
       branchesQuery?.data?.length > 0 &&
-      user?.role !== "STAFF"
+      user?.role !== "STAFF" &&
+      user?.role !== "ADMIN"
     ) {
       setBranches(branchesQuery.data);
     }
   }, [branchesQuery.dataUpdatedAt, setBranches, user?.role]);
 
+  useEffect(() => {
+    if (
+      usersQuery.data &&
+      usersQuery.data.length > 0 &&
+      user?.role !== "STAFF" &&
+      user?.role !== "ADMIN"
+    ) {
+      setUsers(usersQuery.data);
+    }
+  }, [usersQuery.dataUpdatedAt, setUsers]);
   return <>{children}</>;
 };
 

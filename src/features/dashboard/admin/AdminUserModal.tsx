@@ -33,12 +33,12 @@ const passwordSchema = z
   });
 
 type AdminData = {
-  _id: string; 
+  _id?: string;
   email: string;
   lastLogin: string;
   userRole: string;
   adminName: string;
-  profilePicture?: string; 
+  profilePicture?: string;
 };
 
 type AdminUserModalProps = {
@@ -62,12 +62,11 @@ export default function AdminUserModal({
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-
   useEffect(() => {
-  if (open) {
-    console.log("📂 Admin Data when modal opens:", adminData);
-  }
-}, [open, adminData]);
+    if (open) {
+      console.log("📂 Admin Data when modal opens:", adminData);
+    }
+  }, [open, adminData]);
 
   const passwordForm = useForm<z.infer<typeof passwordSchema>>({
     resolver: zodResolver(passwordSchema),
@@ -78,55 +77,58 @@ export default function AdminUserModal({
     },
   });
 
-const handlePasswordSubmit = async (values: z.infer<typeof passwordSchema>) => {
-  try {
-    setIsLoading(true);
+  const handlePasswordSubmit = async (
+    values: z.infer<typeof passwordSchema>
+  ) => {
+    try {
+      setIsLoading(true);
 
-    const payload = {
-      previousPassword: values.previousPassword,
-      newPassword: values.newPassword,
-    };
+      const payload = {
+        previousPassword: values.previousPassword,
+        newPassword: values.newPassword,
+      };
 
-    // Add request logging
-    console.log('Sending payload:', payload);
-    
-    const response = await api.patch(`/users/${adminData._id}/update-password`, payload);
-    console.log('Response:', response);
-    // return response.data
+      // Add request logging
+      console.log("Sending payload:", payload);
 
-    toast.success("Password updated successfully");
-    passwordForm.reset();
-    onOpenChange(false);
+      const response = await api.patch(
+        `/users/${adminData._id}/update-password`,
+        payload
+      );
+      console.log("Response:", response);
+      // return response.data
 
-  } catch (error: any) {
-    console.error("Full error object:", error);
-    
-    if (error.response) {
-      console.error("Error response data:", error.response.data);
-      console.error("Error response status:", error.response.status);
-      console.error("Error response headers:", error.response.headers);
-      
-      if (error.response.status === 401) {
-        toast.error("Unauthorized: Invalid credentials or session expired");
-      } else if (error.response.data?.message) {
-        toast.error(error.response.data.message);
+      toast.success("Password updated successfully");
+      passwordForm.reset();
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error("Full error object:", error);
+
+      if (error.response) {
+        console.error("Error response data:", error.response.data);
+        console.error("Error response status:", error.response.status);
+        console.error("Error response headers:", error.response.headers);
+
+        if (error.response.status === 401) {
+          toast.error("Unauthorized: Invalid credentials or session expired");
+        } else if (error.response.data?.message) {
+          toast.error(error.response.data.message);
+        } else {
+          toast.error(
+            `Password update failed. Status: ${error.response.status}`
+          );
+        }
+      } else if (error.request) {
+        console.error("No response received:", error.request);
+        toast.error("No response from server. Please try again.");
       } else {
-        toast.error(`Password update failed. Status: ${error.response.status}`);
+        console.error("Request setup error:", error.message);
+        toast.error("Request error. Please check your connection.");
       }
-    } else if (error.request) {
-      console.error("No response received:", error.request);
-      toast.error("No response from server. Please try again.");
-    } else {
-      console.error("Request setup error:", error.message);
-      toast.error("Request error. Please check your connection.");
+    } finally {
+      setIsLoading(false);
     }
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-
-
+  };
 
   function handleDragOver(_event: DragEvent<HTMLDivElement>): void {
     throw new Error("Function not implemented.");
@@ -207,7 +209,6 @@ const handlePasswordSubmit = async (values: z.infer<typeof passwordSchema>) => {
             </div>
           </div>
 
-         
           <h3 className="text-sm font-semibold text-gray-800 mb-4">
             Change Password
           </h3>

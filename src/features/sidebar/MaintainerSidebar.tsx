@@ -6,6 +6,7 @@ import {
   UserRoundCog,
   // Settings,
   // CreditCard,
+  Bell,
   LogOut,
 } from "lucide-react";
 // import { HiMiniChartBar } from "react-icons/hi2";
@@ -35,6 +36,11 @@ const items = [
     title: "User Management",
     url: "#",
     icon: UserRoundCog,
+  },
+  {
+    title: "Notification",
+    url: "/maintainer/dashboard/maintainer-notifications",
+    icon: Bell,
   },
   // /manager/dashboard/manage-user
   // {
