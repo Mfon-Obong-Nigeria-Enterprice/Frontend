@@ -24,7 +24,19 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
   };
 
   return (
-    <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-5 px-3 md:px-0">
+    <section
+      className="gap-4 mt-2 px-3 md:px-0"
+      style={{
+        display: "grid",
+        gridTemplateColumns:
+          data.length <= 2
+            ? "repeat(auto-fit, minmax(250px, 1fr))"
+            : data.length === 3
+            ? "repeat(auto-fit, minmax(280px, 1fr))"
+            : "repeat(auto-fit, minmax(250px, 1fr))",
+        maxWidth: "100%",
+      }}
+    >
       {data.map((stat, index) => (
         <div
           key={index}
