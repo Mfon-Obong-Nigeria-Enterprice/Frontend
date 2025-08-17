@@ -11,6 +11,7 @@ import MobileError from "./MobileError";
 import SupportFeedback from "../../components/SupportFeedback";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "react-toastify";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 type LoginFormInputs = {
   username: string;
@@ -25,6 +26,7 @@ const Login = () => {
     null
   );
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [isSupportLoading, setIsSupportLoading] = useState<boolean>(false);
 
   const {
     register,
@@ -44,7 +46,6 @@ const Login = () => {
         throw new Error("User role is missing after login");
       }
 
-      // toast.success(`Welcome back, ${user.user || "User"}!`);
       // Normalize the role to handle any case or whitespace issues
       const normalizedRole = user.role.toString().trim().toUpperCase();
 
@@ -78,7 +79,19 @@ const Login = () => {
     } catch (error) {
       console.error("Login failed", error);
       openModal("error");
+      toast.error("Login Failed!");
     }
+  };
+
+  // function to set a loading spinner before oprning the support modal
+  const openSupportModal = () => {
+    setIsSupportLoading(true);
+
+    setTimeout(() => {
+      setIsSupportLoading(false);
+      openModal("support");
+      reset();
+    }, 2000); // 2 seconds
   };
 
   const openModal = (type: "error" | "support") => setActiveModal(type);
@@ -169,11 +182,13 @@ const Login = () => {
           </span>
           <span
             className="text-[var(--cl-blue)] hover:text-blue-700 text-sm"
-            onClick={() => {
-              openModal("support");
-              reset();
-            }}
+            // onClick={() => {
+            //   openModal("support");
+            //   reset();
+            // }}
+            onClick={openSupportModal}
           >
+            {isSupportLoading && <LoadingSpinner />}
             Contact Support
           </span>
         </div>
@@ -190,13 +205,6 @@ const Login = () => {
 
         {activeModal === "support" && <SupportFeedback onClose={closeModal} />}
       </section>
-
-      {/* ✅ Dev Role Switcher (only visible in development) */}
-      {/** {import.meta.env.DEV && (
-        <div className="mt-4">
-          <DevRoleSwitcher />
-        </div>
-      )}**/}
     </main>
   );
 };
