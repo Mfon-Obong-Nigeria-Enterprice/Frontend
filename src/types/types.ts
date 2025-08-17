@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { settingsSchema, updateSettingsSchema } from "@/schemas/SettingsSchemas";
+import {
+  settingsSchema,
+  updateSettingsSchema,
+} from "@/schemas/SettingsSchemas";
 
 // ==================== CORE TYPES ====================
 export type Role = "SUPER_ADMIN" | "MAINTAINER" | "ADMIN" | "STAFF";
@@ -48,6 +51,7 @@ export interface ApiResponse<T = unknown> {
 // ==================== AUTH TYPES ====================
 export interface User {
   _id: string;
+  id?: string;
   name: string;
   email: string;
   role: Role;
@@ -66,7 +70,6 @@ export interface LoginResponse {
 }
 
 export type TransactionType = "PURCHASE" | "PICKUP" | "DEPOSIT";
-
 
 // ==================== CLIENT TYPES ====================
 export interface TransactionItem {
@@ -116,8 +119,8 @@ export interface ProductTransactionPayload extends BaseTransactionPayload {
   }[];
 }
 
-export type CreateTransactionPayload = 
-  | PaymentTransactionPayload 
+export type CreateTransactionPayload =
+  | PaymentTransactionPayload
   | ProductTransactionPayload;
 
 // ==================== PRODUCT RELATED TYPES ====================
@@ -149,7 +152,7 @@ export interface InventoryState {
   searchQuery: string;
   selectedCategoryId: string;
   categoryUnits: string[];
-};
+}
 
 // sales for the barchart on admin dashboard
 export interface DailySales {
@@ -170,12 +173,14 @@ export type MonthlySales = {
 export const healthCheckSchema = z.object({
   status: z.enum(["up", "down", "critical"]),
   responseTime: z.number().optional(),
-  usage: z.object({
-    heapUsed: z.number().optional(),
-    heapTotal: z.number().optional(),
-    external: z.number().optional(),
-    rss: z.number().optional(),
-  }).optional(),
+  usage: z
+    .object({
+      heapUsed: z.number().optional(),
+      heapTotal: z.number().optional(),
+      external: z.number().optional(),
+      rss: z.number().optional(),
+    })
+    .optional(),
   percentage: z.number().optional(),
 });
 
@@ -194,7 +199,9 @@ export const detailedHealthResponseSchema = z.object({
   }),
 });
 
-export type DetailedHealthResponse = z.infer<typeof detailedHealthResponseSchema>;
+export type DetailedHealthResponse = z.infer<
+  typeof detailedHealthResponseSchema
+>;
 
 export interface HealthState {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -216,7 +223,7 @@ export interface HealthState {
 }
 
 // src/features/notifications/types.ts
-export type NotificationType = 'info' | 'alert' | 'message' | 'warning';
+export type NotificationType = "info" | "alert" | "message" | "warning";
 
 export interface Notification {
   id: string;

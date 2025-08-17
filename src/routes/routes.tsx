@@ -22,6 +22,7 @@ import ActivityLogPage from "@/pages/ActivityLogPage";
 // maintainer
 import MaintainerLayout from "@/layout/MaintainerLayout";
 import MaintainerDashboard from "@/features/dashboard/maintainer/MaintainerDashboard";
+import MaintainerNotification from "@/features/dashboard/maintainer/MaintainerNotification";
 
 // admin
 import AdminDashboardLayout from "@/layout/AdminDashboardLayout";
@@ -60,7 +61,7 @@ const router = createBrowserRouter([
           { path: "activity-log", element: <ActivityLogPage /> },
           { path: "revenue-analytics", element: <RevenueAnalytics /> },
           { path: "manage-user", element: <UserManagement /> },
-          { path: "manager-notifications", element: <ManagerNotifications/>},
+          { path: "manager-notifications", element: <ManagerNotifications /> },
           { path: "manager-settings", element: <ManagerSettings /> },
         ],
       },
@@ -73,6 +74,10 @@ const router = createBrowserRouter([
             element: <Navigate to="/maintainer/dashboard/overview" replace />,
           },
           { path: "overview", element: <MaintainerDashboard /> },
+          {
+            path: "maintainer-notifications",
+            element: <MaintainerNotification />,
+          },
         ],
       },
       {
