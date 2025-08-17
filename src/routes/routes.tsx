@@ -22,6 +22,7 @@ import ActivityLogPage from "@/pages/ActivityLogPage";
 // maintainer
 import MaintainerLayout from "@/layout/MaintainerLayout";
 import MaintainerDashboard from "@/features/dashboard/maintainer/MaintainerDashboard";
+import MaintainerNotification from "@/features/dashboard/maintainer/MaintainerNotification";
 
 // admin
 import AdminDashboardLayout from "@/layout/AdminDashboardLayout";
@@ -30,7 +31,7 @@ import AdminInventory from "@/features/dashboard/admin/AdminInventory";
 import Clients from "@/features/dashboard/admin/Clients";
 import DashboardSales from "@/features/dashboard/admin/DashboardSales";
 import DashboardTransactions from "@/features/dashboard/admin/DashboardTransactions";
-import DashboardSettings from "@/features/dashboard/admin/DashboardSettings";
+import { DashboardSettings } from "@/features/dashboard/admin/DashboardSettings";
 
 // staff
 import StaffDashboardLayout from "@/layout/StaffDashboardLayout";
@@ -39,6 +40,7 @@ import StaffSales from "@/features/dashboard/staff/StaffSales";
 import NewSales from "@/features/dashboard/staff/NewSales";
 import Stock from "@/features/dashboard/staff/Stock";
 import StaffClients from "@/features/dashboard/staff/StaffClients";
+import ManagerNotifications from "@/features/dashboard/manager/ManagerNotifications";
 
 const router = createBrowserRouter([
   {
@@ -59,6 +61,7 @@ const router = createBrowserRouter([
           { path: "activity-log", element: <ActivityLogPage /> },
           { path: "revenue-analytics", element: <RevenueAnalytics /> },
           { path: "manage-user", element: <UserManagement /> },
+          { path: "manager-notifications", element: <ManagerNotifications /> },
           { path: "manager-settings", element: <ManagerSettings /> },
         ],
       },
@@ -71,6 +74,10 @@ const router = createBrowserRouter([
             element: <Navigate to="/maintainer/dashboard/overview" replace />,
           },
           { path: "overview", element: <MaintainerDashboard /> },
+          {
+            path: "maintainer-notifications",
+            element: <MaintainerNotification />,
+          },
         ],
       },
       {
