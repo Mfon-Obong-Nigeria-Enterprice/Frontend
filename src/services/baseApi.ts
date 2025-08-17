@@ -1,52 +1,106 @@
 import axios, { type AxiosInstance } from "axios";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { toast } from "react-toastify";
+
+let isRefreshing = false;
+let failedQueue: {
+  resolve: (token: string) => void;
+  reject: (err: unknown) => void;
+}[] = [];
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token!);
+    }
+  });
+  failedQueue = [];
+};
 
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: { "Content-Type": "application/json" },
+  // withCredentials: true,
 });
 
-// Attach access token to every request
-api.interceptors.request.use(
-  (config) => {
-    const token = useAuthStore.getState().accessToken;
-    const user = useAuthStore.getState().user;
+// Attach access token + staff branchId
+api.interceptors.request.use((config) => {
+  const { accessToken, user } = useAuthStore.getState();
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
+  }
 
-    // If role is staff, add id
-    if (user?.role === "STAFF" && user.branchId) {
-      config.params = {
-        ...config.params,
-        branchId: user.branchId,
-      };
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+  if (user?.role === "STAFF" && user.branchId) {
+    config.params = {
+      ...config.params,
+      branchId: user.branchId,
+    };
+  }
 
-// Handle 401 errors (unauthorized)
-export const setupInterceptors = (navigate?: (path: string) => void) => {
-  api.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-      if (error.response?.status === 401) {
-        toast.error("Unauthorized. Logging out...");
-        await useAuthStore.getState().logout();
+  return config;
+});
 
-        if (navigate) {
-          navigate("/"); // SPA navigation
-        } else {
-          window.location.href = "/"; // Fallback
-        }
+// Handle 401 + auto refresh
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      const { refreshToken } = useAuthStore.getState();
+      if (!refreshToken) {
+        useAuthStore.getState().logout();
+        return Promise.reject(error);
       }
-      return Promise.reject(error);
+
+      if (isRefreshing) {
+        // Wait for the refresh to finish
+        return new Promise((resolve, reject) => {
+          failedQueue.push({
+            resolve: (token: string) => {
+              if (originalRequest.headers)
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve(api(originalRequest));
+            },
+            reject,
+          });
+        });
+      }
+
+      isRefreshing = true;
+
+      try {
+        // raw axios instance to avoid interceptor recursion
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/auth/refresh`,
+          { refresh_token: refreshToken },
+          { withCredentials: true }
+        );
+
+        const newToken = response.data.accessToken;
+        useAuthStore.getState().setAccessToken(newToken);
+
+        processQueue(null, newToken);
+
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        }
+        return api(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        useAuthStore.getState().logout();
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
-  );
-};
+
+    return Promise.reject(error);
+  }
+);
 
 export default api;

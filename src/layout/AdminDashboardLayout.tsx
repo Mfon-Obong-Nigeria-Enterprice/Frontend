@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/features/sidebar/AdminSidebar";
 // import { Suspense } from "react";
 import { AppProvider } from "@/providers/AppProvider";
+import { Toaster } from "sonner";
 // import LoadingSpinner from "@/components/LoadingSpinner";
 
 const AdminDashboardLayout = () => {
@@ -28,6 +29,7 @@ const AdminDashboardLayout = () => {
         </div>
         {/* </Suspense> */}
       </div>
+       <Toaster />
     </SidebarProvider>
   );
 };

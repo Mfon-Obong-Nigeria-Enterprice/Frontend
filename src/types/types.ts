@@ -1,19 +1,63 @@
-// @/types/types.ts
 import { z } from "zod";
-import { categorySchema } from "@/schemas/categorySchema"; // Assuming you have this schema
+import {
+  settingsSchema,
+  updateSettingsSchema,
+} from "@/schemas/SettingsSchemas";
 
-export type CategoryData = z.infer<typeof categorySchema>;
-
+// ==================== CORE TYPES ====================
 export type Role = "SUPER_ADMIN" | "MAINTAINER" | "ADMIN" | "STAFF";
 
+export interface PriceHistoryItem {
+  price: number;
+  date: string;
+  _id: string;
+}
+
+// ==================== SETTINGS TYPES ====================
+export type Settings = z.infer<typeof settingsSchema>;
+export type UpdateSettingsPayload = z.infer<typeof updateSettingsSchema>;
+
+// ==================== PRODUCT TYPES ====================
+export interface Product {
+  _id: string;
+  name: string;
+  categoryId: string | { _id: string; name: string; units: string[] };
+  minStockLevel: number;
+  stock: number;
+  unit: string;
+  unitPrice: number;
+  priceHistory?: PriceHistoryItem[];
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ==================== CATEGORY TYPE ====================
+export interface Category {
+  description: string | undefined;
+  _id: string;
+  name: string;
+  units: string[];
+}
+
+// ==================== API RESPONSE TYPE ====================
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  status: number;
+  message: string;
+  data: T;
+}
+
+// ==================== AUTH TYPES ====================
 export interface User {
-  id: string;
+  _id: string;
+  id?: string;
   name: string;
   email: string;
   role: Role;
   branch: string;
   branchId: string;
-  created_at: string;
+  createdAt: string;
 }
 
 export interface LoginResponse {
@@ -24,8 +68,18 @@ export interface LoginResponse {
     token: string;
   };
 }
-// This file defines the types used in the application, including user roles, setup data, and product categories.
+
 export type TransactionType = "PURCHASE" | "PICKUP" | "DEPOSIT";
+
+// ==================== CLIENT TYPES ====================
+export interface TransactionItem {
+  _id: string;
+  type: TransactionType;
+  amount: number;
+  description?: string;
+  date: string;
+  reference: string;
+}
 
 export interface Client {
   _id: string;
@@ -43,35 +97,12 @@ export interface Client {
   lastTransactionDate?: string;
 }
 
-export interface TransactionItem {
-  _id: string;
-  type: "PURCHASE" | "PICKUP" | "DEPOSIT";
-  amount: number;
-  description?: string;
-  date: string;
-  reference: string;
-}
-
-export interface ClientWithTransactions {
-  _id: string;
-  name: string;
-  phone: string;
-  email?: string;
-  address?: string;
-  balance: number;
-  transactions: TransactionItem[];
-  isActive: boolean;
-  isRegistered: boolean;
-  createdAt: string;
-  updatedAt: string;
-  lastTransactionDate?: string;
-}
 interface BaseTransactionPayload {
   type: TransactionType;
-  description?: string;
-  total: number;
 }
-export interface paymentTransactionPayload extends BaseTransactionPayload {
+
+// ==================== TRANSACTION PAYLOAD TYPES ====================
+export interface PaymentTransactionPayload extends BaseTransactionPayload {
   type: "DEPOSIT";
   amount: number;
   paymentMethod: string;
@@ -79,7 +110,6 @@ export interface paymentTransactionPayload extends BaseTransactionPayload {
   amountPaid?: number; // Optional, used for payments
 }
 
-// Payload for purchase/pickup transactions
 export interface ProductTransactionPayload extends BaseTransactionPayload {
   type: "PURCHASE" | "PICKUP";
   items: {
@@ -91,59 +121,18 @@ export interface ProductTransactionPayload extends BaseTransactionPayload {
 }
 
 export type CreateTransactionPayload =
-  | paymentTransactionPayload
+  | PaymentTransactionPayload
   | ProductTransactionPayload;
 
-export type Category = {
-  _id: string;
-  name: string;
-  units: string[]; // New field
-  description?: string;
-  isActive?: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type Product = {
-  _id: string; // Mongo ID
-  name: string;
-  categoryId: string | { _id: string; name: string; units: string[] }; // Can be string or object, with units
-  minStockLevel: number;
-  stock: number; // Current stock
-  unit: string;
-  unitPrice: number;
-  priceHistory?: Array<{
-    price: number;
-    date: string;
-    _id: string;
-  }>;
-  isActive: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-};
-
-export type UpdateStockProduct = Product & {
-  id: string; // Used for React keys and local identification in UpdateStock
-  newQuantity?: number; // The quantity being updated by the user
-  selected?: boolean; // For checkbox selection
-  category: string; // The category name, derived for display
-  shieldStatus: "high" | "low"; // Standardized to "high" | "low"
-};
-
-export type priceHistory = {
-  price: number;
-  date: string;
-  _id: string;
-};
-
-export type NewProduct = {
+// ==================== PRODUCT RELATED TYPES ====================
+export interface NewProduct {
   name: string;
   categoryId: string;
   unit: string;
   unitPrice: number;
   stock: number;
   minStockLevel: number;
-};
+}
 
 export type ProductImportRow = {
   "Product Name": string;
@@ -152,13 +141,19 @@ export type ProductImportRow = {
   "Price per unit": number | string;
 };
 
-export type InventoryState = {
+export interface ProductUpdatePricePayload {
+  productId: string;
+  newPrice: number;
+}
+
+// ==================== INVENTORY STATE TYPE ====================
+export interface InventoryState {
   products: Product[];
   categories: Category[];
   searchQuery: string;
   selectedCategoryId: string;
   categoryUnits: string[];
-};
+}
 
 // sales for the barchart on admin dashboard
 export interface DailySales {
@@ -175,3 +170,67 @@ export type MonthlySales = {
   month: string;
   sales: number;
 };
+
+export const healthCheckSchema = z.object({
+  status: z.enum(["up", "down", "critical"]),
+  responseTime: z.number().optional(),
+  usage: z
+    .object({
+      heapUsed: z.number().optional(),
+      heapTotal: z.number().optional(),
+      external: z.number().optional(),
+      rss: z.number().optional(),
+    })
+    .optional(),
+  percentage: z.number().optional(),
+});
+
+export const detailedHealthResponseSchema = z.object({
+  status: z.string(),
+  timestamp: z.string(),
+  uptime: z.number(),
+  checks: z.object({
+    database: healthCheckSchema,
+    memory: healthCheckSchema,
+    environment: z.object({
+      nodeVersion: z.string(),
+      platform: z.string(),
+      environment: z.string(),
+    }),
+  }),
+});
+
+export type DetailedHealthResponse = z.infer<
+  typeof detailedHealthResponseSchema
+>;
+
+export interface HealthState {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  fetchHealthData: any;
+  overallStatus: string;
+  metrics: {
+    database: number;
+    memory: number;
+  };
+  loading: boolean;
+  error: string | null;
+  timestamp: string;
+  uptime: number;
+  environment: {
+    nodeVersion: string;
+    platform: string;
+    environment: string;
+  };
+}
+
+// src/features/notifications/types.ts
+export type NotificationType = "info" | "alert" | "message" | "warning";
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  read: boolean;
+  date: Date;
+  type?: NotificationType;
+}

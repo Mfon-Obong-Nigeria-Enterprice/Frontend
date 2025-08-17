@@ -62,10 +62,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       if (response) {
         const newTransaction: Transaction = {
           userId: {
-            _id: user?.id || "",
+            _id: user?._id || "",
             name: user?.name || "",
           },
-          _id: response._id,
+          _id: response.id,
           type: "DEPOSIT" as const,
           status: "completed",
           items: [],
@@ -121,7 +121,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         type: "DEPOSIT",
         amount: Number(amount),
         total: Number(amount),
-        amountPaid: Number(amount),
         description: reference || "Payment received",
         paymentMethod,
         reference: `TXN${Date.now()}`,

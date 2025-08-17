@@ -1,16 +1,10 @@
-import localforage from "localforage";
 import api from "./baseApi";
 import { type AxiosError } from "axios";
 import { type Product, type NewProduct } from "@/types/types";
 
 export const getAllProducts = async (): Promise<Product[]> => {
-  const token = await localforage.getItem<string>("access_token");
-  if (!token) throw new Error("No access token found");
-
   try {
-    const response = await api.get("/products", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await api.get("/products");
 
     return response.data;
   } catch (error) {
