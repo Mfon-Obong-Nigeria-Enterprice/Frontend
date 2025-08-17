@@ -5,8 +5,8 @@ import UserDetailsPage from "@/pages/UserDetailsPage";
 import AddProduct from "@/components/inventory/AddProduct";
 import ClientDetailsPage from "@/pages/ClientDetailsPage";
 import ImportStockPage from "@/features/import/ImportStockPage";
-import RootInterceptorLayout from "@/layout/RootInterceptorLayout";
-import ErrorFallback from "@/components/ErrorFallback";
+// import RootInterceptorLayout from "@/layout/RootInterceptorLayout";
+// import ErrorFallback from "@/components/ErrorFallback";
 
 // manager (super admin)
 import ManagerDashboardLayout from "@/layout/ManagerDashboardLayout";
@@ -41,82 +41,76 @@ import Stock from "@/features/dashboard/staff/Stock";
 import StaffClients from "@/features/dashboard/staff/StaffClients";
 
 const router = createBrowserRouter([
+  { path: "/", element: <Login /> },
+
   {
-    element: <RootInterceptorLayout />,
-    errorElement: <ErrorFallback />,
+    path: "/manager/dashboard",
+    element: <ManagerDashboardLayout />,
     children: [
-      { path: "/", element: <Login /> },
-
-      {
-        path: "/manager/dashboard",
-        element: <ManagerDashboardLayout />,
-        children: [
-          { index: true, element: <Navigate to="m-overview" replace /> },
-          { path: "m-overview", element: <ManagerDashboardOverview /> },
-          { path: "business-report", element: <BusinessReport /> },
-          { path: "manage-clients", element: <ManagerClients /> },
-          { path: "manage-transactions", element: <ManagerTransactions /> },
-          { path: "activity-log", element: <ActivityLogPage /> },
-          { path: "revenue-analytics", element: <RevenueAnalytics /> },
-          { path: "manage-user", element: <UserManagement /> },
-          { path: "manager-settings", element: <ManagerSettings /> },
-        ],
-      },
-      {
-        path: "/maintainer/dashboard",
-        element: <MaintainerLayout />,
-        children: [
-          {
-            index: true,
-            element: <Navigate to="/maintainer/dashboard/overview" replace />,
-          },
-          { path: "overview", element: <MaintainerDashboard /> },
-        ],
-      },
-      {
-        path: "/admin/dashboard",
-        element: <AdminDashboardLayout />,
-        children: [
-          { index: true, element: <Navigate to="/overview" replace /> },
-          { path: "overview", element: <DashboardOverview /> },
-          { path: "inventory", element: <AdminInventory /> },
-          { path: "clients", element: <Clients /> },
-          { path: "sales", element: <DashboardSales /> },
-          { path: "transactions", element: <DashboardTransactions /> },
-          { path: "settings", element: <DashboardSettings /> },
-        ],
-      },
-      {
-        path: "/staff/dashboard",
-        element: <StaffDashboardLayout />,
-        children: [
-          { index: true, element: <Navigate to="/s-overview" replace /> },
-
-          { path: "s-stock", element: <Stock /> },
-          {
-            path: "s-clients",
-            element: <StaffClients />,
-          },
-          { path: "s-overview", element: <StaffDashboardOverview /> },
-          { path: "s-sales", element: <StaffSales /> },
-          { path: "new-sales", element: <NewSales /> },
-        ],
-      },
-      {
-        path: "add-prod",
-        element: <AddProduct />,
-      },
-      {
-        path: "clients/:clientId",
-        element: <ClientDetailsPage />,
-      },
-      { path: "import-stock", element: <ImportStockPage /> },
-      { path: "user-management/:userId", element: <UserDetailsPage /> },
-      {
-        path: "*",
-        element: <Notfound />,
-      },
+      { index: true, element: <Navigate to="m-overview" replace /> },
+      { path: "m-overview", element: <ManagerDashboardOverview /> },
+      { path: "business-report", element: <BusinessReport /> },
+      { path: "manage-clients", element: <ManagerClients /> },
+      { path: "manage-transactions", element: <ManagerTransactions /> },
+      { path: "activity-log", element: <ActivityLogPage /> },
+      { path: "revenue-analytics", element: <RevenueAnalytics /> },
+      { path: "manage-user", element: <UserManagement /> },
+      { path: "manager-settings", element: <ManagerSettings /> },
     ],
+  },
+  {
+    path: "/maintainer/dashboard",
+    element: <MaintainerLayout />,
+    children: [
+      {
+        index: true,
+        element: <Navigate to="/maintainer/dashboard/overview" replace />,
+      },
+      { path: "overview", element: <MaintainerDashboard /> },
+    ],
+  },
+  {
+    path: "/admin/dashboard",
+    element: <AdminDashboardLayout />,
+    children: [
+      { index: true, element: <Navigate to="/overview" replace /> },
+      { path: "overview", element: <DashboardOverview /> },
+      { path: "inventory", element: <AdminInventory /> },
+      { path: "clients", element: <Clients /> },
+      { path: "sales", element: <DashboardSales /> },
+      { path: "transactions", element: <DashboardTransactions /> },
+      { path: "settings", element: <DashboardSettings /> },
+    ],
+  },
+  {
+    path: "/staff/dashboard",
+    element: <StaffDashboardLayout />,
+    children: [
+      { index: true, element: <Navigate to="/s-overview" replace /> },
+
+      { path: "s-stock", element: <Stock /> },
+      {
+        path: "s-clients",
+        element: <StaffClients />,
+      },
+      { path: "s-overview", element: <StaffDashboardOverview /> },
+      { path: "s-sales", element: <StaffSales /> },
+      { path: "new-sales", element: <NewSales /> },
+    ],
+  },
+  {
+    path: "add-prod",
+    element: <AddProduct />,
+  },
+  {
+    path: "clients/:clientId",
+    element: <ClientDetailsPage />,
+  },
+  { path: "import-stock", element: <ImportStockPage /> },
+  { path: "user-management/:userId", element: <UserDetailsPage /> },
+  {
+    path: "*",
+    element: <Notfound />,
   },
 ]);
 

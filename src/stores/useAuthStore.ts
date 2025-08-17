@@ -1,86 +1,128 @@
 import { create } from "zustand";
-import localforage from "localforage";
+import { persist } from "zustand/middleware";
 import { type User } from "@/types/types";
 import * as authService from "@/services/authService";
 
 type AuthState = {
   user: User | null;
-  accessToken: string | null;
+  accessToken: string | null; // in-memory only
+  refreshToken: string | null; // persisted
   isAuthenticated: boolean;
   loading: boolean;
   isInitialized: boolean;
 
-  setAccessToken: (token: string) => void;
-  setUser: (user: User) => void;
+  setAccessToken: (token: string | null) => void;
+  setUser: (user: User | null) => void;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   initializeAuth: () => Promise<void>;
 };
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  accessToken: null,
-  isAuthenticated: false,
-  loading: false,
-  isInitialized: false,
+// global guard to prevent infinite logout loops
+let isLoggingOut = false;
 
-  setAccessToken: (token) => set({ accessToken: token }),
-  setUser: (user) => set({ user, isAuthenticated: true }),
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      isAuthenticated: false,
+      loading: false,
+      isInitialized: false,
 
-  login: async (email, password) => {
-    set({ loading: true });
-    try {
-      const { accessToken, user } = await authService.login(email, password);
-      set({ user, accessToken, isAuthenticated: true, loading: false });
-      await localforage.setItem("access_token", accessToken);
-      await localforage.setItem("user", user);
-    } catch (error) {
-      console.error("Login failed", error);
-      set({ loading: false });
-      throw error;
+      setAccessToken: (token) => set({ accessToken: token }),
+      setUser: (user) => set({ user, isAuthenticated: !!user }),
+
+      login: async (email, password) => {
+        set({ loading: true });
+        try {
+          const { accessToken, refreshToken, user } = await authService.login(
+            email,
+            password
+          );
+
+          set({
+            user,
+            accessToken,
+            refreshToken,
+            isAuthenticated: true,
+            loading: false,
+          });
+        } catch (error) {
+          console.error("Login failed", error);
+          set({ loading: false });
+          throw error;
+        }
+      },
+
+      logout: async () => {
+        if (isLoggingOut) return; // prevent recursion
+        isLoggingOut = true;
+
+        try {
+          await authService.logout();
+        } catch {
+          console.warn("Logout request failed, clearing store anyway.");
+        } finally {
+          set({
+            user: null,
+            accessToken: null,
+            refreshToken: null,
+            isAuthenticated: false,
+          });
+          isLoggingOut = false;
+        }
+      },
+
+      initializeAuth: async () => {
+        const { refreshToken } = get();
+
+        if (!refreshToken) {
+          set({ isInitialized: true });
+          return;
+        }
+
+        try {
+          const {
+            accessToken,
+            refreshToken: newRefresh,
+            user,
+          } = await authService.refreshToken(refreshToken);
+
+          set({
+            user,
+            accessToken,
+            refreshToken: newRefresh,
+            isAuthenticated: true,
+            isInitialized: true,
+          });
+        } catch (err) {
+          console.error("Failed to refresh on init:", err);
+
+          set({
+            user: null,
+            accessToken: null,
+            refreshToken: null,
+            isAuthenticated: false,
+            isInitialized: true,
+          });
+        }
+      },
+    }),
+    {
+      name: "auth-store",
+      partialize: (state) => ({
+        user: state.user,
+        refreshToken: state.refreshToken, // only persist these
+      }),
     }
-  },
+  )
+);
 
-  logout: async () => {
-    await authService.logout();
-    await localforage.removeItem("access_token");
-    await localforage.removeItem("user");
-    set({ user: null, accessToken: null, isAuthenticated: false });
-  },
-
-  // initialization
-  initializeAuth: async () => {
-    try {
-      const [savedToken, savedUser] = await Promise.all([
-        localforage.getItem<string>("access_token"),
-        localforage.getItem<User>("user"),
-      ]);
-
-      if (savedToken && savedUser) {
-        //validate token
-        set({
-          accessToken: savedToken,
-          user: savedUser,
-          isAuthenticated: true,
-          isInitialized: true,
-        });
-      } else {
-        set({ isInitialized: true });
-      }
-    } catch (error) {
-      console.error("Failed to initialize auth from storage:", error);
-      // Clear invalid data
-      await localforage.removeItem("access_token");
-      await localforage.removeItem("user");
-      set({
-        user: null,
-        accessToken: null,
-        isAuthenticated: false,
-        isInitialized: true,
-      });
-    }
-  },
-}));
-
-// Auto-initialize when store is created
-useAuthStore.getState().initializeAuth();
+// clear volatile tokens on reload, but don’t log out
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", () => {
+    useAuthStore.setState({ accessToken: null });
+  });
+}
