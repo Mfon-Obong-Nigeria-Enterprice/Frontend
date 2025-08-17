@@ -1,9 +1,9 @@
 /** @format */
 
 import DashboardTitle from "../shared/DashboardTitle";
-import ClientStats from "./components/ClientStats";
+// import ClientStats from "./components/ClientStats";
 import { Button } from "@/components/ui/button";
-import { Plus, Search } from "lucide-react";
+import { MoreVertical, Plus, Search } from "lucide-react";
 import ClientDirectory from "../shared/ClientDirectory";
 import { useState } from "react";
 import { AddClientDialog } from "./components/AddClientDialog";
@@ -23,6 +23,14 @@ import useClientFiltering, {
   type clientBalance,
   type clientStat,
 } from "@/hooks/useClientFiltering";
+import ClientStats from "./components/ClientStats";
+import ClientDirectoryMobile from "../shared/mobile/ClientDirectoryMobile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ClientProps {
   showExportButtons?: boolean;
@@ -34,6 +42,7 @@ export const Clients: React.FC<ClientProps> = ({
   onClientAction,
 }) => {
   const { clients } = useClientStore();
+
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -191,11 +200,93 @@ export const Clients: React.FC<ClientProps> = ({
         heading="Client Management"
         description="Manage client accounts & relationships"
       />
+
       <ClientStats />
 
       {/* client directory */}
       <section className="bg-white rounded-[0.625rem] pt-4 border border-[#D9D9D9] mt-10 mx-3 md:mx-1 ">
-        <div className="flex justify-between px-7 pt-5 flex-wrap">
+        <div className="flex justify-between items-center px-7 pt-5 flex-wrap">
+          <h4 className="font-medium text-xl font-Inter text-[#1E1E1E]">
+            Client directory
+          </h4>
+
+          {showExportButtons !== false && (
+            <>
+              {/* Desktop buttons - hidden on tablet and below */}
+              <div className="hidden lg:flex items-center gap-3 pt-5 lg:pt-0">
+                <Button
+                  className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
+                  onClick={handleExportPDF}
+                >
+                  Export PDF
+                </Button>
+                <Button
+                  className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
+                  onClick={handleExportExcel}
+                >
+                  Download Excel
+                </Button>
+                <Button
+                  onClick={() => setShowAddDialog(true)}
+                  className="bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)] transition-colors duration-200 ease-in-out"
+                >
+                  <Plus className="w-5 h-5 text-white mr-2" />
+                  Add Client
+                </Button>
+              </div>
+
+              {/* Mobile/Tablet dropdown menu - shown on tablet and below */}
+              <div className="lg:hidden pt-5 lg:pt-0">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)]"
+                    >
+                      <MoreVertical className="w-5 h-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48 bg-white border border-[#D9D9D9] shadow-lg"
+                  >
+                    <div className="flex flex-col gap-1 p-1">
+                      <DropdownMenuItem
+                        onClick={handleExportPDF}
+                        className="cursor-pointer hover:bg-[#f5f5f5] focus:bg-[#f5f5f5] p-3 rounded-md"
+                      >
+                        <span className="text-[#333333] font-Inter font-medium">
+                          Export PDF
+                        </span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={handleExportExcel}
+                        className="cursor-pointer hover:bg-[#f5f5f5] focus:bg-[#f5f5f5] p-3 rounded-md"
+                      >
+                        <span className="text-[#333333] font-Inter font-medium">
+                          Download Excel
+                        </span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setShowAddDialog(true)}
+                        className="cursor-pointer hover:bg-[#e8f5e8] focus:bg-[#e8f5e8] p-3 rounded-md"
+                      >
+                        <div className="flex items-center">
+                          <Plus className="w-4 h-4 text-[#2ECC71] mr-2" />
+                          <span className="text-[#2ECC71] font-Inter font-medium">
+                            Add Client
+                          </span>
+                        </div>
+                      </DropdownMenuItem>
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </>
+          )}
+        </div>
+        {/* <div className="flex justify-between px-7 pt-5 flex-wrap">
           <h4 className="font-medium text-xl font-Inter text-[#1E1E1E]">
             Client directory
           </h4>
@@ -222,7 +313,7 @@ export const Clients: React.FC<ClientProps> = ({
               </Button>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* search */}
         <div className="flex justify-between items-center px-4 py-5 mt-5 flex-wrap sm:flex-nowrap sm:px-2 md:px-8 ">
@@ -263,6 +354,13 @@ export const Clients: React.FC<ClientProps> = ({
         </div>
 
         <ClientDirectory
+          searchTerm={searchTerm}
+          filteredClientsData={filteredClients}
+          onClientAction={onClientAction}
+          actionLabel="view"
+          isStaffView={false}
+        />
+        <ClientDirectoryMobile
           searchTerm={searchTerm}
           filteredClientsData={filteredClients}
           onClientAction={onClientAction}

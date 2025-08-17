@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/command";
 import {
   useClientStore,
-  useSyncClientsWithQuery,
+  // useSyncClientsWithQuery,
 } from "@/stores/useClientStore";
 import { ChevronDown } from "lucide-react";
 
@@ -30,7 +30,7 @@ const ClientSearch = ({
   selectedClient,
   onClientSelect,
 }: ClientSearchProps) => {
-  useSyncClientsWithQuery(); // Loads all clients initially
+  // useSyncClientsWithQuery(); // Loads all clients initially
 
   const { clients } = useClientStore();
   const [open, setOpen] = useState(false);

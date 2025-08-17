@@ -12,6 +12,8 @@ import { Plus } from "lucide-react";
 import { useInventoryStore } from "@/stores/useInventoryStore";
 import { useClientStore } from "@/stores/useClientStore";
 import { type StatCard } from "@/types/stats";
+import { useTransactionsStore } from "@/stores/useTransactionStore";
+import { getChangeText } from "@/utils/helpersfunction";
 
 const DashboardOverview: React.FC = () => {
   const products = useInventoryStore((state) => state.products);
@@ -20,11 +22,14 @@ const DashboardOverview: React.FC = () => {
     getActiveClientsPercentage,
     getOutStandingBalanceData,
   } = useClientStore();
+  const { getTodaysSales, getWeeklySalesPercentageChange } =
+    useTransactionsStore();
 
   const lowStockCount = products?.filter(
     (prod) => prod.stock <= prod.minStockLevel
   ).length;
-
+  const todaysSales = getTodaysSales();
+  const weeklyChange = getWeeklySalesPercentageChange();
   const activeClients = getActiveClients();
   const outstandingBalance = getOutStandingBalanceData();
   const activeClientsPercentage = getActiveClientsPercentage();
@@ -32,10 +37,18 @@ const DashboardOverview: React.FC = () => {
   const stats: StatCard[] = [
     {
       heading: "Total Sales (Today)",
-      salesValue: 1250000,
-      format: "currency",
-      statValue: "12% from yesterday",
-      statColor: "green",
+      salesValue: `₦${todaysSales.toLocaleString()}`,
+      statValue: getChangeText(
+        weeklyChange.percentage,
+        weeklyChange.direction,
+        "week"
+      ),
+      color:
+        weeklyChange.direction === "increase"
+          ? "green"
+          : weeklyChange.direction === "decrease"
+          ? "red"
+          : "orange",
     },
     {
       heading: "Outstanding balances",

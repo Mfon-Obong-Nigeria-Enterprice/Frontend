@@ -1,0 +1,249 @@
+// import * as XLSX from "xlsx";
+// import type { Client, TransactionItem } from "@/types/types";
+// import { Button } from "@/components/ui/button";
+// import { MoreVertical, Plus } from "lucide-react";
+// import { useClientStore } from "@/stores/useClientStore";
+// import jsPDF from "jspdf";
+// import autoTable from "jspdf-autotable";
+
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu";
+// import useClientFiltering from "@/hooks/useClientFiltering";
+// import { useState } from "react";
+// import { AddClientDialog } from "../admin/components/AddClientDialog";
+
+// interface DownloadButtonProps {
+//   showExportButtons?: boolean;
+// }
+
+// const DownloadButton: React.FC<DownloadButtonProps> = ({
+//   showExportButtons,
+// }) => {
+//   const { clients } = useClientStore();
+//   const [showAddDialog, setShowAddDialog] = useState(false);
+
+//   const { filteredClients } = useClientFiltering(clients);
+//   // pdf function downloader
+
+//   const handleExportPDF = () => {
+//     const doc = new jsPDF();
+
+//     const columns = [
+//       { header: "Client Name", dataKey: "Name" },
+//       { header: "Phone", dataKey: "Phone" },
+//       { header: " Email", dataKey: "Email" },
+//       {
+//         header: " Last Transaction",
+//         dataKey: "Last Transaction Type",
+//       },
+//       { header: " Amount", dataKey: "Amount" },
+//       { header: "Balance Status", dataKey: "Balance Status" },
+//       { header: " Total Transaction", dataKey: "Total Transaction" },
+//     ];
+
+//     const rows = filteredClients.map((client) => {
+//       const getLatestTransaction = (client: Client): TransactionItem | null => {
+//         if (
+//           !client.transactions ||
+//           client.transactions.length === 0 ||
+//           !Array.isArray(client.transactions)
+//         )
+//           return null;
+
+//         const sortedTransactions = [...client.transactions].sort(
+//           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+//         );
+//         return sortedTransactions[0] || null;
+//       };
+
+//       const latestTransaction = getLatestTransaction(client);
+
+//       return {
+//         Name: client.name,
+//         Phone: client.phone || "N/A",
+//         Email: client.email || "N/A",
+//         "Last Transaction Type": latestTransaction
+//           ? latestTransaction.type
+//           : "No Transaction",
+//         Amount: client.balance,
+//         "Balance Status":
+//           client.balance > 0
+//             ? "DEPOSIT"
+//             : client.balance < 0
+//             ? "PURCHASE"
+//             : "PICKUP",
+//         "Total Transaction": client.transactions
+//           ? client.transactions.length
+//           : 0,
+//       };
+//     });
+//     doc.setFontSize(16);
+//     doc.text("Client Summary", 14, 16);
+
+//     doc.setFontSize(10);
+//     doc.text(
+//       `Generated: ${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
+//       14,
+//       26
+//     );
+//     autoTable(doc, {
+//       startY: 30,
+//       head: [columns.map((col) => col.header)],
+//       body: rows.map((row) =>
+//         columns.map((col) => row[col.dataKey as keyof typeof row])
+//       ),
+//       styles: { fontSize: 9 },
+//       headStyles: { fillColor: [44, 204, 113] },
+//       alternateRowStyles: { fillColor: [245, 245, 245] },
+//     });
+//     doc.save("Client_Summary.pdf");
+//   };
+
+//   // Export Excel function handler
+//   const handleExportExcel = () => {
+//     const data = filteredClients.map((client) => {
+//       const getLatestTransaction = (client: Client): TransactionItem | null => {
+//         if (
+//           !client.transactions ||
+//           client.transactions.length === 0 ||
+//           !Array.isArray(client.transactions)
+//         )
+//           return null;
+
+//         const sortedTransactions = [...client.transactions].sort(
+//           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+//         );
+//         return sortedTransactions[0] || null;
+//       };
+
+//       const latestTransaction = getLatestTransaction(client);
+
+//       return {
+//         Name: client.name,
+//         Phone: client.phone || "N/A",
+//         Email: client.email || "N/A",
+//         "Client ID": client._id,
+//         "Active Status": client.isActive ? "Active" : "Inactive",
+//         "Last Transaction Date": latestTransaction
+//           ? new Date(latestTransaction.date).toLocaleDateString
+//           : new Date(client.createdAt).toLocaleDateString,
+//         "Registration Status": client.isRegistered
+//           ? "Registered"
+//           : "Unregistered",
+//         "Last Transaction Type": latestTransaction
+//           ? latestTransaction.type
+//           : "No Transaction",
+//         "Last Transaction Amount": latestTransaction
+//           ? latestTransaction.amount
+//           : 0,
+//         Amount: client.balance,
+//         "Balance Status":
+//           client.balance > 0
+//             ? "DEPOSIT"
+//             : client.balance < 0
+//             ? "PURCHASE"
+//             : "PICKUP",
+//         "Total Transaction": client.transactions
+//           ? client.transactions.length
+//           : 0,
+//       };
+//     });
+
+//     const worksheet = XLSX.utils.json_to_sheet(data);
+//     const workbook = XLSX.utils.book_new();
+//     XLSX.utils.book_append_sheet(workbook, worksheet, "Clients");
+//     XLSX.writeFile(workbook, "clients_export.xlsx");
+//   };
+//   return (
+//     <div>
+//       <div className="flex justify-between items-center px-7 pt-5 flex-wrap">
+//         <h4 className="font-medium text-xl font-Inter text-[#1E1E1E]">
+//           Client directory
+//         </h4>
+
+//         {showExportButtons !== false && (
+//           <>
+//             {/* Desktop buttons - hidden on tablet and below */}
+//             <div className="hidden lg:flex items-center gap-3 pt-5 lg:pt-0">
+//               <Button
+//                 className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
+//                 onClick={handleExportPDF}
+//               >
+//                 Export PDF
+//               </Button>
+//               <Button
+//                 className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
+//                 onClick={handleExportExcel}
+//               >
+//                 Download Excel
+//               </Button>
+//               <Button
+//                 onClick={() => setShowAddDialog(true)}
+//                 className="bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)] transition-colors duration-200 ease-in-out"
+//               >
+//                 <Plus className="w-5 h-5 text-white mr-2" />
+//                 Add Client
+//               </Button>
+//             </div>
+
+//             {/* Mobile/Tablet dropdown menu - shown on tablet and below */}
+//             <div className="lg:hidden pt-5 lg:pt-0">
+//               <DropdownMenu>
+//                 <DropdownMenuTrigger asChild>
+//                   <Button
+//                     variant="outline"
+//                     size="sm"
+//                     className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)]"
+//                   >
+//                     <MoreVertical className="w-5 h-5" />
+//                   </Button>
+//                 </DropdownMenuTrigger>
+//                 <DropdownMenuContent
+//                   align="end"
+//                   className="w-48 bg-white border border-[#D9D9D9] shadow-lg"
+//                 >
+//                   <div className="flex flex-col gap-1 p-1">
+//                     <DropdownMenuItem
+//                       onClick={handleExportPDF}
+//                       className="cursor-pointer hover:bg-[#f5f5f5] focus:bg-[#f5f5f5] p-3 rounded-md"
+//                     >
+//                       <span className="text-[#333333] font-Inter font-medium">
+//                         Export PDF
+//                       </span>
+//                     </DropdownMenuItem>
+//                     <DropdownMenuItem
+//                       onClick={handleExportExcel}
+//                       className="cursor-pointer hover:bg-[#f5f5f5] focus:bg-[#f5f5f5] p-3 rounded-md"
+//                     >
+//                       <span className="text-[#333333] font-Inter font-medium">
+//                         Download Excel
+//                       </span>
+//                     </DropdownMenuItem>
+//                     <DropdownMenuItem
+//                       onClick={() => setShowAddDialog(true)}
+//                       className="cursor-pointer hover:bg-[#e8f5e8] focus:bg-[#e8f5e8] p-3 rounded-md"
+//                     >
+//                       <div className="flex items-center">
+//                         <Plus className="w-4 h-4 text-[#2ECC71] mr-2" />
+//                         <span className="text-[#2ECC71] font-Inter font-medium">
+//                           Add Client
+//                         </span>
+//                       </div>
+//                     </DropdownMenuItem>
+//                   </div>
+//                 </DropdownMenuContent>
+//               </DropdownMenu>
+//             </div>
+//           </>
+//         )}
+//       </div>
+//       <AddClientDialog open={showAddDialog} onOpenChange={setShowAddDialog} />
+//     </div>
+//   );
+// };
+
+// export default DownloadButton;

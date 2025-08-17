@@ -71,6 +71,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           items: [],
           amount: Number(amount),
           total: Number(amount),
+          amountPaid: Number(amount),
           paymentMethod,
           clientId: {
             _id: client._id,
@@ -80,6 +81,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           },
           client: client,
           createdAt: new Date().toISOString(),
+          description: reference || "Payment received",
+          reference: `TXN${Date.now()}`,
         };
         addTransaction(newTransaction);
         if (addPayment) {
@@ -117,6 +120,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       const transactionData: CreateTransactionPayload = {
         type: "DEPOSIT",
         amount: Number(amount),
+        total: Number(amount),
+        description: reference || "Payment received",
         paymentMethod,
         reference: `TXN${Date.now()}`,
       };

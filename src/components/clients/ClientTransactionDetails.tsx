@@ -97,84 +97,95 @@ export const ClientTransactionDetails: React.FC<
                 </p>
               </header>
 
-              {/* transaction details sections */}
-              <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 px-2 py-5">
-                {/* Balance Change Section */}
-                <div className="space-y-3 px-3">
-                  <h6 className="text-[#333333] font-normal text-base">
-                    Balance Change
-                  </h6>
+              <div className="w-full max-w-7xl mx-auto py-4">
+                {/* Single card containing all transaction details sections */}
+                <section className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 px-4 sm:px-3 py-5 sm:py-6">
+                    {/* Balance Change Section */}
+                    <div className="space-y-3 sm:space-y-4">
+                      <h6 className="text-[#333333] font-medium text-base ">
+                        Balance Change
+                      </h6>
 
-                  <div className="bg-[#F5F5F5] rounded py-2">
-                    <div className="flex justify-evenly">
-                      <p className="text-[9px] text-[#7D7D7D]">Previous</p>
-                      <p className="text-[9px] text-[#7D7D7D]">New</p>
+                      <div className="bg-[#F5F5F5] rounded-lg py-3 sm:py-4 px-3 sm:px-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <p className="text-xs  text-[#7D7D7D] font-medium">
+                            Previous
+                          </p>
+                          <p className="text-xs sm:text-sm text-[#7D7D7D] font-medium">
+                            New
+                          </p>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <span className="text-[#444444] text-sm font-medium flex-1 text-left truncate">
+                            {formatCurrency(txn.balanceBefore)}
+                          </span>
+                          <span className="mx-2 sm:mx-3 flex-shrink-0">
+                            <ArrowRight size={14} className="text-[#666]" />
+                          </span>
+                          <span className="text-[#444444] text-sm  font-medium flex-1 text-right truncate">
+                            {formatCurrency(txn.balanceAfter)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="flex justify-between items-center">
-                      <span className="text-[#444444] text-[13px]">
-                        {formatCurrency(txn.balanceBefore)}
-                      </span>
-                      <span>
-                        <ArrowRight size={13} />
-                      </span>
-                      <span className="text-[#444444] text-[13px]">
-                        {formatCurrency(txn.balanceAfter)}
-                      </span>
+                    {/* Transaction Details Section */}
+                    <div className="space-y-3 sm:space-y-4">
+                      <h6 className="text-[#333333] font-medium text-base ">
+                        Transaction Details
+                      </h6>
+                      <ul className="space-y-2 sm:space-y-3">
+                        <li className="font-medium text-[#444444] text-sm ">
+                          Amount:{" "}
+                          <span className="font-normal">
+                            ₦{(txn.total || 0).toLocaleString()}
+                          </span>
+                        </li>
+                        <li className="font-medium text-[#444444] text-sm ">
+                          Method:{" "}
+                          <span className="font-normal">
+                            {txn.paymentMethod || "N/A"}
+                          </span>
+                        </li>
+
+                        {/* Show item count for PICKUP/PURCHASE transactions */}
+                        {(txn.type === "PICKUP" || txn.type === "PURCHASE") && (
+                          <li className="font-medium text-[#444444] text-sm">
+                            Items:{" "}
+                            <span className="font-normal">
+                              {txn.items?.length || 0} item(s)
+                            </span>
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+
+                    {/* Process By Section */}
+                    <div className="space-y-3 sm:space-y-4">
+                      <h6 className="text-[#333333] font-medium text-base">
+                        Process By
+                      </h6>
+                      <ul className="space-y-2 sm:space-y-3 flex sm:flex-col gap-1 justify-between">
+                        <li className="font-medium text-[#444444] text-sm ">
+                          Staff:{" "}
+                          <span className="font-normal">
+                            {txn.userId?.name || "Unknown"}
+                          </span>
+                        </li>
+                        <li>
+                          <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center">
+                            <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
+                              {txn.invoiceNumber || "N/A"}
+                            </span>
+                          </div>
+                        </li>
+                      </ul>
                     </div>
                   </div>
-                </div>
-
-                {/* Transaction Details Section */}
-                <div className="space-y-3 px-3">
-                  <h6 className="text-[#333333] font-normal text-base">
-                    Transaction Details
-                  </h6>
-                  <ul className="space-y-1">
-                    <li className="font-medium text-[#444444] text-[13px]">
-                      Amount:{" "}
-                      <span className="font-normal">
-                        ₦{(txn.total || 0).toLocaleString()}
-                      </span>
-                    </li>
-                    <li className="font-medium text-[#444444] text-[13px]">
-                      Method:{" "}
-                      <span className="font-normal">
-                        {txn.paymentMethod || "N/A"}
-                      </span>
-                    </li>
-                    {/* Show item count for PICKUP/PURCHASE transactions */}
-                    {(txn.type === "PICKUP" || txn.type === "PURCHASE") && (
-                      <li className="font-medium text-[#444444] text-[13px]">
-                        Items:{" "}
-                        <span className="font-normal">
-                          {txn.items?.length || 0} item(s)
-                        </span>
-                      </li>
-                    )}
-                  </ul>
-                </div>
-
-                {/* Process By Section */}
-                <div className="space-y-3 px-3">
-                  <h6 className="text-[#333333] font-normal text-base">
-                    Process By
-                  </h6>
-                  <ul className="space-y-2">
-                    <li className="font-medium text-[#444444] text-[13px]">
-                      Staff:{" "}
-                      <span className="font-normal">
-                        {txn.userId?.name || "Unknown"}
-                      </span>
-                    </li>
-                    <li className="rounded-[2px] bg-[#E2F3EB] p-0.5 text-center">
-                      <span className="text-[#3D80FF] text-xs">
-                        {txn.invoiceNumber || "N/A"}
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-              </section>
+                </section>
+              </div>
 
               {/* Footer section - conditional rendering based on transaction type */}
               {txn.type === "DEPOSIT" ? (
@@ -194,11 +205,11 @@ export const ClientTransactionDetails: React.FC<
                   <h6 className="text-base text-[#333333] font-normal px-3 pt-8">
                     Product {txn.type === "PICKUP" ? "Picked Up" : "Purchased"}:
                   </h6>
-                  <ul className="flex flex-wrap gap-4 items-start">
+                  <ul className="flex flex-wrap gap-4 items-start ">
                     {txn.items.map((item, itemIndex) => (
                       <li
                         key={item.productId || itemIndex}
-                        className="flex-1 min-w-[150px] max-w-[200px] bg-[#F5F5F5] py-2.5 px-3 border-l-4 border-[#2ECC71] rounded-[8px]"
+                        className="flex-1 min-w-full md:min-w-[150px] max-w-[200px] bg-[#F5F5F5] py-2.5 px-3 border-l-4 border-[#2ECC71] rounded-[8px]"
                       >
                         <p className="text-xs font-medium text-[#333333]">
                           {item.unit} {item.productName}

@@ -1,34 +1,103 @@
-import React from "react";
-import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
 import Stats from "../shared/Stats";
 import type { StatCard } from "@/types/stats";
 import TotalRevenueTrends from "./component/TotalRevenueTrends";
 import MonthlySalesChart from "./component/MonthlySalesChart";
+import DashboardTitle from "../shared/DashboardTitle";
 import TopSellingProducts from "../shared/TopSellingProducts";
 import SalesByCategoryChart from "../shared/CategoryTransactionChart";
+import { useTransactionsStore } from "@/stores/useTransactionStore";
+import { getChangeText } from "@/utils/helpersfunction";
 
-const stats: StatCard[] = [
-  {
-    heading: "Total Sales (This week)",
-    salesValue: "8",
-    statValue: "3% more than last week",
-    color: "blue",
-  },
-  {
-    heading: "Total Sales (This month)",
-    salesValue: "₦ 2,235,600",
-    statValue: "12% more than last month",
-    color: "green",
-  },
-  {
-    heading: "Total Transaction logged",
-    salesValue: "42",
-    statValue: "5% more than last month",
-    color: "orange",
-  },
-];
+// interface Product {
+//   prodName: string;
+//   soldUnit: number;
+//   revenue: number;
+//   category: string;
+// }
 
-const BusinessReport: React.FC = () => {
+const BusinessReport = () => {
+  const {
+    getThisWeekSales,
+    getThisMonthSales,
+    getWeeklySalesPercentageChange,
+    getMonthlySalesPercentageChange,
+    getTotalTransactionsCount,
+    getTransactionsCountPercentageChange,
+  } = useTransactionsStore();
+
+  const thisWeekSales = getThisWeekSales();
+  const thisMonthSales = getThisMonthSales();
+  const totalTransactions = getTotalTransactionsCount();
+
+  // Get the appropriate percentage changes
+  const weeklyChange = getWeeklySalesPercentageChange();
+  const monthlyChange = getMonthlySalesPercentageChange();
+  const transactionCountChange = getTransactionsCountPercentageChange();
+
+  const stats: StatCard[] = [
+    {
+      heading: "Total Sales (This week)",
+      salesValue: `₦${thisWeekSales.toLocaleString()}`,
+      statValue: getChangeText(
+        weeklyChange.percentage,
+        weeklyChange.direction,
+        "week"
+      ),
+      color:
+        weeklyChange.direction === "increase"
+          ? "green"
+          : weeklyChange.direction === "decrease"
+          ? "red"
+          : "orange",
+    },
+    {
+      heading: "Total Sales (This month)",
+      salesValue: `₦${thisMonthSales.toLocaleString()}`,
+      statValue: getChangeText(
+        monthlyChange.percentage,
+        monthlyChange.direction,
+        "month"
+      ),
+      color:
+        monthlyChange.direction === "increase"
+          ? "green"
+          : monthlyChange.direction === "decrease"
+          ? "red"
+          : "orange",
+    },
+    {
+      heading: "Total Transaction logged",
+      salesValue: totalTransactions.toString(),
+      statValue: getChangeText(
+        transactionCountChange.percentage,
+        transactionCountChange.direction,
+        "month"
+      ),
+      color: "orange",
+    },
+  ];
+
+  // const topProducts: Product[] = [
+  //   {
+  //     prodName: "cement",
+  //     soldUnit: 320,
+  //     revenue: 960000,
+  //     category: "construction",
+  //   },
+  //   {
+  //     prodName: "Rod",
+  //     soldUnit: 190,
+  //     revenue: 285000,
+  //     category: "Reinforcement",
+  //   },
+  //   {
+  //     prodName: "Tiles",
+  //     soldUnit: 100,
+  //     revenue: 280000,
+  //     category: "Finishing",
+  //   },
+  // ];
+
   // Dynamically create selectedMonth in format YYYY-MM
   const now = new Date();
   const selectedMonth = `${now.getFullYear()}-${String(
@@ -38,8 +107,8 @@ const BusinessReport: React.FC = () => {
   return (
     <main className="flex flex-col gap-10 mb-2">
       <DashboardTitle
-        heading="Business Report"
-        description="Here's is a breakdown of your business performance"
+        heading="Transaction"
+        description="Oversee All Payments, Credits & Alerts"
       />
       <Stats data={stats} />
 
