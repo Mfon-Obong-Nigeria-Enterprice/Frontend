@@ -35,6 +35,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const queryClient = useQueryClient();
   const [amount, setAmount] = useState(0);
   const [reference, setReference] = useState("");
+  const [description, setDescription] = useState(""); // Added description field
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -42,7 +43,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     const currentBalance = client?.balance ?? 0;
     const paymentAmount = Number(amount) || 0;
 
-    return currentBalance - paymentAmount;
+    return currentBalance + paymentAmount; // Fixed: Add payment to reduce debt
   }, [client?.balance, amount]);
 
   //Mutation to create transaction via API
@@ -81,7 +82,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           },
           client: client,
           createdAt: new Date().toISOString(),
-          description: reference || "Payment received",
           reference: `TXN${Date.now()}`,
         };
         addTransaction(newTransaction);
@@ -103,35 +103,46 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!amount || amount <= 0) return;
-    if (amount > Math.abs(client.balance) && client.balance > 0) {
+
+    if (!amount || amount <= 0) {
+      toast.error("Please enter a valid payment amount");
+      return;
+    }
+
+    // Check if payment is greater than debt
+    if (client.balance < 0 && amount > Math.abs(client.balance)) {
       const proceed = confirm(
         `Payment amount (${formatCurrency(
           amount
-        )}) is greater than the outstanding balance (${formatCurrency(
-          client.balance
+        )}) is greater than the outstanding debt (${formatCurrency(
+          Math.abs(client.balance)
         )}). This will result in a credit balance. Continue?`
       );
       if (!proceed) return;
-      setIsProcessing(true);
     }
+
+    setIsProcessing(true); // Set processing state immediately after validation
 
     try {
       const transactionData: CreateTransactionPayload = {
         type: "DEPOSIT",
         amount: Number(amount),
         total: Number(amount),
-        description: reference || "Payment received",
+        amountPaid: Number(amount), // Added amountPaid field
         paymentMethod,
-        reference: `TXN${Date.now()}`,
+        reference: reference || `TXN${Date.now()}`,
+        description: description || `Payment for ${client.name}`, // Added description field
       };
+
       await createTransactionMutation.mutateAsync({
         clientId: client._id,
         transaction: transactionData,
       });
 
+      // Reset form
       setAmount(0);
       setReference("");
+      setDescription("");
       setPaymentMethod("Cash");
       console.log("Payment processed successfully");
     } catch (error) {
@@ -144,7 +155,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto px-6">
         <DialogHeader className=" border-b-2 pb-4 border-[#D9D9D9] text-start text-[#1E1E1E] font-medium font-Inter flex-shrink-0">
           <DialogTitle>Process Debt Payment</DialogTitle>
         </DialogHeader>
@@ -199,10 +210,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 px-2">
             <div>
               <label className="block text-sm font-medium mb-1 text-[#1E1E1E] font-Inter">
-                Payment Amount
+                Payment Amount *
               </label>
               <input
                 disabled={isProcessing}
@@ -212,20 +223,21 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 step="0.01"
                 value={amount || ""}
                 onChange={(e) => setAmount(Number(e.target.value))}
-                className="w-full p-2 border rounded-lg"
+                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="1000"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1 text-[#1E1E1E] font-Inter">
-                Payment Method
+                Payment Method *
               </label>
               <select
                 value={paymentMethod}
                 disabled={isProcessing}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full p-2 border rounded-lg"
+                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
               >
                 <option value="Cash">Cash</option>
                 <option value="Transfer">Transfer</option>
@@ -234,16 +246,32 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               </select>
             </div>
 
+            {/* Added Description Field */}
             <div>
               <label className="block text-sm font-medium mb-1 text-[#1E1E1E] font-Inter">
-                Reference/note
+                Description
               </label>
               <textarea
                 disabled={isProcessing}
                 rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Payment description (optional)"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1 text-[#1E1E1E] font-Inter">
+                Reference/note
+              </label>
+              <input
+                disabled={isProcessing}
+                type="text"
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
-                className="w-full p-2 border rounded-lg"
+                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Transaction reference (optional)"
               />
             </div>
 
@@ -265,23 +293,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 </div>
                 <div className="flex justify-between items-center">
                   <p>Payment Amount:</p>
-                  <p
-                    className={`${
-                      amount < 0
-                        ? " text-[#F95353]"
-                        : amount > 0
-                        ? " text-[#2ECC71]"
-                        : " text-[#7d7d7d]"
-                    }`}
-                  >
-                    {formatCurrency(amount)}
-                  </p>
+                  <p className="text-[#2ECC71]">+{formatCurrency(amount)}</p>
                 </div>
               </div>
-              <div className="flex justify-between items-center">
-                <p>New Balance:</p>
+              <div className="flex justify-between items-center pt-4">
+                <p className="font-semibold">New Balance:</p>
                 <p
-                  className={`${
+                  className={`font-semibold ${
                     newBalance < 0
                       ? " text-[#F95353]"
                       : newBalance > 0
@@ -305,14 +323,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               </Button>
               <Button
                 type="submit"
-                disabled={isProcessing}
-                className="bg-[#2ECC71] hover:bg-[#27ae60]"
+                disabled={isProcessing || !amount || amount <= 0}
+                className="bg-[#2ECC71] hover:bg-[#27ae60] disabled:bg-gray-400"
               >
                 {isProcessing ? (
-                  <>
+                  <div className="flex items-center">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     Processing...
-                  </>
+                  </div>
                 ) : (
                   "Process Payment"
                 )}

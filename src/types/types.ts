@@ -105,8 +105,10 @@ interface BaseTransactionPayload {
 export interface PaymentTransactionPayload extends BaseTransactionPayload {
   type: "DEPOSIT";
   amount: number;
+  total: number;
   paymentMethod: string;
   reference: string;
+  description: string;
   amountPaid?: number; // Optional, used for payments
 }
 
