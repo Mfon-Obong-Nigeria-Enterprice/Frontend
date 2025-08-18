@@ -33,21 +33,38 @@ api.interceptors.request.use((config) => {
   }
 
   if ((user?.role === "STAFF" || user?.role === "ADMIN") && user.branchId) {
-    if (config.method === "get") {
-      // For GET requests -> send as query param
-      config.params = {
-        ...config.params,
-        branchId: user.branchId,
-      };
-    } else if (["post", "patch", "put"].includes(config.method ?? "")) {
-      // For write requests -> ensure branchId is in body
-      if (config.data && typeof config.data === "object") {
-        config.data = {
-          ...config.data,
-          branchId: user.branchId,
-        };
-      }
+    const branchId = user.branchId;
+
+    // ❌ Skip these endpoints
+    const excludedEndpoints = ["/categories", "/clients"];
+
+    // If request URL matches an excluded endpoint → just return config
+    if (excludedEndpoints.some((endpoint) => config.url?.includes(endpoint))) {
+      return config;
     }
+
+    // 1️⃣ If URL has `/branch/:id` → replace it
+    if (config.url?.includes("/branch/")) {
+      // e.g. /transactions/branch/ → /transactions/branch/{branchId}
+      config.url = config.url.replace(/\/branch(\/)?$/, `/branch/${branchId}`);
+    }
+    // 2️⃣ Otherwise: decide based on method
+    // else if (config.method === "get") {
+    //   // Add as query param
+    //   config.params = {
+    //     ...config.params,
+    //     branchId,
+    //   };
+    // }
+    // else if (["post", "patch", "put"].includes(config.method ?? "")) {
+    //   // Add into request body if JSON object
+    //   if (config.data && typeof config.data === "object") {
+    //     config.data = {
+    //       ...config.data,
+    //       branchId,
+    //     };
+    //   }
+    // }
   }
 
   return config;
@@ -61,10 +78,21 @@ api.interceptors.request.use((config) => {
 //   }
 
 //   if ((user?.role === "STAFF" || user?.role === "ADMIN") && user.branchId) {
-//     config.params = {
-//       ...config.params,
-//       branchId: user.branchId,
-//     };
+//     if (config.method === "get") {
+//       // For GET requests -> send as query param
+//       config.params = {
+//         ...config.params,
+//         branchId: user.branchId,
+//       };
+//     } else if (["post", "patch", "put"].includes(config.method ?? "")) {
+//       // For write requests -> ensure branchId is in body
+//       if (config.data && typeof config.data === "object") {
+//         config.data = {
+//           ...config.data,
+//           branchId: user.branchId,
+//         };
+//       }
+//     }
 //   }
 
 //   return config;

@@ -10,6 +10,7 @@ export const getAllCategoriesByProduct = async (
   id: string
 ): Promise<Category[]> => {
   const response = await api.get(`/products/${id}/category`);
+
   return response.data;
 };
 

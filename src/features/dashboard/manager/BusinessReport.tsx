@@ -8,13 +8,6 @@ import SalesByCategoryChart from "../shared/CategoryTransactionChart";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { getChangeText } from "@/utils/helpersfunction";
 
-// interface Product {
-//   prodName: string;
-//   soldUnit: number;
-//   revenue: number;
-//   category: string;
-// }
-
 const BusinessReport = () => {
   const {
     getThisWeekSales,

@@ -37,6 +37,7 @@ import {
 // icons
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { formatChangeText, getChangeText } from "@/utils/helpersfunction";
+import SalesByCategoryChart from "../shared/CategoryTransactionChart";
 
 const DashboardSales = () => {
   const { transactions, getTodaysSales, getWeeklySalesPercentageChange } =
@@ -203,8 +204,14 @@ const DashboardSales = () => {
         </div>
         <Stats data={stats} />
 
-        <div className="mt-10">
+        <div className="grid grid-cols-1 md:grid-cols-[90fr_10fr] gap-10 my-10">
           <SalesAnalytics />
+          <div className="bg-white flex flex-col justify-center w-full h-full p-7 border border-[#d9d9d9] rounded-xl">
+            <h4 className="text-xl font-medium text-[#1E1E1E] mb-4">
+              Sales by Category
+            </h4>
+            <SalesByCategoryChart />
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl">

@@ -75,7 +75,6 @@ const Header = ({ userRole }: HeaderProps) => {
           )}
           <div className="hidden sm:flex items-center gap-2">
             <span className="capitalize font-medium text-gray-700">
-              {/* {userName} */}
               {user?.name}
             </span>
             <span
@@ -111,7 +110,7 @@ const Header = ({ userRole }: HeaderProps) => {
           open={isUserModalOpen}
           onOpenChange={setIsUserModalOpen}
           adminData={{
-            _id: user?._id ?? "",
+            _id: user?.id ?? "",
             email: user?.email ?? "",
             lastLogin: new Date().toISOString(),
             userRole: user?.role ?? "user",

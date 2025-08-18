@@ -19,6 +19,16 @@ export const getAllTransactions = async (): Promise<Transaction[]> => {
   }
 };
 
+export const getTransactionByUserId = async (): Promise<Transaction[]> => {
+  try {
+    const response = await api("/transactions/user");
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Error fetching products");
+    throw error;
+  }
+};
+
 export const AddTransaction = async (
   data: TransactionCreate
 ): Promise<Transaction[]> => {

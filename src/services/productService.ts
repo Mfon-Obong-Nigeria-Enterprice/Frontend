@@ -17,23 +17,17 @@ export const getAllProducts = async (): Promise<Product[]> => {
   }
 };
 
-export const getAllProductsByBranch = async () => {
+export const getAllProductsByBranch = async (
+  branchId: string
+): Promise<Product[]> => {
   try {
-    const response = await api.get(`/api/products/branch/`);
+    const response = await api.get(`/products/branch/${branchId}`);
     return response.data ?? [];
   } catch (error) {
     console.error("error fetching", error);
+    throw error;
   }
 };
-
-// export const getAllProductsByBranch = async (branchId: string) => {
-//   try {
-//     const response = await api.get(`/api/products/branch/${branchId}`);
-//     return response.data ?? [];
-//   } catch (error) {
-//     console.error("error fetching", error);
-//   }
-// };
 
 export const createProduct = async (product: NewProduct) => {
   const response = await api.post("/products", product);

@@ -46,7 +46,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 
 const AdminInventory = () => {
   const { user, accessToken } = useAuthStore();
-  console.log(user?.branchId, "token:", accessToken);
+  console.log(user?.branchId, "branch:", user?.branch, "token:", accessToken);
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [position, setPosition] = useState({ xPercent: 80, yPercent: 80 });
