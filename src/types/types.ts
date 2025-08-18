@@ -132,6 +132,7 @@ export interface NewProduct {
   unitPrice: number;
   stock: number;
   minStockLevel: number;
+  // branchId: string;
 }
 
 export type ProductImportRow = {

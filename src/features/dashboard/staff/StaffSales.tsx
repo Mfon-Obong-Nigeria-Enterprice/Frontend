@@ -3,8 +3,12 @@ import MySalesActivity from "./components/MySalesActivity";
 // ui
 import { Button } from "@/components/ui/button";
 import { VscRefresh } from "react-icons/vsc";
+// import { useAuthStore } from "@/stores/useAuthStore";
 
 const StaffSales = () => {
+  // const { user, accessToken } = useAuthStore();
+  // console.log(user?.branchId, "token:", accessToken);
+
   return (
     <div>
       <div className="flex flex-col md:flex-row md:justify-between gap-3">

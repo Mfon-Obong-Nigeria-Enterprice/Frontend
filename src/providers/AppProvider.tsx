@@ -1,6 +1,9 @@
 import { useEffect, type ReactNode } from "react";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
-import { getAllProducts } from "@/services/productService";
+import {
+  getAllProducts,
+  getAllProductsByBranch,
+} from "@/services/productService";
 import { getAllCategories } from "@/services/categoryService";
 import { getAllClients } from "@/services/clientService";
 import { getAllTransactions } from "@/services/transactionService";
@@ -31,10 +34,35 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
     queryFn: getAllCategories,
   });
 
-  const productsQuery = useSuspenseQuery({
+  // fetch products based on role
+  const productsQuery = useQuery({
     queryKey: ["products"],
-    queryFn: getAllProducts,
+    // queryKey: ["products", user?.role, user?.branchId],
+    queryFn: () => {
+      if (user?.role === "ADMIN" || user?.role === "STAFF") {
+        return getAllProductsByBranch();
+      }
+      return getAllProducts();
+    },
+    // enabled: !!user?.role && !!user?.branchId, // only run when user exists
   });
+  // const productsQuery = useQuery({
+  //   queryKey: ["products"],
+  //   // queryKey: ["products", user?.role, user?.branchId],
+  //   queryFn: () => {
+  //     if (user?.role === "ADMIN" || user?.role === "STAFF") {
+  //       return getAllProductsByBranch(user.branchId);
+  //     }
+  //     return getAllProducts();
+  //   },
+  //   // enabled: !!user?.role && !!user?.branchId, // only run when user exists
+  // });
+
+  // const { data } = useQuery({
+  //   queryKey: ["products", user?.role, user?.branchId],
+  //   queryFn: () => getAllProducts(user!.role, user!.branchId),
+  //   enabled: !!user?.role && !!user?.branchId, // only run when defined
+  // });
 
   const transactionsQuery = useSuspenseQuery({
     queryKey: ["transactions"],
@@ -109,6 +137,7 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
 
 // Export the recommended version
 export { AppProviderOptimized as AppProvider };
+
 // export const AppProvider = ({ children }: { children: ReactNode }) => {
 //   const { setProducts, setCategories } = useInventoryStore();
 //   const { setTransactions } = useTransactionsStore();
