@@ -9,7 +9,7 @@ import { useNotificationStore } from "@/stores/useNotificationStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 type HeaderProps = {
-  userRole?: "ADMIN" | "STAFF" | "MAINTAINER" | "SUPER_ADMIN";
+  userRole?: "admin" | "staff" | "maintainer" | "superadmin" | "manager";
 };
 
 const Header = ({ userRole }: HeaderProps) => {

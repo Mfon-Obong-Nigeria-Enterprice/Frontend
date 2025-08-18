@@ -1,57 +1,58 @@
 import React from "react";
-import { IoIosArrowRoundUp } from "react-icons/io";
+import Stats from "../../shared/Stats";
+import type { StatCard } from "@/types/stats";
+import { useTransactionsStore } from "@/stores/useTransactionStore";
+import { formatChangeText, getChangeText } from "@/utils/helpersfunction";
+import { useClientStore } from "@/stores/useClientStore";
 
 const StaffStats: React.FC = () => {
+  const { transactions, getTodaysSales, getWeeklySalesPercentageChange } =
+    useTransactionsStore();
+  const { getActiveClients, getTotalClientsPercentageChange } =
+    useClientStore();
+
+  const todaysSales = getTodaysSales();
+  const weeklyChange = getWeeklySalesPercentageChange();
+  const activeClients = getActiveClients();
+  const totalClientsChange = getTotalClientsPercentageChange();
+  const stats: StatCard[] = [
+    {
+      heading: "Total Sales (Today)",
+      salesValue: `₦${todaysSales.toLocaleString()}`,
+      statValue: getChangeText(
+        weeklyChange.percentage,
+        weeklyChange.direction,
+        "week"
+      ),
+      color:
+        weeklyChange.direction === "increase"
+          ? "green"
+          : weeklyChange.direction === "decrease"
+          ? "red"
+          : "orange",
+    },
+    {
+      heading: "Transaction handled",
+      salesValue: `${transactions?.length || 0}`,
+      color: "green",
+    },
+    {
+      heading: "Active Clients Served",
+      salesValue: `${activeClients}`,
+      hideArrow: true,
+      statValue: formatChangeText(totalClientsChange, "last month"),
+      color:
+        totalClientsChange.direction === "increase"
+          ? "green"
+          : totalClientsChange.direction === "decrease"
+          ? "red"
+          : "blue",
+    },
+  ];
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-Inter mb-8">
-  <div className="bg-white rounded-[8px] border border-[#D9D9D9] p-4">
-    <div className="flex flex-col gap-3">
-      <p className="text-sm text-[var(--cl-secondary)] font-medium">
-        My Sales (Today)
-      </p>
-      <p className="text-[var(--cl-text-dark)] font-Arial font-bold text-xl">
-        ₦ 187,500
-      </p>
-      <p className="flex gap-0.5 font-Arial text-[#2ECC71] ">
-        <IoIosArrowRoundUp />{" "}
-        <span className="text-xs">15% from yesterday</span>
-      </p>
+    <div className="pb-4">
+      <Stats data={stats} />
     </div>
-  </div>
-
- 
-  <div className="bg-white rounded-[8px] border border-[#D9D9D9] p-4">
-    <div className="flex flex-col gap-3">
-      <p className="text-sm text-[var(--cl-secondary)] font-medium">
-        Transactions handled
-      </p>
-      <p className="text-[var(--cl-text-dark)] font-Arial font-bold text-xl">
-        23
-      </p>
-      <p className="flex gap-0.5 font-Arial text-[#FFA500] ">
-        <IoIosArrowRoundUp />{" "}
-        <span className="text-xs">4% more than yesterday</span>
-      </p>
-    </div>
-  </div>
-
-  {/* clients served */}
-  <div className="bg-white rounded-[8px] border border-[#D9D9D9] p-4">
-    <div className="flex flex-col gap-3">
-      <p className="text-sm text-[var(--cl-secondary)] font-medium">
-        Active clients served
-      </p>
-      <p className="text-[var(--cl-text-dark)] font-Arial font-bold text-xl">
-        18
-      </p>
-      <p className="flex gap-0.5 font-Arial text-[#3D80FF] ">
-        <IoIosArrowRoundUp />{" "}
-        <span className="text-xs">3% new clients today</span>
-      </p>
-    </div>
-  </div>
-</div>
-
   );
 };
 

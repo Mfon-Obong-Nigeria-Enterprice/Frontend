@@ -49,10 +49,19 @@ import {
 
 // icons
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { getChangeText } from "@/utils/helpersfunction";
 
 const Transactions = () => {
   const { getOutStandingBalanceData, getClientById } = useClientStore();
-  const { transactions } = useTransactionsStore();
+  const {
+    transactions,
+    getTodaysSales,
+    getPaymentsPercentageChange,
+    getTodaysPayments,
+    getTodaysTransactionCount,
+    getTodaysTransactionCountPercentageChange,
+    getWeeklySalesPercentageChange,
+  } = useTransactionsStore();
   const { branches } = useBranchStore();
   const [clientFilter, setClientFilter] = useState<string | undefined>();
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<
@@ -63,33 +72,82 @@ const Transactions = () => {
     to: undefined,
   });
 
-  const outstandingBalance = getOutStandingBalanceData();
+  const outstandingBalance = getOutStandingBalanceData() || {
+    totalDebt: 0,
+    clientsWithDebt: 0,
+  };
+  const todaysTransactionCount = getTodaysTransactionCount();
+  const transactionCountChange = getTodaysTransactionCountPercentageChange();
+  const todaysSales = getTodaysSales();
+  const todaysPayments = getTodaysPayments();
+  const weeklyChange = getWeeklySalesPercentageChange();
+  const paymentsChange = getPaymentsPercentageChange();
+
+  // Format change text helper
+  const formatChangeText = (change: {
+    percentage: number;
+    direction: "increase" | "decrease" | "no-change";
+  }) => {
+    switch (change.direction) {
+      case "increase":
+        return `↑${change.percentage}% from yesterday`;
+      case "decrease":
+        return `↓${change.percentage}% from yesterday`;
+      default:
+        return "—No change from yesterday";
+    }
+  };
 
   const stats: StatCard[] = [
     {
       heading: "Total Sales (Today)",
-      salesValue: 450000,
+      salesValue: `${todaysSales.toLocaleString()}`,
       format: "currency",
-      hideArrow: true,
+      color:
+        paymentsChange.direction === "increase"
+          ? "green"
+          : paymentsChange.direction === "decrease"
+          ? "red"
+          : "blue",
+      hideArrow: false,
     },
     {
       heading: "Payments Received",
-      salesValue: 300000,
+      salesValue: `${todaysPayments.toLocaleString()}`,
       format: "currency",
-      hideArrow: true,
+      statValue: getChangeText(
+        weeklyChange.percentage,
+        weeklyChange.direction,
+        "week"
+      ),
+      color:
+        weeklyChange.direction === "increase"
+          ? "green"
+          : weeklyChange.direction === "decrease"
+          ? "red"
+          : "orange",
+      hideArrow: false,
       salesColor: "green",
     },
     {
       heading: "Outstanding balance",
       salesValue: `${outstandingBalance.totalDebt.toLocaleString()}`,
       format: "currency",
+      statValue: `${outstandingBalance.clientsWithDebt} clients with overdue balances`,
       hideArrow: true,
       salesColor: "orange",
     },
     {
-      heading: "Total transactions",
-      salesValue: `${transactions?.length || 0}`,
-      hideArrow: true,
+      heading: "Total transactions (Today)",
+      salesValue: `${todaysTransactionCount}`, // Updated to use today's count
+      statValue: formatChangeText(transactionCountChange), // Add percentage change
+      color:
+        transactionCountChange.direction === "increase"
+          ? "green"
+          : transactionCountChange.direction === "decrease"
+          ? "red"
+          : "blue",
+      hideArrow: false, // Show arrow since we now have percentage change
     },
   ];
 

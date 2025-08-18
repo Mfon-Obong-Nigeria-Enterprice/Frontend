@@ -1,18 +1,12 @@
-import localforage from "localforage";
 import api from "./baseApi";
 import { type AxiosError } from "axios";
 import { type Product, type NewProduct } from "@/types/types";
 
 export const getAllProducts = async (): Promise<Product[]> => {
-  const token = await localforage.getItem<string>("access_token");
-  if (!token) throw new Error("No access token found");
-
   try {
-    const response = await api.get("/products", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await api.get("/products");
 
-    return response.data;
+    return response.data ?? [];
   } catch (error) {
     const err = error as AxiosError;
     console.error(
@@ -22,6 +16,24 @@ export const getAllProducts = async (): Promise<Product[]> => {
     throw error;
   }
 };
+
+export const getAllProductsByBranch = async () => {
+  try {
+    const response = await api.get(`/api/products/branch/`);
+    return response.data ?? [];
+  } catch (error) {
+    console.error("error fetching", error);
+  }
+};
+
+// export const getAllProductsByBranch = async (branchId: string) => {
+//   try {
+//     const response = await api.get(`/api/products/branch/${branchId}`);
+//     return response.data ?? [];
+//   } catch (error) {
+//     console.error("error fetching", error);
+//   }
+// };
 
 export const createProduct = async (product: NewProduct) => {
   const response = await api.post("/products", product);

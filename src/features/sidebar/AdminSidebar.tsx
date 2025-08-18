@@ -50,7 +50,7 @@ export function AdminSidebar() {
     <Sidebar>
       <SidebarHeader />
       <Logo />
-      <SidebarContent className=" pt-8">
+      <SidebarContent className="pt-8">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>

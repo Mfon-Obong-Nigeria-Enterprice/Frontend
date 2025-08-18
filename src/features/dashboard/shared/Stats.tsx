@@ -1,7 +1,7 @@
 import React from "react";
 // import { Skeleton } from "@/components/ui/skeleton";
 import type { StatCard } from "@/types/stats";
-import { BsArrowUp } from "react-icons/bs";
+// import { BsArrowUp } from "react-icons/bs";
 
 interface StatsProps {
   data: StatCard[];
@@ -24,11 +24,23 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
   };
 
   return (
-    <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mt-5 px-3 md:px-0">
+    <section
+      className="gap-4 mt-2 px-3 md:px-0"
+      style={{
+        display: "grid",
+        gridTemplateColumns:
+          data.length <= 2
+            ? "repeat(auto-fit, minmax(250px, 1fr))"
+            : data.length === 3
+            ? "repeat(auto-fit, minmax(280px, 1fr))"
+            : "repeat(auto-fit, minmax(250px, 1fr))",
+        maxWidth: "100%",
+      }}
+    >
       {data.map((stat, index) => (
         <div
           key={index}
-          className="bg-white rounded-lg border border-[#D9D9D9]  p-3 sm:py-5 sm:px-7 flex flex-col gap-1 sm:gap-2.5"
+          className="bg-white rounded-lg border border-[#D9D9D9] p-4 sm:p-6 flex flex-col justify-between gap-3 sm:gap-4 min-h-[120px] sm:min-h-[140px] lg:min-h-[160px] w-full max-w-full hover:shadow-md transition-shadow duration-200"
         >
           <div className="font-Inter text-xs sm:text-sm text-[#7D7D7D]">
             {stat.heading}
@@ -49,7 +61,7 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
             "
             style={{ color: stat.statColor || getColor(stat.color) }}
           >
-            <span>{!stat.hideArrow && <BsArrowUp />}</span>
+            {/* <span>{!stat.hideArrow && <BsArrowUp />}</span> */}
             <span className="font-Arial leading-tight"> {stat.statValue}</span>
           </div>
         </div>

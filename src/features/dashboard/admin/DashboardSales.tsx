@@ -36,18 +36,35 @@ import {
 
 // icons
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { formatChangeText, getChangeText } from "@/utils/helpersfunction";
 
 const DashboardSales = () => {
-  const { transactions } = useTransactionsStore();
-  const { getClientById, getActiveClients } = useClientStore();
+  const { transactions, getTodaysSales, getWeeklySalesPercentageChange } =
+    useTransactionsStore();
+  const { getClientById, getActiveClients, getTotalClientsPercentageChange } =
+    useClientStore();
 
   const activeClients = getActiveClients();
+  const todaysSales = getTodaysSales();
+  const weeklyChange = getWeeklySalesPercentageChange();
+  const totalClientsChange = getTotalClientsPercentageChange();
 
   const stats: StatCard[] = [
     {
       heading: "Total Sales (Today)",
-      salesValue: 450000,
+      salesValue: `${todaysSales.toLocaleString()}`,
       format: "currency",
+      statValue: getChangeText(
+        weeklyChange.percentage,
+        weeklyChange.direction,
+        "week"
+      ),
+      color:
+        weeklyChange.direction === "increase"
+          ? "green"
+          : weeklyChange.direction === "decrease"
+          ? "red"
+          : "orange",
       hideArrow: true,
     },
     {
@@ -59,7 +76,13 @@ const DashboardSales = () => {
       heading: "Active Clients",
       salesValue: `${activeClients}`,
       hideArrow: true,
-      salesColor: "green",
+      statValue: formatChangeText(totalClientsChange, "last month"),
+      color:
+        totalClientsChange.direction === "increase"
+          ? "green"
+          : totalClientsChange.direction === "decrease"
+          ? "red"
+          : "blue",
     },
     {
       heading: "Avg. Transactions",
