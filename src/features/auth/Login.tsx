@@ -11,6 +11,7 @@ import MobileError from "./MobileError";
 import SupportFeedback from "../../components/SupportFeedback";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "react-toastify";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 type LoginFormInputs = {
   username: string;
@@ -25,6 +26,7 @@ const Login = () => {
     null
   );
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [isSupportLoading, setIsSupportLoading] = useState<boolean>(false);
 
   const {
     register,
@@ -44,7 +46,6 @@ const Login = () => {
         throw new Error("User role is missing after login");
       }
 
-      // toast.success(`Welcome back, ${user.user || "User"}!`);
       // Normalize the role to handle any case or whitespace issues
       const normalizedRole = user.role.toString().trim().toUpperCase();
 
@@ -78,7 +79,19 @@ const Login = () => {
     } catch (error) {
       console.error("Login failed", error);
       openModal("error");
+      toast.error("Login Failed!");
     }
+  };
+
+  // function to set a loading spinner before oprning the support modal
+  const openSupportModal = () => {
+    setIsSupportLoading(true);
+
+    setTimeout(() => {
+      setIsSupportLoading(false);
+      openModal("support");
+      reset();
+    }, 2000); // 2 seconds
   };
 
   const openModal = (type: "error" | "support") => setActiveModal(type);
@@ -152,7 +165,11 @@ const Login = () => {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12"
+              className={`w-full h-12 ${
+                Object.keys(formErrors).length > 0
+                  ? "bg-[#D9D9D9] hover:bg-[#D9D9D9]/90 text-[#444444]"
+                  : "bg-[#2ECC71] hover:bg-[#27ae60]"
+              }`}
             >
               {Object.keys(formErrors).length > 0
                 ? "Retry"
@@ -161,23 +178,26 @@ const Login = () => {
                 : "Login"}
             </Button>
           </div>
+
+          <div className="flex gap-2.5 justify-center items-center mt-5">
+            {!formErrors && (
+              <span className="text-[var(--cl-blue)] border-b border-[var(--cl-blue)] text-sm">
+                need help?
+              </span>
+            )}
+            <span
+              className="text-[var(--cl-blue)] hover:text-blue-700 text-sm"
+              // onClick={() => {
+              //   openModal("support");
+              //   reset();
+              // }}
+              onClick={openSupportModal}
+            >
+              {isSupportLoading && <LoadingSpinner />}
+              Contact Support
+            </span>
+          </div>
         </form>
-
-        <div className="flex gap-2.5 justify-center items-center mt-5">
-          <span className="text-[var(--cl-blue)] border-b border-[var(--cl-blue)] text-sm">
-            need help?
-          </span>
-          <span
-            className="text-[var(--cl-blue)] hover:text-blue-700 text-sm"
-            onClick={() => {
-              openModal("support");
-              reset();
-            }}
-          >
-            Contact Support
-          </span>
-        </div>
-
         {activeModal === "error" && (
           <MobileError
             onClose={closeModalAndReset}
@@ -190,13 +210,6 @@ const Login = () => {
 
         {activeModal === "support" && <SupportFeedback onClose={closeModal} />}
       </section>
-
-      {/* ✅ Dev Role Switcher (only visible in development) */}
-      {/** {import.meta.env.DEV && (
-        <div className="mt-4">
-          <DevRoleSwitcher />
-        </div>
-      )}**/}
     </main>
   );
 };
