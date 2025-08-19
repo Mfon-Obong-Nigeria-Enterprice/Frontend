@@ -67,26 +67,27 @@ type TransactionState = {
 
 // Helper function to get start of week (Monday)
 const getStartOfWeek = (date: Date): Date => {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday
-  return new Date(d.setDate(diff));
+  const d = new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  );
+  const day = d.getUTCDay();
+  const diff = d.getUTCDate() - day + (day === 0 ? -6 : 1); // Monday
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), diff));
 };
 
 // Helper function to get end of week (Sunday)
 const getEndOfWeek = (date: Date): Date => {
   const startOfWeek = getStartOfWeek(date);
   const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6);
+  endOfWeek.setUTCHours(23, 59, 59, 999);
   return endOfWeek;
 };
 
 // Helper function to check if date is in range
 const isDateInRange = (date: Date, start: Date, end: Date): boolean => {
-  const dateStr = date.toDateString();
-  const startStr = start.toDateString();
-  const endStr = end.toDateString();
-  return dateStr >= startStr && dateStr <= endStr;
+  const time = date.getTime();
+  return time >= start.getTime() && time <= end.getTime();
 };
 
 // Helper function to calculate percentage change
@@ -262,6 +263,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
 
     const now = new Date();
     const startOfWeek = getStartOfWeek(now);
+
     const endOfWeek = getEndOfWeek(now);
 
     return transactions

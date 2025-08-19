@@ -12,6 +12,8 @@ import { IoIosSearch } from "react-icons/io";
 
 import type { Product } from "@/types/types";
 
+import EmptyInventory from "../shared/EmptyInventory";
+
 const Stock = () => {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -81,56 +83,60 @@ const Stock = () => {
         heading="Stock Levels"
         description="View current inventory and availability"
       />
-      <section className="bg-white xl:rounded-xl mt-5">
-        <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center py-5 px-4 sm:px-5 bg-[#f0f0f3] border-b border-[#d9d9d9] md:border-0">
-          <h3 className="text-xl font-medium text-text-dark">
-            Product & Categories
-          </h3>
-        </div>
-
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 px-4 md:px-5 py-5 border">
-          <div className="relative bg-[#F5F5F5] max-w-lg w-full flex items-center gap-1 md:w-1/2 px-4 rounded-md">
-            <IoIosSearch size={18} />
-            <input
-              type="search"
-              placeholder="Search products, categories..."
-              onChange={(e) => debouncedSearch(e.target.value)}
-              className="py-2 outline-0 w-full"
-            />
-            {searchQuery.trim() && suggestions.length > 0 && (
-              <div className="absolute top-full left-0 w-full bg-white shadow-lg z-10 border border-gray-200 rounded-b-md">
-                {suggestions.map((suggestion, i) => (
-                  <div
-                    key={i}
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                  >
-                    {suggestion.item.name}
-                    <span className="text-xs text-gray-500 ml-2">
-                      ({getCategoryName(suggestion.item)})
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {searchQuery.trim() && suggestions.length === 0 && (
-              <div className="absolute top-full left-0 w-full bg-white shadow-lg z-10 p-4 italic text-center text-gray-500 border border-gray-200 rounded-b-md">
-                No matching products found for{" "}
-                <span className="text-gray-700">"{searchQuery}"</span>
-              </div>
-            )}
+      {products.length > 0 ? (
+        <section className="bg-white xl:rounded-xl mt-5">
+          <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center py-5 px-4 sm:px-5 bg-[#f0f0f3] border-b border-[#d9d9d9] md:border-0">
+            <h3 className="text-xl font-medium text-text-dark">
+              Product & Categories
+            </h3>
           </div>
-        </div>
 
-        <div className="my-5" ref={containerRef}>
-          <InventoryTab
-            products={filteredProducts}
-            categories={categories}
-            stockStatus={""}
-            priceRange={""}
-          />
-        </div>
-      </section>
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 px-4 md:px-5 py-5 border">
+            <div className="relative bg-[#F5F5F5] max-w-lg w-full flex items-center gap-1 md:w-1/2 px-4 rounded-md">
+              <IoIosSearch size={18} />
+              <input
+                type="search"
+                placeholder="Search products, categories..."
+                onChange={(e) => debouncedSearch(e.target.value)}
+                className="py-2 outline-0 w-full"
+              />
+              {searchQuery.trim() && suggestions.length > 0 && (
+                <div className="absolute top-full left-0 w-full bg-white shadow-lg z-10 border border-gray-200 rounded-b-md">
+                  {suggestions.map((suggestion, i) => (
+                    <div
+                      key={i}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                    >
+                      {suggestion.item.name}
+                      <span className="text-xs text-gray-500 ml-2">
+                        ({getCategoryName(suggestion.item)})
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {searchQuery.trim() && suggestions.length === 0 && (
+                <div className="absolute top-full left-0 w-full bg-white shadow-lg z-10 p-4 italic text-center text-gray-500 border border-gray-200 rounded-b-md">
+                  No matching products found for{" "}
+                  <span className="text-gray-700">"{searchQuery}"</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="my-5" ref={containerRef}>
+            <InventoryTab
+              products={filteredProducts}
+              categories={categories}
+              stockStatus={""}
+              priceRange={""}
+            />
+          </div>
+        </section>
+      ) : (
+        <EmptyInventory />
+      )}
     </main>
   );
 };

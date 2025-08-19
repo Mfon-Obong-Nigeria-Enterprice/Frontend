@@ -110,6 +110,8 @@ export interface PaymentTransactionPayload extends BaseTransactionPayload {
   reference: string;
   description: string;
   amountPaid?: number; // Optional, used for payments
+  total?: number;
+  description?: string;
 }
 
 export interface ProductTransactionPayload extends BaseTransactionPayload {
@@ -134,6 +136,7 @@ export interface NewProduct {
   unitPrice: number;
   stock: number;
   minStockLevel: number;
+  // branchId: string;
 }
 
 export type ProductImportRow = {

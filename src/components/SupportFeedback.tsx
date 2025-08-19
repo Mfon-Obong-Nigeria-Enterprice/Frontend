@@ -20,7 +20,11 @@ const SupportFeedback = ({ onClose }: { onClose: () => void }) => {
             <GoCheck size={48} className="fill-white" />
           </div>
 
-          <Button variant="secondary" onClick={onClose}>
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            className="w-full bg-[#D9D9D9] hover:bg-[#D9D9D9]/90 h-12 mt-5"
+          >
             Close
           </Button>
         </div>

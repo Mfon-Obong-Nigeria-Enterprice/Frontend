@@ -17,10 +17,12 @@ import { useClientStats } from "@/hooks/useClientStats";
 import { useClientStore } from "@/stores/useClientStore";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { getChangeText } from "@/utils/helpersfunction";
+import { useRevenueStore } from "@/stores/useRevenueStore";
 
 const ManagerDashboardOverview = () => {
   const { getTodaysSales, getWeeklySalesPercentageChange } =
     useTransactionsStore();
+  const { monthlyRevenue } = useRevenueStore();
   const { growthPercent } = useClientStats();
   const { getOutStandingBalanceData } = useClientStore();
   const todaysSales = getTodaysSales();
@@ -47,9 +49,20 @@ const ManagerDashboardOverview = () => {
     },
     {
       heading: "Monthly Revenue",
-      salesValue: "₦ 446,850",
-      statValue: "8% from last month",
-      color: "green",
+      salesValue: `₦${monthlyRevenue?.totalRevenue.toLocaleString()}`,
+      statValue: `${
+        monthlyRevenue?.direction === "increase"
+          ? "+"
+          : monthlyRevenue?.direction === "decrease"
+          ? "-"
+          : ""
+      }${monthlyRevenue?.percentageChange}%`,
+      color:
+        monthlyRevenue?.direction === "increase"
+          ? "green"
+          : monthlyRevenue?.direction === "decrease"
+          ? "red"
+          : "orange",
     },
     {
       heading: "Outstanding balances",

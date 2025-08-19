@@ -35,7 +35,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const queryClient = useQueryClient();
   const [amount, setAmount] = useState(0);
   const [reference, setReference] = useState("");
-  const [description, setDescription] = useState(""); // Added description field
+  const [description, setDescription] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [isProcessing, setIsProcessing] = useState(false);
 

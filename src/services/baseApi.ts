@@ -32,15 +32,43 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
 
-  if (user?.role === "STAFF" && user.branchId) {
-    config.params = {
-      ...config.params,
-      branchId: user.branchId,
-    };
+  if ((user?.role === "STAFF" || user?.role === "ADMIN") && user.branchId) {
+    if (config.method === "get") {
+      // For GET requests -> send as query param
+      config.params = {
+        ...config.params,
+        branchId: user.branchId,
+      };
+    } else if (["post", "patch", "put"].includes(config.method ?? "")) {
+      // For write requests -> ensure branchId is in body
+      if (config.data && typeof config.data === "object") {
+        config.data = {
+          ...config.data,
+          branchId: user.branchId,
+        };
+      }
+    }
   }
 
   return config;
 });
+
+// api.interceptors.request.use((config) => {
+//   const { accessToken, user } = useAuthStore.getState();
+
+//   if (accessToken) {
+//     config.headers.Authorization = `Bearer ${accessToken}`;
+//   }
+
+//   if ((user?.role === "STAFF" || user?.role === "ADMIN") && user.branchId) {
+//     config.params = {
+//       ...config.params,
+//       branchId: user.branchId,
+//     };
+//   }
+
+//   return config;
+// });
 
 // Handle 401 + auto refresh
 api.interceptors.response.use(
