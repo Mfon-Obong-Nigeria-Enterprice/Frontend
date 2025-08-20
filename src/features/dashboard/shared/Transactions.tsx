@@ -56,11 +56,11 @@ const Transactions = () => {
   const {
     transactions,
     getTodaysSales,
-    getPaymentsPercentageChange,
-    getTodaysPayments,
+    getThisMonthPayments,
+    getMonthlyPaymentsPercentageChange,
     getTodaysTransactionCount,
     getTodaysTransactionCountPercentageChange,
-    getWeeklySalesPercentageChange,
+    // getWeeklySalesPercentageChange,
   } = useTransactionsStore();
   const { branches } = useBranchStore();
   const [clientFilter, setClientFilter] = useState<string | undefined>();
@@ -79,9 +79,9 @@ const Transactions = () => {
   const todaysTransactionCount = getTodaysTransactionCount();
   const transactionCountChange = getTodaysTransactionCountPercentageChange();
   const todaysSales = getTodaysSales();
-  const todaysPayments = getTodaysPayments();
-  const weeklyChange = getWeeklySalesPercentageChange();
-  const paymentsChange = getPaymentsPercentageChange();
+  const monthlyPayments = getThisMonthPayments();
+  // const weeklyChange = getWeeklySalesPercentageChange();
+  const monthlyChange = getMonthlyPaymentsPercentageChange();
 
   // Format change text helper
   const formatChangeText = (change: {
@@ -103,27 +103,21 @@ const Transactions = () => {
       heading: "Total Sales (Today)",
       salesValue: `${todaysSales.toLocaleString()}`,
       format: "currency",
-      color:
-        paymentsChange.direction === "increase"
-          ? "green"
-          : paymentsChange.direction === "decrease"
-          ? "red"
-          : "blue",
       hideArrow: false,
     },
     {
       heading: "Payments Received",
-      salesValue: `${todaysPayments.toLocaleString()}`,
+      salesValue: `${monthlyPayments.toLocaleString()}`,
       format: "currency",
       statValue: getChangeText(
-        weeklyChange.percentage,
-        weeklyChange.direction,
-        "week"
+        monthlyChange.percentage,
+        monthlyChange.direction,
+        "month"
       ),
       color:
-        weeklyChange.direction === "increase"
+        monthlyChange.direction === "increase"
           ? "green"
-          : weeklyChange.direction === "decrease"
+          : monthlyChange.direction === "decrease"
           ? "red"
           : "orange",
       hideArrow: false,
