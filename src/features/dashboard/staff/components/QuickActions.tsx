@@ -7,7 +7,7 @@ import { BsBoxSeam} from "react-icons/bs";
 
 const QuickActions: React.FC = () => {
   return (
-    <div className="bg-white rounded p-5 mb-8 hidden lg:block">
+    <div className="bg-white rounded p-5 mb-8">
       <h4 className="text-lg text-[var(--cl-text-dark)] font-medium mb-3">
         Quick Actions
       </h4>
