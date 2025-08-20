@@ -51,9 +51,7 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-xl font-bold text-gray-900">
-          {percentage.toFixed(1)}%
-        </span>
+        <span className="text-xl font-bold text-gray-900">{percentage}%</span>
       </div>
     </div>
   );

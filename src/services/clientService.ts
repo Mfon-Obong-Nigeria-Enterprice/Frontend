@@ -71,3 +71,13 @@ export const deleteClient = async (id: string): Promise<void> => {
     throw error;
   }
 };
+
+export const blockClient = async (clientId: string): Promise<void> => {
+  const response = await api.patch(`/clients/${clientId}/block`);
+  return response.data;
+};
+
+export const unblockClient = async (clientId: string): Promise<void> => {
+  const response = await api.patch(`/clients/${clientId}/unblock`);
+  return response.data;
+};
