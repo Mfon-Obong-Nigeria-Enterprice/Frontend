@@ -110,7 +110,7 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
   return (
     <div className="">
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogOverlay className="bg-[#D9D9D9] fixed inset-0 z-50" />
+        <DialogOverlay className="bg-[#ffffff] fixed inset-0 z-50" />
         <DialogContent aria-describedby="add-client-dialog z-50">
           <DialogHeader>
             <DialogTitle className="font-medium text-xl pb-4 pt-2 text-[#1E1E1E]">

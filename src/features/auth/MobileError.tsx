@@ -32,7 +32,7 @@ const MobileError = ({
       <h5 className="font-medium text-xl text-[var(--cl-text-dark)] my-2">
         Error occured
       </h5>
-      <div className="w-[90%] bg-[var(--cl-bg-gray)] py-4 px-2 border border-[var(--cl-secondary)] rounded-lg">
+      <div className="flex items-center justify-center w-[90%] bg-white h-[73px] py-4 px-2 border border-[var(--cl-secondary)] rounded-lg">
         <p className="text-[0.75rem] text-[var(--cl-text-semidark)] text-center">
           Invalid login credentials. Please check and try again.
         </p>
@@ -41,13 +41,20 @@ const MobileError = ({
         Error code: AUTH-401
       </span>
 
-      <Button variant="secondary" onClick={onClose}>
+      <Button
+        variant="secondary"
+        onClick={onClose}
+        className="w-[244px] h-[48px] bg-[#D9D9D9] hover:bg-[#D9D9D9]/90 mt-10"
+      >
         Retry
       </Button>
 
-      <Button variant="outline" onClick={onSupport}>
+      <button
+        onClick={onSupport}
+        className="bg-transparent text-[#3D80FF] hover:bg-transparent"
+      >
         Contact Support
-      </Button>
+      </button>
     </div>
   );
 };

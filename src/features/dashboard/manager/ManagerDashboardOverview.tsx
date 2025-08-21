@@ -13,27 +13,61 @@ import type { StatCard } from "@/types/stats";
 
 // ui
 import { Button } from "@/components/ui/button";
+import { useClientStats } from "@/hooks/useClientStats";
+import { useClientStore } from "@/stores/useClientStore";
+import { useTransactionsStore } from "@/stores/useTransactionStore";
+import { getChangeText } from "@/utils/helpersfunction";
+import { useRevenueStore } from "@/stores/useRevenueStore";
 
 const ManagerDashboardOverview = () => {
+  const { getTodaysSales, getWeeklySalesPercentageChange } =
+    useTransactionsStore();
+  const { monthlyRevenue } = useRevenueStore();
+  const { growthPercent } = useClientStats();
+  const { getOutStandingBalanceData } = useClientStore();
+  const todaysSales = getTodaysSales();
+  const outstandingBalance = getOutStandingBalanceData();
+  const weeklyChange = getWeeklySalesPercentageChange();
+
   const navigate = useNavigate();
 
   const stats: StatCard[] = [
     {
       heading: "Total Sales (Today)",
-      salesValue: "₦ 135,500",
-      statValue: "15% from yesterday",
-      color: "green",
+      salesValue: `₦${todaysSales.toLocaleString()}`,
+      statValue: getChangeText(
+        weeklyChange.percentage,
+        weeklyChange.direction,
+        "week"
+      ),
+      color:
+        weeklyChange.direction === "increase"
+          ? "green"
+          : weeklyChange.direction === "decrease"
+          ? "red"
+          : "orange",
     },
     {
       heading: "Monthly Revenue",
-      salesValue: "₦ 446,850",
-      statValue: "8% from last month",
-      color: "green",
+      salesValue: `₦${monthlyRevenue?.totalRevenue.toLocaleString()}`,
+      statValue: `${
+        monthlyRevenue?.direction === "increase"
+          ? "+"
+          : monthlyRevenue?.direction === "decrease"
+          ? "-"
+          : ""
+      }${monthlyRevenue?.percentageChange}%`,
+      color:
+        monthlyRevenue?.direction === "increase"
+          ? "green"
+          : monthlyRevenue?.direction === "decrease"
+          ? "red"
+          : "orange",
     },
     {
       heading: "Outstanding balances",
-      salesValue: "₦ 1,355,800",
-      statValue: "5% Clients with overdue balances",
+      salesValue: `₦${outstandingBalance.totalDebt.toLocaleString()}`,
+      statValue: ` ${growthPercent}% Clients with overdue balances`,
       color: "orange",
     },
   ];

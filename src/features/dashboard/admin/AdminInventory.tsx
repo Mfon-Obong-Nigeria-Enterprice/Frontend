@@ -13,7 +13,7 @@ import { useInventoryStore } from "@/stores/useInventoryStore";
 
 import { IoIosArrowUp, IoIosSearch } from "react-icons/io";
 import { CiImport } from "react-icons/ci";
-import { Plus, ChevronRight, RotateCcw } from "lucide-react";
+import { Plus, ChevronRight, RotateCcw, MoreVertical } from "lucide-react";
 
 import type { Product } from "@/types/types";
 import {
@@ -34,8 +34,19 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 import UpdateStock from "./components/UpdateStock";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import EmptyInventory from "../shared/EmptyInventory";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 const AdminInventory = () => {
+  const { user, accessToken } = useAuthStore();
+  console.log(user?.branchId, "token:", accessToken);
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [position, setPosition] = useState({ xPercent: 80, yPercent: 80 });
@@ -261,189 +272,248 @@ const AdminInventory = () => {
         heading="Inventory Management"
         description="Manage your products and categories"
       />
-      <section className="bg-white xl:rounded-xl mt-5">
-        <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center py-5 px-4 sm:px-5 bg-[#f0f0f3] border-b border-[#d9d9d9] md:border-0">
-          <h3 className="text-xl font-medium text-text-dark">
-            Product & Categories
-          </h3>
-          <div className="flex gap-4">
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="w-40 bg-white text-[#333333] flex gap-1.5 items-center justify-center rounded-md py-2 px-4 border border-[#7d7d7d]">
-                  <IoIosArrowUp size={24} />
-                  <span>Export</span>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="p-0 w-48">
+      {products?.length > 0 ? (
+        <section className="bg-white xl:rounded-xl mt-5">
+          <div className="flex  gap-4 justify-between items-center py-5 px-4 sm:px-5 bg-[#f0f0f3] border-b border-[#d9d9d9] md:border-0">
+            <h3 className="text-xl font-medium text-text-dark">
+              Product & Categories
+            </h3>
+            {/*  */}
+            <div className="hidden lg:flex items-center gap-3 pt-5 lg:pt-0">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="w-40 bg-white text-[#333333] flex gap-1.5 items-center justify-center rounded-md py-2 px-4 border border-[#7d7d7d]">
+                    <IoIosArrowUp size={24} />
+                    <span>Export</span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-48">
+                  <button
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                    onClick={handleExportPDF}
+                  >
+                    Export as PDF
+                  </button>
+                  <button
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                    onClick={handleExportExcel}
+                  >
+                    Export as Excel
+                  </button>
+                </PopoverContent>
+              </Popover>
+              <div>
                 <button
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                  onClick={handleExportPDF}
+                  onClick={handleOpenModal}
+                  className="w-40 bg-white text-[#333333] flex gap-1.5 items-center rounded-md py-2 px-4 border border-[#7d7d7d]"
                 >
-                  Export as PDF
+                  <RotateCcw size={24} />
+                  Update Stock
                 </button>
-                <button
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                  onClick={handleExportExcel}
-                >
-                  Export as Excel
-                </button>
-              </PopoverContent>
-            </Popover>
-            <div>
+              </div>
               <button
-                onClick={handleOpenModal}
+                onClick={() => navigate("/import-stock")}
                 className="w-40 bg-white text-[#333333] flex gap-1.5 items-center rounded-md py-2 px-4 border border-[#7d7d7d]"
               >
-                <RotateCcw size={24} />
-                Update Stock
+                <CiImport size={24} />
+                <span>Import Stock</span>
               </button>
             </div>
-            <button
-              onClick={() => navigate("/import-stock")}
-              className="w-40 bg-white text-[#333333] flex gap-1.5 items-center rounded-md py-2 px-4 border border-[#7d7d7d]"
-            >
-              <CiImport size={24} />
-              <span>Import Stock</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 px-4 md:px-5 py-5 border">
-          <div className="relative bg-[#F5F5F5] max-w-lg w-full flex items-center gap-1 md:w-1/2 px-4 rounded-md">
-            <IoIosSearch size={18} />
-            <input
-              type="search"
-              placeholder="Search products, categories..."
-              onChange={(e) => debouncedSearch(e.target.value)}
-              className="py-2 outline-0 w-full"
-            />
-            {searchQuery.trim() && suggestions.length > 0 && (
-              <div className="absolute top-full left-0 w-full bg-white shadow-lg z-10 border border-gray-200 rounded-b-md">
-                {suggestions.map((suggestion, i) => (
-                  <div
-                    key={i}
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+            {/*  */}
+            <div className="lg:hidden pt-5 lg:pt-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)]"
                   >
-                    {suggestion.item.name}
-                    <span className="text-xs text-gray-500 ml-2">
-                      ({getCategoryName(suggestion.item)})
-                    </span>
+                    <MoreVertical className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-48 bg-white border border-[#D9D9D9] shadow-lg"
+                >
+                  <div className="flex flex-col gap-1 p-1">
+                    <DropdownMenuItem
+                      onClick={handleExportPDF}
+                      className="cursor-pointer hover:bg-[#f5f5f5] focus:bg-[#f5f5f5] p-3 rounded-md w-full text-left px-4 py-2 "
+                    >
+                      <span className="text-[#333333] font-Inter font-medium">
+                        Export as PDF
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleExportExcel}
+                      className="cursor-pointer hover:bg-[#f5f5f5] focus:bg-[#f5f5f5] p-3 rounded-md  w-full text-left px-4 py-2"
+                    >
+                      <span className="text-[#333333] font-Inter font-medium ">
+                        Export as Excel
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleOpenModal}
+                      className="w-full bg-white text-[#333333] flex gap-1.5 items-center rounded-md py-2 px-4 border border-[#7d7d7d]"
+                    >
+                      <RotateCcw size={24} />
+                      Update Stock
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => navigate("/import-stock")}
+                      className="w-full bg-white text-[#333333] flex gap-1.5 items-center rounded-md py-2 px-4 border border-[#7d7d7d]"
+                    >
+                      <CiImport size={24} />
+                      <span>Import Stock</span>
+                    </DropdownMenuItem>
                   </div>
-                ))}
-              </div>
-            )}
-            {searchQuery.trim() && suggestions.length === 0 && (
-              <div className="absolute top-full left-0 w-full bg-white shadow-lg z-10 p-4 italic text-center text-gray-500 border border-gray-200 rounded-b-md">
-                No matching products found for{" "}
-                <span className="text-gray-700">"{searchQuery}"</span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-4">
-            <Select value={stockStatus} onValueChange={setStockStatus}>
-              <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d]">
-                <SelectValue placeholder="Stock status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All products</SelectItem>
-                <SelectItem value="high">High stock</SelectItem>
-                <SelectItem value="low">Low stock</SelectItem>
-                <SelectItem value="out">Out of stock</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={priceRange} onValueChange={setPriceRange}>
-              <SelectTrigger className="max-w-40 w-full bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d]">
-                <SelectValue placeholder="Price range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All prices</SelectItem>
-                <SelectItem value="under-1000">Under ₦1,000</SelectItem>
-                <SelectItem value="1000-5000">₦1,000-₦5,000</SelectItem>
-                <SelectItem value="5000-10000">₦5,000-₦10,000</SelectItem>
-                <SelectItem value="10000-50000">₦10,000-₦50,000</SelectItem>
-                <SelectItem value="above-50000">Above ₦50,000</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="my-5" ref={containerRef}>
-          <InventoryTab
-            products={filteredProducts}
-            categories={categories}
-            stockStatus={stockStatus}
-            priceRange={priceRange}
-          />
-
-          {/* draggable button */}
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            onMouseDown={handleMouseDown}
-            className="fixed z-50 flex justify-center items-center bg-[#2ECC71] hover:bg-[#2cCC79] w-16 h-16 rounded-full text-white shadow-2xl cursor-move"
-            style={{
-              left: `${position.xPercent}vw`,
-              top: `${position.yPercent}vh`,
-              transform: "translate(-50%, -50%)",
-            }}
-          >
-            <Plus className="h-8 w-8" />
-          </button>
-        </div>
-
-        <UpdateStock
-          products={productsForUpdateStock}
-          categories={categories} // Now passing categories to UpdateStock
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          onSave={handleSave}
-        />
-
-        <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)}>
-          <h6 className="text-lg font-medium text-[#333333] ml-5 mb-3">
-            What would you like to add?
-          </h6>
-          <div className="flex flex-col gap-4 px-7 pt-4 pb-6 border-t border-[#d9d9d9]">
-            <Link
-              to="/add-product"
-              className="flex justify-between items-center border py-3 px-6 rounded-[0.625rem] hover:shadow-2xl transition-all duration-100 ease-in-out"
-              onClick={() => setIsAddModalOpen(false)}
-            >
-              <div>
-                <p className="text-[#333333] text-sm">Add Product</p>
-                <p className="text-[#7D7D7D] text-[0.625rem]">
-                  Add a new product to your inventory
-                </p>
-              </div>
-              <ChevronRight size={18} />
-            </Link>
-            <div
-              onClick={() => {
-                setIsAddModalOpen(false);
-                setAddCategoryModalOpen(true);
-              }}
-              className="flex justify-between items-center border py-3 px-6 rounded-[0.625rem] hover:shadow-2xl transition-all duration-100 ease-in-out cursor-pointer"
-            >
-              <div>
-                <p className="text-[#333333] text-sm">Add Category</p>
-                <p className="text-[#7D7D7D] text-[0.625rem]">
-                  Create a new product category
-                </p>
-              </div>
-              <ChevronRight size={18} />
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
-        </Modal>
 
-        <Modal
-          isOpen={addCategoryModalOpen}
-          onClose={() => setAddCategoryModalOpen(false)}
-          size="xxl"
-        >
-          <AddCategory closeBothModals={closeBothModals} />
-        </Modal>
-      </section>
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 px-4 md:px-5 py-5 border">
+            <div className="relative bg-[#F5F5F5] max-w-lg w-full flex items-center gap-1 md:w-1/2 px-4 rounded-md">
+              <IoIosSearch size={18} />
+              <input
+                type="search"
+                placeholder="Search products, categories..."
+                onChange={(e) => debouncedSearch(e.target.value)}
+                className="py-2 outline-0 w-full"
+              />
+              {searchQuery.trim() && suggestions.length > 0 && (
+                <div className="absolute top-full left-0 w-full bg-white shadow-lg z-10 border border-gray-200 rounded-b-md">
+                  {suggestions.map((suggestion, i) => (
+                    <div
+                      key={i}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                    >
+                      {suggestion.item.name}
+                      <span className="text-xs text-gray-500 ml-2">
+                        ({getCategoryName(suggestion.item)})
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {searchQuery.trim() && suggestions.length === 0 && (
+                <div className="absolute top-full left-0 w-full bg-white shadow-lg z-10 p-4 italic text-center text-gray-500 border border-gray-200 rounded-b-md">
+                  No matching products found for{" "}
+                  <span className="text-gray-700">"{searchQuery}"</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-4">
+              <Select value={stockStatus} onValueChange={setStockStatus}>
+                <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d]">
+                  <SelectValue placeholder="Stock status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All products</SelectItem>
+                  <SelectItem value="high">High stock</SelectItem>
+                  <SelectItem value="low">Low stock</SelectItem>
+                  <SelectItem value="out">Out of stock</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={priceRange} onValueChange={setPriceRange}>
+                <SelectTrigger className="max-w-40 w-full bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d]">
+                  <SelectValue placeholder="Price range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All prices</SelectItem>
+                  <SelectItem value="under-1000">Under ₦1,000</SelectItem>
+                  <SelectItem value="1000-5000">₦1,000-₦5,000</SelectItem>
+                  <SelectItem value="5000-10000">₦5,000-₦10,000</SelectItem>
+                  <SelectItem value="10000-50000">₦10,000-₦50,000</SelectItem>
+                  <SelectItem value="above-50000">Above ₦50,000</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="my-5" ref={containerRef}>
+            <InventoryTab
+              products={filteredProducts}
+              categories={categories}
+              stockStatus={stockStatus}
+              priceRange={priceRange}
+            />
+
+            {/* draggable button */}
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              onMouseDown={handleMouseDown}
+              className="fixed z-50 flex justify-center items-center bg-[#2ECC71] hover:bg-[#2cCC79] w-16 h-16 rounded-full text-white shadow-2xl cursor-move"
+              style={{
+                left: `${position.xPercent}vw`,
+                top: `${position.yPercent}vh`,
+                transform: "translate(-50%, -50%)",
+              }}
+            >
+              <Plus className="h-8 w-8" />
+            </button>
+          </div>
+
+          <UpdateStock
+            products={productsForUpdateStock}
+            categories={categories} // Now passing categories to UpdateStock
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            onSave={handleSave}
+          />
+
+          <Modal
+            isOpen={isAddModalOpen}
+            onClose={() => setIsAddModalOpen(false)}
+          >
+            <h6 className="text-lg font-medium text-[#333333] ml-5 mb-3">
+              What would you like to add?
+            </h6>
+            <div className="flex flex-col gap-4 px-7 pt-4 pb-6 border-t border-[#d9d9d9]">
+              <Link
+                to="/add-prod"
+                className="flex justify-between items-center border py-3 px-6 rounded-[0.625rem] hover:shadow-2xl transition-all duration-100 ease-in-out"
+                onClick={() => setIsAddModalOpen(false)}
+              >
+                <div>
+                  <p className="text-[#333333] text-sm">Add Product</p>
+                  <p className="text-[#7D7D7D] text-[0.625rem]">
+                    Add a new product to your inventory
+                  </p>
+                </div>
+                <ChevronRight size={18} />
+              </Link>
+              <div
+                onClick={() => {
+                  setIsAddModalOpen(false);
+                  setAddCategoryModalOpen(true);
+                }}
+                className="flex justify-between items-center border py-3 px-6 rounded-[0.625rem] hover:shadow-2xl transition-all duration-100 ease-in-out cursor-pointer"
+              >
+                <div>
+                  <p className="text-[#333333] text-sm">Add Category</p>
+                  <p className="text-[#7D7D7D] text-[0.625rem]">
+                    Create a new product category
+                  </p>
+                </div>
+                <ChevronRight size={18} />
+              </div>
+            </div>
+          </Modal>
+
+          <Modal
+            isOpen={addCategoryModalOpen}
+            onClose={() => setAddCategoryModalOpen(false)}
+            size="xxl"
+          >
+            <AddCategory closeBothModals={closeBothModals} />
+          </Modal>
+        </section>
+      ) : (
+        <EmptyInventory />
+      )}
     </main>
   );
 };

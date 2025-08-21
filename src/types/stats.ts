@@ -7,6 +7,8 @@ export interface StatCard {
   salesColor?: string;
   format?: "currency" | "number" | "text";
   hideArrow?: boolean;
+  percentage?: number;
+  displayType?: "default" | "circular" | "linear";
 }
 
 export type StatCardProps = {

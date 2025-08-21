@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
+import { MdOutlineNotifications } from "react-icons/md"
 import { HiMiniChartBar } from "react-icons/hi2";
 
 import Logo from "@/components/Logo";
@@ -55,6 +56,11 @@ const items = [
     title: "User Management",
     url: "/manager/dashboard/manage-user",
     icon: UserRoundCog,
+  },
+  {
+    title: "Notifications",
+    url: "/manager/dashboard/manager-notifications",
+    icon: MdOutlineNotifications
   },
   {
     title: "Settings",

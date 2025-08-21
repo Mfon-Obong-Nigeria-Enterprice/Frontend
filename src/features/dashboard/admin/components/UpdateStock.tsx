@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /**
  * eslint-disable react-hooks/exhaustive-deps
  *
@@ -13,11 +14,16 @@ import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, X } from "lucide-react";
-import {
-  type Product,
-  type UpdateStockProduct,
-  type Category,
-} from "@/types/types"; // Import Category
+import { type Product, type Category } from "@/types/types"; // Import Category
+
+// Define UpdateStockProduct type locally
+type UpdateStockProduct = Product & {
+  id: string;
+  category: string;
+  selected: boolean;
+  newQuantity?: number;
+  shieldStatus: "high" | "low";
+};
 
 interface UpdateStockProps {
   products: Product[];

@@ -1,16 +1,19 @@
 import { useEffect, type ReactNode } from "react";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
-import { getAllProducts } from "@/services/productService";
+import {
+  getAllProducts,
+  getAllProductsByBranch,
+} from "@/services/productService";
 import { getAllCategories } from "@/services/categoryService";
 import { getAllClients } from "@/services/clientService";
 import { getAllTransactions } from "@/services/transactionService";
 import { getAllBranches } from "@/services/branchService";
-// import { getAllUsers } from "@/services/userService";
+import { getAllUsers } from "@/services/userService";
 import { useInventoryStore } from "@/stores/useInventoryStore";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { useClientStore } from "@/stores/useClientStore";
 import { useBranchStore } from "@/stores/useBranchStore";
-// import { useUserStore } from "@/stores/useUserStore";
+import { useUserStore } from "@/stores/useUserStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
@@ -22,6 +25,7 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   const setTransactions = useTransactionsStore(
     (state) => state.setTransactions
   );
+  const setUsers = useUserStore((state) => state.setUsers);
   const setClients = useClientStore((state) => state.setClients);
   const setBranches = useBranchStore((state) => state.setBranches);
 
@@ -30,10 +34,35 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
     queryFn: getAllCategories,
   });
 
-  const productsQuery = useSuspenseQuery({
+  // fetch products based on role
+  const productsQuery = useQuery({
     queryKey: ["products"],
-    queryFn: getAllProducts,
+    // queryKey: ["products", user?.role, user?.branchId],
+    queryFn: () => {
+      if (user?.role === "ADMIN" || user?.role === "STAFF") {
+        return getAllProductsByBranch();
+      }
+      return getAllProducts();
+    },
+    // enabled: !!user?.role && !!user?.branchId, // only run when user exists
   });
+  // const productsQuery = useQuery({
+  //   queryKey: ["products"],
+  //   // queryKey: ["products", user?.role, user?.branchId],
+  //   queryFn: () => {
+  //     if (user?.role === "ADMIN" || user?.role === "STAFF") {
+  //       return getAllProductsByBranch(user.branchId);
+  //     }
+  //     return getAllProducts();
+  //   },
+  //   // enabled: !!user?.role && !!user?.branchId, // only run when user exists
+  // });
+
+  // const { data } = useQuery({
+  //   queryKey: ["products", user?.role, user?.branchId],
+  //   queryFn: () => getAllProducts(user!.role, user!.branchId),
+  //   enabled: !!user?.role && !!user?.branchId, // only run when defined
+  // });
 
   const transactionsQuery = useSuspenseQuery({
     queryKey: ["transactions"],
@@ -48,7 +77,13 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   const branchesQuery = useQuery({
     queryKey: ["branches"],
     queryFn: getAllBranches,
-    enabled: user?.role !== "STAFF",
+    enabled: user?.role !== "STAFF" && user?.role !== "ADMIN",
+  });
+
+  const usersQuery = useQuery({
+    queryKey: ["clients"],
+    queryFn: getAllUsers,
+    enabled: user?.role !== "STAFF" && user?.role !== "ADMIN",
   });
 
   // Sync immediately when data is successfully fetched
@@ -80,17 +115,29 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
     if (
       branchesQuery.data &&
       branchesQuery?.data?.length > 0 &&
-      user?.role !== "STAFF"
+      user?.role !== "STAFF" &&
+      user?.role !== "ADMIN"
     ) {
       setBranches(branchesQuery.data);
     }
   }, [branchesQuery.dataUpdatedAt, setBranches, user?.role]);
 
+  useEffect(() => {
+    if (
+      usersQuery.data &&
+      usersQuery.data.length > 0 &&
+      user?.role !== "STAFF" &&
+      user?.role !== "ADMIN"
+    ) {
+      setUsers(usersQuery.data);
+    }
+  }, [usersQuery.dataUpdatedAt, setUsers]);
   return <>{children}</>;
 };
 
 // Export the recommended version
 export { AppProviderOptimized as AppProvider };
+
 // export const AppProvider = ({ children }: { children: ReactNode }) => {
 //   const { setProducts, setCategories } = useInventoryStore();
 //   const { setTransactions } = useTransactionsStore();

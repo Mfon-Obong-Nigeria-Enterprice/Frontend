@@ -21,11 +21,81 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import ClientStats from "../admin/components/ClientStats";
+import Stats from "../shared/Stats";
+import type { StatCard } from "@/types/stats";
+import ClientDirectoryMobile from "../shared/mobile/ClientDirectoryMobile";
 
 const ManagerClients = () => {
-  const { clients } = useClientStore();
+  const {
+    clients,
+    getNewClientsThisMonth,
+    getNewClientsPercentageChange,
+    getActiveClients, // This uses the 3-month logic
+    getTotalClientsPercentageChange, // New function for total client growth
+  } = useClientStore();
+
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Get dynamic data from store
+  const totalClients = clients.length;
+  const totalClientsChange = getTotalClientsPercentageChange();
+  const newClientsThisMonth = getNewClientsThisMonth();
+  const newClientsChange = getNewClientsPercentageChange();
+  const activeClients = getActiveClients(); // 3-month active clients
+
+  // Format change text helper
+  const formatChangeText = (
+    change: {
+      percentage: number;
+      direction: "increase" | "decrease" | "no-change";
+    },
+    period: string
+  ) => {
+    switch (change.direction) {
+      case "increase":
+        return `↑${change.percentage}% more than ${period}`;
+      case "decrease":
+        return `↓${change.percentage}% less than ${period}`;
+      default:
+        return `—No change from ${period}`;
+    }
+  };
+
+  const stats: StatCard[] = [
+    {
+      heading: "Total Clients",
+      salesValue: totalClients,
+      format: "number",
+      statValue: formatChangeText(totalClientsChange, "last month"),
+      color:
+        totalClientsChange.direction === "increase"
+          ? "green"
+          : totalClientsChange.direction === "decrease"
+          ? "red"
+          : "blue",
+    },
+    {
+      heading: "Active clients",
+      salesValue: activeClients,
+      format: "number",
+      statValue: `${Math.round(
+        (activeClients / totalClients) * 100
+      )}% of total clients`,
+      color: "blue",
+    },
+    {
+      heading: "New clients (This month)",
+      salesValue: newClientsThisMonth,
+      format: "number",
+      statValue: formatChangeText(newClientsChange, "last month"),
+      color:
+        newClientsChange.direction === "increase"
+          ? "green"
+          : newClientsChange.direction === "decrease"
+          ? "red"
+          : "orange",
+    },
+  ];
 
   const {
     filteredClients: statusBalanceFilter,
@@ -34,13 +104,12 @@ const ManagerClients = () => {
     setClientBalance,
     setClientStatus,
   } = useClientFiltering(clients);
-  //
 
   const filteredClients = useMemo(() => {
     return statusBalanceFilter.filter(
       (client) =>
-        client.name.includes(searchTerm.toLowerCase()) ||
-        client._id.includes(searchTerm.toLowerCase())
+        client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        client._id.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [searchTerm, statusBalanceFilter]);
 
@@ -52,22 +121,18 @@ const ManagerClients = () => {
     setClientBalance(value as clientBalance);
   };
 
-  // pdf function downloader
-
+  // PDF export function
   const handleExportPDF = () => {
     const doc = new jsPDF();
 
     const columns = [
       { header: "Client Name", dataKey: "Name" },
       { header: "Phone", dataKey: "Phone" },
-      { header: " Email", dataKey: "Email" },
-      {
-        header: " Last Transaction",
-        dataKey: "Last Transaction Type",
-      },
-      { header: " Amount", dataKey: "Amount" },
+      { header: "Email", dataKey: "Email" },
+      { header: "Last Transaction", dataKey: "Last Transaction Type" },
+      { header: "Amount", dataKey: "Amount" },
       { header: "Balance Status", dataKey: "Balance Status" },
-      { header: " Total Transaction", dataKey: "Total Transaction" },
+      { header: "Total Transaction", dataKey: "Total Transaction" },
     ];
 
     const rows = filteredClients.map((client) => {
@@ -106,6 +171,7 @@ const ManagerClients = () => {
           : 0,
       };
     });
+
     doc.setFontSize(16);
     doc.text("Client Summary", 14, 16);
 
@@ -115,6 +181,7 @@ const ManagerClients = () => {
       14,
       26
     );
+
     autoTable(doc, {
       startY: 30,
       head: [columns.map((col) => col.header)],
@@ -125,10 +192,11 @@ const ManagerClients = () => {
       headStyles: { fillColor: [44, 204, 113] },
       alternateRowStyles: { fillColor: [245, 245, 245] },
     });
+
     doc.save("Client_Summary.pdf");
   };
 
-  // Export Excel function handler
+  // Export Excel function
   const handleExportExcel = () => {
     const data = filteredClients.map((client) => {
       const getLatestTransaction = (client: Client): TransactionItem | null => {
@@ -154,8 +222,8 @@ const ManagerClients = () => {
         "Client ID": client._id,
         "Active Status": client.isActive ? "Active" : "Inactive",
         "Last Transaction Date": latestTransaction
-          ? new Date(latestTransaction.date).toLocaleDateString
-          : new Date(client.createdAt).toLocaleDateString,
+          ? new Date(latestTransaction.date).toLocaleDateString()
+          : new Date(client.createdAt).toLocaleDateString(),
         "Registration Status": client.isRegistered
           ? "Registered"
           : "Unregistered",
@@ -183,6 +251,7 @@ const ManagerClients = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Clients");
     XLSX.writeFile(workbook, "clients_export.xlsx");
   };
+
   return (
     <div>
       <main className="flex flex-col gap-4 mb-7">
@@ -190,9 +259,9 @@ const ManagerClients = () => {
           heading="Clients"
           description="Manage your client relationships and view outstanding balances"
         />
-        <ClientStats />
+        <Stats data={stats} />
 
-        <section className="bg-white rounded-[0.625rem] pt-4 border border-[#D9D9D9] mt-10  md:mx-1 ">
+        <section className="bg-white rounded-[0.625rem] pt-4 border border-[#D9D9D9] mt-10 md:mx-1">
           <div className="flex items-center justify-between px-7 pt-5 flex-wrap">
             <h4 className="font-medium text-xl font-Inter text-[#1E1E1E]">
               Client directory
@@ -213,19 +282,19 @@ const ManagerClients = () => {
             </div>
           </div>
 
-          {/* search */}
-          <div className="flex justify-between items-center px-4 py-5 mt-5 flex-wrap sm:flex-nowrap sm:px-2 md:px-8 ">
+          {/* Search and filters */}
+          <div className="flex justify-between items-center px-4 py-5 mt-5 flex-wrap sm:flex-nowrap sm:px-2 md:px-8">
             <div className="bg-[#F5F5F5] flex items-center gap-1 px-4 rounded-md w-full sm:w-1/2">
               <Search size={18} />
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 type="search"
-                placeholder="Search products, categories..."
-                className="py-2 outline-0 w-full"
+                placeholder="Search clients, ID..."
+                className="py-2 outline-0 w-full bg-transparent"
               />
             </div>
-            <div className="flex items-center gap-4 pt-4 sm:pt-0  md:gap-3">
+            <div className="flex items-center gap-4 pt-4 sm:pt-0 md:gap-3">
               <Select value={clientStatus} onValueChange={handleStatusChange}>
                 <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d]">
                   <SelectValue placeholder="All Status" />
@@ -250,9 +319,17 @@ const ManagerClients = () => {
               </Select>
             </div>
           </div>
+
           <ClientDirectory
             searchTerm={searchTerm}
             filteredClientsData={filteredClients}
+            actionLabel="view"
+            isStaffView={false}
+          />
+          <ClientDirectoryMobile
+            searchTerm={searchTerm}
+            filteredClientsData={filteredClients}
+            // onClientAction={onClientAction}
             actionLabel="view"
             isStaffView={false}
           />
