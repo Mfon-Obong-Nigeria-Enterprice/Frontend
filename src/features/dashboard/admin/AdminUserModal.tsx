@@ -34,6 +34,7 @@ const passwordSchema = z
 
 type AdminData = {
   _id?: string;
+  id?: string;
   email: string;
   lastLogin: string;
   userRole: string;
@@ -202,7 +203,9 @@ export default function AdminUserModal({
               <h3 className="text-xl font-semibold text-gray-800">
                 {adminData.adminName || "Admin User"}
               </h3>
-              <p className="text-sm text-gray-600">ID: {adminData._id}</p>
+              <p className="text-sm text-gray-600">
+                ID: {adminData._id || adminData.id}
+              </p>
               <p className="text-sm text-gray-600">
                 Last Login: {new Date(adminData.lastLogin).toLocaleString()}
               </p>

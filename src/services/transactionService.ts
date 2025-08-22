@@ -19,6 +19,34 @@ export const getAllTransactions = async (): Promise<Transaction[]> => {
   }
 };
 
+export const getTransactionsByBranch = async (
+  branchId?: string
+): Promise<Transaction[]> => {
+  try {
+    const response = await api.get(
+      branchId ? `/transactions/branch/${branchId}` : `/transactions/branch/ `
+    );
+    return response.data ?? [];
+  } catch (error) {
+    handleApiError(error, "Error fetching transactions");
+    throw error;
+  }
+};
+
+export const getTransactionByUserId = async (
+  userId?: string
+): Promise<Transaction[]> => {
+  try {
+    const url = userId ? `/transactions/user/${userId}` : `/transactions/user/`; // Let interceptor handle this
+
+    const response = await api(url);
+    return response.data;
+  } catch (error) {
+    handleApiError(error, "Error fetching products");
+    throw error;
+  }
+};
+
 export const AddTransaction = async (
   data: TransactionCreate
 ): Promise<Transaction[]> => {

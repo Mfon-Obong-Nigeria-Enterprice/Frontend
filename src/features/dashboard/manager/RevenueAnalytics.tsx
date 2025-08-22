@@ -1,3 +1,4 @@
+import React from "react";
 import {
   LineChart,
   Line,
@@ -9,6 +10,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  CartesianGrid,
 } from "recharts";
 import {
   ChevronDown,
@@ -16,124 +18,166 @@ import {
   TrendingUp,
   TrendingDown,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 import DashboardTitle from "../shared/DashboardTitle";
 import Stats from "../shared/Stats";
-import { useRevenueSelectors, useRevenueStore } from "@/stores/useRevenueStore";
-import { useEffect } from "react";
-import { toast } from "react-toastify";
+import { useRevenueStore } from "@/stores/useRevenueStore";
 import type { StatCard } from "@/types/stats";
-
-// Mock data for charts
-const monthlyTrendData = [
-  { month: "May", value: 300000 },
-  { month: "Jun", value: 350000 },
-  { month: "Jul", value: 400000 },
-  { month: "Aug", value: 380000 },
-  { month: "Sep", value: 420000 },
-  { month: "Oct", value: 450000 },
-  { month: "Nov", value: 480000 },
-  { month: "Dec", value: 460000 },
-  { month: "Jan", value: 500000 },
-  { month: "Feb", value: 520000 },
-  { month: "Mar", value: 550000 },
-  { month: "Apr", value: 580000 },
-  { month: "May", value: 600000 },
-];
-
-const yearOverYearData = [
-  { month: "Jan", "2024": 15, "2025": 35 },
-  { month: "Feb", "2024": 18, "2025": 40 },
-  { month: "Mar", "2024": 25, "2025": 45 },
-  { month: "Apr", "2024": 30, "2025": 50 },
-  { month: "May", "2024": 40, "2025": 55 },
-  { month: "Jun", "2024": 45, "2025": 52 },
-];
-
-const pieData = [
-  { name: "Tier", value: 35, color: "#10B981" },
-  { name: "Prod", value: 28, color: "#F59E0B" },
-  { name: "Content", value: 37, color: "#EF4444" },
-];
-
-const paymentMethods = [
-  {
-    method: "Cash",
-    revenue: "₦300,000",
-    amount: 300000,
-    color: "text-green-600",
-  },
-  {
-    method: "Bank Transfer",
-    revenue: "₦450,000",
-    amount: 450000,
-    color: "text-green-600",
-  },
-  {
-    method: "Credit (Pay Later)",
-    revenue: "₦125,000",
-    amount: 125000,
-    color: "text-red-600",
-  },
-];
+import { getAllTransactions } from "@/services/transactionService";
+import { getPreviousMonthName } from "@/utils/helpersfunction";
+import { getAllProducts } from "@/services/productService";
 
 export default function RevenueAnalytics() {
-  const { error, getAllRevenueData, clearError, ytdRevenue, monthlyRevenue } =
-    useRevenueStore();
-  const { isAnyLoading } = useRevenueSelectors();
+  const {
+    transactions,
+    products,
+    setTransactions,
+    setProducts,
+    getYTDRevenue,
+    getMOMRevenue,
+    getMonthlyTrendData,
+    getYearOverYearData,
+    getProductMarginData,
+    getAverageDiscount,
+    getRevenueLift,
+    getMarginImpact,
+    getPaymentMethodRevenue,
+  } = useRevenueStore();
+
+  // Fetch transactions using useQuery
+  const {
+    data: transactionData,
+    isLoading: isTransactionsLoading,
+    error: transactionsError,
+  } = useQuery({
+    queryKey: ["transactions"],
+    queryFn: getAllTransactions,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+  });
+
+  // Fetch products using useQuery
+  const {
+    data: productData,
+    isLoading: isProductsLoading,
+    error: productsError,
+  } = useQuery({
+    queryKey: ["products"],
+    queryFn: getAllProducts,
+    staleTime: 10 * 60 * 1000, // 10 minutes (products change less frequently)
+    retry: 2,
+  });
+
+  // Update store when data is fetched
+  React.useEffect(() => {
+    if (transactionData) {
+      setTransactions(transactionData);
+    }
+  }, [transactionData, setTransactions]);
+
+  React.useEffect(() => {
+    if (productData) {
+      setProducts(productData);
+    }
+  }, [productData, setProducts]);
+
+  // Handle errors with toast notifications
+  React.useEffect(() => {
+    if (transactionsError) {
+      console.error("Failed to fetch transactions:", transactionsError);
+      toast.error("Failed to load transaction data");
+    }
+  }, [transactionsError]);
+
+  React.useEffect(() => {
+    if (productsError) {
+      console.error("Failed to fetch products:", productsError);
+      toast.error("Failed to load product data");
+    }
+  }, [productsError]);
+
+  // Combined loading and error states
+  const isLoading = isTransactionsLoading || isProductsLoading;
+  const error = (transactionsError as Error) || (productsError as Error);
+
+  // Get computed revenue data (only compute when data is available)
+  const ytdRevenue = transactions
+    ? getYTDRevenue()
+    : {
+        totalRevenue: 0,
+        previousPeriodRevenue: 0,
+        percentageChange: 0,
+        direction: "no-change" as const,
+      };
+
+  const monthlyRevenue = transactions
+    ? getMOMRevenue()
+    : {
+        totalRevenue: 0,
+        previousPeriodRevenue: 0,
+        percentageChange: 0,
+        direction: "no-change" as const,
+      };
+
+  // Get chart data (only compute when data is available)
+  const monthlyTrendData = transactions ? getMonthlyTrendData() : [];
+  const yearOverYearData = transactions ? getYearOverYearData() : [];
+  const productMarginData =
+    transactions && products ? getProductMarginData() : [];
+  const averageDiscount = transactions ? getAverageDiscount() : 0;
+  const revenueLift = transactions
+    ? getRevenueLift()
+    : { percentage: 0, direction: "no-change" as const };
+  const marginImpact =
+    transactions && products
+      ? getMarginImpact()
+      : { percentage: 0, direction: "no-change" as const };
+  const paymentMethods = transactions ? getPaymentMethodRevenue() : [];
 
   const stats: StatCard[] = [
     {
       heading: "Total Revenue (YTD)",
-      salesValue: `₦${ytdRevenue?.totalRevenue.toLocaleString()}`,
+      salesValue: `₦${ytdRevenue.totalRevenue.toLocaleString()}`,
       statValue: `${
-        ytdRevenue?.direction === "increase"
+        ytdRevenue.direction === "increase"
           ? "+"
-          : ytdRevenue?.direction === "decrease"
+          : ytdRevenue.direction === "decrease"
           ? "-"
           : ""
-      }${ytdRevenue?.percentageChange}%`,
+      }${ytdRevenue.percentageChange}%`,
       color:
-        ytdRevenue?.direction === "increase"
+        ytdRevenue.direction === "increase"
           ? "green"
-          : ytdRevenue?.direction === "decrease"
+          : ytdRevenue.direction === "decrease"
           ? "red"
           : "orange",
     },
     {
-      heading: "Previous Month ",
-      salesValue: `₦${monthlyRevenue?.totalRevenue.toLocaleString()}`,
+      heading: `Previous Month (${getPreviousMonthName()})`,
+      salesValue: `₦${monthlyRevenue.previousPeriodRevenue.toLocaleString()}`,
     },
     {
-      heading: " Growth Rate (MOM)",
+      heading: "Growth Rate (MOM)",
       salesValue: `${
-        monthlyRevenue?.direction === "increase"
+        monthlyRevenue.direction === "increase"
           ? "+"
-          : monthlyRevenue?.direction === "decrease"
+          : monthlyRevenue.direction === "decrease"
           ? "-"
           : ""
-      }${monthlyRevenue?.percentageChange}%`,
-      salesColor: "blue",
-      percentage: Math.min(monthlyRevenue?.percentageChange ?? 0, 100), // Cap at 100% for circular display
+      }${monthlyRevenue.percentageChange}%`,
+      salesColor:
+        monthlyRevenue.direction === "increase"
+          ? "green"
+          : monthlyRevenue.direction === "decrease"
+          ? "red"
+          : "blue",
+      percentage: Math.min(monthlyRevenue.percentageChange, 100), // Cap at 100% for circular display
       displayType: "circular",
     },
   ];
 
-  //load data on mount
-  useEffect(() => {
-    getAllRevenueData();
-  }, [getAllRevenueData]);
-
-  // Handle error display
-  useEffect(() => {
-    if (error) {
-      console.error("Revenue Analytics Error:", error);
-      // You could show a toast notification here
-      toast.error(error);
-    }
-  }, [error]);
-
-  //
-  // LoadingSkeleton component
+  // Loading skeleton component
   const LoadingSkeleton = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
       {[1, 2, 3].map((index) => (
@@ -152,7 +196,15 @@ export default function RevenueAnalytics() {
     </div>
   );
 
-  //
+  // Chart loading skeleton
+  const ChartLoadingSkeleton = ({ height = "h-64" }: { height?: string }) => (
+    <div
+      className={`${height} bg-gray-100 rounded-lg animate-pulse flex items-center justify-center`}
+    >
+      <div className="text-gray-400">Loading chart data...</div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen p-2 md:p-4">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -160,12 +212,12 @@ export default function RevenueAnalytics() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <DashboardTitle
             heading="Revenue Analytics"
-            description="welcome back! Here’s your revenue performance"
+            description="Welcome back! Here's your revenue performance"
           />
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-2">
               <span className="text-sm text-gray-600">Filter:</span>
-              <span className="text-sm font-medium">Last 12 month</span>
+              <span className="text-sm font-medium">Last 12 months</span>
               <ChevronDown className="w-4 h-4 text-gray-400" />
             </div>
 
@@ -182,23 +234,19 @@ export default function RevenueAnalytics() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-red-700">
                 <span className="text-sm font-medium">Error loading data:</span>
-                <span className="text-sm">{error}</span>
+                <span className="text-sm">
+                  {error?.message || "Unknown error"}
+                </span>
               </div>
-              <button
-                onClick={clearError}
-                className="text-red-700 hover:text-red-900 text-sm font-medium"
-              >
-                Dismiss
-              </button>
             </div>
           </div>
         )}
 
         {/* Loading State */}
-        {isAnyLoading() ? <LoadingSkeleton /> : <Stats data={stats} />}
+        {isLoading ? <LoadingSkeleton /> : <Stats data={stats} />}
 
         <div className="space-y-4 sm:space-y-6">
-          {/* First Row: Monthly Revenue Trend and Year-Over-Year taking 70% on large screens */}
+          {/* Charts Section */}
           <div className="grid md:grid-cols-1 xl:grid-cols-6 lg:grid-cols-5 gap-4 sm:gap-6">
             <div className="w-full xl:col-span-4 lg:col-span-3 space-y-4 sm:space-y-6">
               {/* Monthly Revenue Trend */}
@@ -210,83 +258,106 @@ export default function RevenueAnalytics() {
                   <MoreVertical className="w-5 h-5 text-gray-400 cursor-pointer" />
                 </div>
 
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={monthlyTrendData}>
-                      <XAxis
-                        dataKey="month"
-                        axisLine={true}
-                        tickLine={false}
-                        className="text-xs text-[#D9D9D9]"
-                      />
-                      <YAxis hide />
-                      <Line
-                        type="monotone"
-                        dataKey="value"
-                        stroke="#3B82F6"
-                        strokeWidth={3}
-                        dot={false}
-                        activeDot={{ r: 6, fill: "#3B82F6" }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
+                {isLoading ? (
+                  <ChartLoadingSkeleton />
+                ) : (
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={monthlyTrendData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey="month"
+                          axisLine={true}
+                          tickLine={false}
+                          className="text-xs text-gray-500"
+                        />
+                        <YAxis
+                          hide
+                          tickFormatter={(value) =>
+                            `₦${(value / 1000).toFixed(0)}k`
+                          }
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="value"
+                          stroke="#3B82F6"
+                          strokeWidth={3}
+                          dot={false}
+                          activeDot={{ r: 6, fill: "#3B82F6" }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
 
               {/* Year Over Year Comparison */}
               <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-gray-900">
-                    Year - Over - Year Comparison
+                    Year-Over-Year Comparison
                   </h3>
                   <div className="flex items-center gap-4 text-xs">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-red-500"></div>
-                      <span>2024</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-blue-500"></div>
-                      <span>2025</span>
-                    </div>
+                    {yearOverYearData.length > 0 && (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-red-500"></div>
+                          <span>{new Date().getFullYear() - 1}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-blue-500"></div>
+                          <span>{new Date().getFullYear()}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={yearOverYearData} barCategoryGap="20%">
-                      <XAxis
-                        dataKey="month"
-                        axisLine={true}
-                        tickLine={false}
-                        className="text-xs text-[#D9D9D9]"
-                      />
-                      <YAxis
-                        axisLine={true}
-                        tickLine={false}
-                        className="text-xs text-[#D9D9D9]"
-                      />
-                      <Bar
-                        dataKey="2024"
-                        fill="#EF4444"
-                        radius={[0, 0, 0, 0]}
-                      />
-                      <Bar
-                        dataKey="2025"
-                        fill="#3B82F6"
-                        radius={[0, 0, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                {isLoading ? (
+                  <ChartLoadingSkeleton />
+                ) : (
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={yearOverYearData} barCategoryGap="20%">
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          className=" bg-gray-500"
+                        />
+                        <XAxis
+                          dataKey="month"
+                          axisLine={true}
+                          tickLine={false}
+                          className="text-xs text-gray-500"
+                        />
+                        <YAxis
+                          axisLine={true}
+                          tickLine={false}
+                          className="text-xs text-gray-500"
+                          tickFormatter={(value) => `${value}k`}
+                        />
+                        <Bar
+                          dataKey={`${new Date().getFullYear() - 1}`}
+                          fill="#EF4444"
+                          radius={[0, 0, 0, 0]}
+                        />
+                        <Bar
+                          dataKey={`${new Date().getFullYear()}`}
+                          fill="#3B82F6"
+                          radius={[0, 0, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="w-full xl:col-span-2 lg:col-span-2 space-y-4 sm:space-y-6">
-              <div className=" grid md:grid-cols-2 lg:grid-cols-1 space-y-4  gap-2 transition-all">
+              <div className="grid md:grid-cols-2 lg:grid-cols-1 gap-4">
                 {/* Revenue by Payment Method */}
                 <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 shadow-sm">
                   <h3 className="text-[16px] lg:text-lg font-semibold text-gray-900 mb-2">
-                    Revenue by Payment method
+                    Revenue by Payment Method
                   </h3>
 
                   <div className="space-y-4">
@@ -295,36 +366,44 @@ export default function RevenueAnalytics() {
                       <span>Revenue</span>
                     </div>
 
-                    {paymentMethods.map((method, index) => (
-                      <div
-                        key={index}
-                        className="grid grid-cols-2 gap-4 items-center py-2 border-b border-gray-200 pb-2"
-                      >
-                        <span className="text-sm text-gray-900">
-                          {method.method}
-                        </span>
-                        <span
-                          className={`text-sm font-semibold ${method.color}`}
+                    {paymentMethods.length > 0 ? (
+                      paymentMethods.map((method, index) => (
+                        <div
+                          key={index}
+                          className="grid grid-cols-2 gap-4 items-center py-2 border-b border-gray-200 pb-2"
                         >
-                          {method.revenue}
-                        </span>
+                          <span className="text-sm text-gray-900">
+                            {method.method}
+                          </span>
+                          <span
+                            className={`text-sm font-semibold ${method.color}`}
+                          >
+                            {method.revenue}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-gray-500 text-center py-4">
+                        {isLoading ? "Loading..." : "No payment data available"}
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
 
                 {/* Discount Impact */}
-                <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 shadow-sm  flex flex-col ">
+                <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 shadow-sm flex flex-col">
                   <h3 className="lg:text-lg text-[16px] font-semibold text-gray-900 mb-4">
                     Discount Impact
                   </h3>
 
-                  <div className="space-y-4 flex flex-col ">
+                  <div className="space-y-4 flex flex-col">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">
                         Avg. Discount:
                       </span>
-                      <span className="text-sm font-semibold">7%</span>
+                      <span className="text-sm font-semibold">
+                        {averageDiscount}%
+                      </span>
                     </div>
 
                     <div className="flex justify-between items-center">
@@ -332,9 +411,26 @@ export default function RevenueAnalytics() {
                         Revenue Lift:
                       </span>
                       <div className="flex items-center gap-1">
-                        <TrendingUp className="w-4 h-4 text-green-600" />
-                        <span className="text-sm font-semibold text-green-600">
-                          12%
+                        {revenueLift.direction === "increase" ? (
+                          <TrendingUp className="w-4 h-4 text-green-600" />
+                        ) : revenueLift.direction === "decrease" ? (
+                          <TrendingDown className="w-4 h-4 text-red-600" />
+                        ) : null}
+                        <span
+                          className={`text-sm font-semibold ${
+                            revenueLift.direction === "increase"
+                              ? "text-green-600"
+                              : revenueLift.direction === "decrease"
+                              ? "text-red-600"
+                              : "text-gray-600"
+                          }`}
+                        >
+                          {revenueLift.direction === "increase"
+                            ? "+"
+                            : revenueLift.direction === "decrease"
+                            ? "-"
+                            : ""}
+                          {revenueLift.percentage}%
                         </span>
                       </div>
                     </div>
@@ -344,69 +440,90 @@ export default function RevenueAnalytics() {
                         Margin Impact:
                       </span>
                       <div className="flex items-center gap-1">
-                        <TrendingDown className="w-4 h-4 text-red-600" />
-                        <span className="text-sm font-semibold text-red-600">
-                          3%
+                        {marginImpact.direction === "increase" ? (
+                          <TrendingUp className="w-4 h-4 text-green-600" />
+                        ) : marginImpact.direction === "decrease" ? (
+                          <TrendingDown className="w-4 h-4 text-red-600" />
+                        ) : null}
+                        <span
+                          className={`text-sm font-semibold ${
+                            marginImpact.direction === "increase"
+                              ? "text-green-600"
+                              : marginImpact.direction === "decrease"
+                              ? "text-red-600"
+                              : "text-gray-600"
+                          }`}
+                        >
+                          {marginImpact.direction === "increase"
+                            ? "+"
+                            : marginImpact.direction === "decrease"
+                            ? "-"
+                            : ""}
+                          {marginImpact.percentage}%
                         </span>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-
-              <div className=" space-y-4 sm:space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Product Margin */}
                 <div className="bg-white rounded-xl border border-gray-200 p-2 sm:p-6 shadow-sm relative">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Product Margin
                   </h3>
 
-                  <div className="flex items-center lg:justify-start justify-center ">
-                    <div className="relative w-32 h-32 mb-5 sm:mb-0">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={pieData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={35}
-                            outerRadius={60}
-                            startAngle={90}
-                            endAngle={-270}
-                            dataKey="value"
-                          >
-                            {pieData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
+                  {productMarginData.length > 0 ? (
+                    <>
+                      <div className="flex items-center lg:justify-start justify-center">
+                        <div className="relative w-32 h-32 mb-5 sm:mb-0">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={productMarginData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={35}
+                                outerRadius={60}
+                                startAngle={90}
+                                endAngle={-270}
+                                dataKey="value"
+                              >
+                                {productMarginData.map((entry, index) => (
+                                  <Cell
+                                    key={`cell-${index}`}
+                                    fill={entry.color}
+                                  />
+                                ))}
+                              </Pie>
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
 
-                  <div className="space-y-2 absolute right-3 bottom-1.5 flex gap-4 md:gap-0 justify-between lg:flex-col  ">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-green-500 "></div>
-                        <span className="text-sm text-gray-600">Tiles</span>
+                      <div className="space-y-2 absolute right-3 bottom-1.5 flex gap-4 md:gap-0 justify-between lg:flex-col">
+                        {productMarginData.slice(0, 3).map((item, index) => (
+                          <div key={index}>
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-3 h-3"
+                                style={{ backgroundColor: item.color }}
+                              ></div>
+                              <span className="text-sm text-gray-600">
+                                {item.name}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-center h-32">
+                      <div className="text-sm text-gray-500">
+                        {isLoading ? "Loading..." : "No margin data available"}
                       </div>
                     </div>
-
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-orange-500 "></div>
-                        <span className="text-sm text-gray-600">Rod</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-red-500 "></div>
-                        <span className="text-sm text-gray-600">Cement</span>
-                      </div>
-                    </div>
-                  </div>
-                  {/*  */}
+                  )}
                 </div>
               </div>
             </div>

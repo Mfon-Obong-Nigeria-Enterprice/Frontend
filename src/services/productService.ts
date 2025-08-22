@@ -17,23 +17,19 @@ export const getAllProducts = async (): Promise<Product[]> => {
   }
 };
 
-export const getAllProductsByBranch = async () => {
+export const getAllProductsByBranch = async (
+  branchId?: string
+): Promise<Product[]> => {
   try {
-    const response = await api.get(`/api/products/branch/`);
+    const url = branchId ? `/products/branch/${branchId}` : `/products/branch/`; // Let interceptor handle this
+
+    const response = await api.get(url);
     return response.data ?? [];
   } catch (error) {
-    console.error("error fetching", error);
+    console.error(error);
+    throw new Error();
   }
 };
-
-// export const getAllProductsByBranch = async (branchId: string) => {
-//   try {
-//     const response = await api.get(`/api/products/branch/${branchId}`);
-//     return response.data ?? [];
-//   } catch (error) {
-//     console.error("error fetching", error);
-//   }
-// };
 
 export const createProduct = async (product: NewProduct) => {
   const response = await api.post("/products", product);

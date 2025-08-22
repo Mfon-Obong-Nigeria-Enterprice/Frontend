@@ -67,11 +67,11 @@ export const getChangeText = (
 ) => {
   switch (direction) {
     case "increase":
-      return `↑ ${percentage}% from last ${period}`;
+      return `↑ ${Math.abs(percentage)}% from  ${period}`;
     case "decrease":
-      return `↓ ${Math.abs(percentage)}% from last ${period}`;
+      return `↓ ${Math.abs(percentage)}% from  ${period}`;
     default:
-      return `0% from last ${period}`;
+      return `0% from  ${period}`;
   }
 };
 
@@ -91,4 +91,25 @@ export const formatChangeText = (
     default:
       return `—No change from ${period}`;
   }
+};
+
+// Helper function to get previous month name
+export const getPreviousMonthName = () => {
+  const now = new Date();
+  const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  return monthNames[previousMonth.getMonth()];
 };

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import type { DragEvent } from "react";
@@ -17,10 +15,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { ImPencil } from "react-icons/im";
 import { Loader2, Camera } from "lucide-react";
 import api from "@/services/baseApi";
-
 
 const profileSchema = z.object({
   fullName: z.string().min(1, "Full Name is required"),
@@ -31,7 +27,7 @@ type ManagerData = {
   _id: string;
   email: string;
   lastLogin: string;
-  userRole: string; 
+  userRole: string;
   fullName: string;
   location: string;
   profilePicture?: string;
@@ -42,7 +38,6 @@ type ManagerUsersModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userData: ManagerData;
- 
   onProfileUpdate: (updatedData: ManagerData) => void;
 };
 
@@ -57,7 +52,7 @@ export function ManagerUsersModal({
   const [profileImage, setProfileImage] = useState<string | undefined>(
     userData.profilePicture
   );
-  const [isDragging] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const profileForm = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -69,8 +64,6 @@ export function ManagerUsersModal({
 
   useEffect(() => {
     if (open) {
-      console.log("📂 Manager/Maintainer User Data when modal opens:", userData);
-      
       setProfileImage(userData.profilePicture);
       profileForm.reset({
         fullName: userData.fullName,
@@ -79,9 +72,7 @@ export function ManagerUsersModal({
     }
   }, [open, userData, profileForm]);
 
-  const handleProfileSubmit = async (
-    values: z.infer<typeof profileSchema>
-  ) => {
+  const handleProfileSubmit = async (values: z.infer<typeof profileSchema>) => {
     try {
       setIsLoading(true);
 
@@ -90,32 +81,39 @@ export function ManagerUsersModal({
         location: values.location,
       };
 
-      console.log("Sending profile update payload:", payload);
+      const response = await api.patch(`/users/${userData._id}`, payload);
 
+      // Create the updated user data object
+      const updatedUserData = {
+        ...userData,
+        fullName: values.fullName,
+        location: values.location,
+        name: values.fullName, // Also update 'name' field for consistency
+        branch: values.location, // Also update 'branch' field for consistency
+        // Include any data from the response
+        ...response.data,
+      };
 
-      const response = await api.patch(`/users/${userData._id}/profile`, payload);
-      console.log("Profile Update Response:", response);
-
-   
-      onProfileUpdate(response.data);
+      // Call the onProfileUpdate callback with the updated data
+      onProfileUpdate(updatedUserData);
 
       toast.success("Profile updated successfully");
       onOpenChange(false);
     } catch (error: any) {
-      console.error("Full error object:", error);
+      console.error("Profile update error:", error);
 
-      if (error.response) {
-        console.error("Error response data:", error.response.data);
-        if (error.response.data?.message) {
-          toast.error(error.response.data.message);
-        } else {
-          toast.error(`Profile update failed. Status: ${error.response.status}`);
-        }
+      // Enhanced error handling with specific 403 guidance
+      if (error.response?.status === 403) {
+        const errorMsg = error.response.data?.message || "Access denied";
+        toast.error(`Permission Error: ${errorMsg}`);
+      } else if (error.response) {
+        const errorMessage =
+          error.response.data?.message ||
+          `Update failed with status ${error.response.status}`;
+        toast.error(errorMessage);
       } else if (error.request) {
-        console.error("No response received:", error.request);
         toast.error("No response from server. Please try again.");
       } else {
-        console.error("Request setup error:", error.message);
         toast.error("Request error. Please check your connection.");
       }
     } finally {
@@ -123,34 +121,109 @@ export function ManagerUsersModal({
     }
   };
 
-  const handleProfilePictureUpload = async (file: File) => {
-    setIsUploadingImage(true);
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    console.log("Uploading profile picture...");
+  const validateImage = (file: File): string | null => {
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
 
+    if (!allowedTypes.includes(file.type)) {
+      return "Please select a valid image file (JPEG, PNG, GIF, or WebP)";
+    }
+
+    if (file.size > maxSize) {
+      return "Image size must be less than 5MB";
+    }
+
+    return null;
+  };
+
+  const handleProfilePictureUpload = async (file: File) => {
     try {
-    
+      const validationError = validateImage(file);
+      if (validationError) {
+        toast.error(validationError);
+        return;
+      }
+
+      setIsUploadingImage(true);
+
+      // Ensure auth token is set
+      const token = localStorage.getItem("authToken");
+      if (token && !api.defaults.headers.common["Authorization"]) {
+        api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+
       const response = await api.patch(
         `/users/${userData._id}/profile-picture`,
-        formData
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
-      console.log("Profile picture upload response:", response);
+      // Try multiple possible response formats
+      let profilePictureUrl = null;
+      let updatedUserData = null;
 
-     
-      onProfileUpdate(response.data);
+      if (response.data) {
+        profilePictureUrl =
+          response.data.url || // { url: "..." }
+          response.data.profilePicture || // { profilePicture: "..." }
+          response.data.data?.url || // { data: { url: "..." } }
+          response.data.data?.profilePicture || // { data: { profilePicture: "..." } }
+          null;
 
-      setProfileImage(response.data.profilePicture);
-      toast.success('Profile picture updated successfully!');
-    } catch (error: any) {
-      console.error('Profile picture upload failed:', error);
-      if (error.response) {
-        console.error("Error response data:", error.response.data);
-        toast.error(error.response.data?.message || 'Profile picture upload failed.');
+        updatedUserData =
+          response.data.user || // { user: {...} }
+          response.data.data || // { data: {...} }
+          response.data; // {...} direct user object
+      }
+
+      if (profilePictureUrl) {
+        setProfileImage(profilePictureUrl);
+
+        const newUserData = {
+          ...userData,
+          ...updatedUserData,
+          profilePicture: profilePictureUrl,
+        };
+
+        onProfileUpdate(newUserData);
+        toast.success("Profile picture updated successfully!");
       } else {
-        toast.error('Profile picture upload failed.');
+        // Still update if we got user data back
+        if (updatedUserData && Object.keys(updatedUserData).length > 0) {
+          onProfileUpdate({ ...userData, ...updatedUserData });
+          toast.success("Upload completed!");
+        } else {
+          toast.warning("Upload completed but no data returned");
+        }
+      }
+    } catch (error: any) {
+      console.error("Profile picture upload error:", error);
+
+      if (error.response?.status === 403) {
+        const errorMsg = error.response.data?.message || "Access denied";
+        toast.error(`Permission Error: ${errorMsg}`);
+      } else if (error.response) {
+        const errorMessage =
+          error.response.data?.message ||
+          `Upload failed with status ${error.response.status}`;
+        toast.error(errorMessage);
+      } else if (error.request) {
+        toast.error("No response from server. Please try again.");
+      } else {
+        toast.error("Upload error. Please check your connection.");
       }
     } finally {
       setIsUploadingImage(false);
@@ -159,28 +232,63 @@ export function ManagerUsersModal({
 
   const handleFileInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-    
-      setProfileImage(URL.createObjectURL(file));
-      handleProfilePictureUpload(file);
-    }
+    if (!file) return;
+
+    const previewUrl = URL.createObjectURL(file);
+    setProfileImage(previewUrl);
+    handleProfilePictureUpload(file);
+    event.target.value = "";
   };
 
-  function handleDragOver(_event: DragEvent<HTMLDivElement>): void {}
-  function handleDrop(_event: DragEvent<HTMLDivElement>): void {}
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(false);
+
+    const files = event.dataTransfer.files;
+    const file = files?.[0];
+
+    if (!file) {
+      toast.error("No file was dropped");
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please drop an image file");
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setProfileImage(previewUrl);
+    handleProfilePictureUpload(file);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] font-inter rounded-lg shadow-lg">
+      <DialogContent className="sm:max-w-[600px] font-inter rounded-lg shadow-lg max-h-[90vh] overflow-y-auto">
         <div className="p-4 space-y-6">
+          <h2 className="text-lg font-semibold">Edit Profile</h2>
+
           <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg shadow-sm">
             <div
               className={`relative w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center border-2 ${
-                isDragging ? "border-blue-500" : "border-gray-300"
-              } transition-colors duration-200`}
+                isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
+              } transition-all duration-200 cursor-pointer`}
               onDragEnter={handleDragOver}
               onDragOver={handleDragOver}
-              onDragLeave={handleDragOver}
+              onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
               {profileImage ? (
@@ -189,17 +297,22 @@ export function ManagerUsersModal({
                   alt={`${userData.userRole} Avatar`}
                   className="w-full h-full object-cover"
                   onError={(e) => {
+                    console.error(
+                      "Failed to load profile image:",
+                      profileImage
+                    );
                     (e.target as HTMLImageElement).style.display = "none";
                   }}
                 />
               ) : (
                 <div className="text-center">
-                  <span className="text-gray-500 text-xs block mt-1">
-                    Choose photo from file{" "}
-                    <ImPencil size={30} className="mx-auto" />
+                  <Camera className="w-8 h-8 mx-auto text-gray-400 mb-1" />
+                  <span className="text-gray-500 text-xs block">
+                    Choose photo
                   </span>
                 </div>
               )}
+
               <label
                 htmlFor="profile-upload"
                 className={`absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 text-white cursor-pointer ${
@@ -215,6 +328,7 @@ export function ManagerUsersModal({
                 )}
                 <span className="sr-only">Choose photo from file</span>
               </label>
+
               <input
                 id="profile-upload"
                 type="file"
@@ -235,9 +349,12 @@ export function ManagerUsersModal({
             </div>
           </div>
 
-          <h3 className="text-sm font-semibold text-gray-800 mb-4">
-            Edit Profile
-          </h3>
+          {isDragging && (
+            <div className="text-center p-4 border-2 border-dashed border-blue-500 bg-blue-50 rounded-lg">
+              <p className="text-blue-600 font-medium">Drop your image here</p>
+            </div>
+          )}
+
           <Form {...profileForm}>
             <form
               onSubmit={profileForm.handleSubmit(handleProfileSubmit)}
@@ -296,7 +413,9 @@ export function ManagerUsersModal({
                   />
                 </FormControl>
                 <FormMessage />
-                <p className="text-gray-500 text-xs">This field can't be edited</p>
+                <p className="text-gray-500 text-xs">
+                  This field can't be edited
+                </p>
               </FormItem>
 
               <Button
