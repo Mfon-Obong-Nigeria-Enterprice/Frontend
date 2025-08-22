@@ -4,6 +4,8 @@ import {
   createClient,
   updateClient,
   deleteClient,
+  blockClient,
+  unblockClient,
 } from "@/services/clientService";
 
 export const useClientMutations = () => {
@@ -25,5 +27,21 @@ export const useClientMutations = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
   });
 
-  return { createMutate, updateMutate, deleteMutate };
+  const blockMutate = useMutation({
+    mutationFn: blockClient,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
+  });
+
+  const unblockMutate = useMutation({
+    mutationFn: unblockClient,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
+  });
+
+  return {
+    createMutate,
+    updateMutate,
+    deleteMutate,
+    blockMutate,
+    unblockMutate,
+  };
 };

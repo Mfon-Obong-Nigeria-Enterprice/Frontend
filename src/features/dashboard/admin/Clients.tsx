@@ -7,13 +7,6 @@ import { MoreVertical, Plus, Search } from "lucide-react";
 import ClientDirectory from "../shared/ClientDirectory";
 import { useState } from "react";
 import { AddClientDialog } from "./components/AddClientDialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import * as XLSX from "xlsx";
 import type { Client, TransactionItem } from "@/types/types";
 import { useClientStore } from "@/stores/useClientStore";
@@ -286,34 +279,6 @@ export const Clients: React.FC<ClientProps> = ({
             </>
           )}
         </div>
-        {/* <div className="flex justify-between px-7 pt-5 flex-wrap">
-          <h4 className="font-medium text-xl font-Inter text-[#1E1E1E]">
-            Client directory
-          </h4>
-          {showExportButtons !== false && (
-            <div className="flex items-center gap-3 pt-5 sm:pt-0 justify-self-end sm:justify-self-auto">
-              <Button
-                className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
-                onClick={handleExportPDF}
-              >
-                Export PDF
-              </Button>
-              <Button
-                className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
-                onClick={handleExportExcel}
-              >
-                Download Excel
-              </Button>
-              <Button
-                onClick={() => setShowAddDialog(true)}
-                className="bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)] transition-colors duration-200 ease-in-out [&_span]:text-5xl"
-              >
-                <Plus className="w-10 h-10 text-white" />
-                Add Client
-              </Button>
-            </div>
-          )}
-        </div> */}
 
         {/* search */}
         <div className="flex justify-between items-center px-4 py-5 mt-5 flex-wrap sm:flex-nowrap sm:px-2 md:px-8 ">
@@ -327,29 +292,26 @@ export const Clients: React.FC<ClientProps> = ({
               className="py-2 outline-0 w-full"
             />
           </div>
-          <div className="flex items-center gap-4 pt-4 sm:pt-0  md:gap-3">
-            <Select value={clientStatus} onValueChange={handleStatusChange}>
-              <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d]">
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All Status">All Status</SelectItem>
-                <SelectItem value="Registered">Registered</SelectItem>
-                <SelectItem value="Unregistered">Unregistered</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={clientBalance} onValueChange={handleBalanceChange}>
-              <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d]">
-                <SelectValue placeholder="All Balances" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All Balances">All Balances</SelectItem>
-                <SelectItem value="PURCHASE">Purchase</SelectItem>
-                <SelectItem value="PICKUP">Pickup</SelectItem>
-                <SelectItem value="DEPOSIT">Deposit</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-4 pt-4 sm:pt-0 md:gap-3">
+            <select
+              value={clientStatus}
+              onChange={(e) => handleStatusChange(e.target.value)}
+              className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] p-2 rounded-sm"
+            >
+              <option value="All Status">All Status</option>
+              <option value="Registered">Registered</option>
+              <option value="Unregistered">Unregistered</option>
+            </select>
+            <select
+              value={clientBalance}
+              onChange={(e) => handleBalanceChange(e.target.value)}
+              className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] p-2 rounded-sm"
+            >
+              <option value="All Balances">All Balances</option>
+              <option value="PURCHASE">Purchase</option>
+              <option value="PICKUP">Pickup</option>
+              <option value="DEPOSIT">Deposit</option>
+            </select>
           </div>
         </div>
 

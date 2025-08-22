@@ -16,6 +16,7 @@ type AuthState = {
   login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   initializeAuth: () => Promise<void>;
+  updateUser: (updates: Partial<User>) => void;
 };
 
 // global guard to prevent infinite logout loops
@@ -41,6 +42,7 @@ export const useAuthStore = create<AuthState>()(
             email,
             password
           );
+          console.log("Lofin successful, user data:", user);
 
           set({
             user,
@@ -55,6 +57,14 @@ export const useAuthStore = create<AuthState>()(
           set({ loading: false });
           throw error;
         }
+      },
+      updateUser: (updates) => {
+        console.log("Updating user with:", updates);
+        set((state) => {
+          const updatedUser = state.user ? { ...state.user, ...updates } : null;
+          console.log("Updated user object:", updatedUser);
+          return { user: updatedUser };
+        });
       },
 
       logout: async () => {
@@ -111,12 +121,25 @@ export const useAuthStore = create<AuthState>()(
         }
       },
     }),
+    // {
+    //   name: "auth-store",
+    //   partialize: (state) => ({
+    //     user: state.user,
+    //     refreshToken: state.refreshToken, // only persist these
+    //   }),
+    // }
     {
       name: "auth-store",
-      partialize: (state) => ({
-        user: state.user,
-        refreshToken: state.refreshToken, // only persist these
-      }),
+      partialize: (state) => {
+        console.log("Persisting auth state:", {
+          user: state.user,
+          refreshToken: state.refreshToken,
+        });
+        return {
+          user: state.user,
+          refreshToken: state.refreshToken, // persist user and refresh token
+        };
+      },
     }
   )
 );
