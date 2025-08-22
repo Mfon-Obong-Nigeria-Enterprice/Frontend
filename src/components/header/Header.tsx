@@ -17,6 +17,7 @@ import {
   // DrawerFooter,
   // DrawerClose,
 } from "@/components/ui/drawer";
+import type { Role } from "@/types/types";
 
 type HeaderProps = {
   userRole?: "admin" | "staff" | "maintainer" | "superadmin" | "manager";
@@ -113,7 +114,9 @@ const Header = ({ userRole }: HeaderProps) => {
                   <DrawerTitle>Notifications</DrawerTitle>
                 </DrawerHeader>
                 <div className="px-4 pb-4">
-                  <NotificationModal role={user?.role?.toLowerCase()} />
+                  {user?.role && (
+                    <NotificationModal role={user.role.toLowerCase() as Role} />
+                  )}
                 </div>
               </DrawerContent>
             </Drawer>

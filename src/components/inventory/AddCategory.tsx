@@ -13,6 +13,44 @@ import { Button } from "../ui/button";
 import { toast } from "react-toastify";
 import LoadingSpinner from "../LoadingSpinner";
 import { useNotificationStore } from "@/stores/useNotificationStore";
+import type { Role } from "@/types/types";
+import { v4 as uuidv4 } from "uuid"; // for unique IDs
+
+const addErrorNotification = (
+  message: string,
+  recipients: Role[] = ["ADMIN"]
+) => {
+  const addNotification = useNotificationStore.getState().addNotification;
+
+  addNotification({
+    id: uuidv4(),
+    title: "Category Failed",
+    message,
+    type: "error",
+    action: "category_added", // you can still use the related action
+    read: false,
+    createdAt: new Date(),
+    recipients,
+  });
+};
+
+const addCategoryNotification = (
+  newCategory: { name: string },
+  recipients: Role[]
+) => {
+  const addNotification = useNotificationStore.getState().addNotification;
+
+  addNotification({
+    id: uuidv4(), // unique id
+    title: "New Category",
+    message: `${newCategory.name} has been created successfully.`,
+    type: "success",
+    action: "category_added",
+    read: false,
+    createdAt: new Date(),
+    recipients,
+  });
+};
 
 type Props = {
   closeBothModals: () => void;
@@ -23,7 +61,7 @@ type CategoryFormData = z.infer<typeof categorySchema>;
 
 const AddCategory = ({ closeBothModals }: Props) => {
   const queryClient = useQueryClient();
-  const { addNotification } = useNotificationStore();
+
   // const [isLoading, setIsLoading] = useState(false);
 
   //  set up mutation
@@ -36,11 +74,8 @@ const AddCategory = ({ closeBothModals }: Props) => {
       // toast + notification
       toast.success("Category created successfully!");
 
-      addNotification({
-        type: "success",
-        title: "New Category",
-        message: `${newCategory.name} has been created successfull.`,
-      });
+      addCategoryNotification(newCategory, ["ADMIN", "SUPER_ADMIN"]);
+
       closeBothModals();
     },
     onError: (error: AxiosError<{ message: string }>) => {
@@ -49,11 +84,7 @@ const AddCategory = ({ closeBothModals }: Props) => {
       toast.error(message);
 
       // Example: push to notification modal
-      addNotification({
-        type: "error",
-        title: "Category Failed",
-        message,
-      });
+      addErrorNotification("Failed to create the category. Please try again.");
     },
   });
   // Use CategoryFormData for the form type
