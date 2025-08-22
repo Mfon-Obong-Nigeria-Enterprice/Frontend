@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { type AxiosError } from "axios";
+import { useQueryClient } from "@tanstack/react-query";
 // import { toast } from "sonner";
 import { toast } from "react-toastify";
 import { useForm, Controller, useWatch } from "react-hook-form";
@@ -27,6 +28,7 @@ import LoadingSpinner from "../LoadingSpinner";
 const AddProduct = () => {
   // const navigate = useNavigate();
   const goBack = useGoBack();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const { categories, categoryUnits, setSelectedCategoryId } =
     useInventoryStore();
@@ -54,6 +56,7 @@ const AddProduct = () => {
     setIsLoading(true);
     try {
       await createProduct(data);
+      queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success("Product created successfully");
       reset();
       goBack();

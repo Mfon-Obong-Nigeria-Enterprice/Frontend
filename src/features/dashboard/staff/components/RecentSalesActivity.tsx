@@ -1,41 +1,20 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useTransactionsStore } from "@/stores/useTransactionStore";
+import { balanceTextClass, formatCurrency } from "@/utils/styles";
+
 import { MdKeyboardArrowRight, MdKeyboardArrowDown } from "react-icons/md";
-
-// type Props = {
-//   client: string;
-//   amount: string | number;
-//   time: string;
-// };
-
-const Sales = [
-  {
-    client: "Walk-in client",
-    amount: "-₦ 12,750",
-    time: "11:40 AM",
-    products: ["5x Nails"],
-  },
-  {
-    client: "Akpan construction",
-    amount: "₦ 150,000",
-    time: "11:25 AM",
-    products: ["10x Cement"],
-  },
-  {
-    client: "Ade properties",
-    amount: "₦ 225,000",
-    time: "09:15 AM",
-    products: ["25x Steel rods"],
-  },
-  {
-    client: "Walk-in client",
-    amount: "-₦ 7,500",
-    time: "08:10 AM",
-    products: ["3x Nails"],
-  },
-];
+// ui
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 
 const RecentSalesActivity: React.FC = () => {
+  const { transactions } = useTransactionsStore();
+
   return (
     <div className="bg-white rounded-[0.625rem] border border-[#D9D9D9] py-1 font-Inter">
       <div className="flex justify-between items-center p-4">
@@ -53,41 +32,78 @@ const RecentSalesActivity: React.FC = () => {
 
       {/* sales data */}
       <div>
-        {Sales.map((sale, i) => (
-          <div key={i} className="p-4 border-t border-[#D9D9D9]">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-[#333333] mb-2">{sale.client}</p>
-                {sale.products && (
-                  <div className="p-2 border rounded border-[#D9D9D9] w-fit flex gap-1 items-center">
-                    <p className="text-[#444444B2] text-sm">{sale.products}</p>
-                    <MdKeyboardArrowDown />
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-1.5 items-center">
-                <p
-                  className={`text-sm font-semibold ${
-                    sale.amount.includes("-")
-                      ? "text-[#F95353]"
-                      : "text-[#2ECC71]"
-                  }`}
-                >
-                  {sale.amount}
-                </p>
-                <span className="text-xs text-[var(--cl-secondary)]">
-                  {sale.time}
-                </span>
+        {[...(transactions || [])]
+          .sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )
+          .slice(0, 4)
+          .map((sale, i) => (
+            <div key={i} className="p-4 border-t border-[#D9D9D9]">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-[#333333] mb-2">
+                    {sale.clientName || sale.walkInClientName}
+                  </p>
+                  {sale.items && (
+                    <div className="p-2 border rounded border-[#D9D9D9] w-fit flex gap-1 items-center">
+                      <p className="text-[#444444B2] text-sm">
+                        {sale.items.length > 0 && (
+                          <>
+                            <span>
+                              {sale.items[0].quantity}x{" "}
+                              {sale.items[0].productName}
+                            </span>
+                            {sale.items.length > 1 && (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="ml-1"
+                                  >
+                                    <MdKeyboardArrowDown className="w-4 h-4" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="text-sm max-w-60">
+                                  {sale.items
+                                    .slice(1)
+                                    .map(
+                                      (item, index) =>
+                                        `${item.quantity}x ${item.productName}${
+                                          index < sale.items.length - 2
+                                            ? ", "
+                                            : ""
+                                        }`
+                                    )}
+                                </PopoverContent>
+                              </Popover>
+                            )}
+                          </>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-1.5 items-center">
+                  <p
+                    className={`text-sm font-semibold ${balanceTextClass(
+                      sale.total
+                    )}`}
+                  >
+                    {formatCurrency(sale.total)}
+                  </p>
+                  <span className="text-xs text-[var(--cl-secondary)]">
+                    {new Date(sale.createdAt).toLocaleTimeString("en-NG", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* pagination
-       */}
-      <div className="flex justify-center items-center border-t border-[#D9D9D9] p-5">
-        Page 1 of 1
+          ))}
       </div>
     </div>
   );
