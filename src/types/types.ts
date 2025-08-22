@@ -21,7 +21,11 @@ export type UpdateSettingsPayload = z.infer<typeof updateSettingsSchema>;
 export interface Product {
   _id: string;
   name: string;
-  categoryId: string | { _id: string; name: string; units: string[] };
+  categoryId: string | { 
+    _id: string; 
+    name: string; 
+    units: string[] 
+  };
   minStockLevel: number;
   stock: number;
   unit: string;
@@ -30,7 +34,12 @@ export interface Product {
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
+  __v?: number;
 }
+
+
+
+
 
 // ==================== CATEGORY TYPE ====================
 export interface Category {

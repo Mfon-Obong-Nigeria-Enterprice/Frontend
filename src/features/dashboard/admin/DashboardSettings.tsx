@@ -8,7 +8,7 @@ import {
   useSettings,
 } from "@/hooks/useSetting";
 import { useSettingsStore } from "@/stores/useSettingsStore";
-import { type Product, type Settings } from "@/types/types";
+import { type Settings } from "@/types/types";
 import { useHasRole } from "@/lib/roles";
 
 export function DashboardSettings() {
@@ -20,7 +20,7 @@ export function DashboardSettings() {
   const updateProductPriceMutation = useUpdateProductPrice();
 
   const { currentSettings, initializeSettings, setSetting } =
-    useSettingsStore();
+    useSettingsStore(); 
 
   const [editingPrices, setEditingPrices] = React.useState<{
     [key: string]: number;
@@ -50,25 +50,26 @@ export function DashboardSettings() {
     }
   };
 
-  const handleUpdatePrice = (product: Product) => {
+  const handleUpdatePrice = (productId: string, newPrice: number) => {
     if (!canModifyPrices) return;
 
-    const newPrice = editingPrices[product._id];
-    if (newPrice !== undefined && !isNaN(newPrice) && newPrice > 0) {
-      updateProductPriceMutation.mutate({ productId: product._id, newPrice });
-      setEditingPrices((prev) => {
-        const newEditingPrices = { ...prev };
-        delete newEditingPrices[product._id];
-        return newEditingPrices;
-      });
-    }
+    updateProductPriceMutation.mutate({ 
+      productId, 
+      newPrice
+    });
+    
+    setEditingPrices((prev) => {
+      const newEditingPrices = { ...prev };
+      delete newEditingPrices[productId];
+      return newEditingPrices;
+    });
   };
 
-  const handleResetPrice = (product: Product) => {
+  const handleResetPrice = (productId: string) => {
     if (!canModifyPrices) return;
     setEditingPrices((prev) => {
       const newEditingPrices = { ...prev };
-      delete newEditingPrices[product._id];
+      delete newEditingPrices[productId];
       return newEditingPrices;
     });
   };

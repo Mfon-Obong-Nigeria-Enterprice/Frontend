@@ -1,17 +1,17 @@
 import * as React from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Loader2 } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { type Product } from '@/types/types';
-import { Loader2 } from 'lucide-react';
+import type { Product } from '@/types/types';
 
 interface PriceUpdateTableSectionProps {
   products: Product[];
   editingPrices: { [key: string]: number };
   loadingProductId: string | null;
   onPriceChange: (id: string, value: number) => void;
-  onUpdate: (product: Product) => void;
-  onReset: (product: Product) => void;
+  onUpdate: (productId: string, newPrice: number) => void;
+  onReset: (productId: string) => void;
   isReadOnly?: boolean;
 }
 
@@ -25,9 +25,9 @@ export const PriceUpdateTableSection: React.FC<PriceUpdateTableSectionProps> = (
   isReadOnly = false,
 }) => {
   return (
-    <div className="space-y-6">
-      <h2 className="text-lg font-semibold text-gray-800">Price Update Management</h2>
-      <p className="text-sm text-gray-500 mb-4">Product: Price Update</p>
+    <div className="space-y-6 p-6 bg-white rounded-lg shadow-md">
+      <h2 className="text-2xl font-semibold text-gray-800">Price Update Management</h2>
+      <p className="text-sm text-gray-500 mb-4">Update product prices in real-time.</p>
 
       <div className="border rounded-lg overflow-hidden">
         <Table>
@@ -36,9 +36,9 @@ export const PriceUpdateTableSection: React.FC<PriceUpdateTableSectionProps> = (
               <TableHead className="font-semibold text-gray-700">Product</TableHead>
               <TableHead className="font-semibold text-gray-700">Current Price</TableHead>
               <TableHead className="font-semibold text-gray-700">New Price</TableHead>
-              <TableHead className="font-semibold text-gray-700">Change%</TableHead>
+              <TableHead className="font-semibold text-gray-700">Change %</TableHead>
               <TableHead className="font-semibold text-gray-700">Unit</TableHead>
-              <TableHead className="font-semibold text-gray-700">Actions</TableHead>
+              <TableHead className="font-semibold text-gray-700 text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -68,16 +68,11 @@ export const PriceUpdateTableSection: React.FC<PriceUpdateTableSectionProps> = (
                     {change > 0 ? '+' : ''}{displayChange}%
                   </TableCell>
                   <TableCell className="text-gray-600">{product.unit}</TableCell>
-                  <TableCell className="flex space-x-2">
+                  <TableCell className="flex space-x-2 justify-center">
                     <Button
                       size="sm"
-                      onClick={() => onUpdate(product)}
-                      disabled={
-                        loadingProductId === product._id || 
-                        !isChanged ||
-                        !isValid ||
-                        isReadOnly
-                      }
+                      onClick={() => onUpdate(product._id, currentPrice)}
+                      disabled={loadingProductId === product._id || !isChanged || !isValid || isReadOnly}
                       className="h-8"
                     >
                       {loadingProductId === product._id ? (
@@ -89,7 +84,7 @@ export const PriceUpdateTableSection: React.FC<PriceUpdateTableSectionProps> = (
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onReset(product)}
+                      onClick={() => onReset(product._id)}
                       disabled={loadingProductId === product._id || !isEditing || isReadOnly}
                       className="h-8"
                     >
