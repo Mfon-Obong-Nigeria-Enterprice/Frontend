@@ -45,8 +45,7 @@ import EmptyInventory from "../shared/EmptyInventory";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 const AdminInventory = () => {
-  const { user, accessToken } = useAuthStore();
-  console.log(user?.branchId, "token:", accessToken);
+  const { accessToken, refreshToken } = useAuthStore();
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [position, setPosition] = useState({ xPercent: 80, yPercent: 80 });
@@ -56,6 +55,13 @@ const AdminInventory = () => {
   const [addCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
   const [stockStatus, setStockStatus] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
+
+  useEffect(() => {
+    if (!accessToken && !refreshToken) {
+      console.warn("⚠️ No auth tokens found, redirecting to login");
+      navigate("/login"); // or wherever your login page is
+    }
+  }, [accessToken, refreshToken, navigate]);
 
   // set the search query from zustand store
 

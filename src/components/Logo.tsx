@@ -6,7 +6,7 @@ const Logo: React.FC = () => {
       <div>
         <img className="w-[4rem]" src="/logo.png" alt="Mfon-Enterprise Logo" />
       </div>
-      <p className="font-Arial font-bold text-sm leading-none text-[#333333]">
+      <p className="font-Arial font-bold text-sm leading-none text-[#333333] text-shadow-lg text-shadow-black/25">
         Mfon-Obong Nigerian Enterprise
       </p>
     </div>
