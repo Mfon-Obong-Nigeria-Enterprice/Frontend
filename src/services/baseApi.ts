@@ -28,26 +28,49 @@ const api: AxiosInstance = axios.create({
 api.interceptors.request.use((config) => {
   const { accessToken, user } = useAuthStore.getState();
 
+  console.log("🔍 Interceptor - Request URL:", config.url);
+  console.log("🔍 Interceptor - User role:", user?.role);
+  console.log("🔍 Interceptor - Has accessToken:", !!accessToken);
+
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
 
   if ((user?.role === "STAFF" || user?.role === "ADMIN") && user.branchId) {
     const branchId = user.branchId;
-
+    const userId = user.id;
     // ❌ Skip these endpoints
     const excludedEndpoints = ["/categories", "/clients"];
 
-    // If request URL matches an excluded endpoint → just return config
-    if (excludedEndpoints.some((endpoint) => config.url?.includes(endpoint))) {
+    // Check if excluded
+    const isExcluded = excludedEndpoints.some((endpoint) =>
+      config.url?.includes(endpoint)
+    );
+
+    // console.log("🔍 Interceptor - URL excluded:", isExcluded);
+
+    if (isExcluded) {
+      // console.log("🔍 Interceptor - Skipping branchId for:", config.url);
       return config;
     }
+
+    // If request URL matches an excluded endpoint → just return config
+    // if (excludedEndpoints.some((endpoint) => config.url?.includes(endpoint))) {
+    //   return config;
+    // }
 
     // 1️⃣ If URL has `/branch/:id` → replace it
     if (config.url?.includes("/branch/")) {
       // e.g. /transactions/branch/ → /transactions/branch/{branchId}
       config.url = config.url.replace(/\/branch(\/)?$/, `/branch/${branchId}`);
     }
+
+    // exclude branchid for staff for /user endpoint
+    if (config.url?.includes("/user/")) {
+      // e.g. /transactions/branch/ → /transactions/branch/{branchId}
+      config.url = config.url.replace(/\/user(\/)?$/, `/user/${userId}`);
+    }
+
     // 2️⃣ Otherwise: decide based on method
     // else if (config.method === "get") {
     //   // Add as query param

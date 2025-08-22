@@ -18,14 +18,16 @@ export const getAllProducts = async (): Promise<Product[]> => {
 };
 
 export const getAllProductsByBranch = async (
-  branchId: string
+  branchId?: string
 ): Promise<Product[]> => {
   try {
-    const response = await api.get(`/products/branch/${branchId}`);
+    const url = branchId ? `/products/branch/${branchId}` : `/products/branch/`; // Let interceptor handle this
+
+    const response = await api.get(url);
     return response.data ?? [];
   } catch (error) {
-    console.error("error fetching", error);
-    throw error;
+    console.error(error);
+    throw new Error();
   }
 };
 

@@ -1,8 +1,6 @@
-/** @format */
-
-import { useState } from "react";
+// import { useState } from "react";
 import { type AxiosError } from "axios";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod"; // Add this import
@@ -14,6 +12,7 @@ import InputField from "../InputField";
 import { Button } from "../ui/button";
 import { toast } from "react-toastify";
 import LoadingSpinner from "../LoadingSpinner";
+import { useNotificationStore } from "@/stores/useNotificationStore";
 
 type Props = {
   closeBothModals: () => void;
@@ -24,15 +23,46 @@ type CategoryFormData = z.infer<typeof categorySchema>;
 
 const AddCategory = ({ closeBothModals }: Props) => {
   const queryClient = useQueryClient();
-  const [isLoading, setIsLoading] = useState(false);
-  
+  const { addNotification } = useNotificationStore();
+  // const [isLoading, setIsLoading] = useState(false);
+
+  //  set up mutation
+  const { mutate: addCategory, isPending } = useMutation({
+    mutationFn: (data: CategoryFormData) => createCategory(data as Category),
+    onSuccess: (newCategory) => {
+      // update cache
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+
+      // toast + notification
+      toast.success("Category created successfully!");
+
+      addNotification({
+        type: "success",
+        title: "New Category",
+        message: `${newCategory.name} has been created successfull.`,
+      });
+      closeBothModals();
+    },
+    onError: (error: AxiosError<{ message: string }>) => {
+      const message =
+        error?.response?.data?.message || "Failed to create category";
+      toast.error(message);
+
+      // Example: push to notification modal
+      addNotification({
+        type: "error",
+        title: "Category Failed",
+        message,
+      });
+    },
+  });
   // Use CategoryFormData for the form type
   const {
     register,
     handleSubmit,
     control,
     formState: { errors },
-    reset,
+    // reset,
   } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
     mode: "onBlur",
@@ -43,23 +73,28 @@ const AddCategory = ({ closeBothModals }: Props) => {
     },
   });
 
-  const onSubmit = async (data: CategoryFormData) => {
-    setIsLoading(true);
-    try {
-      await createCategory(data as Category);
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
-      toast.success("Category created successfully");
-      reset();
-      closeBothModals();
-    } catch (error) {
-      const err = error as AxiosError<{ message: string }>;
-      const message = err?.response?.data.message || "Failed to create category";
-      toast.error(message);
-      console.error("API Error:", error);
-    } finally {
-      setIsLoading(false);
-    }
+  const onSubmit = (data: CategoryFormData) => {
+    addCategory(data);
   };
+
+  // const onSubmit = async (data: CategoryFormData) => {
+  //   setIsLoading(true);
+  //   try {
+  //     await createCategory(data as Category);
+  //     queryClient.invalidateQueries({ queryKey: ["categories"] });
+  //     toast.success("Category created successfully");
+  //     reset();
+  //     closeBothModals();
+  //   } catch (error) {
+  //     const err = error as AxiosError<{ message: string }>;
+  //     const message =
+  //       err?.response?.data.message || "Failed to create category";
+  //     toast.error(message);
+  //     console.error("API Error:", error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-10">
@@ -127,12 +162,12 @@ const AddCategory = ({ closeBothModals }: Props) => {
           </Button>
         </div>
         <div className="w-full lg:w-[30%]">
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Creating..." : "Add Category"}
+          <Button type="submit" disabled={isPending}>
+            {isPending ? "Creating..." : "Add Category"}
           </Button>
         </div>
       </div>
-      {isLoading && <LoadingSpinner />}
+      {isPending && <LoadingSpinner />}
     </form>
   );
 };

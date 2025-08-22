@@ -227,7 +227,13 @@ export interface HealthState {
 }
 
 // src/features/notifications/types.ts
-export type NotificationType = "info" | "alert" | "message" | "warning";
+export type NotificationType =
+  | "info"
+  | "success"
+  | "error"
+  | "alert"
+  | "message"
+  | "warning";
 
 export interface Notification {
   id: string;

@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   getAllProducts,
   getAllProductsByBranch,
@@ -9,6 +9,7 @@ import { getAllClients } from "@/services/clientService";
 import {
   getAllTransactions,
   getTransactionByUserId,
+  getTransactionsByBranch,
 } from "@/services/transactionService";
 import { getAllBranches } from "@/services/branchService";
 import { getAllUsers } from "@/services/userService";
@@ -32,7 +33,7 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   const setClients = useClientStore((state) => state.setClients);
   const setBranches = useBranchStore((state) => state.setBranches);
 
-  const categoriesQuery = useSuspenseQuery({
+  const categoriesQuery = useQuery({
     queryKey: ["categories"],
     queryFn: getAllCategories,
   });
@@ -52,16 +53,20 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   });
 
   const transactionsQuery = useQuery({
-    queryKey: ["transactions", user?.role, user?.branchId],
+    queryKey: ["transactions", user?.role, user?.branchId, user?.id],
     queryFn: () => {
       if (user?.role === "STAFF") {
         return getTransactionByUserId();
+      }
+
+      if (user?.role === "ADMIN") {
+        return getTransactionsByBranch();
       }
       return getAllTransactions();
     },
   });
 
-  const clientsQuery = useSuspenseQuery({
+  const clientsQuery = useQuery({
     queryKey: ["clients"],
     queryFn: getAllClients,
   });
@@ -82,7 +87,9 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
 
   // Sync immediately when data is successfully fetched
   useEffect(() => {
-    if (categoriesQuery.data?.length > 0) {
+    console.log("Categories query data:", categoriesQuery.data);
+    if (categoriesQuery.data) {
+      console.log("Setting categories in store:", categoriesQuery.data);
       setCategories(categoriesQuery.data);
     }
   }, [categoriesQuery.dataUpdatedAt, setCategories]);
@@ -100,7 +107,7 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   }, [transactionsQuery.dataUpdatedAt, setTransactions]);
 
   useEffect(() => {
-    if (clientsQuery.data ?? []) {
+    if (clientsQuery.data) {
       setClients(clientsQuery.data);
     }
   }, [clientsQuery.dataUpdatedAt, setClients]);

@@ -3,6 +3,7 @@ import { MdOutlineDashboard, MdOutlineShoppingBag } from "react-icons/md";
 import { BsBoxSeam } from "react-icons/bs";
 import { IoPerson, IoSettingsOutline } from "react-icons/io5";
 import { RiLogoutCircleRLine } from "react-icons/ri";
+import { Bell } from "lucide-react";
 import { IoIosLogOut } from "react-icons/io";
 import Logo from "@/components/Logo";
 import { useLogout } from "@/hooks/uselogout";
@@ -35,6 +36,11 @@ const items = [
     icon: RiLogoutCircleRLine,
   },
   {
+    title: "Notifications",
+    url: "/admin/dashboard/admin-notifications",
+    icon: Bell,
+  },
+  {
     title: "Settings",
     url: "/admin/dashboard/settings",
     icon: IoSettingsOutline,
@@ -46,7 +52,6 @@ export function AdminSidebar() {
   const { logout } = useLogout();
 
   return (
-    // mt-[3.5rem] pt-10
     <Sidebar>
       <SidebarHeader />
       <Logo />

@@ -112,7 +112,6 @@ const InventoryTab = React.memo(
               </TabsTrigger>
               {/* display data for categories */}
               {categories?.map((category) => {
-                console.log("cat", categories);
                 const categoryName = category.name; // This is safe as 'categories' are actual Category objects
                 const count = products.filter((prod) => {
                   const productCategoryName = getCategoryNameForProduct(
