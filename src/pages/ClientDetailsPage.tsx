@@ -27,8 +27,9 @@ import ClientDiscountDetails from "@/components/clients/ClientDiscountDetails";
 import CustomDatePicker from "@/utils/CustomDatePicker";
 import { useAuthStore } from "@/stores/useAuthStore";
 import DeleteClientDialog from "@/features/dashboard/manager/component/DeleteClientDialog";
-import { toast } from "sonner";
 import EditClientDialog from "@/features/dashboard/manager/component/EditClientDialog";
+import { toast } from "react-toastify";
+import BlockUnblockClient from "@/features/dashboard/manager/BlockUnblockClient";
 
 interface ClientDetailsPageProps {
   isManagerView?: boolean;
@@ -61,6 +62,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   const [dateTo, setDateTo] = useState<Date | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showBlockUnblockDialog, setShowBlockUnblockDialog] = useState(false);
 
   const mergedTransactions = useMemo(() => {
     if (!transactions || !clients) return [];
@@ -82,22 +84,25 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   }, [clients, clientId]);
   //
 
+  // Check if client is blocked
+  const isClientBlocked = useMemo(() => {
+    return client?.isActive === false;
+  }, [client]);
+
   // Fix auto-scroll issue
   useEffect(() => {
     // Prevent auto-scroll on page load
     const preventAutoScroll = () => {
       window.scrollTo({ top: 0, behavior: "instant" });
     };
-
     // Run immediately
     preventAutoScroll();
-
     // Also run after a short delay to catch any delayed scrolling
     const timeoutId = setTimeout(preventAutoScroll, 100);
-
     return () => clearTimeout(timeoutId);
   }, [clientId]); //reruns when clientId changes
 
+  //
   const clientTransactions = useMemo(() => {
     if (!clientId) return [];
     let filtered = mergedTransactions.filter((t) => t.client?._id === clientId);
@@ -157,6 +162,10 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       case "edit":
         setShowEditDialog(true);
         break;
+      case "suspend":
+      case "unsuspend":
+        setShowBlockUnblockDialog(true);
+        break;
       case "delete":
         setShowDialog(true);
         break;
@@ -165,12 +174,17 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     }
   };
 
+  const handleBlockUnblockSuccess = () => {
+    const action = isClientBlocked ? "unblocked" : "blocked";
+    toast.success(`Client ${action} successfully`);
+  };
+
   const handleDeleteSuccess = () => {
-    toast.success("Client deleted successfully");
+    toast.success(`${client?.name} successfully deleted`);
     navigate(-1);
   };
   const handleEditSuccess = () => {
-    toast.success("Client updated successfully");
+    toast.success(`${client?.name} successfully edited`);
   };
 
   const handleApplyFilters = () => {
@@ -203,7 +217,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
           <p className="text-gray-600 mb-4">
             The client you're looking for doesn't exist.
           </p>
-          <Button onClick={() => navigate("/clients")}>Back to Clients</Button>
+          <Button onClick={() => navigate(-1)}>Back to Clients</Button>
         </div>
       </div>
     );
@@ -238,7 +252,9 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                 <SelectGroup>
                   <SelectLabel></SelectLabel>
                   <SelectItem value="edit">Edit Client</SelectItem>
-                  <SelectItem value="suspend">Suspend Client</SelectItem>
+                  <SelectItem value={isClientBlocked ? "unsuspend" : "suspend"}>
+                    {isClientBlocked ? "Unsuspend Client" : "Suspend Client"}
+                  </SelectItem>
                   <SelectItem value="delete">Delete Client</SelectItem>
                 </SelectGroup>
               </SelectContent>
@@ -401,6 +417,14 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         onOpenChange={setShowEditDialog}
         client={client}
         onEditSuccess={handleEditSuccess}
+      />
+
+      <BlockUnblockClient
+        open={showBlockUnblockDialog}
+        onOpenchange={setShowBlockUnblockDialog}
+        client={client}
+        isBlocked={isClientBlocked}
+        onSuccess={handleBlockUnblockSuccess}
       />
     </>
   );

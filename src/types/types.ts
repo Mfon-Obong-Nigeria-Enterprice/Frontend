@@ -58,6 +58,7 @@ export interface User {
   branch: string;
   branchId: string;
   createdAt: string;
+  profilePicture?: string;
 }
 
 export interface LoginResponse {

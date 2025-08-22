@@ -112,7 +112,7 @@ const Transactions = () => {
       statValue: getChangeText(
         monthlyChange.percentage,
         monthlyChange.direction,
-        "month"
+        "last month"
       ),
       color:
         monthlyChange.direction === "increase"

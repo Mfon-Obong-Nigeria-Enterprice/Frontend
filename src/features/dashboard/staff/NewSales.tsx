@@ -37,6 +37,8 @@ import Modal from "@/components/Modal";
 // utils
 import { toSentenceCaseName } from "@/utils/styles";
 import { handleApiError } from "@/services/errorhandler";
+import { AlertCircle } from "lucide-react";
+import ClientStatusBadge from "@/pages/ClientStatusBadge";
 
 export type Row = {
   productId: string;
@@ -81,13 +83,21 @@ const NewSales: React.FC = () => {
 
   // receipt state
   const [showReceipt, setShowReceipt] = useState(false);
-  const [receiptData, setReceiptData] = useState<any>(null); // store the info for the receipt
+  // Define a type for the receipt data based on your transaction structure
+  type ReceiptData = ReturnType<typeof AddTransaction> extends Promise<
+    (infer U)[]
+  >
+    ? U
+    : unknown;
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null); // store the info for the receipt
 
   // check for branchid
   if (!user?.branchId) {
     toast.error("Branch ID is missing");
     return null;
   }
+  // Check if selected client is blocked/suspended
+  const isClientBlocked = selectedClient?.isActive === false;
 
   // Helper to get numeric value safely
   const getAmountPaid = () => {
@@ -97,6 +107,7 @@ const NewSales: React.FC = () => {
 
   // helper function to check requirements for completing sales
   const canSubmit = () => {
+    if (selectedClient && isClientBlocked) return false;
     if (!selectedClient && !isWalkIn) return false;
     if (isWalkIn && !walkInData.name.trim()) return false;
     if (!rows.some((row) => row.productId)) return false;
@@ -113,6 +124,12 @@ const NewSales: React.FC = () => {
 
   // validate sales
   const validateSales = () => {
+    if (selectedClient && isClientBlocked) {
+      toast.error(
+        "Cannot create transaction for suspended client. Please contact manager to reactive the Client"
+      );
+      return false;
+    }
     if (!canSubmit()) {
       toast.error("Please fill all required fields correctly");
       return false;
@@ -337,13 +354,60 @@ const NewSales: React.FC = () => {
 
           {/* Show details only if a client is selected */}
           {selectedClient && (
+            <div>
+              {/* Client Status Badge */}
+              <div className="mt-4">
+                <ClientStatusBadge client={selectedClient} />
+              </div>
+
+              {/* Show warning if client is blocked */}
+              {isClientBlocked && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-red-800 font-medium">Client Suspended</p>
+                    <p className="text-red-700 text-sm">
+                      This client has been suspended and cannot make new
+                      transactions. Please contact management to reactivate the
+                      client before proceeding.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <ClientDisplayBox
+                clientName={selectedClient.name}
+                phoneNumber={selectedClient.phone}
+                address={selectedClient.address}
+                balance={selectedClient.balance}
+              />
+            </div>
+          )}
+
+          {/* Show warning if client is blocked */}
+          {/* {isClientBlocked && (
+            <div className="my-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+              <div>
+                <p className="text-red-800 font-medium">Client Suspended</p>
+                <p className="text-red-700 text-sm">
+                  This client has been suspended and cannot make new
+                  transactions. Please contact management to reactivate the
+                  client before proceeding.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Show details only if a client is selected *
+          {selectedClient && (
             <ClientDisplayBox
               clientName={selectedClient.name}
               phoneNumber={selectedClient.phone}
               address={selectedClient.address}
               balance={selectedClient.balance}
             />
-          )}
+          )} */}
 
           {/* Show walk-in client summary if walk-in is active and data is entered */}
           {isWalkIn && walkInData.name && (
@@ -356,91 +420,94 @@ const NewSales: React.FC = () => {
             </div>
           )}
 
-          {/* add product */}
-          <div className="mt-7">
-            <AddSaleProduct
-              // onRowsChange={setRows}
-              rows={rows}
-              setRows={setRows}
-              onDiscountReasonChange={setDiscountReason}
-              discountReason={discountReason}
-            />
-          </div>
-        </div>
-
-        {/* payment method */}
-        <div className="p-5 my-7 border border-[#D9D9D9] rounded-[8px]">
-          <h5 className="text-[var(--cl-text-dark)] text-xl font-medium mb-4">
-            Payment Details
-          </h5>
-
-          <div className="flex gap-6 flex-wrap">
-            <div className="">
-              <Label className="text-[#333333] text-sm font-medium mb-2 block">
-                Payment Method
-              </Label>
-              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                <SelectTrigger className="w-[180px] bg-[#D9D9D9] border border-[#D9D9D9]">
-                  <SelectValue placeholder="Select Payment Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="transfer">Transfer</SelectItem>
-                  <SelectItem value="bank">Bank</SelectItem>
-                  <SelectItem value="pos">P.O.S</SelectItem>
-                  <SelectItem value="balance">From Balance</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Show bank name input for bank/transfer payments */}
-            {(paymentMethod === "bank" || paymentMethod === "transfer") && (
-              <div>
-                <Label className="text-[#333333] text-sm font-medium mb-2 block">
-                  Bank Name
-                </Label>
-                <Input
-                  type="text"
-                  placeholder="Enter bank name"
-                  className="w-40"
-                  value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
-                />
-              </div>
-            )}
-
-            <div>
-              <Label className="text-[#333333] text-sm font-medium mb-2 block">
-                Amount Paid
-              </Label>
-              <Input
-                type="number"
-                placeholder="0.00"
-                className="w-40"
-                value={amountPaid}
-                onChange={(e) => setAmountPaid(e.target.value)}
+          {/* add product - only show if client is not blocked or if it's a walk-in */}
+          {(!selectedClient || !isClientBlocked || isWalkIn) && (
+            <div className="mt-7">
+              <AddSaleProduct
+                rows={rows}
+                setRows={setRows}
+                onDiscountReasonChange={setDiscountReason}
+                discountReason={discountReason}
               />
             </div>
-          </div>
-
-          {/* Optional notes field */}
-          <div className="mt-4">
-            <Label className="text-[#333333] text-sm font-medium mb-2 block">
-              Additional Notes (Optional)
-            </Label>
-            <Input
-              type="text"
-              placeholder="Enter any additional notes"
-              className="w-full max-w-md"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </div>
-
-          <p className="mt-3 text-sm">
-            Status: <span className="text-[#7D7D7D]">{statusMessage}</span>
-          </p>
+          )}
         </div>
+
+        {/* payment method - only show if client is not blocked or if it's a walk-in */}
+        {(!selectedClient || !isClientBlocked || isWalkIn) && (
+          <div className="p-5 my-7 border border-[#D9D9D9] rounded-[8px]">
+            <h5 className="text-[var(--cl-text-dark)] text-xl font-medium mb-4">
+              Payment Details
+            </h5>
+
+            <div className="flex gap-6 flex-wrap">
+              <div className="">
+                <Label className="text-[#333333] text-sm font-medium mb-2 block">
+                  Payment Method
+                </Label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger className="w-[180px] bg-[#D9D9D9] border border-[#D9D9D9]">
+                    <SelectValue placeholder="Select Payment Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="transfer">Transfer</SelectItem>
+                    <SelectItem value="bank">Bank</SelectItem>
+                    <SelectItem value="pos">P.O.S</SelectItem>
+                    <SelectItem value="balance">From Balance</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Show bank name input for bank/transfer payments */}
+              {(paymentMethod === "bank" || paymentMethod === "transfer") && (
+                <div>
+                  <Label className="text-[#333333] text-sm font-medium mb-2 block">
+                    Bank Name
+                  </Label>
+                  <Input
+                    type="text"
+                    placeholder="Enter bank name"
+                    className="w-40"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                  />
+                </div>
+              )}
+
+              <div>
+                <Label className="text-[#333333] text-sm font-medium mb-2 block">
+                  Amount Paid
+                </Label>
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  className="w-40"
+                  value={amountPaid}
+                  onChange={(e) => setAmountPaid(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Optional notes field */}
+            <div className="mt-4">
+              <Label className="text-[#333333] text-sm font-medium mb-2 block">
+                Additional Notes (Optional)
+              </Label>
+              <Input
+                type="text"
+                placeholder="Enter any additional notes"
+                className="w-full max-w-md"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </div>
+
+            <p className="mt-3 text-sm">
+              Status: <span className="text-[#7D7D7D]">{statusMessage}</span>
+            </p>
+          </div>
+        )}
 
         {/* buttons */}
         <div className="flex gap-3 items-center">
