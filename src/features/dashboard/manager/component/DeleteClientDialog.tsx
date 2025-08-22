@@ -11,7 +11,7 @@ import { useClientMutations } from "@/hooks/useClientMutations";
 import type { Client } from "@/types/types";
 import { isAxiosError } from "axios";
 import React, { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 
 interface DeleteClientDialogProps {
   open: boolean;
@@ -37,14 +37,11 @@ const DeleteClientDialog: React.FC<DeleteClientDialogProps> = ({
 
     try {
       await deleteMutate.mutateAsync(client._id);
-      toast.success("Client deleted successfully");
       onOpenChange(false);
       onDeleteSuccess(); // Call the success callback if provided
     } catch (err) {
       if (isAxiosError(err)) {
-        console.error("Error deleting client:", err.response?.data);
-      } else {
-        console.error("Unexpected error:", err);
+        toast.error("Error deleting client:", err.response?.data);
       }
     } finally {
       setIsDeleting(false);

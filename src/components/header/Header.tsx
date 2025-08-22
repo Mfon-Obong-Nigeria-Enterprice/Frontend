@@ -11,14 +11,26 @@ import { useAuthStore } from "@/stores/useAuthStore";
 type HeaderProps = {
   userRole?: "admin" | "staff" | "maintainer" | "superadmin" | "manager";
 };
+// Handler for profile updates
+type UpdatedUserData = {
+  fullName?: string;
+  adminName?: string;
+  name?: string;
+  profilePicture?: string;
+  location?: string;
+  [key: string]: unknown;
+};
 
 const Header = ({ userRole }: HeaderProps) => {
-  const { user } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
 
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
 
   const getAvatarImage = () => {
+    if (user?.profilePicture) {
+      return user.profilePicture;
+    }
     return `/images/${userRole}-avatar.png`;
   };
 
@@ -34,6 +46,25 @@ const Header = ({ userRole }: HeaderProps) => {
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const handleProfileUpdate = (updatedData: UpdatedUserData) => {
+    console.log("Profile updated:", updatedData);
+
+    // Update the user store with new data
+    if (updateUser) {
+      updateUser({
+        ...user,
+        name:
+          updatedData.fullName ||
+          updatedData.adminName ||
+          updatedData.name ||
+          user?.name,
+        profilePicture: updatedData.profilePicture,
+        branch: updatedData.location || user?.branch,
+        ...updatedData,
+      });
     }
   };
 
@@ -95,6 +126,10 @@ const Header = ({ userRole }: HeaderProps) => {
                 src={getAvatarImage()}
                 alt={`${userRole} avatar`}
                 onError={(e) => {
+                  console.error(
+                    "failed to load avatar image:",
+                    getAvatarImage()
+                  );
                   (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
@@ -118,6 +153,7 @@ const Header = ({ userRole }: HeaderProps) => {
             adminName: user?.name ?? "",
             profilePicture: getAvatarImage(),
           }}
+          // onProfileUpdate={handleProfileUpdate}
         />
       ) : (
         <ManagerUsersModal
@@ -132,9 +168,7 @@ const Header = ({ userRole }: HeaderProps) => {
             location: user?.branch ?? "",
             profilePicture: getAvatarImage(),
           }}
-          onProfileUpdate={(updatedData) => {
-            console.log("Profile updated:", updatedData);
-          }}
+          onProfileUpdate={handleProfileUpdate}
         />
       )}
     </>

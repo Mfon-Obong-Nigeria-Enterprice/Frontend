@@ -13,7 +13,7 @@ interface CircularProgressProps {
 
 const CircularProgress: React.FC<CircularProgressProps> = ({
   percentage,
-  size = 200,
+  size = 80,
 }) => {
   // Use the radius that matches your actual circle elements
   const radius = 30;
@@ -51,16 +51,15 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-xl font-bold text-gray-900">
-          {percentage.toFixed(1)}%
-        </span>
+        <span className="text-xl font-bold text-gray-900">{percentage}%</span>
       </div>
     </div>
   );
 };
 
 const Stats: React.FC<StatsProps> = ({ data }) => {
-  const { monthlyRevenue } = useRevenueStore();
+  const { getMOMRevenue } = useRevenueStore();
+  const monthlyRevenue = getMOMRevenue();
   const getColor = (color?: string) => {
     switch (color) {
       case "green":
@@ -85,8 +84,8 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
           data.length <= 2
             ? "repeat(auto-fit, minmax(250px, 1fr))"
             : data.length === 3
-            ? "repeat(auto-fit, minmax(250px, 1fr))"
-            : "repeat(auto-fit, minmax(250px, 1fr))",
+            ? "repeat(auto-fit, minmax(280px, 1fr))"
+            : "repeat(auto-fit, minmax(220px, 1fr))",
         maxWidth: "100%",
       }}
     >

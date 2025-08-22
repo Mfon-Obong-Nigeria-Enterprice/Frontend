@@ -14,7 +14,7 @@ import { useClientMutations } from "@/hooks/useClientMutations";
 import type { Client } from "@/types/types";
 import { AxiosError, isAxiosError } from "axios";
 import React, { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 
 interface EditClientDialogProps {
   open: boolean;
@@ -96,14 +96,6 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
     }
 
     try {
-      //   const clientData = {
-      //     id: client._id,
-      //     name: formData.name.trim(),
-      //     phone: formData.phone.trim(),
-      //     description: formData.description.trim(),
-      //     balance: Number(formData.balance),
-      //     address: formData.address.trim(),
-      //   };
       await updateMutate.mutateAsync({
         id: client._id,
         data: {
@@ -121,7 +113,6 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
         },
       });
       onEditSuccess(); // Call the success callback if provided
-      toast.success("Client updated successfully");
       onOpenChange(false);
     } catch (err) {
       console.error("Failed to add client:", err);
