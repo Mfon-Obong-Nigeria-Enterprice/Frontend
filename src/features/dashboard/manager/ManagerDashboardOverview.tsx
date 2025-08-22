@@ -13,39 +13,57 @@ import type { StatCard } from "@/types/stats";
 
 // ui
 import { Button } from "@/components/ui/button";
-import { useClientStats } from "@/hooks/useClientStats";
 import { useClientStore } from "@/stores/useClientStore";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { getChangeText } from "@/utils/helpersfunction";
 import { useRevenueStore } from "@/stores/useRevenueStore";
+import { getAllTransactions } from "@/services/transactionService";
+import { useEffect } from "react";
 
 const ManagerDashboardOverview = () => {
-  const { getTodaysSales, getWeeklySalesPercentageChange } =
-    useTransactionsStore();
-  const { monthlyRevenue } = useRevenueStore();
-  const { growthPercent } = useClientStats();
+  const { getTodaysSales, getSalesPercentageChange } = useTransactionsStore();
+  const { getMOMRevenue, setTransactions, transactions } = useRevenueStore();
   const { getOutStandingBalanceData } = useClientStore();
   const todaysSales = getTodaysSales();
+  const monthlyRevenue = getMOMRevenue();
   const outstandingBalance = getOutStandingBalanceData();
-  const weeklyChange = getWeeklySalesPercentageChange();
+  const dailyChange = getSalesPercentageChange();
 
   const navigate = useNavigate();
+
+  // Initialize data
+  useEffect(() => {
+    const initializeData = async () => {
+      try {
+        const transactionData = await getAllTransactions();
+        setTransactions(transactionData);
+      } catch (error) {
+        console.error("Failed to fetch transactions:", error);
+      }
+    };
+
+    if (!transactions) {
+      initializeData();
+    }
+  }, [transactions, setTransactions]);
 
   const stats: StatCard[] = [
     {
       heading: "Total Sales (Today)",
-      salesValue: `₦${todaysSales.toLocaleString()}`,
+      salesValue: `${todaysSales.toLocaleString()}`,
+      format: "currency",
       statValue: getChangeText(
-        weeklyChange.percentage,
-        weeklyChange.direction,
-        "week"
+        dailyChange.percentage,
+        dailyChange.direction,
+        "yesterday"
       ),
       color:
-        weeklyChange.direction === "increase"
+        dailyChange.direction === "increase"
           ? "green"
-          : weeklyChange.direction === "decrease"
+          : dailyChange.direction === "decrease"
           ? "red"
           : "orange",
+      hideArrow: true,
     },
     {
       heading: "Monthly Revenue",
@@ -56,7 +74,7 @@ const ManagerDashboardOverview = () => {
           : monthlyRevenue?.direction === "decrease"
           ? "-"
           : ""
-      }${monthlyRevenue?.percentageChange}%`,
+      }${monthlyRevenue?.percentageChange}% from last month`,
       color:
         monthlyRevenue?.direction === "increase"
           ? "green"
@@ -67,7 +85,7 @@ const ManagerDashboardOverview = () => {
     {
       heading: "Outstanding balances",
       salesValue: `₦${outstandingBalance.totalDebt.toLocaleString()}`,
-      statValue: ` ${growthPercent}% Clients with overdue balances`,
+      statValue: ` ${outstandingBalance.clientsWithDebt} Clients with overdue balances`,
       color: "orange",
     },
   ];

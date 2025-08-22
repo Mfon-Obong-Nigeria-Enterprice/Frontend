@@ -41,7 +41,7 @@ const BusinessReport = () => {
       statValue: getChangeText(
         weeklyChange.percentage,
         weeklyChange.direction,
-        "week"
+        "last week"
       ),
       color:
         weeklyChange.direction === "increase"
@@ -56,7 +56,7 @@ const BusinessReport = () => {
       statValue: getChangeText(
         monthlyChange.percentage,
         monthlyChange.direction,
-        "month"
+        "last month"
       ),
       color:
         monthlyChange.direction === "increase"
@@ -71,7 +71,7 @@ const BusinessReport = () => {
       statValue: getChangeText(
         transactionCountChange.percentage,
         transactionCountChange.direction,
-        "month"
+        "last month"
       ),
       color: "orange",
     },
@@ -99,31 +99,31 @@ const BusinessReport = () => {
   // ];
 
   // Dynamically create selectedMonth in format YYYY-MM
-  const now = new Date();
-  const selectedMonth = `${now.getFullYear()}-${String(
-    now.getMonth() + 1
-  ).padStart(2, "0")}`;
+  // const now = new Date();
+  // const selectedMonth = `${now.getFullYear()}-${String(
+  //   now.getMonth() + 1
+  // ).padStart(2, "0")}`;
 
   return (
-    <main className="flex flex-col gap-10 mb-2">
+    <main className="flex flex-col gap-3 mb-2">
       <DashboardTitle
         heading="Transaction"
         description="Oversee All Payments, Credits & Alerts"
       />
       <Stats data={stats} />
 
-      <div className="mt-5">
+      <div className="mt-2">
         <TotalRevenueTrends />
       </div>
 
-      <div className="bg-white py-10 px-5 border border-[#D9D9D9] rounded-md shadow-md">
+      <div className="bg-white py-10 px-5 border border-[#D9D9D9] rounded-md shadow-md mt-2">
         <p className="font-medium text-xl text-[#1E1E1E] pb-3">
           Sales Performance (Last 30 days)
         </p>
-        <MonthlySalesChart selectedMonth={selectedMonth} />
+        <MonthlySalesChart />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 items-center justify-center gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 items-center justify-center gap-5 mt-2">
         <TopSellingProducts />
         <div className="bg-white flex flex-col justify-center w-full h-full p-7 border border-[#d9d9d9] rounded-xl">
           <h4 className="text-xl font-medium text-[#1E1E1E] mb-4">

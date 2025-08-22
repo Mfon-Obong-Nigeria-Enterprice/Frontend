@@ -39,15 +39,27 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { formatChangeText, getChangeText } from "@/utils/helpersfunction";
 
 const DashboardSales = () => {
-  const { transactions, getTodaysSales, getWeeklySalesPercentageChange } =
-    useTransactionsStore();
+  const {
+    transactions,
+    getTodaysSales,
+    getSalesPercentageChange,
+    getTodaysTransactionCount,
+    getTodaysTransactionCountPercentageChange,
+    getThisWeekAverageTransaction,
+    getWeeklyAverageTransactionPercentageChange,
+  } = useTransactionsStore();
   const { getClientById, getActiveClients, getTotalClientsPercentageChange } =
     useClientStore();
 
   const activeClients = getActiveClients();
   const todaysSales = getTodaysSales();
-  const weeklyChange = getWeeklySalesPercentageChange();
+  const dailyChange = getSalesPercentageChange();
   const totalClientsChange = getTotalClientsPercentageChange();
+  const todaysTransactionCount = getTodaysTransactionCount();
+  const transactionCountChange = getTodaysTransactionCountPercentageChange();
+  const thisWeekAvgTransaction = getThisWeekAverageTransaction();
+  const weeklyAvgTransactionChange =
+    getWeeklyAverageTransactionPercentageChange();
 
   const stats: StatCard[] = [
     {
@@ -55,22 +67,29 @@ const DashboardSales = () => {
       salesValue: `${todaysSales.toLocaleString()}`,
       format: "currency",
       statValue: getChangeText(
-        weeklyChange.percentage,
-        weeklyChange.direction,
-        "week"
+        dailyChange.percentage,
+        dailyChange.direction,
+        "yesterday"
       ),
       color:
-        weeklyChange.direction === "increase"
+        dailyChange.direction === "increase"
           ? "green"
-          : weeklyChange.direction === "decrease"
+          : dailyChange.direction === "decrease"
           ? "red"
           : "orange",
       hideArrow: true,
     },
     {
-      heading: "Total transactions",
-      salesValue: `${transactions?.length || 0}`,
-      hideArrow: true,
+      heading: "Transactions",
+      salesValue: `${todaysTransactionCount}`, // Updated to use today's count
+      statValue: formatChangeText(transactionCountChange, " yesterday"), // Add percentage change
+      color:
+        transactionCountChange.direction === "increase"
+          ? "green"
+          : transactionCountChange.direction === "decrease"
+          ? "red"
+          : "blue",
+      hideArrow: false, // Show arrow since we now have percentage change
     },
     {
       heading: "Active Clients",
@@ -86,10 +105,16 @@ const DashboardSales = () => {
     },
     {
       heading: "Avg. Transactions",
-      salesValue: 40000,
+      salesValue: thisWeekAvgTransaction,
       format: "currency",
-      hideArrow: true,
-      salesColor: "orange",
+      statValue: formatChangeText(weeklyAvgTransactionChange, "last week"),
+      color:
+        weeklyAvgTransactionChange.direction === "increase"
+          ? "green"
+          : weeklyAvgTransactionChange.direction === "decrease"
+          ? "red"
+          : "orange",
+      hideArrow: false,
     },
   ];
 

@@ -22,14 +22,13 @@ const DashboardOverview: React.FC = () => {
     getActiveClientsPercentage,
     getOutStandingBalanceData,
   } = useClientStore();
-  const { getTodaysSales, getWeeklySalesPercentageChange } =
-    useTransactionsStore();
+  const { getTodaysSales, getSalesPercentageChange } = useTransactionsStore();
 
   const lowStockCount = products?.filter(
     (prod) => prod.stock <= prod.minStockLevel
   ).length;
   const todaysSales = getTodaysSales();
-  const weeklyChange = getWeeklySalesPercentageChange();
+  const dailyChange = getSalesPercentageChange();
   const activeClients = getActiveClients();
   const outstandingBalance = getOutStandingBalanceData();
   const activeClientsPercentage = getActiveClientsPercentage();
@@ -39,14 +38,14 @@ const DashboardOverview: React.FC = () => {
       heading: "Total Sales (Today)",
       salesValue: `₦${todaysSales.toLocaleString()}`,
       statValue: getChangeText(
-        weeklyChange.percentage,
-        weeklyChange.direction,
-        "week"
+        dailyChange.percentage,
+        dailyChange.direction,
+        "yesterday"
       ),
       color:
-        weeklyChange.direction === "increase"
+        dailyChange.direction === "increase"
           ? "green"
-          : weeklyChange.direction === "decrease"
+          : dailyChange.direction === "decrease"
           ? "red"
           : "orange",
     },
@@ -60,15 +59,17 @@ const DashboardOverview: React.FC = () => {
     {
       heading: "Low Stock Items",
       salesValue: `${lowStockCount} Products`,
-      statValue: "Needs attention",
+      statValue: `${
+        lowStockCount > 0 ? "Needs attention" : "All items well stocked"
+      }`,
       // format: "text",
-      statColor: "red",
+      statColor: `${lowStockCount > 0 ? "red" : "gray"}`,
       hideArrow: true,
     },
     {
       heading: "Active Clients",
       salesValue: `${activeClients}`,
-      statValue: `${activeClientsPercentage}% new clients this week`,
+      statValue: `${activeClientsPercentage}% of total`,
       statColor: "green",
     },
   ];
