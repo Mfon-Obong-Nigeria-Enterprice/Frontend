@@ -6,9 +6,9 @@ interface SettingsStore {
   currentSettings: Settings;
   initializeSettings: (settings: Settings) => void;
   setSetting: (key: keyof Settings, value: boolean) => void;
+  saveSettings: () => Promise<void>;
 }
 
-// Default settings
 const defaultSettings: Settings = {
   clientsDebtsAlert: false,
   largeBalanceAlert: false,
@@ -20,7 +20,7 @@ const defaultSettings: Settings = {
 
 export const useSettingsStore = create<SettingsStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       currentSettings: defaultSettings,
       
       initializeSettings: (settings) => {
@@ -34,6 +34,14 @@ export const useSettingsStore = create<SettingsStore>()(
             [key]: value,
           },
         }));
+      },
+      
+      saveSettings: async () => {
+      
+        const { currentSettings } = get();
+        console.log("Saving settings:", currentSettings);
+       
+        return new Promise((resolve) => setTimeout(resolve, 500));
       },
     }),
     {
