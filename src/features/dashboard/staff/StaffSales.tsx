@@ -15,8 +15,8 @@ const StaffSales = () => {
   );
   console.log(transactions);
   const [filter, setFilter] = useState<"today" | "week" | "month">("today");
-  const { user, accessToken } = useAuthStore();
-  console.log(user?.branchId, "token:", accessToken);
+  const { user } = useAuthStore();
+  console.log(user?.branchId);
 
   // filter transaction
   const filteredTransactions = useMemo(() => {

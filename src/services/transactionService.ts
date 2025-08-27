@@ -10,27 +10,17 @@ import type { TransactionCreate } from "@/types/transactions";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 export const getAllTransactions = async (): Promise<Transaction[]> => {
-  // try {
   const response = await api.get("/transactions");
   return response.data;
-  // } catch (error) {
-  //   handleApiError(error, "Error fetching products");
-  //   throw error;
-  // }
 };
 
 export const getTransactionsByBranch = async (
   branchId?: string
 ): Promise<Transaction[]> => {
-  // try {
   const response = await api.get(
     branchId ? `/transactions/branch/${branchId}` : `/transactions/branch/ `
   );
   return response.data ?? [];
-  // } catch (error) {
-  //   handleApiError(error, "Error fetching transactions");
-  //   throw error;
-  // }
 };
 
 export const getTransactionByUserId = async (

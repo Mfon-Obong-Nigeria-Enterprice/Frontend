@@ -6,6 +6,7 @@ import type {
   ApiResponse,
   ProductUpdatePricePayload,
   UpdateSettingsPayload,
+ 
 } from '@/types/types';
 import { toast } from 'sonner';
 
@@ -82,10 +83,18 @@ export const updateSettings = async (payload: UpdateSettingsPayload): Promise<Se
 export const fetchProducts = async (): Promise<Product[]> => {
   try {
     const response = await api.get<ApiResponse<Product[]>>('/products');
-    return handleApiResponse(response);
+    const data = handleApiResponse(response);
+    
+    // Check if data is an array
+    if (!Array.isArray(data)) {
+      console.error('Expected array of products but got:', data);
+      return [];
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error fetching products:', error);
-    throw error;
+    return [];
   }
 };
 
@@ -105,5 +114,27 @@ export const updateProductPrice = async (
     throw error;
   }
 };
+
+
+// export const updateProductStock = async (
+//   payload: ProductUpdateStockPayload
+// ): Promise<Product> => {
+//   try {
+//     const response = await api.patch<ApiResponse<Product>>(
+//       `/products/${payload.productId}/stock`,
+//       {
+//         quantity: payload.quantity,
+//         unit: payload.unit,
+//         operation: payload.operation,
+//       }
+//     );
+//     const data = handleApiResponse(response);
+//     toast.success('Product stock updated successfully');
+//     return data;
+//   } catch (error) {
+//     console.error(`Error updating product stock for ${payload.productId}:`, error);
+//     throw error;
+//   }
+// };
 
 export default api;
