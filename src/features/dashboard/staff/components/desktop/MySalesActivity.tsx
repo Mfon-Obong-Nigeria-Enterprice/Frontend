@@ -21,7 +21,7 @@ const MySalesActivity = ({
   filteredTransactions: Transaction[];
 }) => {
   return (
-    <div>
+    <div className="hidden md:block">
       <table className="w-full">
         <thead>
           <tr className="bg-[#F5F5F5] h-[65px]">

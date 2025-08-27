@@ -1,10 +1,10 @@
 import api from "./baseApi";
 import { type Category } from "@/types/types";
-import axios from "axios";
-// export const getAllCategories = async (): Promise<Category[]> => {
-//   const response = await api.get("/categories");
-//   return response.data;
-// };
+// import axios from "axios";
+export const getAllCategories = async (): Promise<Category[]> => {
+  const response = await api.get("/categories");
+  return response.data;
+};
 
 // In your categoryService.ts
 // export const getAllCategories = async (): Promise<Category[]> => {
@@ -30,18 +30,18 @@ import axios from "axios";
 //   }
 // };
 // Option 1: Make the API call without Authorization header for categories
-export const getAllCategories = async (): Promise<Category[]> => {
-  try {
-    // Use axios directly without the interceptor for public endpoints
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/categories`
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching categories:", error);
-    throw error;
-  }
-};
+// export const getAllCategories = async (): Promise<Category[]> => {
+//   try {
+//     // Use axios directly without the interceptor for public endpoints
+//     const response = await axios.get(
+//       `${import.meta.env.VITE_API_URL}/categories`
+//     );
+//     return response.data;
+//   } catch (error) {
+//     console.error("Error fetching categories:", error);
+//     throw error;
+//   }
+// };
 
 export const getAllCategoriesByProduct = async (
   id: string

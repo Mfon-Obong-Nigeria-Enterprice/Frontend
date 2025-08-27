@@ -17,15 +17,17 @@ const RecentSalesActivity: React.FC = () => {
 
   return (
     <div className="bg-white rounded-[0.625rem] border border-[#D9D9D9] py-1 font-Inter">
-      <div className="flex justify-between items-center p-4">
-        <h5 className=" font-medium text-[var(--cl-text-dark)] text-lg">
+      <div className="flex justify-between items-center p-4 gap-4">
+        <h5 className="font-medium text-[var(--cl-text-dark)] text-base md:text-lg">
           Your Recent Sales Activity
         </h5>
         <Link
           to="/staff/dashboard/s-sales"
-          className="flex gap-1 items-center text-[#3D80FF]"
+          className="flex md:gap-1 items-center text-[#3D80FF]"
         >
-          <span>View all Sales</span>
+          <button className="text-sm cursor-pointer">
+            View all <span className="hidden md:flex">Sales</span>
+          </button>
           <MdKeyboardArrowRight />
         </Link>
       </div>
@@ -42,12 +44,21 @@ const RecentSalesActivity: React.FC = () => {
             <div key={i} className="p-4 border-t border-[#D9D9D9]">
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-[#333333] mb-2">
-                    {sale.clientName || sale.walkInClientName}
-                  </p>
+                  <div className="flex flex-col">
+                    <p className="text-[#333333] mb-2">
+                      {sale.clientName || sale.walkInClientName}
+                    </p>
+                    <p
+                      className={`md:hidden text-sm font-semibold ${balanceTextClass(
+                        sale.total
+                      )}`}
+                    >
+                      {formatCurrency(sale.total)}
+                    </p>
+                  </div>
                   {sale.items && (
-                    <div className="p-2 border rounded border-[#D9D9D9] w-fit flex gap-1 items-center">
-                      <p className="text-[#444444B2] text-sm">
+                    <div className="p-2 md:border rounded md:border-[#D9D9D9] w-fit flex gap-1 items-center">
+                      <p className="text-[#444444B2] text-xs md:text-sm">
                         {sale.items.length > 0 && (
                           <>
                             <span>
@@ -87,7 +98,7 @@ const RecentSalesActivity: React.FC = () => {
                 </div>
                 <div className="flex gap-1.5 items-center">
                   <p
-                    className={`text-sm font-semibold ${balanceTextClass(
+                    className={`hidden md:flex text-sm font-semibold ${balanceTextClass(
                       sale.total
                     )}`}
                   >
