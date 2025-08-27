@@ -49,7 +49,7 @@ const items = [
 
 export function AdminSidebar() {
   const { pathname } = useLocation();
-  const { logout } = useLogout();
+  const { mutate: logout } = useLogout();
 
   return (
     <Sidebar>
@@ -85,7 +85,7 @@ export function AdminSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenuButton onClick={logout}>
+        <SidebarMenuButton onClick={() => logout()}>
           <IoIosLogOut />
           <span>Logout</span>
         </SidebarMenuButton>

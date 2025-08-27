@@ -90,24 +90,24 @@ export interface ApiResponse<T = unknown> {
 }
 
 // ==================== AUTH TYPES ====================
-export interface User {
-  _id: string;
-  id?: string;
+export interface LoginUser {
+  // _id: string;
+  id: string;
   name: string;
   email: string;
   role: Role;
   branch: string;
   branchId: string;
   createdAt: string;
-  profilePicture?: string;
+  // profilePicture?: string;
 }
 
 export interface LoginResponse {
   status: number;
   message: string;
   data: {
-    user: User;
-    token: string;
+    user: LoginUser;
+    // token: string;
   };
 }
 

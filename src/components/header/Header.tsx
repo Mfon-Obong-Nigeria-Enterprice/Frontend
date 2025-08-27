@@ -234,7 +234,7 @@ const Header = ({ userRole }: HeaderProps) => {
           open={isUserModalOpen}
           onOpenChange={setIsUserModalOpen}
           userData={{
-            _id: (user?._id || user?.id) ?? "",
+            _id: user?.id ?? "",
             email: user?.email ?? "",
             lastLogin: new Date().toISOString(),
             userRole: user?.role ?? "",

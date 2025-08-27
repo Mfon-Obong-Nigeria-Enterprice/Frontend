@@ -43,7 +43,7 @@ const items = [
 
 export function StaffSidebar() {
   const { pathname } = useLocation();
-  const { logout } = useLogout();
+  const { mutate: logout } = useLogout();
 
   return (
     <Sidebar className="bg-white">
@@ -79,7 +79,7 @@ export function StaffSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenuButton onClick={logout}>
+        <SidebarMenuButton onClick={() => logout()}>
           <IoIosLogOut />
           <span>Logout</span>
         </SidebarMenuButton>
