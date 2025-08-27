@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import type { DragEvent } from "react";
@@ -83,14 +84,12 @@ export function ManagerUsersModal({
 
       const response = await api.patch(`/users/${userData._id}`, payload);
 
-      // Create the updated user data object
       const updatedUserData = {
         ...userData,
         fullName: values.fullName,
         location: values.location,
-        name: values.fullName, // Also update 'name' field for consistency
-        branch: values.location, // Also update 'branch' field for consistency
-        // Include any data from the response
+        name: values.fullName, 
+        branch: values.location,
         ...response.data,
       };
 
@@ -122,7 +121,7 @@ export function ManagerUsersModal({
   };
 
   const validateImage = (file: File): string | null => {
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
     const allowedTypes = [
       "image/jpeg",
       "image/jpg",

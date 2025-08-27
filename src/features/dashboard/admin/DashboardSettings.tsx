@@ -56,7 +56,7 @@ export function DashboardSettings() {
       { productId, newPrice },
       {
         onSuccess: (updatedProduct) => {
-          // Update the product in inventory store
+
           updateProduct(updatedProduct);
           setLoadingProductId(null);
           handleResetPrice(productId);

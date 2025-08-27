@@ -1,8 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { z } from "zod";
-import {
-  settingsSchema,
-  updateSettingsSchema,
-} from "@/schemas/SettingsSchemas";
 
 // ==================== CORE TYPES ====================
 export type Role = "SUPER_ADMIN" | "MAINTAINER" | "ADMIN" | "STAFF";
@@ -14,6 +11,45 @@ export interface PriceHistoryItem {
 }
 
 // ==================== SETTINGS TYPES ====================
+export const alertAndNotificationSettingsSchema = z.object({
+  lowStockAlerts: z.boolean(),
+  expirationReminders: z.boolean(),
+  newProductNotifications: z.boolean(),
+  clientsDebtsAlert: z.boolean(),
+  CustomThresholdAlerts: z.boolean(),
+  LargeBalanceAlertThreshold: z.boolean(),
+  PriceChangeNotification: z.boolean(),
+  dashboardNotification: z.boolean(), 
+  emailNotification: z.boolean(), 
+  inactivityAlerts: z.boolean(),
+});
+
+export const systemPreferencesSchema = z.object({
+  lowStockAlertThreshold: z.number().min(0, "Must be a positive number"),
+  maximumDiscount: z.number().min(0, "Must be a positive number").max(100, "Cannot exceed 100%"),
+  bulkDiscountThreshold: z.number().min(0, "Must be a positive number"),
+  minimumPurchaseForBulkDiscount: z.number().min(0, "Must be a positive number"),
+  allowNegativeBalances: z.boolean(),
+});
+
+export const clientAccountSettingsSchema = z.object({
+  defaultCreditLimit: z.number().min(0, "Must be a positive number"),
+  inactivePeriodDays: z.number().min(1, "Must be at least 1 day"),
+});
+
+// Define the main settings schema
+export const settingsSchema = z.object({
+  alerts: alertAndNotificationSettingsSchema,
+  system: systemPreferencesSchema,
+  clientAccount: clientAccountSettingsSchema,
+});
+
+// Define the update settings schema (if different from settingsSchema)
+export const updateSettingsSchema = settingsSchema.partial();
+
+export type AlertAndNotificationSettings = z.infer<typeof alertAndNotificationSettingsSchema>;
+export type SystemPreferences = z.infer<typeof systemPreferencesSchema>;
+export type ClientAccountSettings = z.infer<typeof clientAccountSettingsSchema>;
 export type Settings = z.infer<typeof settingsSchema>;
 export type UpdateSettingsPayload = z.infer<typeof updateSettingsSchema>;
 
@@ -36,10 +72,6 @@ export interface Product {
   updatedAt?: string;
   __v?: number;
 }
-
-
-
-
 
 // ==================== CATEGORY TYPE ====================
 export interface Category {
@@ -119,7 +151,7 @@ export interface PaymentTransactionPayload extends BaseTransactionPayload {
   paymentMethod: string;
   reference: string;
   description: string;
-  amountPaid?: number; // Optional, used for payments
+  amountPaid?: number;
 }
 
 export interface ProductTransactionPayload extends BaseTransactionPayload {
@@ -144,7 +176,6 @@ export interface NewProduct {
   unitPrice: number;
   stock: number;
   minStockLevel: number;
-  // branchId: string;
 }
 
 export type ProductImportRow = {
@@ -218,7 +249,6 @@ export type DetailedHealthResponse = z.infer<
 >;
 
 export interface HealthState {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fetchHealthData: any;
   overallStatus: string;
   metrics: {
@@ -236,7 +266,7 @@ export interface HealthState {
   };
 }
 
-// src/features/notifications/types.ts
+// NOTIFICATION TYPES
 export type NotificationType =
   | "info"
   | "success"

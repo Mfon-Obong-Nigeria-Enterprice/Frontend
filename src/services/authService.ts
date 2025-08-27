@@ -6,17 +6,7 @@ export const login = async (
   password: string
 ): Promise<{ accessToken: string; refreshToken: string; user: User }> => {
   const response = await api.post("/auth/login", { email, password });
-  console.log("login response", response);
-  const accessToken = response.data.access_token;
-  const refreshToken = response.data.refresh_token;
-  const user = response.data.user;
-
-  if (!accessToken || !refreshToken || !user) {
-    console.error("Login response missing token or user", response.data);
-    throw new Error("Invalid login response");
-  }
-
-  return { accessToken, refreshToken, user };
+  return response.data;
 };
 
 export const refreshToken = async (
