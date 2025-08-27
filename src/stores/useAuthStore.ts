@@ -1,24 +1,24 @@
 import { create } from "zustand";
-import { type LoginUser } from "@/types/types";
+import { type LoginUser, type UserProfile } from "@/types/types";
 import * as authService from "@/services/authService";
-import api from "@/services/baseApi";
+// import api from "@/services/baseApi";
 
 type AuthState = {
   user: LoginUser | null;
-
+  userProfile: UserProfile | null;
   isAuthenticated: boolean;
   loading: boolean;
 
   setUser: (user: LoginUser | null) => void;
   login: (email: string, password: string) => Promise<LoginUser>;
   logout: () => Promise<void>;
-  initializeAuth: () => Promise<void>;
-  updateUser: (updates: Partial<User>) => void;
+  // initializeAuth: () => Promise<void>;
+  updateUser: (updates: Partial<UserProfile>) => void;
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-
+  userProfile: null,
   isAuthenticated: false,
   loading: false,
 
@@ -27,16 +27,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email, password) => {
     set({ loading: true });
     try {
-      const { accessToken, refreshToken, user } = await authService.login(
-        email,
-        password
-      );
+      const { user } = await authService.login(email, password);
       console.log("Lofin successful, user data:", user);
 
       set({
         user,
-        accessToken,
-        refreshToken,
+        //accessToken,
+        //refreshToken,
         isAuthenticated: true,
         loading: false,
       });
@@ -50,9 +47,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   updateUser: (updates) => {
     console.log("Updating user with:", updates);
     set((state) => {
-      const updatedUser = state.user ? { ...state.user, ...updates } : null;
+      const updatedUser = state.userProfile
+        ? { ...state.userProfile, ...updates }
+        : null;
       console.log("Updated user object:", updatedUser);
-      return { user: updatedUser };
+      return { userProfile: updatedUser };
     });
   },
 

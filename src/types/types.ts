@@ -67,6 +67,17 @@ export interface LoginUser {
   createdAt: string;
   // profilePicture?: string;
 }
+export interface UserProfile {
+  // _id: string;
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  branch: string;
+  branchId: string;
+  createdAt: string;
+  profilePicture?: string;
+}
 
 export interface LoginResponse {
   status: number;

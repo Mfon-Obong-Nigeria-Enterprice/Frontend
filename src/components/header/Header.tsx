@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Bell, BellDot } from "lucide-react";
 import Logo from "../Logo";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
-import { useState } from "react";
 import AdminUserModal from "@/features/dashboard/admin/AdminUserModal";
 import { ManagerUsersModal } from "@/features/dashboard/manager/component/ManagerUsersModal";
 import { useNotificationStore } from "@/stores/useNotificationStore";
@@ -35,37 +34,37 @@ type UpdatedUserData = {
 };
 
 const Header = ({ userRole }: HeaderProps) => {
-  const { user, updateUser, refreshUserData, isInitialized } = useAuthStore();
+  const { userProfile, user, updateUser } = useAuthStore();
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const [hasRefreshed, setHasRefreshed] = useState(false);
+  // const [hasRefreshed, setHasRefreshed] = useState(false);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
 
   // Refresh user data on component mount (after auth is initialized)
-  useEffect(() => {
-    const refreshData = async () => {
-      if (isInitialized && user && !hasRefreshed && (user._id || user.id)) {
-        try {
-          await refreshUserData();
-          setHasRefreshed(true);
-        } catch (error) {
-          console.error("Failed to refresh user data on mount:", error);
-          setHasRefreshed(true); // Mark as attempted even if failed
-        }
-      }
-    };
+  // useEffect(() => {
+  //   const refreshData = async () => {
+  //     if (isInitialized && user && !hasRefreshed && (user._id || user.id)) {
+  //       try {
+  //         await refreshUserData();
+  //         setHasRefreshed(true);
+  //       } catch (error) {
+  //         console.error("Failed to refresh user data on mount:", error);
+  //         setHasRefreshed(true); // Mark as attempted even if failed
+  //       }
+  //     }
+  //   };
 
-    refreshData();
-  }, [isInitialized, user?._id, user?.id, hasRefreshed, refreshUserData]);
+  //   refreshData();
+  // }, [isInitialized, user?._id, user?.id, hasRefreshed, refreshUserData]);
 
   const getAvatarImage = () => {
-    if (user?.profilePicture) {
-      return user?.profilePicture;
+    if (userProfile?.profilePicture) {
+      return userProfile?.profilePicture;
     }
     return `/images/${userRole}-avatar.png`;
   };
 
   const getRoleBadgeColor = () => {
-    switch (user?.role.toLowerCase()) {
+    switch (userProfile?.role.toLowerCase()) {
       case "admin":
         return "bg-blue-100 text-blue-800";
       case "maintainer":
@@ -89,9 +88,10 @@ const Header = ({ userRole }: HeaderProps) => {
           updatedData.fullName ||
           updatedData.adminName ||
           updatedData.name ||
-          user?.name,
-        profilePicture: updatedData.profilePicture || user?.profilePicture,
-        branch: updatedData.location || user?.branch,
+          userProfile?.name,
+        profilePicture:
+          updatedData.profilePicture || userProfile?.profilePicture,
+        branch: updatedData.location || userProfile?.branch,
         ...updatedData,
       };
 
@@ -99,11 +99,11 @@ const Header = ({ userRole }: HeaderProps) => {
     }
 
     // Also refresh from server to ensure consistency
-    try {
-      await refreshUserData();
-    } catch (error) {
-      console.error("Failed to refresh user data after profile update:", error);
-    }
+    // try {
+    //   await refreshUserData();
+    // } catch (error) {
+    //   console.error("Failed to refresh user data after profile update:", error);
+    // }
   };
 
   return (
