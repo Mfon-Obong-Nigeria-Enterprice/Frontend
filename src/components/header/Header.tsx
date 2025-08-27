@@ -1,12 +1,24 @@
+import { useState } from "react";
+// import { Link } from "react-router-dom";
 import { Bell, BellDot } from "lucide-react";
 import Logo from "../Logo";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import AdminUserModal from "@/features/dashboard/admin/AdminUserModal";
 import { ManagerUsersModal } from "@/features/dashboard/manager/component/ManagerUsersModal";
-import { Link } from "react-router-dom";
 import { useNotificationStore } from "@/stores/useNotificationStore";
 import { useAuthStore } from "@/stores/useAuthStore";
+import NotificationModal from "@/features/dashboard/shared/NotificationModal";
+import {
+  Drawer,
+  DrawerTrigger,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  // DrawerFooter,
+  // DrawerClose,
+} from "@/components/ui/drawer";
+import type { Role } from "@/types/types";
 
 type HeaderProps = {
   userRole?: "admin" | "staff" | "maintainer" | "superadmin" | "manager";
@@ -96,14 +108,82 @@ const Header = ({ userRole }: HeaderProps) => {
 
   return (
     <>
-      <header className="h-14 sm:h-16 fixed top-0 right-0 left-0 z-20 flex justify-between items-center px-7 py-3 bg-white shadow-sm">
+      <header className="h-14 sm:h-16 fixed top-0 right-0 left-0 z-50 flex justify-between items-center px-7 py-3 bg-white shadow-sm">
         <div>
-          <div className="hidden md:flex">
+          <div className="hidden md:flex md:ml-10">
             <Logo />
           </div>
         </div>
 
         <div className="flex gap-4 items-center">
+          {user?.role !== "STAFF" && (
+            <Drawer direction="right">
+              <DrawerTrigger asChild>
+                <button
+                  className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  aria-label="Notifications"
+                >
+                  {unreadCount > 0 ? (
+                    <BellDot className="h-5 w-5 text-gray-700" />
+                  ) : (
+                    <Bell className="h-5 w-5 text-gray-500" />
+                  )}
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+              </DrawerTrigger>
+
+              <DrawerContent>
+                <DrawerHeader>
+                  <DrawerTitle>Notifications</DrawerTitle>
+                </DrawerHeader>
+                <div className="px-4 pb-4">
+                  {user?.role && (
+                    <NotificationModal role={user.role.toLowerCase() as Role} />
+                  )}
+                </div>
+              </DrawerContent>
+            </Drawer>
+          )}
+
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="capitalize font-medium text-gray-700">
+              {user?.name}
+            </span>
+            <span
+              className={`capitalize text-xs px-2 py-1 rounded-full ${getRoleBadgeColor()}`}
+            >
+              {user?.role.toLowerCase()}
+            </span>
+          </div>
+
+          <button
+            onClick={() => setIsUserModalOpen(true)}
+            className="focus:outline-none"
+            aria-label="User settings"
+          >
+            <Avatar>
+              <AvatarImage
+                src={getAvatarImage()}
+                alt={`${userRole} avatar`}
+                onError={(e) => {
+                  console.error(
+                    "failed to load avatar image:",
+                    getAvatarImage()
+                  );
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
+              <AvatarFallback>
+                {user?.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </button>
+        </div>
+        {/* <div className="flex gap-4 items-center">
           {user?.role !== "STAFF" && (
             <Link
               to={`${
@@ -151,10 +231,6 @@ const Header = ({ userRole }: HeaderProps) => {
                 src={getAvatarImage()}
                 alt={`${userRole} avatar`}
                 onError={(e) => {
-                  console.error(
-                    "failed to load avatar image:",
-                    getAvatarImage()
-                  );
                   (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
@@ -163,7 +239,7 @@ const Header = ({ userRole }: HeaderProps) => {
               </AvatarFallback>
             </Avatar>
           </button>
-        </div>
+        </div> */}
       </header>
 
       {user?.role === "ADMIN" || user?.role === "STAFF" ? (
@@ -171,7 +247,7 @@ const Header = ({ userRole }: HeaderProps) => {
           open={isUserModalOpen}
           onOpenChange={setIsUserModalOpen}
           adminData={{
-            _id: user?._id ?? "",
+            _id: user?.id ?? "",
             email: user?.email ?? "",
             lastLogin: new Date().toISOString(),
             userRole: user?.role ?? "user",
@@ -185,7 +261,7 @@ const Header = ({ userRole }: HeaderProps) => {
           open={isUserModalOpen}
           onOpenChange={setIsUserModalOpen}
           userData={{
-            _id: (user?._id || user?.id) ?? "",
+            _id: user?.id ?? "",
             email: user?.email ?? "",
             lastLogin: new Date().toISOString(),
             userRole: user?.role ?? "",

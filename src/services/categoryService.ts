@@ -1,6 +1,6 @@
 import api from "./baseApi";
 import { type Category } from "@/types/types";
-
+// import axios from "axios";
 export const getAllCategories = async (): Promise<Category[]> => {
   const response = await api.get("/categories");
   return response.data;
@@ -10,6 +10,7 @@ export const getAllCategoriesByProduct = async (
   id: string
 ): Promise<Category[]> => {
   const response = await api.get(`/products/${id}/category`);
+
   return response.data;
 };
 

@@ -1,52 +1,45 @@
 import axios, { type AxiosInstance } from "axios";
 import { useAuthStore } from "@/stores/useAuthStore";
 
-let isRefreshing = false;
-let failedQueue: {
-  resolve: (token: string) => void;
-  reject: (err: unknown) => void;
-}[] = [];
-
-const processQueue = (error: unknown, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token!);
-    }
-  });
-  failedQueue = [];
-};
-
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: { "Content-Type": "application/json" },
-  // withCredentials: true,
+  withCredentials: true,
 });
 
-// Attach access token + staff branchId
+// Attach staff branchId
 api.interceptors.request.use((config) => {
-  const { user } = useAuthStore.getState();
+  const { accessToken, user } = useAuthStore.getState();
 
-  // if (accessToken) {
-  //   config.headers.Authorization = `Bearer ${accessToken}`;
-  // }
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
+  }
 
   if ((user?.role === "STAFF" || user?.role === "ADMIN") && user.branchId) {
-    if (config.method === "get") {
-      // For GET requests -> send as query param
-      config.params = {
-        ...config.params,
-        branchId: user.branchId,
-      };
-    } else if (["post", "patch", "put"].includes(config.method ?? "")) {
-      // For write requests -> ensure branchId is in body
-      if (config.data && typeof config.data === "object") {
-        config.data = {
-          ...config.data,
-          branchId: user.branchId,
-        };
-      }
+    const branchId = user.branchId;
+    const userId = user.id;
+    // ❌ Skip these endpoints
+    const excludedEndpoints = ["/categories", "/clients"];
+
+    // Check if excluded
+    const isExcluded = excludedEndpoints.some((endpoint) =>
+      config.url?.includes(endpoint)
+    );
+
+    if (isExcluded) {
+      return config;
+    }
+
+    // 1️⃣ If URL has `/branch/:id` → replace it
+    if (config.url?.includes("/branch/")) {
+      // e.g. /transactions/branch/ → /transactions/branch/{branchId}
+      config.url = config.url.replace(/\/branch(\/)?$/, `/branch/${branchId}`);
+    }
+
+    // exclude branchid for staff for /user endpoint
+    if (config.url?.includes("/user/")) {
+      // e.g. /transactions/branch/ → /transactions/branch/{branchId}
+      config.url = config.url.replace(/\/user(\/)?$/, `/user/${userId}`);
     }
   }
 
@@ -79,11 +72,11 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      // const { refreshToken } = useAuthStore.getState();
-      // if (!refreshToken) {
-      //   useAuthStore.getState().logout();
-      //   return Promise.reject(error);
-      // }
+      const { refreshToken } = useAuthStore.getState();
+      if (!refreshToken) {
+        useAuthStore.getState().logout();
+        return Promise.reject(error);
+      }
 
       if (isRefreshing) {
         // Wait for the refresh to finish
@@ -105,7 +98,7 @@ api.interceptors.response.use(
         // raw axios instance to avoid interceptor recursion
         const response = await axios.post(
           `${import.meta.env.VITE_API_URL}/auth/refresh`,
-          // { refresh_token: refreshToken },
+          { refresh_token: refreshToken },
           { withCredentials: true }
         );
 

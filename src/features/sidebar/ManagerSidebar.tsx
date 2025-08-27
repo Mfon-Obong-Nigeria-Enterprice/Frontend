@@ -9,7 +9,7 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
-import { MdOutlineNotifications } from "react-icons/md"
+import { MdOutlineNotifications } from "react-icons/md";
 import { HiMiniChartBar } from "react-icons/hi2";
 
 import Logo from "@/components/Logo";
@@ -60,7 +60,7 @@ const items = [
   {
     title: "Notifications",
     url: "/manager/dashboard/manager-notifications",
-    icon: MdOutlineNotifications
+    icon: MdOutlineNotifications,
   },
   {
     title: "Settings",
@@ -71,7 +71,7 @@ const items = [
 
 const ManagerSidebar = () => {
   const { pathname } = useLocation();
-  const { logout } = useLogout();
+  const { mutate: logout } = useLogout();
 
   return (
     <Sidebar>
@@ -108,7 +108,7 @@ const ManagerSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenuButton onClick={logout}>
+        <SidebarMenuButton onClick={() => logout()}>
           <LogOut />
           <span>Logout</span>
         </SidebarMenuButton>

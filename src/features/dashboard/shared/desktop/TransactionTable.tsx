@@ -192,7 +192,7 @@ const TransactionTable = ({
                 {/* {searchTerm ?
                  "No transactions found matching your search"
                   : "Loading transactions..."} */}
-                Loading transactions...
+                No transactions found
               </td>
             </tr>
           )}

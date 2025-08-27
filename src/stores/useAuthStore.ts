@@ -1,204 +1,72 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { type User } from "@/types/types";
+import { type LoginUser } from "@/types/types";
 import * as authService from "@/services/authService";
 import api from "@/services/baseApi";
 
 type AuthState = {
-  user: User | null;
-  accessToken: string | null; // in-memory only
-  refreshToken: string | null; // persisted
+  user: LoginUser | null;
+
   isAuthenticated: boolean;
   loading: boolean;
-  isInitialized: boolean;
 
-  setAccessToken: (token: string | null) => void;
-  setUser: (user: User | null) => void;
-  login: (email: string, password: string) => Promise<User>;
+  setUser: (user: LoginUser | null) => void;
+  login: (email: string, password: string) => Promise<LoginUser>;
   logout: () => Promise<void>;
   initializeAuth: () => Promise<void>;
-  updateUser: (userData: Partial<User>) => void;
-  // New methods for profile management
-  refreshUserData: () => Promise<void>;
-  syncUserProfile: (userId: string) => Promise<User | null>;
+  updateUser: (updates: Partial<User>) => void;
 };
 
-// global guard to prevent infinite logout loops
-let isLoggingOut = false;
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      accessToken: null,
-      refreshToken: null,
-      isAuthenticated: false,
-      loading: false,
-      isInitialized: false,
+  isAuthenticated: false,
+  loading: false,
 
-      setAccessToken: (token) => set({ accessToken: token }),
-      setUser: (user) => set({ user, isAuthenticated: !!user }),
+  setUser: (user) => set({ user, isAuthenticated: !!user }),
 
-      login: async (email, password) => {
-        set({ loading: true });
-        try {
-          const { accessToken, refreshToken, user } = await authService.login(
-            email,
-            password
-          );
-          console.log("Login successful, user data:", user);
+  login: async (email, password) => {
+    set({ loading: true });
+    try {
+      const { accessToken, refreshToken, user } = await authService.login(
+        email,
+        password
+      );
+      console.log("Lofin successful, user data:", user);
 
-          set({
-            user,
-            accessToken,
-            refreshToken,
-            isAuthenticated: true,
-            loading: false,
-          });
-          return user;
-        } catch (error) {
-          console.error("Login failed", error);
-          set({ loading: false });
-          throw error;
-        }
-      },
-      updateUser: (updates) => {
-        console.log("Updating user with:", updates);
-        set((state) => {
-          const updatedUser = state.user ? { ...state.user, ...updates } : null;
-          console.log("Updated user object:", updatedUser);
-          return { user: updatedUser };
-        });
-      },
-
-      // New method to sync user profile from server
-      syncUserProfile: async (userId: string) => {
-        try {
-          const response = await api.get(`users/${userId}/`);
-          const userData = response.data;
-
-          // Transform the response to match your User type
-          const updatedUser: User = {
-            ...get().user,
-            ...userData,
-            name:
-              userData.fullName ||
-              userData.adminName ||
-              userData.name ||
-              get().user?.name,
-            profilePicture: userData.profilePicture || userData.image,
-            branch: userData.location || get().user?.branch,
-            // Add any other field mappings you need
-          };
-
-          // Update the store with fresh data
-          set({ user: updatedUser });
-
-          return updatedUser;
-        } catch (error) {
-          console.error("Failed to sync user profile:", error);
-          return null;
-        }
-      },
-
-      // New method to refresh user data from server
-      refreshUserData: async () => {
-        const { user } = get();
-        if (!user) return;
-
-        const userId = user._id || user.id;
-        if (!userId) return;
-
-        try {
-          const freshUser = await get().syncUserProfile(userId);
-          if (freshUser) {
-            console.log("Refreshed user data from server:", freshUser);
-          }
-        } catch (error) {
-          console.error("Failed to refresh user data:", error);
-        }
-      },
-
-      logout: async () => {
-        if (isLoggingOut) return; // prevent recursion
-        isLoggingOut = true;
-
-        try {
-          await authService.logout();
-        } catch {
-          console.warn("Logout request failed, clearing store anyway.");
-        } finally {
-          set({
-            user: null,
-            accessToken: null,
-            refreshToken: null,
-            isAuthenticated: false,
-          });
-          isLoggingOut = false;
-        }
-      },
-
-      initializeAuth: async () => {
-        const { refreshToken } = get();
-
-        if (!refreshToken) {
-          set({ isInitialized: true });
-          return;
-        }
-
-        try {
-          const {
-            accessToken,
-            refreshToken: newRefresh,
-            user,
-          } = await authService.refreshToken(refreshToken);
-
-          set({
-            user,
-            accessToken,
-            refreshToken: newRefresh,
-            isAuthenticated: true,
-            isInitialized: true,
-          });
-        } catch (err) {
-          console.error("Failed to refresh on init:", err);
-
-          set({
-            user: null,
-            accessToken: null,
-            refreshToken: null,
-            isAuthenticated: false,
-            isInitialized: true,
-          });
-        }
-      },
-    }),
-    // {
-    //   name: "auth-store",
-    //   partialize: (state) => ({
-    //     user: state.user,
-    //     refreshToken: state.refreshToken, // only persist these
-    //   }),
-    // }
-    {
-      name: "auth-store",
-      partialize: (state) => {
-        console.log("Persisting auth state:", {
-          user: state.user,
-          refreshToken: state.refreshToken,
-        });
-        return {
-          user: state.user,
-          refreshToken: state.refreshToken, // persist user and refresh token
-        };
-      },
+      set({
+        user,
+        accessToken,
+        refreshToken,
+        isAuthenticated: true,
+        loading: false,
+      });
+      return user;
+    } catch (error) {
+      console.error("Login failed", error);
+      set({ loading: false });
+      throw error;
     }
-  )
-);
+  },
+  updateUser: (updates) => {
+    console.log("Updating user with:", updates);
+    set((state) => {
+      const updatedUser = state.user ? { ...state.user, ...updates } : null;
+      console.log("Updated user object:", updatedUser);
+      return { user: updatedUser };
+    });
+  },
 
-// clear volatile tokens on reload, but don’t log out
-if (typeof window !== "undefined") {
-  window.addEventListener("beforeunload", () => {
-    useAuthStore.setState({ accessToken: null });
-  });
-}
+  logout: async () => {
+    try {
+      await authService.logout();
+    } catch {
+      console.warn("Logout request failed, clearing store anyway.");
+    } finally {
+      set({
+        user: null,
+
+        isAuthenticated: false,
+      });
+    }
+  },
+}));

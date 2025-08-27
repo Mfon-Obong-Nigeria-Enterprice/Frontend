@@ -31,6 +31,7 @@ import Clients from "@/features/dashboard/admin/Clients";
 import DashboardSales from "@/features/dashboard/admin/DashboardSales";
 import DashboardTransactions from "@/features/dashboard/admin/DashboardTransactions";
 import { DashboardSettings } from "@/features/dashboard/admin/DashboardSettings";
+import AdminNotification from "@/features/dashboard/admin/AdminNotification";
 
 // staff
 import StaffDashboardLayout from "@/layout/StaffDashboardLayout";
@@ -39,6 +40,7 @@ import StaffSales from "@/features/dashboard/staff/StaffSales";
 import NewSales from "@/features/dashboard/staff/NewSales";
 import Stock from "@/features/dashboard/staff/Stock";
 import StaffClients from "@/features/dashboard/staff/StaffClients";
+import ManagerNotifications from "@/features/dashboard/manager/ManagerNotifications";
 
 const router = createBrowserRouter([
   { path: "/", element: <Login /> },
@@ -56,6 +58,7 @@ const router = createBrowserRouter([
       { path: "revenue-analytics", element: <RevenueAnalytics /> },
       { path: "manage-user", element: <UserManagement /> },
       { path: "manager-settings", element: <ManagerSettings /> },
+      { path: "manager-notifications", element: <ManagerNotifications /> },
     ],
   },
   {
@@ -80,6 +83,7 @@ const router = createBrowserRouter([
       { path: "sales", element: <DashboardSales /> },
       { path: "transactions", element: <DashboardTransactions /> },
       { path: "settings", element: <DashboardSettings /> },
+      { path: "admin-notifications", element: <AdminNotification /> },
     ],
   },
   {

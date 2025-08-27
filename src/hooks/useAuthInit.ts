@@ -1,12 +1,34 @@
-import { useEffect } from "react";
-import { useAuthStore } from "@/stores/useAuthStore";
+// import { useAuthStore } from "@/stores/useAuthStore";
+// import { useQuery } from "@tanstack/react-query";
 
-export const useAuthInit = () => {
-  const { initializeAuth, isInitialized } = useAuthStore();
+// // Query to fetch current user (useful for app initialization)
+// export const useUser = () => {
+//   const { user, logout, loading, login } = useAuthStore();
 
-  useEffect(() => {
-    initializeAuth();
-  }, [initializeAuth]);
+//   return useQuery({
+//     queryKey: ["user"],
+//     queryFn: async () => {
+//       await login();
+//       return useAuthStore.getState().user;
+//     },
+//     enabled: !user && !loading, // Only fetch if we don't have user data
+//     retry: false,
+//     staleTime: 5 * 60 * 1000, // 5 minutes
+//     onError: () => {
+//       logout();
+//     },
+//   });
+// };
 
-  return isInitialized;
-};
+// // import { useEffect } from "react";
+// // import { useAuthStore } from "@/stores/useAuthStore";
+
+// // export const useAuthInit = () => {
+// //   const { initializeAuth, isInitialized } = useAuthStore();
+
+// //   useEffect(() => {
+// //     initializeAuth();
+// //   }, [initializeAuth]);
+
+// //   return isInitialized;
+// // };

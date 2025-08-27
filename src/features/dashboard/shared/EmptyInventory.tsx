@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Download, Plus } from "lucide-react";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 const EmptyInventory = () => {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
 
   return (
     <div className="space-y-7 mt-10 mx-4">
@@ -36,19 +38,21 @@ const EmptyInventory = () => {
 
           {/* buttons
            */}
-          <div className="flex flex-col md:flex-row gap-5">
-            <Button onClick={() => navigate("/add-prod")}>
-              <Plus /> Add Your First Product
-            </Button>
-            <Button
-              variant="tertiary"
-              onClick={() => navigate("/import-stock")}
-              className="w-50"
-            >
-              <Download />
-              Import Stock
-            </Button>
-          </div>
+          {user?.role !== "STAFF" && (
+            <div className="flex flex-col md:flex-row gap-5">
+              <Button onClick={() => navigate("/add-prod")}>
+                <Plus /> Add Your First Product
+              </Button>
+              <Button
+                variant="tertiary"
+                onClick={() => navigate("/import-stock")}
+                className="w-50"
+              >
+                <Download />
+                Import Stock
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

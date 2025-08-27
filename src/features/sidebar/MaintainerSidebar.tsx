@@ -52,7 +52,7 @@ const items = [
 
 const MaintainerSidebar = () => {
   const { pathname } = useLocation();
-  const { logout } = useLogout();
+  const { mutate: logout, isPending } = useLogout();
 
   return (
     <Sidebar>
@@ -89,9 +89,9 @@ const MaintainerSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenuButton onClick={logout}>
+        <SidebarMenuButton onClick={() => logout()} disabled={isPending}>
           <LogOut />
-          <span>Logout</span>
+          <span> {isPending ? "Logging out..." : "Logout"}</span>
         </SidebarMenuButton>
       </SidebarFooter>
     </Sidebar>

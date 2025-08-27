@@ -42,11 +42,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import EmptyInventory from "../shared/EmptyInventory";
-import { useAuthStore } from "@/stores/useAuthStore";
 
 const AdminInventory = () => {
-  const { user, accessToken } = useAuthStore();
-  console.log(user?.branchId, "token:", accessToken);
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [position, setPosition] = useState({ xPercent: 80, yPercent: 80 });

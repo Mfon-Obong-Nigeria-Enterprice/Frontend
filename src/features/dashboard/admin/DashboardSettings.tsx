@@ -3,31 +3,26 @@ import { AlertSettingsSection } from "./components/AlertSettings";
 import { NotificationSettingsSection } from "./components/NotificationSettings";
 import { PriceUpdateTableSection } from "./components/PriceUpdate";
 import {
-  useProducts,
   useUpdateProductPrice,
   useSettings,
 } from "@/hooks/useSetting";
 import { useSettingsStore } from "@/stores/useSettingsStore";
-import { type Product, type Settings } from "@/types/types";
+import { useInventoryStore } from "@/stores/useInventoryStore";
+import { type Settings } from "@/types/types";
 import { useHasRole } from "@/lib/roles";
 
 export function DashboardSettings() {
   const canModifySettings = useHasRole(["SUPER_ADMIN", "ADMIN"]);
   const canModifyPrices = useHasRole(["SUPER_ADMIN", "ADMIN", "MAINTAINER"]);
 
-  const { data: products } = useProducts();
+  const { products: storeProducts, updateProduct } = useInventoryStore();
   const { data: apiSettings } = useSettings();
   const updateProductPriceMutation = useUpdateProductPrice();
 
-  const { currentSettings, initializeSettings, setSetting } =
-    useSettingsStore();
+  const [editingPrices, setEditingPrices] = React.useState<{ [key: string]: number }>({});
+  const [loadingProductId, setLoadingProductId] = React.useState<string | null>(null);
 
-  const [editingPrices, setEditingPrices] = React.useState<{
-    [key: string]: number;
-  }>({});
-  const loadingProductId = updateProductPriceMutation.isPending
-    ? updateProductPriceMutation.variables?.productId || null
-    : null;
+  const { currentSettings, initializeSettings, setSetting } = useSettingsStore();
 
   React.useEffect(() => {
     if (apiSettings) {
@@ -41,36 +36,36 @@ export function DashboardSettings() {
     }
   };
 
-  const handlePriceInputChange = (id: string, value: number) => {
-    if (canModifyPrices) {
-      setEditingPrices((prev) => ({
-        ...prev,
-        [id]: value,
-      }));
-    }
+  const handlePriceChange = (productId: string, newPrice: number) => {
+    setEditingPrices(prev => ({ ...prev, [productId]: newPrice }));
   };
 
-  const handleUpdatePrice = (product: Product) => {
-    if (!canModifyPrices) return;
-
-    const newPrice = editingPrices[product._id];
-    if (newPrice !== undefined && !isNaN(newPrice) && newPrice > 0) {
-      updateProductPriceMutation.mutate({ productId: product._id, newPrice });
-      setEditingPrices((prev) => {
-        const newEditingPrices = { ...prev };
-        delete newEditingPrices[product._id];
-        return newEditingPrices;
-      });
-    }
-  };
-
-  const handleResetPrice = (product: Product) => {
-    if (!canModifyPrices) return;
-    setEditingPrices((prev) => {
-      const newEditingPrices = { ...prev };
-      delete newEditingPrices[product._id];
-      return newEditingPrices;
+  const handleResetPrice = (productId: string) => {
+    setEditingPrices(prev => {
+      const newState = { ...prev };
+      delete newState[productId];
+      return newState;
     });
+  };
+
+  const handleUpdatePrice = (productId: string, newPrice: number) => {
+    if (!canModifyPrices) return;
+    
+    setLoadingProductId(productId);
+    updateProductPriceMutation.mutate(
+      { productId, newPrice },
+      {
+        onSuccess: (updatedProduct) => {
+          // Update the product in inventory store
+          updateProduct(updatedProduct);
+          setLoadingProductId(null);
+          handleResetPrice(productId);
+        },
+        onError: () => {
+          setLoadingProductId(null);
+        },
+      }
+    );
   };
 
   return (
@@ -108,10 +103,10 @@ export function DashboardSettings() {
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <PriceUpdateTableSection
-                products={products || []}
+                products={storeProducts} 
                 editingPrices={editingPrices}
                 loadingProductId={loadingProductId}
-                onPriceChange={handlePriceInputChange}
+                onPriceChange={handlePriceChange}
                 onUpdate={handleUpdatePrice}
                 onReset={handleResetPrice}
                 isReadOnly={!canModifyPrices}
