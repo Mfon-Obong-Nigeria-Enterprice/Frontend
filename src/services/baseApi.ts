@@ -26,11 +26,11 @@ const api: AxiosInstance = axios.create({
 
 // Attach access token + staff branchId
 api.interceptors.request.use((config) => {
-  const { accessToken, user } = useAuthStore.getState();
+  const { user } = useAuthStore.getState();
 
-  if (accessToken) {
-    config.headers.Authorization = `Bearer ${accessToken}`;
-  }
+  // if (accessToken) {
+  //   config.headers.Authorization = `Bearer ${accessToken}`;
+  // }
 
   if ((user?.role === "STAFF" || user?.role === "ADMIN") && user.branchId) {
     if (config.method === "get") {
@@ -79,11 +79,11 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const { refreshToken } = useAuthStore.getState();
-      if (!refreshToken) {
-        useAuthStore.getState().logout();
-        return Promise.reject(error);
-      }
+      // const { refreshToken } = useAuthStore.getState();
+      // if (!refreshToken) {
+      //   useAuthStore.getState().logout();
+      //   return Promise.reject(error);
+      // }
 
       if (isRefreshing) {
         // Wait for the refresh to finish
@@ -105,7 +105,7 @@ api.interceptors.response.use(
         // raw axios instance to avoid interceptor recursion
         const response = await axios.post(
           `${import.meta.env.VITE_API_URL}/auth/refresh`,
-          { refresh_token: refreshToken },
+          // { refresh_token: refreshToken },
           { withCredentials: true }
         );
 

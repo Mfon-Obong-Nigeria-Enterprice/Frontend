@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { type User } from "@/types/types";
 import * as authService from "@/services/authService";
+import api from "@/services/baseApi";
 
 type AuthState = {
   user: User | null;
@@ -16,7 +17,10 @@ type AuthState = {
   login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   initializeAuth: () => Promise<void>;
-  updateUser: (updates: Partial<User>) => void;
+  updateUser: (userData: Partial<User>) => void;
+  // New methods for profile management
+  refreshUserData: () => Promise<void>;
+  syncUserProfile: (userId: string) => Promise<User | null>;
 };
 
 // global guard to prevent infinite logout loops
@@ -42,7 +46,7 @@ export const useAuthStore = create<AuthState>()(
             email,
             password
           );
-          console.log("Lofin successful, user data:", user);
+          console.log("Login successful, user data:", user);
 
           set({
             user,
@@ -65,6 +69,54 @@ export const useAuthStore = create<AuthState>()(
           console.log("Updated user object:", updatedUser);
           return { user: updatedUser };
         });
+      },
+
+      // New method to sync user profile from server
+      syncUserProfile: async (userId: string) => {
+        try {
+          const response = await api.get(`users/${userId}/`);
+          const userData = response.data;
+
+          // Transform the response to match your User type
+          const updatedUser: User = {
+            ...get().user,
+            ...userData,
+            name:
+              userData.fullName ||
+              userData.adminName ||
+              userData.name ||
+              get().user?.name,
+            profilePicture: userData.profilePicture || userData.image,
+            branch: userData.location || get().user?.branch,
+            // Add any other field mappings you need
+          };
+
+          // Update the store with fresh data
+          set({ user: updatedUser });
+
+          return updatedUser;
+        } catch (error) {
+          console.error("Failed to sync user profile:", error);
+          return null;
+        }
+      },
+
+      // New method to refresh user data from server
+      refreshUserData: async () => {
+        const { user } = get();
+        if (!user) return;
+
+        const userId = user._id || user.id;
+        if (!userId) return;
+
+        try {
+          const freshUser = await get().syncUserProfile(userId);
+          if (freshUser) {
+            console.log("Refreshed user data from server:", freshUser);
+          }
+        } catch (error) {
+          console.error("Failed to refresh user data:", error);
+        }
       },
 
       logout: async () => {

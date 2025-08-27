@@ -1,22 +1,27 @@
 import api from "./baseApi";
 import { type User } from "@/types/types";
 
-export const login = async (
-  email: string,
-  password: string
-): Promise<{ accessToken: string; refreshToken: string; user: User }> => {
+// export const login = async (
+//   email: string,
+//   password: string
+// ): Promise<{ accessToken: string; refreshToken: string; user: User }> => {
+//   const response = await api.post("/auth/login", { email, password });
+
+//   const accessToken = response.data.access_token;
+//   const refreshToken = response.data.refresh_token;
+//   const user = response.data.user;
+
+//   if (!accessToken || !refreshToken || !user) {
+//     console.error("Login response missing token or user", response.data);
+//     throw new Error("Invalid login response");
+//   }
+
+//   return { accessToken, refreshToken, user };
+// };
+
+export const login = async (email: string, password: string) => {
   const response = await api.post("/auth/login", { email, password });
-
-  const accessToken = response.data.access_token;
-  const refreshToken = response.data.refresh_token;
-  const user = response.data.user;
-
-  if (!accessToken || !refreshToken || !user) {
-    console.error("Login response missing token or user", response.data);
-    throw new Error("Invalid login response");
-  }
-
-  return { accessToken, refreshToken, user };
+  return response.data;
 };
 
 export const refreshToken = async (

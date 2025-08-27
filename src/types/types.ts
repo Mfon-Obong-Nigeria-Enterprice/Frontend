@@ -59,6 +59,7 @@ export interface User {
   branchId: string;
   createdAt: string;
   profilePicture?: string;
+  lastLogin?: string;
 }
 
 export interface LoginResponse {

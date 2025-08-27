@@ -1,7 +1,7 @@
 import { Bell, BellDot } from "lucide-react";
 import Logo from "../Logo";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AdminUserModal from "@/features/dashboard/admin/AdminUserModal";
 import { ManagerUsersModal } from "@/features/dashboard/manager/component/ManagerUsersModal";
 import { Link } from "react-router-dom";
@@ -11,6 +11,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 type HeaderProps = {
   userRole?: "admin" | "staff" | "maintainer" | "superadmin" | "manager";
 };
+
 // Handler for profile updates
 type UpdatedUserData = {
   fullName?: string;
@@ -22,14 +23,31 @@ type UpdatedUserData = {
 };
 
 const Header = ({ userRole }: HeaderProps) => {
-  const { user, updateUser } = useAuthStore();
-
+  const { user, updateUser, refreshUserData, isInitialized } = useAuthStore();
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [hasRefreshed, setHasRefreshed] = useState(false);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
+
+  // Refresh user data on component mount (after auth is initialized)
+  useEffect(() => {
+    const refreshData = async () => {
+      if (isInitialized && user && !hasRefreshed && (user._id || user.id)) {
+        try {
+          await refreshUserData();
+          setHasRefreshed(true);
+        } catch (error) {
+          console.error("Failed to refresh user data on mount:", error);
+          setHasRefreshed(true); // Mark as attempted even if failed
+        }
+      }
+    };
+
+    refreshData();
+  }, [isInitialized, user?._id, user?.id, hasRefreshed, refreshUserData]);
 
   const getAvatarImage = () => {
     if (user?.profilePicture) {
-      return user.profilePicture;
+      return user?.profilePicture;
     }
     return `/images/${userRole}-avatar.png`;
   };
@@ -49,22 +67,30 @@ const Header = ({ userRole }: HeaderProps) => {
     }
   };
 
-  const handleProfileUpdate = (updatedData: UpdatedUserData) => {
+  const handleProfileUpdate = async (updatedData: UpdatedUserData) => {
     console.log("Profile updated:", updatedData);
 
-    // Update the user store with new data
+    // Update the user store with new data immediately for optimistic updates
     if (updateUser) {
-      updateUser({
-        ...user,
+      const updates = {
         name:
           updatedData.fullName ||
           updatedData.adminName ||
           updatedData.name ||
           user?.name,
-        profilePicture: updatedData.profilePicture,
+        profilePicture: updatedData.profilePicture || user?.profilePicture,
         branch: updatedData.location || user?.branch,
         ...updatedData,
-      });
+      };
+
+      updateUser(updates);
+    }
+
+    // Also refresh from server to ensure consistency
+    try {
+      await refreshUserData();
+    } catch (error) {
+      console.error("Failed to refresh user data after profile update:", error);
     }
   };
 
@@ -106,7 +132,6 @@ const Header = ({ userRole }: HeaderProps) => {
           )}
           <div className="hidden sm:flex items-center gap-2">
             <span className="capitalize font-medium text-gray-700">
-              {/* {userName} */}
               {user?.name}
             </span>
             <span
@@ -134,7 +159,7 @@ const Header = ({ userRole }: HeaderProps) => {
                 }}
               />
               <AvatarFallback>
-                {user?.name.charAt(0).toUpperCase()}
+                {user?.name?.charAt(0)?.toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
           </button>
@@ -164,7 +189,7 @@ const Header = ({ userRole }: HeaderProps) => {
             email: user?.email ?? "",
             lastLogin: new Date().toISOString(),
             userRole: user?.role ?? "",
-            fullName: user?.name ?? "",
+            name: user?.name ?? "",
             location: user?.branch ?? "",
             profilePicture: getAvatarImage(),
           }}
