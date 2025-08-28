@@ -38,9 +38,8 @@ const Login = () => {
     mutationFn: (data: LoginFormInputs) =>
       authService.login(data.email, data.password),
     onSuccess: (data) => {
-      // update store here if needed
+      // update store here
       useAuthStore.getState().setUser(data.user);
-      // useAuthStore.getState().setAccessToken(data.accessToken);
 
       if (!data.user.role) {
         throw new Error("User role is missing after login");
@@ -74,7 +73,7 @@ const Login = () => {
           throw new Error(`Unknown user role: ${data.user.role}`);
       }
 
-      toast.success("Login successful!");
+      toast.success(`Welcome ${data.user.name}`);
     },
     onError: (error) => {
       console.error("Login failed", error);
@@ -85,49 +84,8 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormInputs) => {
     mutation.mutate(data);
-    // try {
-    //   const user = await login(data.username, data.password);
-    //   // const { user } = useAuthStore.getState();
-
-    //   if (!user.role) {
-    //     throw new Error("User role is missing after login");
-    //   }
-
-    //   // Normalize the role to handle any case or whitespace issues
-    //   const normalizedRole = user.role.toString().trim().toUpperCase();
-
-    //   switch (normalizedRole) {
-    //     case "SUPER_ADMIN":
-    //       navigate("/manager/dashboard");
-    //       break;
-
-    //     case "MAINTAINER":
-    //       navigate("/maintainer/dashboard");
-    //       break;
-
-    //     case "ADMIN":
-    //       navigate("/admin/dashboard/overview");
-    //       break;
-
-    //     case "STAFF":
-    //       navigate("/staff/dashboard/s-overview");
-    //       break;
-
-    //     default:
-    //       console.error("Unknown user role detected:", {
-    //         originalRole: user.role,
-    //         normalizedRole,
-    //         user,
-    //       });
-    //       throw new Error(`Unknown user role: ${user.role}`);
-    //   }
 
     //   toast.success(`Welcome back, ${user.name || "User"}!`);
-    // } catch (error) {
-    //   console.error("Login failed", error);
-    //   openModal("error");
-    //   toast.error("Login Failed!");
-    // }
   };
 
   // function to set a loading spinner before oprning the support modal
@@ -172,12 +130,13 @@ const Login = () => {
             type="text"
             {...register("email")}
             placeholder="Email address"
+            disabled={mutation.isPending}
             aria-invalid={!!formErrors.email}
             className={`bg-transparent border px-4 py-3 rounded-[0.625rem] text-base w-full ${
               formErrors.email
                 ? "border-[var(--cl-error)]"
                 : "border-[var(--cl-gray-a1)]"
-            }`}
+            } ${mutation.isPending ? "cursor-not-allowed opacity-50" : ""}`}
           />
           <p className="text-[var(--cl-error)] text-sm pt-1">
             {formErrors.email?.message ?? ""}
@@ -189,11 +148,12 @@ const Login = () => {
               {...register("password")}
               placeholder="Password"
               aria-invalid={!!formErrors.password}
+              disabled={mutation.isPending}
               className={`border outline-0 pl-4 pr-10 py-3 rounded-[0.625rem] text-base w-full ${
                 formErrors.password
                   ? "border-[var(--cl-error)]"
                   : "border-[var(--cl-gray-a1)]"
-              }`}
+              } ${mutation.isPending ? "cursor-not-allowed opacity-50" : ""}`}
             />
             <button
               type="button"
@@ -216,7 +176,7 @@ const Login = () => {
                 Object.keys(formErrors).length > 0
                   ? "bg-[#D9D9D9] hover:bg-[#D9D9D9]/90 text-[#444444]"
                   : "bg-[#2ECC71] hover:bg-[#27ae60]"
-              }`}
+              } ${mutation.isPending ? "cursor-not-allowed" : ""}`}
             >
               {Object.keys(formErrors).length > 0
                 ? "Retry"
