@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Table,
@@ -17,6 +18,16 @@ import { getDaysSince } from "@/utils/helpersfunction";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 import { useMergedTransactions } from "@/hooks/useMergedTransactions";
+import usePagination from "@/hooks/usePagination";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const OutstandingBalance = () => {
   const navigate = useNavigate();
@@ -28,6 +39,22 @@ const OutstandingBalance = () => {
   const debtors = mergedTransactions.filter(
     (tx) => tx.client && tx.client?.balance < 0
   );
+
+  const {
+    currentPage,
+    // setCurrentPage,
+    totalPages,
+    goToPreviousPage,
+    goToNextPage,
+    canGoPrevious,
+    canGoNext,
+  } = usePagination((debtors ?? []).length, 5);
+
+  const currentDebtors = useMemo(() => {
+    const startIndex = (currentPage - 1) * 5;
+    const endIndex = startIndex + 5;
+    return debtors?.slice(startIndex, endIndex);
+  }, [debtors, currentPage]);
 
   // get user role
   const role = user?.role;
@@ -77,7 +104,7 @@ const OutstandingBalance = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              debtors.map((entry, index) => (
+              currentDebtors.map((entry, index) => (
                 <TableRow
                   key={entry._id}
                   className={`border-b border-gray-300 ${
@@ -101,6 +128,49 @@ const OutstandingBalance = () => {
             )}
           </TableBody>
         </Table>
+        {/* pagination */}
+        {debtors && currentDebtors?.length > 0 && totalPages > 1 && (
+          <div className="h-14 bg-[#f5f5f5] text-sm text-[#7D7D7D] flex justify-center items-center gap-3">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={canGoPrevious ? goToPreviousPage : undefined}
+                    className={
+                      !canGoPrevious
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                    aria-label="Go to previous page"
+                  >
+                    <Button
+                      disabled={!canGoPrevious}
+                      className="border border-[#d9d9d9] rounded"
+                    >
+                      <ChevronLeft size={14} />
+                    </Button>
+                  </PaginationPrevious>
+                </PaginationItem>
+                <PaginationItem className="px-4 text-sm text-gray-600">
+                  Page {currentPage} of {totalPages}
+                </PaginationItem>
+                <PaginationNext
+                  onClick={canGoNext ? goToNextPage : undefined}
+                  className={
+                    !canGoNext
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                  aria-label="Go to next page"
+                >
+                  <Button className="border border-[#d9d9d9] rounded">
+                    <ChevronRight size={14} />
+                  </Button>
+                </PaginationNext>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </div>
 
       <div className="mt-[7dvh] ">

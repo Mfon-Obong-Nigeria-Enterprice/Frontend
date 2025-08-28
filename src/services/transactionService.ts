@@ -39,7 +39,7 @@ export const getTransactionByUserId = async (
 
 export const AddTransaction = async (
   data: TransactionCreate
-): Promise<Transaction[]> => {
+): Promise<Transaction> => {
   // try {
   const { user } = useAuthStore.getState();
   if (!user?.branchId) throw new Error("Branch ID missing");

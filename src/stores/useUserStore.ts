@@ -1,10 +1,32 @@
 import { create } from "zustand";
+import type { Role } from "@/types/types";
 
-import type { User } from "@/types/user";
+export interface CompanyUser {
+  _id: string;
+  name: string;
+  address: string;
+  branch: string;
+  branchId: {
+    _id: string;
+    name: string;
+  };
+  createdAt: string;
+  email: string;
+  isActive: boolean;
+  isBlocked: boolean;
+
+  phone: string;
+  profilePicture: string;
+  profilePictureMeta: {
+    public_id: string;
+  };
+  role: Role;
+  updatedAt: string;
+}
 
 type UserState = {
-  users: User[];
-  setUsers: (users: User[]) => void;
+  users: CompanyUser[];
+  setUsers: (users: CompanyUser[]) => void;
   getUserNameById: (id: string) => string | undefined;
 };
 
