@@ -1,22 +1,36 @@
 import { useState, useMemo } from "react";
+
+// components
 import DashboardTitle from "../shared/DashboardTitle";
 import MySalesActivity from "./components/desktop/MySalesActivity";
+import MobileSalesActivity from "./components/mobile/MobileSalesActivity";
+
 // ui
 import { Button } from "@/components/ui/button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
+// icons
 import { VscRefresh } from "react-icons/vsc";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+// stores
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 
-import { useAuthStore } from "@/stores/useAuthStore";
-import MobileSalesActivity from "./components/mobile/MobileSalesActivity";
+// hooks
+import usePagination from "@/hooks/usePagination";
 
 const StaffSales = () => {
   const transactions = useTransactionsStore(
     (state) => state.transactions ?? []
   );
-  console.log(transactions);
+
   const [filter, setFilter] = useState<"today" | "week" | "month">("today");
-  const { user } = useAuthStore();
-  console.log(user?.branchId);
 
   // filter transaction
   const filteredTransactions = useMemo(() => {
@@ -54,6 +68,23 @@ const StaffSales = () => {
       return true;
     });
   }, [transactions, filter]);
+
+  //  use filtered transaction for pagination
+  const {
+    currentPage,
+    // setCurrentPage,
+    totalPages,
+    goToPreviousPage,
+    goToNextPage,
+    canGoPrevious,
+    canGoNext,
+  } = usePagination((filteredTransactions ?? []).length, 5);
+
+  const currentTransaction = useMemo(() => {
+    const startIndex = (currentPage - 1) * 5;
+    const endIndex = startIndex + 5;
+    return filteredTransactions?.slice(startIndex, endIndex);
+  }, [filteredTransactions, currentPage]);
 
   return (
     <div>
@@ -106,8 +137,54 @@ const StaffSales = () => {
             ))}
           </div>
         </div>
-        <MySalesActivity filteredTransactions={filteredTransactions} />
-        <MobileSalesActivity filteredTransactions={filteredTransactions} />
+        <MySalesActivity filteredTransactions={currentTransaction} />
+        <MobileSalesActivity filteredTransactions={currentTransaction} />
+
+        {/* pagination */}
+        {currentTransaction &&
+          currentTransaction?.length > 0 &&
+          totalPages > 1 && (
+            <div className="h-14 bg-[#f5f5f5] text-sm text-[#7D7D7D] flex justify-center items-center gap-3">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={canGoPrevious ? goToPreviousPage : undefined}
+                      className={
+                        !canGoPrevious
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                      aria-label="Go to previous page"
+                    >
+                      <Button
+                        disabled={!canGoPrevious}
+                        className="border border-[#d9d9d9] rounded"
+                      >
+                        <ChevronLeft size={14} />
+                      </Button>
+                    </PaginationPrevious>
+                  </PaginationItem>
+                  <PaginationItem className="px-4 text-sm text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </PaginationItem>
+                  <PaginationNext
+                    onClick={canGoNext ? goToNextPage : undefined}
+                    className={
+                      !canGoNext
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                    aria-label="Go to next page"
+                  >
+                    <Button className="border border-[#d9d9d9] rounded">
+                      <ChevronRight size={14} />
+                    </Button>
+                  </PaginationNext>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
       </section>
     </div>
   );

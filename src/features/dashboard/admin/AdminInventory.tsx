@@ -270,8 +270,8 @@ const AdminInventory = () => {
         description="Manage your products and categories"
       />
       {products?.length > 0 ? (
-        <section className="bg-white xl:rounded-xl mt-5">
-          <div className="flex  gap-4 justify-between items-center py-5 px-4 sm:px-5 bg-[#f0f0f3] border-b border-[#d9d9d9] md:border-0">
+        <section className="bg-white xl:rounded-xl mt-5 max-w-[74vw] 2xl:max-w-full">
+          <div className="flex gap-4 justify-between items-center py-5 px-4 sm:px-5 bg-[#f0f0f3] border-b border-[#d9d9d9] md:border-0">
             <h3 className="text-xl font-medium text-text-dark">
               Product & Categories
             </h3>

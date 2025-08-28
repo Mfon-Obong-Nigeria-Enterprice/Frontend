@@ -78,18 +78,15 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
     enabled: user?.role !== "STAFF" && user?.role !== "ADMIN",
   });
 
-  // Fixed: Correct queryKey and only fetch for super admin roles
   const usersQuery = useQuery({
-    queryKey: ["users"], // Fixed: was ["clients"]
+    queryKey: ["users"],
     queryFn: getAllUsers,
     enabled: user?.role !== "STAFF" && user?.role !== "ADMIN",
   });
 
   // Sync immediately when data is successfully fetched
   useEffect(() => {
-    console.log("Categories query data:", categoriesQuery.data);
     if (categoriesQuery.data) {
-      console.log("Setting categories in store:", categoriesQuery.data);
       setCategories(categoriesQuery.data);
     }
   }, [categoriesQuery.dataUpdatedAt, setCategories]);
@@ -124,6 +121,7 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   }, [branchesQuery.dataUpdatedAt, setBranches, user?.role]);
 
   useEffect(() => {
+    console.log("users query data:", usersQuery.data);
     if (
       usersQuery.data &&
       usersQuery.data.length > 0 &&
@@ -131,6 +129,7 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
       user?.role !== "ADMIN"
     ) {
       setUsers(usersQuery.data);
+      console.log("Setting users in store:", usersQuery.data);
     }
   }, [usersQuery.dataUpdatedAt, setUsers, user?.role]);
 

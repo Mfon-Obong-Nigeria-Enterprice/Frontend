@@ -8,7 +8,7 @@ const EmptyInventory = () => {
   const { user } = useAuthStore();
 
   return (
-    <div className="space-y-7 mt-10 mx-4">
+    <div className="space-y-7 mt-2 mx-4">
       <h5 className="text-black font-medium font-Inter text-xl">
         Product and Category
       </h5>
@@ -29,11 +29,13 @@ const EmptyInventory = () => {
             <h6 className="font-Inter text-[#333333] text-lg md:text-2xl font-medium">
               No Product in your inventory yet!
             </h6>
-            <p className="font-medium text-[#7D7D7D] text-xs md:text-sm max-w-[295px] md:max-w-[400px] text-center">
-              Start building your inventory by adding product and organizing
-              them into categories, you can add product manually or import them
-              from a spreedsheet
-            </p>
+            {user?.role !== "STAFF" && (
+              <p className="font-medium text-[#7D7D7D] text-xs md:text-sm max-w-[295px] md:max-w-[400px] text-center">
+                Start building your inventory by adding product and organizing
+                them into categories, you can add product manually or import
+                them from a spreedsheet
+              </p>
+            )}
           </div>
 
           {/* buttons

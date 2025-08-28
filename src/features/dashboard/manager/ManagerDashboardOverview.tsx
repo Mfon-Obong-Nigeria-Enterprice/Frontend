@@ -1,3 +1,4 @@
+// import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardTitle from "../shared/DashboardTitle";
 import Stats from "../shared/Stats";
@@ -13,16 +14,19 @@ import type { StatCard } from "@/types/stats";
 
 // ui
 import { Button } from "@/components/ui/button";
+
+// stores
 import { useClientStore } from "@/stores/useClientStore";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
-import { getChangeText } from "@/utils/helpersfunction";
 import { useRevenueStore } from "@/stores/useRevenueStore";
-import { getAllTransactions } from "@/services/transactionService";
-import { useEffect } from "react";
+// import { getAllTransactions } from "@/services/transactionService";
+
+// utils
+import { getChangeText } from "@/utils/helpersfunction";
 
 const ManagerDashboardOverview = () => {
   const { getTodaysSales, getSalesPercentageChange } = useTransactionsStore();
-  const { getMOMRevenue, setTransactions, transactions } = useRevenueStore();
+  const { getMOMRevenue } = useRevenueStore();
   const { getOutStandingBalanceData } = useClientStore();
   const todaysSales = getTodaysSales();
   const monthlyRevenue = getMOMRevenue();
@@ -32,20 +36,20 @@ const ManagerDashboardOverview = () => {
   const navigate = useNavigate();
 
   // Initialize data
-  useEffect(() => {
-    const initializeData = async () => {
-      try {
-        const transactionData = await getAllTransactions();
-        setTransactions(transactionData);
-      } catch (error) {
-        console.error("Failed to fetch transactions:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const initializeData = async () => {
+  //     try {
+  //       const transactionData = await getAllTransactions();
+  //       setTransactions(transactionData);
+  //     } catch (error) {
+  //       console.error("Failed to fetch transactions:", error);
+  //     }
+  //   };
 
-    if (!transactions) {
-      initializeData();
-    }
-  }, [transactions, setTransactions]);
+  //   if (!transactions) {
+  //     initializeData();
+  //   }
+  // }, [transactions, setTransactions]);
 
   const stats: StatCard[] = [
     {
