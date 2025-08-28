@@ -41,6 +41,7 @@ import NewSales from "@/features/dashboard/staff/NewSales";
 import Stock from "@/features/dashboard/staff/Stock";
 import StaffClients from "@/features/dashboard/staff/StaffClients";
 import ManagerNotifications from "@/features/dashboard/manager/ManagerNotifications";
+import ManageUser from "@/features/dashboard/maintainer/ManageUser";
 
 const router = createBrowserRouter([
   { path: "/", element: <Login /> },
@@ -70,6 +71,7 @@ const router = createBrowserRouter([
         element: <Navigate to="/maintainer/dashboard/overview" replace />,
       },
       { path: "overview", element: <MaintainerDashboard /> },
+      { path: "user", element: <ManageUser /> },
     ],
   },
   {

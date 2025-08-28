@@ -261,6 +261,79 @@ const NewSales: React.FC = () => {
     setNotes("");
   };
 
+  // const handleSubmit = async () => {
+  //   if (!validateSales()) return;
+
+  //   setIsSubmitting(true);
+  //   try {
+  //     const { discountTotal, total } = calculateTotals();
+  //     const effectiveAmountPaid = getAmountPaid() || 0;
+
+  //     const apiItems = rows
+  //       .filter((row) => row.productId)
+  //       .map((row) => {
+  //         const product = products.find((p) => p._id === row.productId);
+  //         return {
+  //           productId: row.productId,
+  //           quantity: row.quantity,
+  //           unit: product?.unit || "pcs",
+  //           discount: row.discount || 0,
+  //         };
+  //       });
+
+  //     let saleType: "PURCHASE" | "PICKUP" = "PURCHASE";
+  //     if (!isWalkIn && selectedClient) {
+  //       const clientBalance = selectedClient.balance || 0;
+  //       if (effectiveAmountPaid + clientBalance < total) {
+  //         saleType = "PICKUP";
+  //       }
+  //     }
+
+  //     let paymentMethodForBackend = paymentMethod;
+  //     if (subMethod) {
+  //       if (paymentMethod === "bank" || paymentMethod === "transfer") {
+  //         paymentMethodForBackend = `Transfer from ${subMethod}`;
+  //       } else if (paymentMethod === "pos") {
+  //         paymentMethodForBackend = `POS with ${subMethod}`;
+  //       }
+  //     }
+
+  //     const payload = {
+  //       ...(selectedClient?._id
+  //         ? { clientId: selectedClient._id }
+  //         : { walkInClient: walkInData }),
+  //       type: saleType,
+  //       items: apiItems,
+  //       amountPaid: effectiveAmountPaid,
+  //       discount: discountTotal,
+  //       paymentMethod:
+  //         saleType === "PICKUP" ? "Credit" : paymentMethodForBackend,
+  //       notes,
+  //     };
+
+  //     await AddTransaction(payload);
+
+  //     toast.info("Transaction created, waiting for receipt...");
+
+  //     setReceiptData({
+  //       client: selectedClient,
+  //       walkInClient: isWalkIn ? walkInData : null,
+  //       items: rows.filter((row) => row.productId),
+  //       totals: calculateTotals(),
+  //       paymentMethod,
+  //       //  bankName,
+  //       amountPaid: getAmountPaid(),
+  //       date: new Date(),
+  //     });
+  //     setIsReceiptOpen(true);
+
+  //     handleResetClient();
+  //   } catch (error) {
+  //     handleApiError(error, "Transaction error");
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
   const handleSubmit = async () => {
     if (!validateSales()) return;
 
@@ -311,9 +384,14 @@ const NewSales: React.FC = () => {
         notes,
       };
 
-      await AddTransaction(payload);
+      // ✅ get the actual transaction returned from backend
+      const transaction = await AddTransaction(payload);
 
-      toast.info("Transaction created, waiting for receipt...");
+      toast.success("Transaction created successfully");
+
+      // ✅ pass the backend transaction to the receipt
+      setReceiptData(transaction);
+      setShowReceipt(true);
 
       handleResetClient();
     } catch (error) {
@@ -597,7 +675,7 @@ const NewSales: React.FC = () => {
           <SalesReceipt transaction={receiptData} />
         </Modal>
       )}
-      {transaction && <SalesReceipt transaction={receiptData} />}
+      {/* {transaction && <SalesReceipt transaction={receiptData} />} */}
     </main>
   );
 };

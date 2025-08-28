@@ -209,24 +209,26 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
 
       <Table className="w-full mt-2 space-y-20">
         <TableHeader className="bg-[#F0F0F3] h-12">
-          <TableHead className="text-[#333333] font-normal px-4">
-            Product
-          </TableHead>
-          <TableHead className="text-[#333333] text-center font-normal">
-            Quantity
-          </TableHead>
-          <TableHead className="text-[#333333] text-center font-normal">
-            Unit Price
-          </TableHead>
-          <TableHead className=" text-[#333333] text-center font-normal">
-            Discount
-          </TableHead>
-          <TableHead className="text-[#333333] text-center font-normal">
-            Total
-          </TableHead>
-          <TableHead className="text-[#333333] pr-5 text-center font-normal">
-            Actions
-          </TableHead>
+          <TableRow>
+            <TableHead className="text-[#333333] font-normal px-4">
+              Product
+            </TableHead>
+            <TableHead className="text-[#333333] text-center font-normal">
+              Quantity
+            </TableHead>
+            <TableHead className="text-[#333333] text-center font-normal">
+              Unit Price
+            </TableHead>
+            <TableHead className=" text-[#333333] text-center font-normal">
+              Discount
+            </TableHead>
+            <TableHead className="text-[#333333] text-center font-normal">
+              Total
+            </TableHead>
+            <TableHead className="text-[#333333] pr-5 text-center font-normal">
+              Actions
+            </TableHead>
+          </TableRow>
         </TableHeader>
         <TableBody>
           {rows.map((row, index) => {
