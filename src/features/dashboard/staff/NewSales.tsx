@@ -58,6 +58,7 @@ export type Row = {
 };
 
 // Define a simple type for the receipt data based on backend structure
+type ReceiptData = Transaction;
 // type ReceiptData = {
 //   invoiceNumber: string;
 //   clientName?: string;
@@ -75,16 +76,16 @@ export type Row = {
 //   }[];
 //   date: string;
 // };
-type ReceiptData = Omit<
-  Transaction,
-  | "_id"
-  | "userId"
-  | "status"
-  | "branchId"
-  | "waybillNumber"
-  | "description"
-  | "reference"
->;
+// type ReceiptData = Omit<
+//   Transaction,
+//   | "_id"
+//   | "userId"
+//   | "status"
+//   | "branchId"
+//   | "waybillNumber"
+//   | "description"
+//   | "reference"
+// >;
 
 const emptyRow: Row = {
   productId: "",
