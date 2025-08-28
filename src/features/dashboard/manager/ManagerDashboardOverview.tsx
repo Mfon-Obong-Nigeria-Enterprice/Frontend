@@ -66,7 +66,7 @@ const ManagerDashboardOverview = () => {
       hideArrow: true,
     },
     {
-      heading: "Monthly Revenue",
+      heading: "Monthly Revenue ",
       salesValue: `₦${monthlyRevenue?.totalRevenue.toLocaleString()}`,
       statValue: `${
         monthlyRevenue?.direction === "increase"

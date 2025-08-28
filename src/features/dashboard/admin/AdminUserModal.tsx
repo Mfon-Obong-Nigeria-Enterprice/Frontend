@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import type { DragEvent } from "react";
@@ -17,9 +15,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { ImPencil } from "react-icons/im";
 import { Loader2, Eye, EyeOff, Camera } from "lucide-react";
-import api from "@/services/baseApi";
+import { useUser, useUserMutations } from "@/hooks/useUserMutation";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 const passwordSchema = z
   .object({
@@ -46,28 +44,62 @@ type AdminUserModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   adminData: AdminData;
+  onProfileUpdate: (updatedData: AdminData) => void;
 };
 
 export default function AdminUserModal({
   open,
   onOpenChange,
   adminData,
+  onProfileUpdate,
 }: AdminUserModalProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [isUploadingImage] = useState(false);
-  const [profileImage] = useState<string | null>(
+  const [profileImage, setProfileImage] = useState<string | null>(
     adminData.profilePicture || null
   );
-  const [isDragging] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [isDragging, setIsDragging] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Get the user ID and handle undefined case
+  const userId = adminData._id || adminData.id;
+
+  // Use the user mutations hook
+  const { updatePassword, updateProfilePicture } = useUserMutations();
+
+  // Only call useUser if userId exists
+  const { data: userProfile, refetch } = useUser(userId || "");
+
+  // Add auth store hook
+  const { syncUserWithProfile } = useAuthStore();
+
   useEffect(() => {
     if (open) {
       console.log("📂 Admin Data when modal opens:", adminData);
+      console.log("📂 User Profile from API:", userProfile);
     }
-  }, [open, adminData]);
+  }, [open, adminData, userProfile]);
+
+  // Update profile image when adminData or userProfile changes
+  useEffect(() => {
+    const currentProfilePicture =
+      adminData.profilePicture || userProfile?.profilePicture;
+    setProfileImage(currentProfilePicture || null);
+  }, [adminData.profilePicture, userProfile?.profilePicture]);
+
+  // Sync with auth store when userProfile is loaded
+  useEffect(() => {
+    if (userProfile && userId) {
+      syncUserWithProfile({
+        _id: userId,
+        name: userProfile.name || adminData.adminName,
+        email: userProfile.email || adminData.email,
+        role: userProfile.role || adminData.userRole,
+        profilePicture: userProfile.profilePicture,
+      });
+    }
+  }, [userProfile, userId, syncUserWithProfile, adminData]);
 
   const passwordForm = useForm<z.infer<typeof passwordSchema>>({
     resolver: zodResolver(passwordSchema),
@@ -82,66 +114,144 @@ export default function AdminUserModal({
     values: z.infer<typeof passwordSchema>
   ) => {
     try {
-      setIsLoading(true);
+      if (!userId) {
+        toast.error("User ID is required");
+        return;
+      }
 
-      const payload = {
-        previousPassword: values.previousPassword,
-        newPassword: values.newPassword,
-      };
+      await updatePassword.mutateAsync({
+        userId,
+        passwordData: {
+          previousPassword: values.previousPassword,
+          newPassword: values.newPassword,
+        },
+      });
 
-      // Add request logging
-      console.log("Sending payload:", payload);
+      onProfileUpdate(adminData);
 
-      const response = await api.patch(
-        `/users/${adminData._id}/update-password`,
-        payload
-      );
-      console.log("Response:", response);
-      // return response.data
-
-      toast.success("Password updated successfully");
+      // Success is handled by the mutation's onSuccess callback
       passwordForm.reset();
       onOpenChange(false);
-    } catch (error: any) {
-      console.error("Full error object:", error);
-
-      if (error.response) {
-        console.error("Error response data:", error.response.data);
-        console.error("Error response status:", error.response.status);
-        console.error("Error response headers:", error.response.headers);
-
-        if (error.response.status === 401) {
-          toast.error("Unauthorized: Invalid credentials or session expired");
-        } else if (error.response.data?.message) {
-          toast.error(error.response.data.message);
-        } else {
-          toast.error(
-            `Password update failed. Status: ${error.response.status}`
-          );
-        }
-      } else if (error.request) {
-        console.error("No response received:", error.request);
-        toast.error("No response from server. Please try again.");
-      } else {
-        console.error("Request setup error:", error.message);
-        toast.error("Request error. Please check your connection.");
-      }
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      // Error handling is done by the mutation's onError callback
+      console.error("Password update failed:", error);
     }
   };
 
-  function handleDragOver(_event: DragEvent<HTMLDivElement>): void {
-    throw new Error("Function not implemented.");
-  }
+  const handleFileInputChange = (
+    event: ChangeEvent<HTMLInputElement>
+  ): void => {
+    const files = event?.target.files;
+    const selectedFile = files && files.length > 0 ? files[0] : null;
 
-  function handleDrop(_event: DragEvent<HTMLDivElement>): void {
-    throw new Error("Function not implemented.");
-  }
+    if (!selectedFile) {
+      return;
+    }
 
-  function handleFileInputChange(_event: ChangeEvent<HTMLInputElement>): void {
-    throw new Error("Function not implemented.");
-  }
+    if (!selectedFile.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(selectedFile);
+
+    // Upload immediately
+    handleProfilePictureUpload(selectedFile);
+  };
+
+  const handleProfilePictureUpload = async (file: File) => {
+    try {
+      if (!userId) {
+        toast.error("User ID is required");
+        return;
+      }
+
+      const imageUrl = await updateProfilePicture.mutateAsync({
+        userId,
+        imageFile: file,
+      });
+
+      // Update the profile image state
+      setProfileImage(imageUrl);
+
+      // Sync with auth store
+      syncUserWithProfile({
+        _id: userId,
+        name: adminData.adminName,
+        email: adminData.email,
+        profilePicture: imageUrl,
+      });
+
+      // Update the parent component with new profile picture
+      const updatedAdminData: AdminData = {
+        ...adminData,
+        profilePicture: imageUrl,
+      };
+      onProfileUpdate(updatedAdminData);
+
+      // Refetch user data to ensure consistency
+      if (refetch) {
+        await refetch();
+      }
+
+      // Clear preview
+      setImagePreview("");
+
+      toast.success("Profile picture updated successfully");
+    } catch (error) {
+      console.error("Profile picture upload failed:", error);
+      // Clear the failed upload preview
+      setImagePreview("");
+    }
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>): void => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>): void => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>): void => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(false);
+
+    const files = event.dataTransfer.files;
+    const file = files?.[0];
+
+    if (!file) {
+      toast.error("No file was dropped");
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please drop an image file");
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload immediately
+    handleProfilePictureUpload(file);
+  };
+
+  const displayImage = imagePreview || profileImage;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -150,39 +260,40 @@ export default function AdminUserModal({
           <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg shadow-sm">
             <div
               className={`relative w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center border-2 ${
-                isDragging ? "border-blue-500" : "border-gray-300"
-              } transition-colors duration-200`}
+                isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
+              } transition-colors duration-200 cursor-pointer`}
               onDragEnter={handleDragOver}
               onDragOver={handleDragOver}
-              onDragLeave={handleDragOver}
+              onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
-              {profileImage ? (
+              {displayImage ? (
                 <img
-                  src={`/images/${adminData.userRole}-avatar.png`}
+                  src={displayImage}
                   alt=""
                   className="w-full h-full object-cover"
                   onError={(e) => {
+                    console.error("Failed to load profile image");
                     (e.target as HTMLImageElement).style.display = "none";
                   }}
                 />
               ) : (
                 <div className="text-center">
-                  <span className="text-gray-500 text-xs block mt-1">
-                    Choose photo from file{" "}
-                    <ImPencil size={30} className="mx-auto" />
+                  <Camera className="w-8 h-8 mx-auto text-gray-400 mb-1" />
+                  <span className="text-gray-500 text-xs block">
+                    Choose photo
                   </span>
                 </div>
               )}
               <label
                 htmlFor="profile-upload"
                 className={`absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 text-white cursor-pointer ${
-                  isUploadingImage
+                  updateProfilePicture.isPending
                     ? "opacity-100"
                     : "opacity-0 hover:opacity-100"
                 } transition-opacity duration-300 rounded-full`}
               >
-                {isUploadingImage ? (
+                {updateProfilePicture.isPending ? (
                   <Loader2 className="w-6 h-6 animate-spin" />
                 ) : (
                   <Camera className="w-6 h-6" />
@@ -195,7 +306,7 @@ export default function AdminUserModal({
                 accept="image/*"
                 onChange={handleFileInputChange}
                 className="hidden"
-                disabled={isUploadingImage}
+                disabled={updateProfilePicture.isPending}
               />
             </div>
 
@@ -203,14 +314,18 @@ export default function AdminUserModal({
               <h3 className="text-xl font-semibold text-gray-800">
                 {adminData.adminName || "Admin User"}
               </h3>
-              <p className="text-sm text-gray-600">
-                ID: {adminData._id || adminData.id}
-              </p>
+              <p className="text-sm text-gray-600">ID: {userId || "No ID"}</p>
               <p className="text-sm text-gray-600">
                 Last Login: {new Date(adminData.lastLogin).toLocaleString()}
               </p>
             </div>
           </div>
+
+          {isDragging && (
+            <div className="text-center p-4 border-2 border-dashed border-blue-500 bg-blue-50 rounded-lg">
+              <p className="text-blue-600 font-medium">Drop your image here</p>
+            </div>
+          )}
 
           <h3 className="text-sm font-semibold text-gray-800 mb-4">
             Change Password
@@ -235,6 +350,7 @@ export default function AdminUserModal({
                           placeholder="Enter current password"
                           {...field}
                           className="pr-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all duration-200 ease-in-out"
+                          disabled={updatePassword.isPending}
                         />
                         <Button
                           type="button"
@@ -244,6 +360,7 @@ export default function AdminUserModal({
                           onClick={() =>
                             setShowCurrentPassword((prev) => !prev)
                           }
+                          disabled={updatePassword.isPending}
                         >
                           {showCurrentPassword ? (
                             <EyeOff className="h-4 w-4" />
@@ -276,6 +393,7 @@ export default function AdminUserModal({
                           placeholder="Enter new password (min 8 characters)"
                           {...field}
                           className="pr-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all duration-200 ease-in-out"
+                          disabled={updatePassword.isPending}
                         />
                         <Button
                           type="button"
@@ -283,6 +401,7 @@ export default function AdminUserModal({
                           size="sm"
                           className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-500 hover:text-gray-700"
                           onClick={() => setShowNewPassword((prev) => !prev)}
+                          disabled={updatePassword.isPending}
                         >
                           {showNewPassword ? (
                             <EyeOff className="h-4 w-4" />
@@ -315,6 +434,7 @@ export default function AdminUserModal({
                           placeholder="Confirm new password"
                           {...field}
                           className="pr-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all duration-200 ease-in-out"
+                          disabled={updatePassword.isPending}
                         />
                         <Button
                           type="button"
@@ -324,6 +444,7 @@ export default function AdminUserModal({
                           onClick={() =>
                             setShowConfirmPassword((prev) => !prev)
                           }
+                          disabled={updatePassword.isPending}
                         >
                           {showConfirmPassword ? (
                             <EyeOff className="h-4 w-4" />
@@ -343,10 +464,12 @@ export default function AdminUserModal({
 
               <Button
                 type="submit"
-                disabled={isLoading}
-                className="w-full bg-[#2ECC71] hover:bg-[#28B463] text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 ease-in-out shadow-md"
+                disabled={updatePassword.isPending || !userId}
+                className="w-full bg-[#2ECC71] hover:bg-[#28B463] text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 ease-in-out shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {updatePassword.isPending && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
                 Update Password
               </Button>
             </form>
