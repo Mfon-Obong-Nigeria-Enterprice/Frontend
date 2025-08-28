@@ -110,7 +110,7 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
 
           {/* Conditional rendering based on displayType */}
           {stat.displayType === "circular" && stat.percentage !== undefined ? (
-            <div className="absolute right-2 bottom-[20%]">
+            <div className="absolute right-2 bottom-[2%] sm:bottom-[20%]">
               <CircularProgress
                 percentage={monthlyRevenue?.percentageChange ?? 0}
                 size={80}

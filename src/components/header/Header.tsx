@@ -40,7 +40,6 @@ const useProfilePicture = (userRole?: string) => {
       // Priority order for profile picture sources
       const sources = [
         userProfile?.profilePicture,
-
         // Fallback to localStorage for persistence
         localStorage.getItem(`user-profile-picture-${user?.id}`),
       ];
@@ -88,6 +87,11 @@ const Header = ({ userRole }: HeaderProps) => {
   // Role-based capabilities
   const capabilities = getRoleBasedCapabilities(user?.role || "");
 
+  // Get the current display name with proper priority
+  const getDisplayName = () => {
+    return userProfile?.name || user?.name || "User";
+  };
+
   const getRoleBadgeColor = () => {
     const role = (userProfile?.role || user?.role || "").toLowerCase();
     switch (role) {
@@ -127,7 +131,7 @@ const Header = ({ userRole }: HeaderProps) => {
           ...updatedData,
         };
 
-        // Apply updates
+        // Apply updates to both user and userProfile
         updateUser(updates);
 
         // Persist profile picture if updated
@@ -163,7 +167,7 @@ const Header = ({ userRole }: HeaderProps) => {
 
   // Get user initials for fallback
   const getUserInitials = (): string => {
-    const name = user?.name || userProfile?.name || "User";
+    const name = getDisplayName();
     return name
       .split(" ")
       .map((word) => word.charAt(0))
@@ -219,7 +223,7 @@ const Header = ({ userRole }: HeaderProps) => {
           {/* User info display */}
           <div className="hidden sm:flex items-center gap-2">
             <span className="capitalize font-medium text-gray-700">
-              {user?.name || "User"}
+              {getDisplayName()}
             </span>
             <span
               className={`capitalize text-xs px-2 py-1 rounded-full ${getRoleBadgeColor()}`}
@@ -237,7 +241,7 @@ const Header = ({ userRole }: HeaderProps) => {
             <Avatar key={`${profileImageUrl}-${Date.now()}`}>
               <AvatarImage
                 src={profileImageUrl}
-                alt={`${user?.name || userRole} avatar`}
+                alt={`${getDisplayName()} avatar`}
                 onError={handleImageError}
                 className="object-cover"
               />
@@ -259,7 +263,7 @@ const Header = ({ userRole }: HeaderProps) => {
             email: user?.email ?? "",
             lastLogin: new Date().toISOString(),
             userRole: user?.role ?? "user",
-            adminName: user?.name ?? "",
+            adminName: getDisplayName(),
             profilePicture: profileImageUrl,
           }}
           onProfileUpdate={handleProfileUpdate}
@@ -273,7 +277,7 @@ const Header = ({ userRole }: HeaderProps) => {
             email: user?.email ?? "",
             lastLogin: new Date().toISOString(),
             userRole: user?.role ?? "",
-            name: user?.name ?? "",
+            name: getDisplayName(),
             location: user?.branch ?? "",
             profilePicture: profileImageUrl,
           }}

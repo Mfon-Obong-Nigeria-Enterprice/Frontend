@@ -81,10 +81,13 @@ export const useAuthStore = create<AuthState>()(
             return state;
           }
 
+          // Clean and process the name
+          const cleanName = updates.name ? updates.name.trim() : undefined;
+
           // Update both user and userProfile
           const updatedUser: LoginUser = {
             ...state.user,
-            name: updates.name || state.user.name,
+            name: cleanName || state.user.name,
             email: updates.email || state.user.email,
             branch: updates.branch || state.user.branch,
           };
@@ -92,6 +95,7 @@ export const useAuthStore = create<AuthState>()(
           const updatedUserProfile: UserProfile = {
             ...state.userProfile,
             ...updates,
+            name: cleanName || state.userProfile.name, // Use cleaned name
           };
 
           console.log("Updated user object:", updatedUser);
@@ -118,10 +122,15 @@ export const useAuthStore = create<AuthState>()(
             return state;
           }
 
+          // Clean the name if it exists in profileData
+          const cleanName = profileData.name
+            ? profileData.name.trim()
+            : undefined;
+
           // Update user object with fresh profile data
           const updatedUser: LoginUser = {
             ...state.user,
-            name: profileData.name || state.user.name,
+            name: cleanName || state.user.name,
             email: profileData.email || state.user.email,
             branch: profileData.branch || state.user.branch,
           };
@@ -130,9 +139,9 @@ export const useAuthStore = create<AuthState>()(
           const updatedUserProfile: UserProfile = {
             ...state.userProfile,
             ...profileData,
-            // Override with explicit fallbacks for required fields
+            // Override with explicit fallbacks for required fields and use cleaned name
             _id: profileData._id || state.userProfile._id,
-            name: profileData.name || state.userProfile.name,
+            name: cleanName || state.userProfile.name,
             email: profileData.email || state.userProfile.email,
             role: profileData.role || state.userProfile.role,
             branch: profileData.branch || state.userProfile.branch,
@@ -142,6 +151,7 @@ export const useAuthStore = create<AuthState>()(
 
           console.log("Syncing user with profile data:", {
             profileData,
+            cleanName,
             updatedUser,
             updatedUserProfile,
           });

@@ -501,7 +501,7 @@ export default function RevenueAnalytics() {
                         </div>
                       </div>
 
-                      <div className="space-y-2 absolute right-3 bottom-1.5 flex gap-4 md:gap-0 justify-between lg:flex-col">
+                      <div className="space-y-2 absolute right-3 bottom-1.5 flex gap-4 lg:gap-0 justify-between lg:flex-col">
                         {productMarginData.slice(0, 3).map((item, index) => (
                           <div key={index}>
                             <div className="flex items-center gap-2">
