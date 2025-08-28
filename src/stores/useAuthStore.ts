@@ -111,14 +111,8 @@ export const useAuthStore = create<AuthState>()(
       // Fixed method to sync user data with fresh profile data
       syncUserWithProfile: (profileData) => {
         set((state) => {
-          if (!state.user) {
-            console.warn("No user to sync with profile data");
-            return state;
-          }
-
-          // If no existing userProfile, we can't sync
-          if (!state.userProfile) {
-            console.warn("No userProfile to sync with profile data");
+          if (!state.user || !state.userProfile) {
+            console.warn("No user or userProfile to sync with profile data");
             return state;
           }
 
@@ -126,6 +120,27 @@ export const useAuthStore = create<AuthState>()(
           const cleanName = profileData.name
             ? profileData.name.trim()
             : undefined;
+
+          // Check if there are actual changes to prevent unnecessary updates
+          const hasUserChanges =
+            cleanName !== state.user.name ||
+            profileData.email !== state.user.email ||
+            profileData.branch !== state.user.branch;
+
+          const hasProfileChanges = Object.keys(profileData).some((key) => {
+            const newValue =
+              key === "name"
+                ? cleanName
+                : profileData[key as keyof typeof profileData];
+            const currentValue = state.userProfile![key as keyof UserProfile];
+            return newValue !== currentValue && newValue !== undefined;
+          });
+
+          // If no changes, don't update the state
+          if (!hasUserChanges && !hasProfileChanges) {
+            console.log("No changes detected, skipping sync");
+            return state;
+          }
 
           // Update user object with fresh profile data
           const updatedUser: LoginUser = {

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import type { DragEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -89,7 +89,7 @@ export default function AdminUserModal({
   }, [adminData.profilePicture, userProfile?.profilePicture]);
 
   // Sync with auth store when userProfile is loaded
-  useEffect(() => {
+  const handleSyncUserWithProfile = useCallback(() => {
     if (userProfile && userId) {
       syncUserWithProfile({
         _id: userId,
@@ -99,7 +99,19 @@ export default function AdminUserModal({
         profilePicture: userProfile.profilePicture,
       });
     }
-  }, [userProfile, userId, syncUserWithProfile, adminData]);
+  }, [
+    userProfile,
+    userId,
+    adminData.adminName,
+    adminData.email,
+    adminData.userRole,
+    syncUserWithProfile,
+  ]);
+
+  // Sync with auth store when userProfile is loaded
+  useEffect(() => {
+    handleSyncUserWithProfile();
+  }, [handleSyncUserWithProfile]);
 
   const passwordForm = useForm<z.infer<typeof passwordSchema>>({
     resolver: zodResolver(passwordSchema),
