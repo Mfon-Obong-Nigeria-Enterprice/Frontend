@@ -21,11 +21,13 @@ export type UpdateSettingsPayload = z.infer<typeof updateSettingsSchema>;
 export interface Product {
   _id: string;
   name: string;
-  categoryId: string | { 
-    _id: string; 
-    name: string; 
-    units: string[] 
-  };
+  categoryId:
+    | string
+    | {
+        _id: string;
+        name: string;
+        units: string[];
+      };
   minStockLevel: number;
   stock: number;
   unit: string;
@@ -36,10 +38,6 @@ export interface Product {
   updatedAt?: string;
   __v?: number;
 }
-
-
-
-
 
 // ==================== CATEGORY TYPE ====================
 export interface Category {
@@ -68,6 +66,17 @@ export interface LoginUser {
   branchId: string;
   createdAt: string;
   // profilePicture?: string;
+}
+export interface UserProfile {
+  // _id: string;
+  _id: string;
+  name: string;
+  email: string;
+  role: Role;
+  branch: string;
+  branchId: string;
+  createdAt: string;
+  profilePicture?: string;
 }
 
 export interface LoginResponse {

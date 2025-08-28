@@ -6,13 +6,13 @@ import { formatChangeText, getChangeText } from "@/utils/helpersfunction";
 import { useClientStore } from "@/stores/useClientStore";
 
 const StaffStats: React.FC = () => {
-  const { transactions, getTodaysSales, getWeeklySalesPercentageChange } =
+  const { transactions, getTodaysSales, getSalesPercentageChange } =
     useTransactionsStore();
   const { getActiveClients, getTotalClientsPercentageChange } =
     useClientStore();
 
   const todaysSales = getTodaysSales();
-  const weeklyChange = getWeeklySalesPercentageChange();
+  const dailyChange = getSalesPercentageChange();
   const activeClients = getActiveClients();
   const totalClientsChange = getTotalClientsPercentageChange();
   const stats: StatCard[] = [
@@ -20,14 +20,14 @@ const StaffStats: React.FC = () => {
       heading: "Total Sales (Today)",
       salesValue: `₦${todaysSales.toLocaleString()}`,
       statValue: getChangeText(
-        weeklyChange.percentage,
-        weeklyChange.direction,
-        "week"
+        dailyChange.percentage,
+        dailyChange.direction,
+        "yesterday"
       ),
       color:
-        weeklyChange.direction === "increase"
+        dailyChange.direction === "increase"
           ? "green"
-          : weeklyChange.direction === "decrease"
+          : dailyChange.direction === "decrease"
           ? "red"
           : "orange",
     },

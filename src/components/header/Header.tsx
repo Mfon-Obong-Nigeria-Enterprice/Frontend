@@ -1,5 +1,4 @@
-import { useState } from "react";
-// import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Bell, BellDot } from "lucide-react";
 import Logo from "../Logo";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
@@ -14,14 +13,13 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-  // DrawerFooter,
-  // DrawerClose,
 } from "@/components/ui/drawer";
 import type { Role } from "@/types/types";
 
 type HeaderProps = {
   userRole?: "admin" | "staff" | "maintainer" | "superadmin" | "manager";
 };
+
 // Handler for profile updates
 type UpdatedUserData = {
   fullName?: string;
@@ -32,21 +30,67 @@ type UpdatedUserData = {
   [key: string]: unknown;
 };
 
-const Header = ({ userRole }: HeaderProps) => {
-  const { user, updateUser } = useAuthStore();
+// Enhanced profile picture management
+const useProfilePicture = (userRole?: string) => {
+  const { userProfile, user } = useAuthStore();
+  const [profileImageUrl, setProfileImageUrl] = useState<string>("");
 
+  useEffect(() => {
+    const getProfileImageUrl = (): string => {
+      // Priority order for profile picture sources
+      const sources = [
+        userProfile?.profilePicture,
+
+        // Fallback to localStorage for persistence
+        localStorage.getItem(`user-profile-picture-${user?.id}`),
+      ];
+
+      // Return first valid source
+      for (const source of sources) {
+        if (source && source.trim() !== "") {
+          return source;
+        }
+      }
+
+      // Final fallback to default avatar
+      return `/images/${userRole}-avatar.png`;
+    };
+
+    setProfileImageUrl(getProfileImageUrl());
+  }, [userProfile?.profilePicture, user?.id, userRole]);
+
+  return profileImageUrl;
+};
+
+// Role-based access control helper
+const getRoleBasedCapabilities = (role: string) => {
+  const normalizedRole = role.toUpperCase();
+
+  return {
+    canAccessNotifications: !["STAFF"].includes(normalizedRole),
+    canAccessUserProfiles: ["ADMIN", "SUPER_ADMIN", "MAINTAINER"].includes(
+      normalizedRole
+    ),
+    modalType: ["ADMIN", "STAFF"].includes(normalizedRole)
+      ? "admin"
+      : "manager",
+  };
+};
+
+const Header = ({ userRole }: HeaderProps) => {
+  const { userProfile, user, updateUser } = useAuthStore();
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
 
-  const getAvatarImage = () => {
-    if (user?.profilePicture) {
-      return user.profilePicture;
-    }
-    return `/images/${userRole}-avatar.png`;
-  };
+  // Enhanced profile picture management
+  const profileImageUrl = useProfilePicture(userRole);
+
+  // Role-based capabilities
+  const capabilities = getRoleBasedCapabilities(user?.role || "");
 
   const getRoleBadgeColor = () => {
-    switch (user?.role.toLowerCase()) {
+    const role = (userProfile?.role || user?.role || "").toLowerCase();
+    switch (role) {
       case "admin":
         return "bg-blue-100 text-blue-800";
       case "maintainer":
@@ -54,29 +98,78 @@ const Header = ({ userRole }: HeaderProps) => {
       case "manager":
         return "bg-green-100 text-green-800";
       case "super_admin":
+      case "superadmin":
         return "bg-red-100 text-red-800";
+      case "staff":
+        return "bg-orange-100 text-orange-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
-  const handleProfileUpdate = (updatedData: UpdatedUserData) => {
-    console.log("Profile updated:", updatedData);
+  const handleProfileUpdate = async (updatedData: UpdatedUserData) => {
+    console.log("=== Header Profile Update ===");
+    console.log("Updated data received:", updatedData);
 
-    // Update the user store with new data
-    if (updateUser) {
-      updateUser({
-        ...user,
-        name:
-          updatedData.fullName ||
-          updatedData.adminName ||
-          updatedData.name ||
-          user?.name,
-        profilePicture: updatedData.profilePicture,
-        branch: updatedData.location || user?.branch,
-        ...updatedData,
-      });
+    try {
+      // Update the user store with new data immediately for optimistic updates
+      if (updateUser) {
+        const updates = {
+          name:
+            updatedData.fullName ||
+            updatedData.adminName ||
+            updatedData.name ||
+            userProfile?.name ||
+            user?.name,
+          profilePicture:
+            updatedData.profilePicture || userProfile?.profilePicture,
+          branch: updatedData.location || userProfile?.branch || user?.branch,
+          ...updatedData,
+        };
+
+        // Apply updates
+        updateUser(updates);
+
+        // Persist profile picture if updated
+        if (updatedData.profilePicture && user?.id) {
+          localStorage.setItem(
+            `user-profile-picture-${user.id}`,
+            updatedData.profilePicture
+          );
+        }
+
+        console.log("Profile updates applied:", updates);
+      }
+    } catch (error) {
+      console.error("Error updating profile in header:", error);
     }
+  };
+
+  // Enhanced error handling for profile images
+  const handleImageError = (
+    e: React.SyntheticEvent<HTMLImageElement, Event>
+  ) => {
+    console.warn("Failed to load profile image:", profileImageUrl);
+    const img = e.target as HTMLImageElement;
+
+    // Try fallback image
+    if (img.src !== `/images/${userRole}-avatar.png`) {
+      img.src = `/images/${userRole}-avatar.png`;
+    } else {
+      // Hide broken image
+      img.style.display = "none";
+    }
+  };
+
+  // Get user initials for fallback
+  const getUserInitials = (): string => {
+    const name = user?.name || userProfile?.name || "User";
+    return name
+      .split(" ")
+      .map((word) => word.charAt(0))
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   return (
@@ -89,7 +182,8 @@ const Header = ({ userRole }: HeaderProps) => {
         </div>
 
         <div className="flex gap-4 items-center">
-          {user?.role !== "STAFF" && (
+          {/* Notifications - Role-based access */}
+          {capabilities.canAccessNotifications && (
             <Drawer direction="right">
               <DrawerTrigger asChild>
                 <button
@@ -122,100 +216,41 @@ const Header = ({ userRole }: HeaderProps) => {
             </Drawer>
           )}
 
+          {/* User info display */}
           <div className="hidden sm:flex items-center gap-2">
             <span className="capitalize font-medium text-gray-700">
-              {user?.name}
+              {user?.name || "User"}
             </span>
             <span
               className={`capitalize text-xs px-2 py-1 rounded-full ${getRoleBadgeColor()}`}
             >
-              {user?.role.toLowerCase()}
+              {(user?.role || "user").toLowerCase()}
             </span>
           </div>
 
+          {/* User avatar button */}
           <button
             onClick={() => setIsUserModalOpen(true)}
-            className="focus:outline-none"
+            className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full"
             aria-label="User settings"
           >
-            <Avatar>
+            <Avatar key={`${profileImageUrl}-${Date.now()}`}>
               <AvatarImage
-                src={getAvatarImage()}
-                alt={`${userRole} avatar`}
-                onError={(e) => {
-                  console.error(
-                    "failed to load avatar image:",
-                    getAvatarImage()
-                  );
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
+                src={profileImageUrl}
+                alt={`${user?.name || userRole} avatar`}
+                onError={handleImageError}
+                className="object-cover"
               />
-              <AvatarFallback>
-                {user?.name.charAt(0).toUpperCase()}
+              <AvatarFallback className="bg-gray-200 text-gray-700 font-medium">
+                {getUserInitials()}
               </AvatarFallback>
             </Avatar>
           </button>
         </div>
-        {/* <div className="flex gap-4 items-center">
-          {user?.role !== "STAFF" && (
-            <Link
-              to={`${
-                user?.role === "SUPER_ADMIN"
-                  ? "/manager/dashboard/manager-notifications"
-                  : `/${user?.role.toLowerCase()}/dashboard/${user?.role.toLowerCase()}-notifications`
-              }`}
-              className="relative"
-            >
-              <button
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                aria-label="Notifications"
-              >
-                {unreadCount > 0 ? (
-                  <BellDot className="h-5 w-5 text-gray-700" />
-                ) : (
-                  <Bell className="h-5 w-5 text-gray-500" />
-                )}
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
-              </button>
-            </Link>
-          )}
-          <div className="hidden sm:flex items-center gap-2">
-            <span className="capitalize font-medium text-gray-700">
-              {user?.name}
-            </span>
-            <span
-              className={`capitalize text-xs px-2 py-1 rounded-full ${getRoleBadgeColor()}`}
-            >
-              {user?.role.toLowerCase()}
-            </span>
-          </div>
-
-          <button
-            onClick={() => setIsUserModalOpen(true)}
-            className="focus:outline-none"
-            aria-label="User settings"
-          >
-            <Avatar>
-              <AvatarImage
-                src={getAvatarImage()}
-                alt={`${userRole} avatar`}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
-              <AvatarFallback>
-                {user?.name.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-          </button>
-        </div> */}
       </header>
 
-      {user?.role === "ADMIN" || user?.role === "STAFF" ? (
+      {/* Role-based modal rendering */}
+      {capabilities.modalType === "admin" ? (
         <AdminUserModal
           open={isUserModalOpen}
           onOpenChange={setIsUserModalOpen}
@@ -225,9 +260,9 @@ const Header = ({ userRole }: HeaderProps) => {
             lastLogin: new Date().toISOString(),
             userRole: user?.role ?? "user",
             adminName: user?.name ?? "",
-            profilePicture: getAvatarImage(),
+            profilePicture: profileImageUrl,
           }}
-          // onProfileUpdate={handleProfileUpdate}
+          onProfileUpdate={handleProfileUpdate}
         />
       ) : (
         <ManagerUsersModal
@@ -238,9 +273,9 @@ const Header = ({ userRole }: HeaderProps) => {
             email: user?.email ?? "",
             lastLogin: new Date().toISOString(),
             userRole: user?.role ?? "",
-            fullName: user?.name ?? "",
+            name: user?.name ?? "",
             location: user?.branch ?? "",
-            profilePicture: getAvatarImage(),
+            profilePicture: profileImageUrl,
           }}
           onProfileUpdate={handleProfileUpdate}
         />
