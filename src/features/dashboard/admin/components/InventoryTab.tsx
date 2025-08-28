@@ -95,69 +95,73 @@ const InventoryTab = React.memo(
     return (
       <div className="px-5 min-h-30">
         <Tabs defaultValue="allProducts">
-          <div className="w-full max-w-[970px]">
-            {/* Added scrollbar for mobile */}
-            <TabsList className="w-full bg-[#F5F5F5] gap-3 overflow-x-auto whitespace-nowrap h-16 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
-              <TabsTrigger
-                value="allProducts"
-                className={cn(
-                  "!bg-white px-3 data-[state=active]:[&_span]:bg-green-400 data-[state=active]:[&_span]:text-white data-[state=active]:shadow-xl text-sm"
-                )}
-              >
-                <p>
-                  All Products
-                  <span className="ml-1 rounded-2xl text-[#7d7d7d] bg-gray-300 py-1 px-2">
-                    {products.length}
-                  </span>
-                </p>
-              </TabsTrigger>
-              {/* display data for categories */}
-              {categories?.map((category) => {
-                const categoryName = category.name; // This is safe as 'categories' are actual Category objects
-                const count = products.filter((prod) => {
-                  const productCategoryName = getCategoryNameForProduct(
-                    prod.categoryId
-                  );
-                  return productCategoryName === categoryName;
-                }).length;
-                return (
-                  <TabsTrigger
-                    key={category.name} // Use category.name directly here as it's from the categories array
-                    value={categoryName}
-                    className={cn(
-                      "!bg-white px-3 border border-gray-200 data-[state=active]:shadow-xl data-[state=active]:[&_span]:bg-green-400 data-[state=active]:[&_span]:text-white hover:border-dashed hover:border-green-400 data-[state=active]:border-green-400 text-sm"
-                    )}
-                  >
-                    {category.name}
-                    <span className="mx-0.5 bg-gray-300 rounded-2xl text-[0.625rem] text-[#7d7d7d] py-1 px-2">
-                      {count}
+          <div>
+            <div className="">
+              {/* Added scroll for mobile */}
+              <TabsList className=" bg-[#F5F5F5] gap-3 overflow-x-auto whitespace-nowrap h-16 hide-scrollbar w-max max-w-full">
+                <TabsTrigger
+                  value="allProducts"
+                  className={cn(
+                    "!bg-white px-3 data-[state=active]:[&_span]:bg-green-400 data-[state=active]:[&_span]:text-white data-[state=active]:shadow-xl text-sm"
+                  )}
+                >
+                  <p>
+                    All Products
+                    <span className="ml-1 rounded-2xl text-[#7d7d7d] bg-gray-300 py-1 px-2">
+                      {products.length}
                     </span>
-                    <p
-                      onClick={(e) => {
-                        // Added 'e' parameter to prevent tab change on click
-                        e.stopPropagation(); // Stop propagation to prevent tab trigger from firing
-                        setOpenCategory({
-                          name: category.name,
-                          count,
-                          description: category.description,
-                        });
-                      }}
-                      className="ml-1" // Added a small margin
+                  </p>
+                </TabsTrigger>
+                {/* display data for categories */}
+                {categories?.map((category) => {
+                  const categoryName = category.name; // This is safe as 'categories' are actual Category objects
+                  const count = products.filter((prod) => {
+                    const productCategoryName = getCategoryNameForProduct(
+                      prod.categoryId
+                    );
+                    return productCategoryName === categoryName;
+                  }).length;
+                  return (
+                    <TabsTrigger
+                      key={category.name}
+                      value={categoryName}
+                      className={cn(
+                        "!bg-white px-3 border border-gray-200 data-[state=active]:shadow-xl data-[state=active]:[&_span]:bg-green-400 data-[state=active]:[&_span]:text-white hover:border-dashed hover:border-green-400 data-[state=active]:border-green-400 text-sm"
+                      )}
                     >
-                      <Info className="text-[#D9D9D9] h-4 w-4" />
-                      {/* Adjusted size for consistency */}
-                    </p>
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
+                      {category.name}
+                      <span className="mx-0.5 bg-gray-300 rounded-2xl text-[0.625rem] text-[#7d7d7d] py-1 px-2">
+                        {count}
+                      </span>
+                      <p
+                        onClick={(e) => {
+                          // Added 'e' parameter to prevent tab change on click
+                          e.stopPropagation(); // Stop propagation to prevent tab trigger from firing
+                          setOpenCategory({
+                            name: category.name,
+                            count,
+                            description: category.description,
+                          });
+                        }}
+                        className="ml-1" // Added a small margin
+                      >
+                        <Info className="text-[#D9D9D9] h-4 w-4" />
+                        {/* Adjusted size for consistency */}
+                      </p>
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+            </div>{" "}
           </div>
           {/* All Products Tab */}
           <TabsContent value="allProducts">
-            <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8 pb-5">
-              {filteredProducts?.map((prod) => (
-                <ProductDisplayTab key={prod._id} product={prod} />
-              ))}
+            <div>
+              <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8 pb-5">
+                {filteredProducts?.map((prod) => (
+                  <ProductDisplayTab key={prod._id} product={prod} />
+                ))}
+              </div>
             </div>
           </TabsContent>
 

@@ -1,18 +1,26 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+
+// icons
 import { MdOutlineDashboard, MdOutlineShoppingBag } from "react-icons/md";
 import { BsBoxSeam } from "react-icons/bs";
 import { IoPerson } from "react-icons/io5";
 // import {  IoSettingsOutline } from "react-icons/io5";
 import { RiLogoutCircleRLine } from "react-icons/ri";
 import { IoIosLogOut } from "react-icons/io";
-import Logo from "@/components/Logo";
+
+// hook
 import { useLogout } from "@/hooks/uselogout";
 
+// components
+import Logo from "@/components/Logo";
+import LogoutConfirmModal from "../dashboard/shared/LogoutConfirmModal";
+
+// ui
 import {
   Sidebar,
   SidebarContent,
   SidebarGroupContent,
-  // SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -43,7 +51,20 @@ const items = [
 
 export function StaffSidebar() {
   const { pathname } = useLocation();
-  const { mutate: logout } = useLogout();
+  const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const logoutMutation = useLogout();
+
+  const handleConfirm = async () => {
+    setIsLoading(true);
+
+    // wait for 1 second before logout
+    setTimeout(() => {
+      logoutMutation.mutate(); // trigger logout
+      setIsLoading(false);
+      setShowModal(false);
+    }, 1000);
+  };
 
   return (
     <Sidebar className="bg-white">
@@ -79,11 +100,22 @@ export function StaffSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenuButton onClick={() => logout()}>
+        <SidebarMenuButton
+          className="cursor-pointer"
+          onClick={() => setShowModal(true)}
+        >
           <IoIosLogOut />
           <span>Logout</span>
         </SidebarMenuButton>
       </SidebarFooter>
+
+      {/* the logout modal */}
+      <LogoutConfirmModal
+        isOpen={showModal}
+        onClose={() => !isLoading && setShowModal(false)}
+        onConfirm={handleConfirm}
+        isLoading={isLoading}
+      />
     </Sidebar>
   );
 }

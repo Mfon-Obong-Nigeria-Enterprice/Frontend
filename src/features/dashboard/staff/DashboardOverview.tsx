@@ -1,10 +1,14 @@
 import React from "react";
-// import { Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
 import { Button } from "@/components/ui/button";
 import StaffStats from "./components/StaffStats";
 import QuickActions from "./components/QuickActions";
 import RecentSalesActivity from "./components/RecentSalesActivity";
+
+// icons
+import { MdKeyboardArrowRight } from "react-icons/md";
+import RecentSalesMobile from "./components/mobile/RecentSalesMobile";
 
 const StaffDashboardOverview: React.FC = () => {
   return (
@@ -15,7 +19,6 @@ const StaffDashboardOverview: React.FC = () => {
           <DashboardTitle
             heading="Dashboard"
             description="Welcome, Staff User!"
-            // If DashboardTitle doesn't accept className, remove padding inside its file.
           />
         </div>
 
@@ -28,18 +31,43 @@ const StaffDashboardOverview: React.FC = () => {
         </div>
 
         <div className="flex gap-3 md:gap-5">
-          <Button className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)]">
+          <Button
+            onClick={() => window.location.reload()}
+            className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)]"
+          >
             Refresh
           </Button>
-          <Button className="bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)]">
-            + Add Sales
-          </Button>
+          <Link to="/staff/dashboard/new-sales">
+            <Button>+ Add Sales</Button>
+          </Link>
         </div>
       </div>
 
       <StaffStats />
       <QuickActions />
-      <RecentSalesActivity />
+
+      {/* recent sales activity */}
+      <div className="bg-white rounded-[0.625rem] md:border md:border-[#D9D9D9] py-1 font-Inter">
+        <div className="flex justify-between items-center p-4 gap-4">
+          <h5 className="font-medium text-[var(--cl-text-dark)] text-base md:text-lg">
+            Your Recent Sales Activity
+          </h5>
+          <Link
+            to="/staff/dashboard/s-sales"
+            className="flex md:gap-1 items-center text-[#3D80FF]"
+          >
+            <button className="flex gap-1 text-sm cursor-pointer">
+              View all <span className="hidden md:flex">Sales</span>
+            </button>
+            <MdKeyboardArrowRight />
+          </Link>
+        </div>
+
+        {/* ===== MOBILE VIEW (cards) ===== */}
+        <RecentSalesMobile />
+        {/* ===== DESKTOP VIEW (table) ===== */}
+        <RecentSalesActivity />
+      </div>
     </main>
   );
 };
