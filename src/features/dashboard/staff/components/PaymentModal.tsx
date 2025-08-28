@@ -63,7 +63,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       if (response) {
         const newTransaction: Transaction = {
           userId: {
-            _id: user?._id || "",
+            _id: user?.id || "",
             name: user?.name || "",
           },
           _id: response.id,
@@ -165,7 +165,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           id="payment-form"
         >
           <div
-            className={` border border-l-[6px]   ${
+            className={`border border-l-[6px]   ${
               client?.balance !== null &&
               typeof client?.balance === "number" &&
               client?.balance < 0

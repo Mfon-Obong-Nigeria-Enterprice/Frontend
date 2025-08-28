@@ -1,53 +1,67 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { type User } from "@/types/types";
+import { type LoginUser, type UserProfile } from "@/types/types";
 import * as authService from "@/services/authService";
 
 type AuthState = {
-  user: User | null;
-  accessToken: string | null; // in-memory only
-  refreshToken: string | null; // persisted
+  user: LoginUser | null;
+  userProfile: UserProfile | null;
   isAuthenticated: boolean;
   loading: boolean;
-  isInitialized: boolean;
 
-  setAccessToken: (token: string | null) => void;
-  setUser: (user: User | null) => void;
-  login: (email: string, password: string) => Promise<User>;
+  setUser: (user: LoginUser | null) => void;
+  login: (email: string, password: string) => Promise<LoginUser>;
   logout: () => Promise<void>;
-  initializeAuth: () => Promise<void>;
-  updateUser: (updates: Partial<User>) => void;
+  updateUser: (updates: Partial<UserProfile>) => void;
+  syncUserWithProfile: (profileData: Partial<UserProfile>) => void;
 };
-
-// global guard to prevent infinite logout loops
-let isLoggingOut = false;
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
-      accessToken: null,
-      refreshToken: null,
+      userProfile: null,
       isAuthenticated: false,
       loading: false,
-      isInitialized: false,
 
-      setAccessToken: (token) => set({ accessToken: token }),
-      setUser: (user) => set({ user, isAuthenticated: !!user }),
+      setUser: (user) => {
+        set({
+          user,
+          isAuthenticated: !!user,
+          // Initialize userProfile from user data
+          userProfile: user
+            ? {
+                _id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                branch: user.branch,
+                branchId: user.branchId,
+                createdAt: user.createdAt,
+                profilePicture: undefined, // Will be set separately
+              }
+            : null,
+        });
+      },
 
       login: async (email, password) => {
         set({ loading: true });
         try {
-          const { accessToken, refreshToken, user } = await authService.login(
-            email,
-            password
-          );
-          console.log("Lofin successful, user data:", user);
+          const { user } = await authService.login(email, password);
+          console.log("Login successful, user data:", user);
 
           set({
             user,
-            accessToken,
-            refreshToken,
+            userProfile: {
+              _id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              branch: user.branch,
+              branchId: user.branchId,
+              createdAt: user.createdAt,
+              profilePicture: undefined, // Will be set when profile is loaded
+            },
             isAuthenticated: true,
             loading: false,
           });
@@ -58,19 +72,88 @@ export const useAuthStore = create<AuthState>()(
           throw error;
         }
       },
+
       updateUser: (updates) => {
         console.log("Updating user with:", updates);
         set((state) => {
-          const updatedUser = state.user ? { ...state.user, ...updates } : null;
+          if (!state.user || !state.userProfile) {
+            console.warn("No user or userProfile to update");
+            return state;
+          }
+
+          // Update both user and userProfile
+          const updatedUser: LoginUser = {
+            ...state.user,
+            name: updates.name || state.user.name,
+            email: updates.email || state.user.email,
+            branch: updates.branch || state.user.branch,
+          };
+
+          const updatedUserProfile: UserProfile = {
+            ...state.userProfile,
+            ...updates,
+          };
+
           console.log("Updated user object:", updatedUser);
-          return { user: updatedUser };
+          console.log("Updated userProfile object:", updatedUserProfile);
+
+          return {
+            user: updatedUser,
+            userProfile: updatedUserProfile,
+          };
+        });
+      },
+
+      // Fixed method to sync user data with fresh profile data
+      syncUserWithProfile: (profileData) => {
+        set((state) => {
+          if (!state.user) {
+            console.warn("No user to sync with profile data");
+            return state;
+          }
+
+          // If no existing userProfile, we can't sync
+          if (!state.userProfile) {
+            console.warn("No userProfile to sync with profile data");
+            return state;
+          }
+
+          // Update user object with fresh profile data
+          const updatedUser: LoginUser = {
+            ...state.user,
+            name: profileData.name || state.user.name,
+            email: profileData.email || state.user.email,
+            branch: profileData.branch || state.user.branch,
+          };
+
+          // Ensure all required fields have values by using existing values as fallbacks
+          const updatedUserProfile: UserProfile = {
+            ...state.userProfile,
+            ...profileData,
+            // Override with explicit fallbacks for required fields
+            _id: profileData._id || state.userProfile._id,
+            name: profileData.name || state.userProfile.name,
+            email: profileData.email || state.userProfile.email,
+            role: profileData.role || state.userProfile.role,
+            branch: profileData.branch || state.userProfile.branch,
+            branchId: profileData.branchId || state.userProfile.branchId,
+            createdAt: profileData.createdAt || state.userProfile.createdAt,
+          };
+
+          console.log("Syncing user with profile data:", {
+            profileData,
+            updatedUser,
+            updatedUserProfile,
+          });
+
+          return {
+            user: updatedUser,
+            userProfile: updatedUserProfile,
+          };
         });
       },
 
       logout: async () => {
-        if (isLoggingOut) return; // prevent recursion
-        isLoggingOut = true;
-
         try {
           await authService.logout();
         } catch {
@@ -78,75 +161,20 @@ export const useAuthStore = create<AuthState>()(
         } finally {
           set({
             user: null,
-            accessToken: null,
-            refreshToken: null,
+            userProfile: null,
             isAuthenticated: false,
-          });
-          isLoggingOut = false;
-        }
-      },
-
-      initializeAuth: async () => {
-        const { refreshToken } = get();
-
-        if (!refreshToken) {
-          set({ isInitialized: true });
-          return;
-        }
-
-        try {
-          const {
-            accessToken,
-            refreshToken: newRefresh,
-            user,
-          } = await authService.refreshToken(refreshToken);
-
-          set({
-            user,
-            accessToken,
-            refreshToken: newRefresh,
-            isAuthenticated: true,
-            isInitialized: true,
-          });
-        } catch (err) {
-          console.error("Failed to refresh on init:", err);
-
-          set({
-            user: null,
-            accessToken: null,
-            refreshToken: null,
-            isAuthenticated: false,
-            isInitialized: true,
           });
         }
       },
     }),
-    // {
-    //   name: "auth-store",
-    //   partialize: (state) => ({
-    //     user: state.user,
-    //     refreshToken: state.refreshToken, // only persist these
-    //   }),
-    // }
     {
-      name: "auth-store",
-      partialize: (state) => {
-        console.log("Persisting auth state:", {
-          user: state.user,
-          refreshToken: state.refreshToken,
-        });
-        return {
-          user: state.user,
-          refreshToken: state.refreshToken, // persist user and refresh token
-        };
-      },
+      name: "auth-storage", // Persist key
+      // Only persist essential data
+      partialize: (state) => ({
+        user: state.user,
+        userProfile: state.userProfile,
+        isAuthenticated: state.isAuthenticated,
+      }),
     }
   )
 );
-
-// clear volatile tokens on reload, but don’t log out
-if (typeof window !== "undefined") {
-  window.addEventListener("beforeunload", () => {
-    useAuthStore.setState({ accessToken: null });
-  });
-}

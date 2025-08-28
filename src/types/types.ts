@@ -21,7 +21,13 @@ export type UpdateSettingsPayload = z.infer<typeof updateSettingsSchema>;
 export interface Product {
   _id: string;
   name: string;
-  categoryId: string | { _id: string; name: string; units: string[] };
+  categoryId:
+    | string
+    | {
+        _id: string;
+        name: string;
+        units: string[];
+      };
   minStockLevel: number;
   stock: number;
   unit: string;
@@ -30,6 +36,7 @@ export interface Product {
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
+  __v?: number;
 }
 
 // ==================== CATEGORY TYPE ====================
@@ -49,9 +56,20 @@ export interface ApiResponse<T = unknown> {
 }
 
 // ==================== AUTH TYPES ====================
-export interface User {
+export interface LoginUser {
+  // _id: string;
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  branch: string;
+  branchId: string;
+  createdAt: string;
+  // profilePicture?: string;
+}
+export interface UserProfile {
+  // _id: string;
   _id: string;
-  id?: string;
   name: string;
   email: string;
   role: Role;
@@ -65,8 +83,8 @@ export interface LoginResponse {
   status: number;
   message: string;
   data: {
-    user: User;
-    token: string;
+    user: LoginUser;
+    // token: string;
   };
 }
 

@@ -1,12 +1,13 @@
 import { useState, useMemo } from "react";
 import DashboardTitle from "../shared/DashboardTitle";
-import MySalesActivity from "./components/MySalesActivity";
+import MySalesActivity from "./components/desktop/MySalesActivity";
 // ui
 import { Button } from "@/components/ui/button";
 import { VscRefresh } from "react-icons/vsc";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 
 import { useAuthStore } from "@/stores/useAuthStore";
+import MobileSalesActivity from "./components/mobile/MobileSalesActivity";
 
 const StaffSales = () => {
   const transactions = useTransactionsStore(
@@ -14,8 +15,8 @@ const StaffSales = () => {
   );
   console.log(transactions);
   const [filter, setFilter] = useState<"today" | "week" | "month">("today");
-  const { user, accessToken } = useAuthStore();
-  console.log(user?.branchId, "token:", accessToken);
+  const { user } = useAuthStore();
+  console.log(user?.branchId);
 
   // filter transaction
   const filteredTransactions = useMemo(() => {
@@ -80,9 +81,9 @@ const StaffSales = () => {
       </div>
 
       {/* sales activity */}
-      <section className="bg-white border rounded-[10px] mx-4 mt-5">
-        <div className="flex justify-between items-center h-[72px] border px-10 py-6">
-          <h4 className="font-medium text-lg text-[#1E1E1E] font-Inter">
+      <section className="bg-white border rounded-[10px] md:mx-4 mt-5">
+        <div className="flex justify-between items-center h-[72px] border px-2 md:px-10 py-6">
+          <h4 className="hidden md:block font-medium text-lg text-[#1E1E1E] font-Inter">
             Your Sales Activity
           </h4>
           <div className="flex gap-3 items-center">
@@ -106,6 +107,7 @@ const StaffSales = () => {
           </div>
         </div>
         <MySalesActivity filteredTransactions={filteredTransactions} />
+        <MobileSalesActivity filteredTransactions={filteredTransactions} />
       </section>
     </div>
   );

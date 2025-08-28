@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema } from "@/schemas/authSchema";
+import { loginSchema, type LoginFormInputs } from "@/schemas/authSchema";
 import { IoEyeOffOutline, IoEyeOutline } from "react-icons/io5";
 import { Button } from "@/components/ui/button";
 import MobileError from "./MobileError";
@@ -12,16 +12,13 @@ import SupportFeedback from "../../components/SupportFeedback";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "react-toastify";
 import LoadingSpinner from "@/components/LoadingSpinner";
-
-type LoginFormInputs = {
-  username: string;
-  password: string;
-};
+import { useMutation } from "@tanstack/react-query";
+import * as authService from "@/services/authService";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuthStore();
-
+  // const { login } = useAuthStore();
+  // const loginStore = useAuthStore((state) => state.login);
   const [activeModal, setActiveModal] = useState<"error" | "support" | null>(
     null
   );
@@ -32,22 +29,24 @@ const Login = () => {
     register,
     handleSubmit,
     reset,
-    formState: { errors: formErrors, isSubmitting },
+    formState: { errors: formErrors },
   } = useForm<LoginFormInputs>({
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginFormInputs) => {
-    try {
-      const user = await login(data.username, data.password);
-      // const { user } = useAuthStore.getState();
+  const mutation = useMutation({
+    mutationFn: (data: LoginFormInputs) =>
+      authService.login(data.email, data.password),
+    onSuccess: (data) => {
+      // update store here if needed
+      useAuthStore.getState().setUser(data.user);
+      // useAuthStore.getState().setAccessToken(data.accessToken);
 
-      if (!user.role) {
+      if (!data.user.role) {
         throw new Error("User role is missing after login");
       }
 
-      // Normalize the role to handle any case or whitespace issues
-      const normalizedRole = user.role.toString().trim().toUpperCase();
+      const normalizedRole = data.user.role.toString().trim().toUpperCase();
 
       switch (normalizedRole) {
         case "SUPER_ADMIN":
@@ -68,19 +67,67 @@ const Login = () => {
 
         default:
           console.error("Unknown user role detected:", {
-            originalRole: user.role,
+            originalRole: data.user.role,
             normalizedRole,
-            user,
+            //  data.user,
           });
-          throw new Error(`Unknown user role: ${user.role}`);
+          throw new Error(`Unknown user role: ${data.user.role}`);
       }
 
-      toast.success(`Welcome back, ${user.name || "User"}!`);
-    } catch (error) {
+      toast.success("Login successful!");
+    },
+    onError: (error) => {
       console.error("Login failed", error);
       openModal("error");
       toast.error("Login Failed!");
-    }
+    },
+  });
+
+  const onSubmit = async (data: LoginFormInputs) => {
+    mutation.mutate(data);
+    // try {
+    //   const user = await login(data.username, data.password);
+    //   // const { user } = useAuthStore.getState();
+
+    //   if (!user.role) {
+    //     throw new Error("User role is missing after login");
+    //   }
+
+    //   // Normalize the role to handle any case or whitespace issues
+    //   const normalizedRole = user.role.toString().trim().toUpperCase();
+
+    //   switch (normalizedRole) {
+    //     case "SUPER_ADMIN":
+    //       navigate("/manager/dashboard");
+    //       break;
+
+    //     case "MAINTAINER":
+    //       navigate("/maintainer/dashboard");
+    //       break;
+
+    //     case "ADMIN":
+    //       navigate("/admin/dashboard/overview");
+    //       break;
+
+    //     case "STAFF":
+    //       navigate("/staff/dashboard/s-overview");
+    //       break;
+
+    //     default:
+    //       console.error("Unknown user role detected:", {
+    //         originalRole: user.role,
+    //         normalizedRole,
+    //         user,
+    //       });
+    //       throw new Error(`Unknown user role: ${user.role}`);
+    //   }
+
+    //   toast.success(`Welcome back, ${user.name || "User"}!`);
+    // } catch (error) {
+    //   console.error("Login failed", error);
+    //   openModal("error");
+    //   toast.error("Login Failed!");
+    // }
   };
 
   // function to set a loading spinner before oprning the support modal
@@ -123,17 +170,17 @@ const Login = () => {
         >
           <input
             type="text"
-            {...register("username")}
+            {...register("email")}
             placeholder="Email address"
-            aria-invalid={!!formErrors.username}
+            aria-invalid={!!formErrors.email}
             className={`bg-transparent border px-4 py-3 rounded-[0.625rem] text-base w-full ${
-              formErrors.username
+              formErrors.email
                 ? "border-[var(--cl-error)]"
                 : "border-[var(--cl-gray-a1)]"
             }`}
           />
           <p className="text-[var(--cl-error)] text-sm pt-1">
-            {formErrors.username?.message ?? ""}
+            {formErrors.email?.message ?? ""}
           </p>
 
           <div className="relative mt-4">
@@ -164,7 +211,7 @@ const Login = () => {
           <div className="mt-10">
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={mutation.isPending}
               className={`w-full h-12 ${
                 Object.keys(formErrors).length > 0
                   ? "bg-[#D9D9D9] hover:bg-[#D9D9D9]/90 text-[#444444]"
@@ -173,7 +220,7 @@ const Login = () => {
             >
               {Object.keys(formErrors).length > 0
                 ? "Retry"
-                : isSubmitting
+                : mutation.isPending
                 ? "Logging in..."
                 : "Login"}
             </Button>

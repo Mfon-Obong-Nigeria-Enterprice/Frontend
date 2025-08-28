@@ -199,7 +199,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt).toDateString();
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+
         return (
           (t.type === "PURCHASE" || t.type === "PICKUP") &&
           transactionDate === today
