@@ -4,8 +4,10 @@ import type { DragEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Loader2, Camera } from "lucide-react";
-import api from "@/services/baseApi";
 import { toast } from "react-toastify";
+// import { useUser, useUserMutations } from "@/hooks/useUserMutations";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useUser, useUserMutations } from "@/hooks/useUserMutation";
 
 type ManagerData = {
   _id: string;
@@ -31,8 +33,8 @@ export function ManagerUsersModal({
   userData,
   onProfileUpdate,
 }: ManagerUsersModalProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string>("");
   const [profileData, setProfileData] = useState({
     userRole: "",
     name: "",
@@ -40,32 +42,54 @@ export function ManagerUsersModal({
     image: null as File | null,
     profilePicture: "",
   });
-  const [imagePreview, setImagePreview] = useState<string>("");
-  const [isDragging, setIsDragging] = useState(false);
 
-  const getProfile = async (user_id: string): Promise<void> => {
-    try {
-      setIsLoading(true);
+  // React Query hooks
+  const {
+    data: userProfile,
+    isLoading: isLoadingProfile,
+    refetch,
+  } = useUser(userData._id);
+  const { updateProfile } = useUserMutations();
+  const { syncUserWithProfile } = useAuthStore();
 
-      const res = await api.get(`users/${user_id}/`);
-      setProfileData({
-        ...res.data,
-        image: null,
-        profilePicture: res.data.profilePicture || res.data.image || "",
-      });
-    } catch (error) {
-      console.log(error);
-      toast.error("Failed to load profile data");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Load profile data when modal opens or userData changes
   useEffect(() => {
-    if (userData && userData._id) {
-      getProfile(userData._id);
+    if (userData?._id && open) {
+      if (userProfile) {
+        // Use data from React Query
+        setProfileData({
+          userRole: userProfile.role || userData.userRole,
+          name: userProfile.name || userData.name,
+          location: userProfile.branch || userData.location,
+          image: null,
+          profilePicture:
+            userProfile.profilePicture || userData.profilePicture || "",
+        });
+      } else {
+        // Fallback to userData while loading
+        setProfileData({
+          userRole: userData.userRole,
+          name: userData.name,
+          location: userData.location,
+          image: null,
+          profilePicture: userData.profilePicture || "",
+        });
+      }
     }
-  }, [userData]);
+  }, [userData, userProfile, open]);
+
+  // Sync with auth store when profile data updates
+  useEffect(() => {
+    if (userProfile) {
+      syncUserWithProfile({
+        _id: userProfile._id,
+        name: userProfile.name,
+        role: userProfile.role,
+        branch: userProfile.branch,
+        profilePicture: userProfile.profilePicture,
+      });
+    }
+  }, [userProfile, syncUserWithProfile]);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event?.target.files;
@@ -87,82 +111,6 @@ export function ManagerUsersModal({
     }
   };
 
-  const uploadProfilePicture = async (
-    userId: string,
-    imageFile: File
-  ): Promise<string | null> => {
-    try {
-      setIsUploadingImage(true);
-
-      // List of possible field names the backend might expect
-      const fieldNames = [
-        "image",
-        "profilePicture",
-        "profile_picture",
-        "file",
-        "photo",
-      ];
-
-      for (const fieldName of fieldNames) {
-        try {
-          const formData = new FormData();
-          formData.append(fieldName, imageFile);
-
-          console.log(`Trying upload with field name: ${fieldName}`);
-          console.log("Uploading to:", `users/${userId}/profile-picture`);
-
-          const res = await api.patch(
-            `users/${userId}/profile-picture`,
-            formData,
-            {
-              headers: {
-                "Content-Type": "multipart/form-data",
-              },
-            }
-          );
-
-          console.log("Upload successful with field:", fieldName, res.data);
-          return res.data.profilePicture || res.data.image || res.data.url;
-        } catch (error: any) {
-          console.log(
-            `Failed with field name ${fieldName}:`,
-            error.response?.status
-          );
-
-          // If it's not a 400 error, throw it (might be a different issue)
-          if (error.response?.status !== 400) {
-            throw error;
-          }
-
-          // Continue to next field name if it's a 400 error
-          continue;
-        }
-      }
-
-      // If all field names failed, throw an error
-      throw new Error("All field name attempts failed");
-    } catch (error: any) {
-      console.error("Failed to upload profile picture:", error);
-
-      if (error.response) {
-        console.error("Error response:", error.response.data);
-        console.error("Error status:", error.response.status);
-        toast.error(
-          `Upload failed: ${
-            error.response?.data?.message ||
-            error.response?.data?.error ||
-            "Unknown error"
-          }`
-        );
-      } else {
-        toast.error("Failed to upload profile picture");
-      }
-      return null;
-    } finally {
-      setIsUploadingImage(false);
-    }
-  };
-
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -172,55 +120,42 @@ export function ManagerUsersModal({
     }
 
     try {
-      setIsLoading(true);
-
-      let updatedProfilePicture = profileData.profilePicture;
-
-      // Handle profile picture upload separately if a new image is selected
-      if (profileData.image) {
-        const uploadedImageUrl = await uploadProfilePicture(
-          userData._id,
-          profileData.image
-        );
-        if (uploadedImageUrl) {
-          updatedProfilePicture = uploadedImageUrl;
-        } else {
-          // If image upload failed, don't proceed with the rest of the update
-          toast.error("Profile picture upload failed. Please try again.");
-          return;
-        }
-      }
-
-      // Update other profile data using the main user endpoint
+      // Prepare update data
       const updateData = {
-        fullName: profileData.name,
-        location: profileData.location,
+        userId: userData._id,
+        userData: {
+          fullName: profileData.name,
+          location: profileData.location,
+        },
+        imageFile: profileData.image || undefined,
       };
 
-      const res = await api.patch(`users/${userData._id}/`, updateData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      // Use the combined mutation
+      const result = await updateProfile.mutateAsync(updateData);
 
       toast.success("Profile updated successfully");
 
       // Prepare updated data for callback
       const updatedData: ManagerData = {
         ...userData,
-        ...res.data,
-        profilePicture: updatedProfilePicture,
-        name: res.data.name || profileData.name,
-        location: res.data.location || profileData.location,
+        name: profileData.name,
+        location: profileData.location,
+        profilePicture: result.profilePicture || profileData.profilePicture,
       };
 
       onProfileUpdate(updatedData);
+
+      // Refetch the user data to ensure consistency
+      await refetch();
+
       onOpenChange(false);
-    } catch (err) {
-      console.error("Update error:", err);
+
+      // Clear image preview
+      setImagePreview("");
+      setProfileData((prev) => ({ ...prev, image: null }));
+    } catch (error) {
+      console.error("Update error:", error);
       toast.error("Failed to update profile");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -275,6 +210,10 @@ export function ManagerUsersModal({
 
   const displayImage =
     imagePreview || profileData.profilePicture || userData.profilePicture;
+
+  const isLoading = updateProfile.isPending;
+  const isUploadingImage =
+    updateProfile.isPending && profileData.image !== null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -349,6 +288,14 @@ export function ManagerUsersModal({
                 <p className="text-sm text-gray-600">
                   {profileData.userRole || userData.userRole || "User Role"}
                 </p>
+                {isLoadingProfile && (
+                  <div className="flex items-center mt-1">
+                    <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                    <span className="text-xs text-gray-500">
+                      Loading profile...
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -365,12 +312,12 @@ export function ManagerUsersModal({
                 Full name
               </label>
               <input
-                name="fullName"
+                name="name"
                 onChange={handleProfileChange}
                 value={profileData.name}
                 placeholder="Enter full name"
                 className="w-full px-3 py-2 rounded-md border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all duration-200 ease-in-out"
-                disabled={isLoading}
+                disabled={isLoading || isLoadingProfile}
               />
             </div>
 
@@ -384,7 +331,7 @@ export function ManagerUsersModal({
                 value={profileData.location}
                 placeholder="Enter location"
                 className="w-full px-3 py-2 rounded-md border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all duration-200 ease-in-out"
-                disabled={isLoading}
+                disabled={isLoading || isLoadingProfile}
               />
             </div>
 
@@ -405,7 +352,7 @@ export function ManagerUsersModal({
 
             <Button
               type="submit"
-              disabled={isLoading || isUploadingImage}
+              disabled={isLoading || isUploadingImage || isLoadingProfile}
               className="w-full bg-[#2ECC71] hover:bg-[#28B463] text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 ease-in-out shadow-md disabled:opacity-50"
             >
               {(isLoading || isUploadingImage) && (
