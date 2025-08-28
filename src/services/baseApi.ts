@@ -80,6 +80,13 @@ api.interceptors.response.use(
 
     // If 401 and not already retried
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // 👇 check auth state before trying refresh
+      const { isAuthenticated } = useAuthStore.getState();
+      if (!isAuthenticated) {
+        // If user not logged in, don't try refresh → just reject
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         // queue up requests until refresh finishes
         return new Promise(function (resolve, reject) {

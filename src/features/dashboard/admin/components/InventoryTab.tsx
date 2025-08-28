@@ -157,7 +157,7 @@ const InventoryTab = React.memo(
           {/* All Products Tab */}
           <TabsContent value="allProducts">
             <div>
-              <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8 pb-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8 pb-5">
                 {filteredProducts?.map((prod) => (
                   <ProductDisplayTab key={prod._id} product={prod} />
                 ))}

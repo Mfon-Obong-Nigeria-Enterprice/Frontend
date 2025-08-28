@@ -33,12 +33,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Modal from "@/components/Modal";
+import ClientStatusBadge from "@/pages/ClientStatusBadge";
 
 // utils
-import { toSentenceCaseName } from "@/utils/styles";
+import {
+  toSentenceCaseName,
+  balanceTextClass,
+  formatCurrency,
+} from "@/utils/styles";
 import { handleApiError } from "@/services/errorhandler";
+
+// icons
 import { AlertCircle } from "lucide-react";
-import ClientStatusBadge from "@/pages/ClientStatusBadge";
 
 // data
 import { bankNames, posNames } from "@/data/banklist";
@@ -76,16 +82,6 @@ type ReceiptData = Transaction;
 //   }[];
 //   date: string;
 // };
-// type ReceiptData = Omit<
-//   Transaction,
-//   | "_id"
-//   | "userId"
-//   | "status"
-//   | "branchId"
-//   | "waybillNumber"
-//   | "description"
-//   | "reference"
-// >;
 
 const emptyRow: Row = {
   productId: "",
@@ -184,6 +180,17 @@ const NewSales: React.FC = () => {
       toast.error("Please fill all required fields correctly");
       return false;
     }
+
+    // prevent walk-in from overpaying
+    if (isWalkIn) {
+      const { total } = calculateTotals();
+      const paid = getAmountPaid() || 0;
+      if (paid > total) {
+        toast.error(`Amount is greater than total - ${total}`);
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -195,8 +202,15 @@ const NewSales: React.FC = () => {
 
     const discountTotal = rows.reduce((acc, row) => {
       const lineAmount = Number(row.quantity) * Number(row.unitPrice);
-      const pct = Number(row.discount) || 0;
-      const discountAmount = (lineAmount * pct) / 100;
+      if (!row.discount) return acc;
+
+      let discountAmount = 0;
+      if (row.discountType === "percent") {
+        discountAmount = (lineAmount * Number(row.discount)) / 100;
+      } else if (row.discountType === "amount") {
+        discountAmount = Number(row.discount);
+      }
+
       return acc + discountAmount;
     }, 0);
 
@@ -213,6 +227,7 @@ const NewSales: React.FC = () => {
     const availableBalance = selectedClient ? clientBalance : 0;
     const effectiveAmountPaid = paid + availableBalance;
     const balanceDue = Math.max(0, total - effectiveAmountPaid);
+    const newBalance = effectiveAmountPaid - total;
 
     let statusMessage;
     if (balanceDue === 0) {
@@ -225,10 +240,11 @@ const NewSales: React.FC = () => {
       statusMessage = `Balance due: ₦${balanceDue.toFixed(2)}`;
     }
 
-    return { statusMessage };
+    return { statusMessage, total, paid, clientBalance, newBalance };
   };
 
-  const { statusMessage } = getBalanceInfo();
+  const { statusMessage, total, paid, clientBalance, newBalance } =
+    getBalanceInfo();
 
   const handleWalkInDataChange = (data: { name: string; phone: string }) => {
     setWalkInData(data);
@@ -406,7 +422,7 @@ const NewSales: React.FC = () => {
             <h5 className="text-xl font-medium mb-4">Payment Details</h5>
             <div className="flex gap-6 flex-wrap">
               <div>
-                <Label>Payment Method</Label>
+                <Label className="mb-1">Payment Method</Label>
                 <Select
                   value={paymentMethod}
                   onValueChange={(val) => {
@@ -422,15 +438,19 @@ const NewSales: React.FC = () => {
                     <SelectItem value="transfer">Transfer</SelectItem>
                     <SelectItem value="bank">Bank</SelectItem>
                     <SelectItem value="pos">P.O.S</SelectItem>
-                    <SelectItem value="balance">From Balance</SelectItem>
-                    <SelectItem value="credit">On Credit</SelectItem>
+                    {!isWalkIn && (
+                      <>
+                        <SelectItem value="balance">From Balance</SelectItem>
+                        <SelectItem value="credit">On Credit</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
 
               {["bank", "transfer", "pos"].includes(paymentMethod) && (
                 <div>
-                  <Label>
+                  <Label className="mb-1">
                     Choose {paymentMethod === "pos" ? "POS" : "Bank"}
                   </Label>
                   <Select value={subMethod} onValueChange={setSubMethod}>
@@ -449,7 +469,7 @@ const NewSales: React.FC = () => {
               )}
 
               <div>
-                <Label>Amount Paid</Label>
+                <Label className="mb-1">Amount Paid</Label>
                 <Input
                   type="number"
                   placeholder="0.00"
@@ -459,7 +479,93 @@ const NewSales: React.FC = () => {
                 />
               </div>
             </div>
-            <p className="mt-3 text-sm text-[#7D7D7D]">{statusMessage}</p>
+            {isWalkIn && (
+              <p className="mt-3 text-sm text-[#7D7D7D]">{statusMessage}</p>
+            )}
+
+            {/* for registered client, show account details */}
+            {selectedClient && total > 0 && (
+              <div className="bg-[#f0f0f3] px-5 py-5 rounded-[10px] mt-5 space-y-2.5">
+                {/* client balance */}
+                <p className="flex justify-between items-center text-sm font-Inter">
+                  <span className="text-[#444444]">
+                    Current Client Balance:
+                  </span>
+                  <span
+                    className={`font-medium ${balanceTextClass(clientBalance)}`}
+                  >
+                    {/* ₦
+                    {clientBalance.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })} */}
+                    {formatCurrency(clientBalance)}
+                  </span>
+                </p>
+
+                {/* total purchase */}
+                <p className="flex justify-between items-center text-sm font-Inter">
+                  <span className="text-[#444444]">Purchase Total:</span>
+                  <span className="font-medium text-[#F95353]">
+                    -₦
+                    {total.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
+                  </span>
+                </p>
+
+                {/* amount paid */}
+                <p className="flex justify-between items-center text-sm font-Inter">
+                  <span className="text-[#444444]">Amount Paid:</span>
+                  <span className="font-medium text-[#2ECC71]">
+                    +₦
+                    {`${paid.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}`}
+                  </span>
+                </p>
+
+                {/* new balance */}
+
+                <p className="flex justify-between items-center text-sm font-Inter border-t border-[#7D7D7D] pt-2 font-medium">
+                  <span className="text-[#7D7D7D]">
+                    New balance (After purchase):
+                  </span>
+                  <span
+                    // className={
+                    //   newBalance >= 0
+                    //     ? "text-green-600 font-semibold"
+                    //     : "text-red-600 font-semibold"
+                    // }
+                    className={balanceTextClass(newBalance)}
+                  >
+                    {/* {newBalance >= 0
+                      ? `₦${newBalance.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })} (Credit)`
+                      : `₦${Math.abs(newBalance).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })} (Debt)`} */}
+                    {formatCurrency(newBalance)}{" "}
+                    {newBalance > 0 ? "(Credit)" : "(Debt)"}
+                  </span>
+                </p>
+              </div>
+            )}
+            {/* only show warning if the client will owe */}
+            {newBalance < 0 && (
+              <div className="flex items-center bg-[#FFF2CE] border border-[#ffa500] rounded-[8px] min-h-[63px] px-14 mt-5">
+                <p className="font-Inter text-amber-800">
+                  <span className="font-medium text-[15px]">Warning:</span>
+                  <span className="text-sm">
+                    This transaction will result in a debt of ₦
+                    {Math.abs(newBalance).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
+                    . Client will owe money after this purchase
+                  </span>
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -491,6 +597,7 @@ const NewSales: React.FC = () => {
           <SalesReceipt transaction={receiptData} />
         </Modal>
       )}
+      {transaction && <SalesReceipt transaction={receiptData} />}
     </main>
   );
 };

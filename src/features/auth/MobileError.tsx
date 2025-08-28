@@ -7,9 +7,13 @@ import { Button } from "@/components/ui/button";
 const MobileError = ({
   onClose,
   onSupport,
+  message,
+  code,
 }: {
   onClose: () => void;
   onSupport?: () => void;
+  message: string;
+  code?: string | number;
 }) => {
   return (
     <div className="absolute top-0 left-0 w-full h-full flex flex-col py-[10%] items-center gap-4 bg-[var(--cl-bg-light)] p-3 mb-4 md:hidden">
@@ -34,12 +38,16 @@ const MobileError = ({
       </h5>
       <div className="flex items-center justify-center w-[90%] bg-white h-[73px] py-4 px-2 border border-[var(--cl-secondary)] rounded-lg">
         <p className="text-[0.75rem] text-[var(--cl-text-semidark)] text-center">
-          Invalid login credentials. Please check and try again.
+          {/* Invalid login credentials. Please check and try again. */}
+          {message}
         </p>
       </div>
-      <span className="text-[0.625rem] text-[var(--cl-secondary)] text-center">
-        Error code: AUTH-401
-      </span>
+      {code && (
+        <span className="text-[0.625rem] text-[var(--cl-secondary)] text-center">
+          Error code: {code}
+          {/* AUTH-401 */}
+        </span>
+      )}
 
       <Button
         variant="secondary"
