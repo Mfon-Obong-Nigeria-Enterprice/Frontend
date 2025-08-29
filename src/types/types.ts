@@ -11,17 +11,33 @@ export interface PriceHistoryItem {
 }
 
 // ==================== SETTINGS TYPES ====================
+export const maintenanceModeSchema = z.object({
+  enabled: z.boolean(),
+  message: z.string().optional(),
+  scheduledStart: z.string().datetime().optional(),
+  scheduledEnd: z.string().datetime().optional(),
+});
+
+// Session Management Schema
+export const sessionSettingsSchema = z.object({
+  timeoutHours: z.number().min(0.5).max(24),
+  forceLogout: z.boolean().default(false),
+});
+
+// Your existing schemas
 export const alertAndNotificationSettingsSchema = z.object({
   lowStockAlerts: z.boolean(),
   expirationReminders: z.boolean(),
   newProductNotifications: z.boolean(),
   clientsDebtsAlert: z.boolean(),
   CustomThresholdAlerts: z.boolean(),
-  LargeBalanceAlertThreshold: z.boolean(),
   PriceChangeNotification: z.boolean(),
+  LargeBalanceAlertThreshold: z.boolean(),
   dashboardNotification: z.boolean(), 
   emailNotification: z.boolean(), 
   inactivityAlerts: z.boolean(),
+  systemHealthAlerts: z.boolean(),
+  userLoginNotifications: z.boolean(),
 });
 
 export const systemPreferencesSchema = z.object({
@@ -30,6 +46,7 @@ export const systemPreferencesSchema = z.object({
   bulkDiscountThreshold: z.number().min(0, "Must be a positive number"),
   minimumPurchaseForBulkDiscount: z.number().min(0, "Must be a positive number"),
   allowNegativeBalances: z.boolean(),
+  largeBalanceThreshold: z.number().min(0, "Must be a positive number"),
 });
 
 export const clientAccountSettingsSchema = z.object({
@@ -42,16 +59,51 @@ export const settingsSchema = z.object({
   alerts: alertAndNotificationSettingsSchema,
   system: systemPreferencesSchema,
   clientAccount: clientAccountSettingsSchema,
+  maintenanceMode: maintenanceModeSchema.optional(),
+  sessionSettings: sessionSettingsSchema.optional(),
 });
 
-// Define the update settings schema (if different from settingsSchema)
+// Define the update settings schema
 export const updateSettingsSchema = settingsSchema.partial();
 
+// API Settings Schema (what comes from backend)
+export const apiSettingsSchema = z.object({
+  // Alert settings
+  lowStockAlert: z.boolean().optional(),
+  newProductNotification: z.boolean().optional(),
+  expirationReminder: z.boolean().optional(),
+  debtAlert: z.boolean().optional(),
+  customThresholdAlert: z.boolean().optional(),
+  largeBalanceAlert: z.boolean().optional(),
+  priceChangeNotification: z.boolean().optional(),
+  dashboardNotification: z.boolean().optional(),
+  emailNotification: z.boolean().optional(),
+  inactivityAlert: z.boolean().optional(),
+  systemHealthAlert: z.boolean().optional(),
+  userLoginNotification: z.boolean().optional(),
+  
+  // System settings
+  lowStockThreshold: z.number().optional(),
+  maxDiscount: z.number().optional(),
+  bulkDiscountThreshold: z.number().optional(),
+  minPurchaseForBulkDiscount: z.number().optional(),
+  allowNegativeBalance: z.boolean().optional(),
+  largeBalanceThreshold: z.number().optional(),
+  
+  // Client account settings
+  defaultCreditLimit: z.number().optional(),
+  inactivePeriodDays: z.number().optional(),
+});
+
+// Export all types
+export type MaintenanceModeSettings = z.infer<typeof maintenanceModeSchema>;
+export type SessionSettings = z.infer<typeof sessionSettingsSchema>;
 export type AlertAndNotificationSettings = z.infer<typeof alertAndNotificationSettingsSchema>;
 export type SystemPreferences = z.infer<typeof systemPreferencesSchema>;
 export type ClientAccountSettings = z.infer<typeof clientAccountSettingsSchema>;
 export type Settings = z.infer<typeof settingsSchema>;
 export type UpdateSettingsPayload = z.infer<typeof updateSettingsSchema>;
+export type ApiSettings = z.infer<typeof apiSettingsSchema>;
 
 // ==================== PRODUCT TYPES ====================
 export interface Product {
@@ -91,7 +143,6 @@ export interface ApiResponse<T = unknown> {
 
 // ==================== AUTH TYPES ====================
 export interface LoginUser {
-  // _id: string;
   id: string;
   name: string;
   email: string;
@@ -99,7 +150,6 @@ export interface LoginUser {
   branch: string;
   branchId: string;
   createdAt: string;
-  // profilePicture?: string;
 }
 
 export interface LoginResponse {
@@ -107,7 +157,6 @@ export interface LoginResponse {
   message: string;
   data: {
     user: LoginUser;
-    // token: string;
   };
 }
 

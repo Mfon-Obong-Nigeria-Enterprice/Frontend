@@ -5,7 +5,7 @@ import {
   fetchProducts,
   updateProductPrice
 } from '@/lib/api';
-import type{ 
+import type { 
   Settings, 
   Product,  
   ProductUpdatePricePayload, 
@@ -26,41 +26,56 @@ export const useUpdateProductPrice = () => {
     mutationFn: updateProductPrice,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
     }
   });
 };
 
-export const useSettings = () => {
+export const useSystemSettings = () => {
   return useQuery<Settings, Error>({
-    queryKey: ['settings'],
+    queryKey: ['system-settings'],
     queryFn: fetchSettings,
-    staleTime: Infinity,
-    // Move error handling to a separate useEffect if needed
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2
   });
 };
 
-export const useUpdateSettings = () => {
+export const useUpdateSystemSettings = () => {
   const queryClient = useQueryClient();
+  
   return useMutation<Settings, Error, UpdateSettingsPayload, { previousSettings?: Settings }>({
     mutationFn: updateSettings,
     onMutate: async (newSettings) => {
-      await queryClient.cancelQueries({ queryKey: ['settings'] });
-      const previousSettings = queryClient.getQueryData<Settings>(['settings']);
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['system-settings'] });
       
-      queryClient.setQueryData<Settings>(['settings'], (old) => 
-        old ? { ...old, ...newSettings } : { ...newSettings } as Settings
-      );
+      // Snapshot the previous value
+      const previousSettings = queryClient.getQueryData<Settings>(['system-settings']);
+      
+      // Optimistically update to the new value
+      queryClient.setQueryData<Settings>(['system-settings'], (old) => {
+        if (!old) return newSettings as Settings;
+        return { ...old, ...newSettings };
+      });
 
       return { previousSettings };
     },
     onError: (error, _, context) => {
-      console.error('Error updating settings:', error);
+      if (!import.meta.env.PROD) {
+        console.error('Error updating settings:', error);
+      }
+      // Rollback to the previous value on error
       if (context?.previousSettings) {
-        queryClient.setQueryData(['settings'], context.previousSettings);
+        queryClient.setQueryData(['system-settings'], context.previousSettings);
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['settings'] });
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ['system-settings'] });
     }
   });
 };
+
+// Alias for backward compatibility
+export const useSettings = useSystemSettings;
+export const useUpdateSettings = useUpdateSystemSettings;

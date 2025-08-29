@@ -19,8 +19,8 @@ export const AlertSettingsSection: React.FC<AlertSettingsSectionProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex items-center space-x-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="flex items-center space-x-3 p-3 ">
           <Checkbox
             id="clientsDebtsAlert"
             checked={alerts.clientsDebtsAlert || false}
@@ -28,10 +28,12 @@ export const AlertSettingsSection: React.FC<AlertSettingsSectionProps> = ({
             disabled={isReadOnly}
             className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
           />
-          <Label htmlFor="clientsDebtsAlert" className="text-gray-700">Clients Debts Alerts</Label>
+          <Label htmlFor="clientsDebtsAlert" className="text-gray-700 text-sm font-medium cursor-pointer">
+            Clients Debts Alerts
+          </Label>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 p-3 ">
           <Checkbox
             id="LargeBalanceAlertThreshold"
             checked={alerts.LargeBalanceAlertThreshold || false}
@@ -39,10 +41,12 @@ export const AlertSettingsSection: React.FC<AlertSettingsSectionProps> = ({
             disabled={isReadOnly}
             className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
           />
-          <Label htmlFor="LargeBalanceAlertThreshold" className="text-gray-700">Large Balance Alert</Label>
+          <Label htmlFor="LargeBalanceAlertThreshold" className="text-gray-700 text-sm font-medium cursor-pointer">
+            Large Balance Alert
+          </Label>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 p-3 ">
           <Checkbox
             id="lowStockAlerts"
             checked={alerts.lowStockAlerts || false}
@@ -50,10 +54,12 @@ export const AlertSettingsSection: React.FC<AlertSettingsSectionProps> = ({
             disabled={isReadOnly}
             className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
           />
-          <Label htmlFor="lowStockAlerts" className="text-gray-700">Low Stock Alerts</Label>
+          <Label htmlFor="lowStockAlerts" className="text-gray-700 text-sm font-medium cursor-pointer">
+            Low Stock Alerts
+          </Label>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 p-3 ">
           <Checkbox
             id="inactivityAlerts"
             checked={alerts.inactivityAlerts || false}
@@ -61,7 +67,9 @@ export const AlertSettingsSection: React.FC<AlertSettingsSectionProps> = ({
             disabled={isReadOnly}
             className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
           />
-          <Label htmlFor="inactivityAlerts" className="text-gray-700">Inactivity Alerts</Label>
+          <Label htmlFor="inactivityAlerts" className="text-gray-700 text-sm font-medium cursor-pointer">
+            Inactivity Alerts
+          </Label>
         </div>
       </div>
     </div>

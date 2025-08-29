@@ -1,26 +1,35 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { systemPreferencesSchema, type SystemPreferences } from "@/types/types";
-import { useSettingsStore } from "@/stores/useSettingsStore";
-import { SettingsIcon } from "lucide-react";
 
-export function SystemPreferencesForm() {
-  const { systemPreferences, setSystemPreferences } = useSettingsStore();
+interface SystemPreferencesFormProps {
+  settings: SystemPreferences;
+  onThresholdChange: (key: string, value: number) => void;
+}
+
+export function SystemPreferencesForm({ settings, onThresholdChange }: SystemPreferencesFormProps) {
   const [isSaved, setIsSaved] = useState(false);
 
   const form = useForm<SystemPreferences>({
     resolver: zodResolver(systemPreferencesSchema),
-    defaultValues: systemPreferences,
+    defaultValues: settings,
   });
 
-  function onSubmit(data: SystemPreferences) {
-    setSystemPreferences(data);
+  const handleNumberChange = (field: any, key: string, value: string) => {
+    const numericValue = parseInt(value) || 0;
+    field.onChange(numericValue);
+    onThresholdChange(key, numericValue);
+  };
+
+  function onSubmit(_data: SystemPreferences) {
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
   }
@@ -28,11 +37,9 @@ export function SystemPreferencesForm() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-          <SettingsIcon className="h-5 w-5" />
-          System Preferences
+        <CardTitle className="flex items-center gap-2 text-lg font-semibold border-b border-gray-300 pb-2">
+         System Preferences
         </CardTitle>
-        <CardDescription>Manage your system preferences</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -42,12 +49,12 @@ export function SystemPreferencesForm() {
               name="lowStockAlertThreshold"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Low Stock Alert Threshold</FormLabel>
+                  <FormLabel className="text-sm font-normal">Low Stock Alert Threshold</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      value={field.value}
+                      onChange={(e) => handleNumberChange(field, 'lowStockAlertThreshold', e.target.value)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -60,12 +67,12 @@ export function SystemPreferencesForm() {
               name="maximumDiscount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Maximum Discount (%)</FormLabel>
+                  <FormLabel className="text-sm font-normal">Maximum Discount</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      value={field.value}
+                      onChange={(e) => handleNumberChange(field, 'maximumDiscount', e.target.value)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -78,42 +85,59 @@ export function SystemPreferencesForm() {
               name="bulkDiscountThreshold"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Bulk Discount Threshold</FormLabel>
+                  <FormLabel className="text-sm font-normal">Bulk Discount Threshold</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      value={field.value}
+                      onChange={(e) => handleNumberChange(field, 'bulkDiscountThreshold', e.target.value)}
                     />
                   </FormControl>
-                  <FormDescription>
+                  <FormDescription className="text-xs font-normal">
                     Minimum purchase amount for bulk discount
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
+          
             <FormField
               control={form.control}
-              name="allowNegativeBalances"
+              name="minimumPurchaseForBulkDiscount"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Allow Negative Balances</FormLabel>
-                    <FormDescription>
-                      Allow customers to have negative account balances
-                    </FormDescription>
-                  </div>
+                <FormItem>
+                  <FormLabel className="text-sm font-normal">Minimum Purchase for Bulk Discount</FormLabel>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
+                    <Input
+                      type="number"
+                      value={field.value}
+                      onChange={(e) => handleNumberChange(field, 'minimumPurchaseForBulkDiscount', e.target.value)}
                     />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
+
+            <div className="flex items-center gap-6">
+              <div>
+                <p className="text-xs font-normal">Allow Negative Balances</p>
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="allowNegativeBalances"
+                render={({ field }) => (
+                  <FormControl className="">
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      className="data-[state=checked]:bg-blue-700"
+                    />
+                  </FormControl>
+                )}
+              />
+            </div>
 
             <Button type="submit" className="w-full">
               {isSaved ? "Saved!" : "Save Changes"}

@@ -1,24 +1,34 @@
-import  { useState } from "react";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { type ClientAccountSettings, clientAccountSettingsSchema } from "@/types/types";
-import { useSettingsStore } from "@/stores/useSettingsStore";
 
-export function ClientAccountSettingsForm() {
-  const { clientAccountSettings, setClientAccountSettings } = useSettingsStore();
+interface ClientAccountSettingsFormProps {
+  settings: ClientAccountSettings;
+  onThresholdChange: (key: string, value: number) => void;
+}
+
+export function ClientAccountSettingsForm({ settings, onThresholdChange }: ClientAccountSettingsFormProps) {
   const [isSaved, setIsSaved] = useState(false);
 
   const form = useForm<ClientAccountSettings>({
     resolver: zodResolver(clientAccountSettingsSchema),
-    defaultValues: clientAccountSettings,
+    defaultValues: settings,
   });
 
-  function onSubmit(data: ClientAccountSettings) {
-    setClientAccountSettings(data);
+  const handleNumberChange = (field: any, key: string, value: string) => {
+    const numericValue = parseInt(value) || 0;
+    field.onChange(numericValue);
+    onThresholdChange(key, numericValue);
+  };
+
+  function onSubmit(_data: ClientAccountSettings) {
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
   }
@@ -26,8 +36,7 @@ export function ClientAccountSettingsForm() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">Clients Account Settings</CardTitle>
-        <CardDescription>Configure client account preferences</CardDescription>
+        <CardTitle className="text-lg font-semibold border-b border-gray-300 pb-2">Clients Account Settings</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -37,17 +46,14 @@ export function ClientAccountSettingsForm() {
               name="defaultCreditLimit"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Default Credit Limit</FormLabel>
+                  <FormLabel className="text-sm font-normal">Default Credit Limit</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      value={field.value}
+                      onChange={(e) => handleNumberChange(field, 'defaultCreditLimit', e.target.value)}
                     />
                   </FormControl>
-                  <FormDescription>
-                    The default credit limit assigned to new clients
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -58,17 +64,14 @@ export function ClientAccountSettingsForm() {
               name="inactivePeriodDays"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Inactive Period (Days)</FormLabel>
+                  <FormLabel className="text-sm font-normal">Inactive Period (Days)</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      value={field.value}
+                      onChange={(e) => handleNumberChange(field, 'inactivePeriodDays', e.target.value)}
                     />
                   </FormControl>
-                  <FormDescription>
-                    Number of days before a client is considered inactive
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
