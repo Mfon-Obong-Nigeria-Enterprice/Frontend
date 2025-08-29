@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Loader2, Camera } from "lucide-react";
 import { toast } from "react-toastify";
-// import { useUser, useUserMutations } from "@/hooks/useUserMutations";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useUser, useUserMutations } from "@/hooks/useUserMutation";
 
@@ -34,7 +33,6 @@ export function ManagerUsersModal({
   onProfileUpdate,
 }: ManagerUsersModalProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string>("");
   const [profileData, setProfileData] = useState({
     userRole: "",
     name: "",
@@ -43,12 +41,10 @@ export function ManagerUsersModal({
     profilePicture: "",
   });
 
-  // React Query hooks
-  const {
-    data: userProfile,
-    isLoading: isLoadingProfile,
-    refetch,
-  } = useUser(userData._id);
+  // React Query hooks - consistent naming with the fixed hook
+  const { data: userProfile, isLoading: isLoadingProfile } = useUser(
+    userData._id
+  );
   const { updateProfile } = useUserMutations();
   const { syncUserWithProfile } = useAuthStore();
 
@@ -78,7 +74,7 @@ export function ManagerUsersModal({
     }
   }, [userData, userProfile, open]);
 
-  // Sync with auth store when profile data updates
+  // Sync with auth store when userProfile loads
   useEffect(() => {
     if (userProfile) {
       syncUserWithProfile({
@@ -95,22 +91,21 @@ export function ManagerUsersModal({
     const files = event?.target.files;
     const selectedFile = files && files.length > 0 ? files[0] : null;
 
+    if (!selectedFile) return;
+
+    if (!selectedFile.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    // Store file for form submission
     setProfileData({
       ...profileData,
       image: selectedFile,
     });
-
-    if (selectedFile) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(selectedFile);
-    } else {
-      setImagePreview("");
-    }
   };
 
+  // Form submission using the combined mutation
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -119,21 +114,19 @@ export function ManagerUsersModal({
       return;
     }
 
-    try {
-      // Prepare update data
-      const updateData = {
-        userId: userData._id,
-        userData: {
-          fullName: profileData.name,
-          location: profileData.location,
-        },
-        imageFile: profileData.image || undefined,
-      };
+    // Prepare update data
+    const updateData = {
+      userId: userData._id,
+      userData: {
+        fullName: profileData.name,
+        location: profileData.location,
+      },
+      imageFile: profileData.image || undefined,
+    };
 
+    try {
       // Use the combined mutation
       const result = await updateProfile.mutateAsync(updateData);
-
-      toast.success("Profile updated successfully");
 
       // Prepare updated data for callback
       const updatedData: ManagerData = {
@@ -144,18 +137,13 @@ export function ManagerUsersModal({
       };
 
       onProfileUpdate(updatedData);
-
-      // Refetch the user data to ensure consistency
-      await refetch();
-
       onOpenChange(false);
 
-      // Clear image preview
-      setImagePreview("");
+      // Clear form state
       setProfileData((prev) => ({ ...prev, image: null }));
     } catch (error) {
       console.error("Update error:", error);
-      toast.error("Failed to update profile");
+      // Error toast is handled by the mutation hook
     }
   };
 
@@ -196,24 +184,20 @@ export function ManagerUsersModal({
       return;
     }
 
+    // Store file for form submission
     setProfileData({
       ...profileData,
       image: file,
     });
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
   };
 
+  // Current display image comes from userProfile or local state
   const displayImage =
-    imagePreview || profileData.profilePicture || userData.profilePicture;
+    userProfile?.profilePicture ||
+    profileData.profilePicture ||
+    userData.profilePicture;
 
   const isLoading = updateProfile.isPending;
-  const isUploadingImage =
-    updateProfile.isPending && profileData.image !== null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -257,12 +241,12 @@ export function ManagerUsersModal({
                 <label
                   htmlFor="profile-upload"
                   className={`absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 text-white cursor-pointer ${
-                    isUploadingImage
+                    isLoading && profileData.image
                       ? "opacity-100"
                       : "opacity-0 hover:opacity-100"
                   } transition-opacity duration-300 rounded-full`}
                 >
-                  {isUploadingImage ? (
+                  {isLoading && profileData.image ? (
                     <Loader2 className="w-6 h-6 animate-spin" />
                   ) : (
                     <Camera className="w-6 h-6" />
@@ -277,7 +261,7 @@ export function ManagerUsersModal({
                   accept="image/*"
                   onChange={handleFileChange}
                   className="hidden"
-                  disabled={isUploadingImage || isLoading}
+                  disabled={isLoading}
                 />
               </div>
 
@@ -352,17 +336,11 @@ export function ManagerUsersModal({
 
             <Button
               type="submit"
-              disabled={isLoading || isUploadingImage || isLoadingProfile}
+              disabled={isLoading || isLoadingProfile}
               className="w-full bg-[#2ECC71] hover:bg-[#28B463] text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200 ease-in-out shadow-md disabled:opacity-50"
             >
-              {(isLoading || isUploadingImage) && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              {isUploadingImage
-                ? "Uploading..."
-                : isLoading
-                ? "Updating..."
-                : "Update Profile"}
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading ? "Updating..." : "Update Profile"}
             </Button>
           </form>
         </div>
