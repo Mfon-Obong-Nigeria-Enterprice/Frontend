@@ -1,27 +1,7 @@
-// import api from "./baseApi";
-// import type { User } from "@/types/user";
-// // import { AxiosError } from "axios";
-
-// export const getAllUsers = async (): Promise<User[]> => {
-//   // try {
-//   const response = await api.get("/users");
-//   return response.data;
-//   // } catch (error) {
-//   //   const err = error as AxiosError;
-//   //   console.error("Error fetching users:", err.response?.data || err.message);
-//   //   throw error;
-//   // }
-// };
-
-// export const getUserById = async (id: string): Promise<User> => {
-//   const response = await api.get(`/users/${id}`);
-//   return response.data;
-// };
-
 import type { UserProfile } from "@/types/types";
 import api from "./baseApi";
 import { isAxiosError } from "axios";
-import type { User } from "@/types/user";
+import type { CompanyUser } from "@/stores/useUserStore";
 
 // API Response interfaces
 interface UpdateUserResponse {
@@ -63,7 +43,7 @@ interface UpdatePasswordResponse {
 }
 
 // Get all users
-export const getAllUsers = async (): Promise<User[]> => {
+export const getAllUsers = async (): Promise<CompanyUser[]> => {
   try {
     const response = await api.get("/users");
     return response.data;
@@ -116,6 +96,7 @@ export const updateUser = async (
         "Content-Type": "application/json",
       },
     });
+    console.log(response.data);
     return response.data;
   } catch (error) {
     if (isAxiosError(error)) {

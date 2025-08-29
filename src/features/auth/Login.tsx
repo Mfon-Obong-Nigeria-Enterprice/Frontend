@@ -15,13 +15,16 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useMutation } from "@tanstack/react-query";
 import * as authService from "@/services/authService";
 
+import type { AxiosError } from "axios";
+
 const Login = () => {
   const navigate = useNavigate();
-  // const { login } = useAuthStore();
-  // const loginStore = useAuthStore((state) => state.login);
+
   const [activeModal, setActiveModal] = useState<"error" | "support" | null>(
     null
   );
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [errorCode, setErrorCode] = useState<string | undefined>();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [isSupportLoading, setIsSupportLoading] = useState<boolean>(false);
 
@@ -75,10 +78,34 @@ const Login = () => {
 
       toast.success(`Welcome ${data.user.name}`);
     },
-    onError: (error) => {
-      console.error("Login failed", error);
+    onError: (
+      error: AxiosError<
+        string | { message: string | string[]; errors?: string[] }
+      >
+    ) => {
+      let backendMessage = "Login failed. Please try again.";
+
+      const data = error.response?.data;
+
+      if (typeof data === "string") {
+        backendMessage = data; // plain string
+      } else if (data?.message) {
+        backendMessage = Array.isArray(data.message)
+          ? data.message.join(", ")
+          : data.message;
+      } else if (Array.isArray(data?.errors)) {
+        backendMessage = data.errors.join(", ");
+      }
+
+      const backendCode: string | undefined = error.response?.status
+        ? `AUTH-${error.response.status}`
+        : undefined;
+
+      setErrorMessage(backendMessage);
+      setErrorCode(backendCode);
+      console.error("Login failed", backendMessage);
       openModal("error");
-      toast.error("Login Failed!");
+      toast.error(backendMessage);
     },
   });
 
@@ -207,6 +234,8 @@ const Login = () => {
         </form>
         {activeModal === "error" && (
           <MobileError
+            message={errorMessage}
+            code={errorCode}
             onClose={closeModalAndReset}
             onSupport={() => {
               closeModal();

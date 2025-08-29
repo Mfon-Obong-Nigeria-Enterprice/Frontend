@@ -316,7 +316,7 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
 
   // Display mode
   return (
-    <article className="relative bg-white border border-[var(--cl-border-gray)] rounded p-10 sm:p-4 mt-6 font-Arial hover:shadow-xl hover:border-green-400 transition-all duration-200 ease-in-out">
+    <article className="bg-white border border-[var(--cl-border-gray)] rounded p-10 sm:p-4 mt-6 font-Arial hover:shadow-xl hover:border-green-400 transition-all duration-200 ease-in-out">
       <div className="flex justify-between" id={product._id}>
         <div>
           <h6 className="text-lg font-normal text-[var(--cl-text-gray)]">

@@ -178,7 +178,7 @@ const Header = ({ userRole }: HeaderProps) => {
 
   return (
     <>
-      <header className="h-14 sm:h-16 fixed top-0 right-0 left-0 z-50 flex justify-between items-center px-7 py-3 bg-white shadow-sm">
+      <header className="h-14 sm:h-16 fixed top-0 right-0 left-0 z-50 flex justify-between items-center px-7 py-3 bg-white border border-[#F5F5F5]">
         <div>
           <div className="hidden md:flex md:ml-10">
             <Logo />

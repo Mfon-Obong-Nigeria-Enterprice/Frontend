@@ -177,12 +177,6 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
     0
   );
 
-  // const discountTotal = rows.reduce((acc, row) => {
-  //   const lineAmount = Number(row.quantity) * Number(row.unitPrice);
-  //   const pct = Number(row.discount) || 0;
-  //   const discountAmount = (lineAmount * pct) / 100;
-  //   return acc + discountAmount;
-  // }, 0);
   const discountTotal = rows.reduce((acc, row) => {
     const baseAmount = row.quantity * row.unitPrice;
 
@@ -215,24 +209,26 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
 
       <Table className="w-full mt-2 space-y-20">
         <TableHeader className="bg-[#F0F0F3] h-12">
-          <TableHead className="text-[#333333] font-normal px-4">
-            Product
-          </TableHead>
-          <TableHead className="text-[#333333] text-center font-normal">
-            Quantity
-          </TableHead>
-          <TableHead className="text-[#333333] text-center font-normal">
-            Unit Price
-          </TableHead>
-          <TableHead className=" text-[#333333] text-center font-normal">
-            Discount
-          </TableHead>
-          <TableHead className="text-[#333333] text-center font-normal">
-            Total
-          </TableHead>
-          <TableHead className="text-[#333333] pr-5 text-center font-normal">
-            Actions
-          </TableHead>
+          <TableRow>
+            <TableHead className="text-[#333333] font-normal px-4">
+              Product
+            </TableHead>
+            <TableHead className="text-[#333333] text-center font-normal">
+              Quantity
+            </TableHead>
+            <TableHead className="text-[#333333] text-center font-normal">
+              Unit Price
+            </TableHead>
+            <TableHead className=" text-[#333333] text-center font-normal">
+              Discount
+            </TableHead>
+            <TableHead className="text-[#333333] text-center font-normal">
+              Total
+            </TableHead>
+            <TableHead className="text-[#333333] pr-5 text-center font-normal">
+              Actions
+            </TableHead>
+          </TableRow>
         </TableHeader>
         <TableBody>
           {rows.map((row, index) => {
@@ -309,11 +305,30 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                       type="number"
                       min="0"
                       value={row.discount}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        let newDiscount = Number(e.target.value) || 0;
+                        const baseAmount = row.quantity * row.unitPrice;
+
+                        if (
+                          row.discountType === "percent" &&
+                          newDiscount > 100
+                        ) {
+                          toast.warn("Discount percentage cannot exceed 100%");
+                          newDiscount = 100;
+                        } else if (
+                          row.discountType === "amount" &&
+                          newDiscount > baseAmount
+                        ) {
+                          toast.warn(
+                            "Discount cannot exceed total amount of goods"
+                          );
+                          newDiscount = baseAmount;
+                        }
+
                         updateRow(index, {
-                          discount: Number(e.target.value) || 0,
-                        })
-                      }
+                          discount: newDiscount,
+                        });
+                      }}
                       className="flex-1/3 text-center w-8 md:w-12 outline-0 mr-0.5"
                     />
                     <Select

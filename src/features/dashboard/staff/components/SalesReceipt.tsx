@@ -88,11 +88,11 @@ const SalesReceipt: React.FC<SalesReceiptProps> = ({ transaction }) => {
       <table className="w-full border">
         <thead>
           <tr className="border-b">
-            <th className="px-2 py-3 border-r text-sm">QTY</th>
-            <th className="px-1.5 text-center text-sm border-r">DESCRIPTION</th>
-            <th className="px-1.5 text-center text-sm border-r">UNIT PRICE</th>
-            <th className="px-1.5 text-center text-sm border-r">DISCOUNT</th>
-            <th className="px-1.5 text-center text-sm">AMOUNT</th>
+            <td className="px-2 py-3 border-r text-sm">QTY</td>
+            <td className="px-1.5 text-center text-sm border-r">DESCRIPTION</td>
+            <td className="px-1.5 text-center text-sm border-r">UNIT PRICE</td>
+            <td className="px-1.5 text-center text-sm border-r">DISCOUNT</td>
+            <td className="px-1.5 text-center text-sm">AMOUNT</td>
           </tr>
         </thead>
         <tbody>
@@ -140,6 +140,11 @@ const SalesReceipt: React.FC<SalesReceiptProps> = ({ transaction }) => {
           <span className="ml-1.5 font-normal">
             {transaction.paymentMethod}
           </span>
+        </p>
+        {/*staff that processed transaction */}
+        <p className="text-sm text-gray-600 font-bold">
+          Processed by:
+          <span className="ml-1.5 font-normal">{transaction.userName}</span>
         </p>
         {/* if the user pays with bank */}
         {/* {transaction.bankName && (
