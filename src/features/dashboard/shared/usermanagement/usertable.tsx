@@ -1,7 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import { useUserStore } from "@/stores/useUserStore";
 import { useAuthStore } from "@/stores/useAuthStore";
-
+import DeleteUserModal from "./modals/deleteusermodal";
 import {
   Table,
   TableBody,
@@ -26,10 +28,23 @@ import {
 import usePagination from "@/hooks/usePagination";
 
 import { MoreVertical, ExternalLink } from "lucide-react";
+import SuspendUserModal from "./modals/suspendusermodal";
 
 const UserTable = () => {
+  const navigate = useNavigate();
+  // const { id } = useParams();
   const users = useUserStore((s) => s.users);
   const currentUser = useAuthStore((s) => s.user);
+  const [deleteModal, setDeleteModal] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [suspendModal, setSuspendModal] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
+  const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
 
   // super admin sees all data except his own but maintainer only sees staff and admin
   const filteredUsers = users.filter((user) => {
@@ -174,21 +189,23 @@ const UserTable = () => {
                       ? "Inventory, client"
                       : "System maintainer"}
                   </TableCell>
+
                   <TableCell
                     className={`text-xs ${
-                      user.isActive
-                        ? "text-[#1AD410]"
+                      user.isBlocked
+                        ? "text-[#F95353]" // suspended
                         : user.isActive
-                        ? "text-[#F95353]"
-                        : "text-[#F39C12]"
+                        ? "text-[#1AD410]" // active
+                        : "text-[#F39C12]" // inactive
                     }`}
                   >
-                    {user.isActive
-                      ? "Active"
-                      : user.isActive
+                    {user.isBlocked
                       ? "Suspended"
+                      : user.isActive
+                      ? "Active"
                       : "Inactive"}
                   </TableCell>
+
                   <TableCell>Last login</TableCell>
                   <TableCell className="text-[#444444] font-normal">
                     {user.branch || "N/A"}
@@ -198,7 +215,12 @@ const UserTable = () => {
                     {new Date(user.createdAt).toDateString()}
                   </TableCell>
                   <TableCell>
-                    <Popover>
+                    <Popover
+                      open={popoverOpen === user._id}
+                      onOpenChange={(open) =>
+                        setPopoverOpen(open ? user._id : null)
+                      }
+                    >
                       <PopoverTrigger
                         asChild
                         // className="absolute top-1/2 -translate-y-1/2 right-0"
@@ -217,9 +239,11 @@ const UserTable = () => {
                         <>
                           <button
                             className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
-                            // onClick={() =>
-                            //   navigate(`/user-management/${user._id}`)
-                            // }
+                            onClick={() =>
+                              navigate(
+                                `/maintainer/dashboard/user-management/${user._id}`
+                              )
+                            }
                           >
                             <span className="flex-1 text-left">
                               View User Data
@@ -240,7 +264,13 @@ const UserTable = () => {
                           </button>
                           <button
                             className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
-                            // onClick={() => handleSuspendClick(user.name)}
+                            onClick={() => {
+                              setSuspendModal({
+                                id: user._id,
+                                name: user.name,
+                              });
+                              setPopoverOpen(null);
+                            }}
                           >
                             <span className="flex-1 text-left">
                               Suspend User
@@ -248,7 +278,13 @@ const UserTable = () => {
                           </button>
                           <button
                             className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium text-red-600"
-                            // onClick={() => handleDeleteClick(user.name)}
+                            onClick={() => {
+                              setDeleteModal({
+                                id: user._id,
+                                name: user.name,
+                              });
+                              setPopoverOpen(null);
+                            }}
                           >
                             <span className="flex-1 text-left">
                               Delete User
@@ -305,6 +341,22 @@ const UserTable = () => {
             </PaginationContent>
           </Pagination>
         </div>
+      )}
+
+      {/* modal to delete user */}
+      {deleteModal && (
+        <DeleteUserModal
+          user={deleteModal}
+          onClose={() => setDeleteModal(null)}
+        />
+      )}
+
+      {/* modal to suspend user */}
+      {suspendModal && (
+        <SuspendUserModal
+          user={suspendModal}
+          onClose={() => setSuspendModal(null)}
+        />
       )}
     </div>
   );

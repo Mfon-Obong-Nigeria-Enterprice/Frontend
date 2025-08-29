@@ -2,7 +2,24 @@ import type { UserProfile } from "@/types/types";
 import api from "./baseApi";
 import { isAxiosError } from "axios";
 import type { CompanyUser } from "@/stores/useUserStore";
+import type { Role } from "@/types/types";
+import type { CreateUserPayload } from "@/schemas/userSchema";
 
+// create user API response
+interface createUserResponse {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  address: string;
+  role: Role;
+  isActive: boolean;
+  branchId: string;
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
 // API Response interfaces
 interface UpdateUserResponse {
   _id: string;
@@ -41,6 +58,26 @@ interface UpdatePasswordResponse {
   message: string;
   success: boolean;
 }
+
+// create a new user
+export const createNewUser = async (
+  payload: CreateUserPayload
+): Promise<createUserResponse> => {
+  const response = await api.post("/users", payload);
+  return response.data;
+};
+
+// delete user
+export const deleteUser = async (userId: string) => {
+  const response = await api.delete(`/users/${userId}`);
+  return response.data;
+};
+
+// block user
+export const suspendUser = async (userId: string) => {
+  const response = await api.patch(`/users/${userId}/block`);
+  return response.data;
+};
 
 // Get all users
 export const getAllUsers = async (): Promise<CompanyUser[]> => {

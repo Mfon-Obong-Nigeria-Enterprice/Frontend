@@ -110,6 +110,7 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   }, [clientsQuery.dataUpdatedAt, setClients]);
 
   useEffect(() => {
+    console.log("branches query data:", branchesQuery.data);
     if (
       branchesQuery.data &&
       branchesQuery?.data?.length > 0 &&
@@ -117,11 +118,11 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
       user?.role !== "ADMIN"
     ) {
       setBranches(branchesQuery.data);
+      console.log("Setting branches in store:", branchesQuery.data);
     }
   }, [branchesQuery.dataUpdatedAt, setBranches, user?.role]);
 
   useEffect(() => {
-    console.log("users query data:", usersQuery.data);
     if (
       usersQuery.data &&
       usersQuery.data.length > 0 &&
@@ -129,7 +130,6 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
       user?.role !== "ADMIN"
     ) {
       setUsers(usersQuery.data);
-      console.log("Setting users in store:", usersQuery.data);
     }
   }, [usersQuery.dataUpdatedAt, setUsers, user?.role]);
 
