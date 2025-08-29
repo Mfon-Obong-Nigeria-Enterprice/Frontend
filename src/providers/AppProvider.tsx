@@ -13,12 +13,15 @@ import {
 } from "@/services/transactionService";
 import { getAllBranches } from "@/services/branchService";
 import { getAllUsers } from "@/services/userService";
+import { getSystemActivityLogs } from "@/services/activityLogService";
+
 import { useInventoryStore } from "@/stores/useInventoryStore";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { useClientStore } from "@/stores/useClientStore";
 import { useBranchStore } from "@/stores/useBranchStore";
 import { useUserStore } from "@/stores/useUserStore";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
 
 export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   const { user } = useAuthStore();
@@ -32,6 +35,7 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   const setUsers = useUserStore((state) => state.setUsers);
   const setClients = useClientStore((state) => state.setClients);
   const setBranches = useBranchStore((state) => state.setBranches);
+  const setActivities = useActivityLogsStore((state) => state.setActivities);
 
   const categoriesQuery = useQuery({
     queryKey: ["categories"],
@@ -84,6 +88,12 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
     enabled: user?.role !== "STAFF" && user?.role !== "ADMIN",
   });
 
+  const activitiesQuery = useQuery({
+    queryKey: ["activities"],
+    queryFn: getSystemActivityLogs,
+    // enabled: user?.role !== "STAFF" && user?.role === "ADMIN",
+  });
+
   // Sync immediately when data is successfully fetched
   useEffect(() => {
     if (categoriesQuery.data) {
@@ -110,7 +120,6 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   }, [clientsQuery.dataUpdatedAt, setClients]);
 
   useEffect(() => {
-    console.log("branches query data:", branchesQuery.data);
     if (
       branchesQuery.data &&
       branchesQuery?.data?.length > 0 &&
@@ -118,7 +127,6 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
       user?.role !== "ADMIN"
     ) {
       setBranches(branchesQuery.data);
-      console.log("Setting branches in store:", branchesQuery.data);
     }
   }, [branchesQuery.dataUpdatedAt, setBranches, user?.role]);
 
@@ -133,11 +141,25 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
     }
   }, [usersQuery.dataUpdatedAt, setUsers, user?.role]);
 
+  useEffect(() => {
+    console.log("activity query data:", activitiesQuery.data);
+    if (
+      activitiesQuery.data
+      // &&
+      // user?.role !== "STAFF" &&
+      // user?.role !== "ADMIN"
+    ) {
+      setActivities(activitiesQuery.data);
+      console.log("setting activities in store", activitiesQuery);
+    }
+  }, [activitiesQuery.dataUpdatedAt, setActivities, user?.role]);
+
   return <>{children}</>;
 };
 
 // Export the recommended version
 export { AppProviderOptimized as AppProvider };
+
 // import { useEffect, type ReactNode } from "react";
 // import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 // import {

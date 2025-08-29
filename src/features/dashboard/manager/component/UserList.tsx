@@ -86,33 +86,33 @@ const UserList: React.FC = () => {
     XLSX.writeFile(wb, "users_export.csv"); // Export the workbook to a CSV file
   };
 
-  const handleCloseEnableModal = () =>
-    setEnableModal({ open: false, name: null });
-  const handleConfirmEnable = () => {
-    // Find user by name
-    const user = users.find((u) => u.name === enableModal.name);
-    if (!user) return setEnableModal({ open: false, name: null });
-    const token = localStorage.getItem("token") || "";
-    fetch(
-      `https://mfon-obong-enterprise.onrender.com/api/users/${user._id}/enable`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    )
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to enable user");
-        setEnableModal({ open: false, name: null });
-        window.location.reload();
-      })
-      .catch(() => {
-        alert("Error enabling user");
-        setEnableModal({ open: false, name: null });
-      });
-  };
+  // const handleCloseEnableModal = () =>
+  //   setEnableModal({ open: false, name: null });
+  // const handleConfirmEnable = () => {
+  //   // Find user by name
+  //   const user = users.find((u) => u.name === enableModal.name);
+  //   if (!user) return setEnableModal({ open: false, name: null });
+  //   const token = localStorage.getItem("token") || "";
+  //   fetch(
+  //     `https://mfon-obong-enterprise.onrender.com/api/users/${user._id}/enable`,
+  //     {
+  //       method: "PATCH",
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //         "Content-Type": "application/json",
+  //       },
+  //     }
+  //   )
+  //     .then((res) => {
+  //       if (!res.ok) throw new Error("Failed to enable user");
+  //       setEnableModal({ open: false, name: null });
+  //       window.location.reload();
+  //     })
+  //     .catch(() => {
+  //       alert("Error enabling user");
+  //       setEnableModal({ open: false, name: null });
+  //     });
+  // };
   const [users, setUsers] = useState<User[]>([]);
   const defaultRoles: Role[] = [
     { name: "Admin" },
@@ -654,13 +654,13 @@ const UserList: React.FC = () => {
               <div className="flex gap-4 justify-center">
                 <button
                   className="px-6 py-2 rounded-lg text-[#444] font-medium border-2"
-                  onClick={handleCloseEnableModal}
+                  // onClick={handleCloseEnableModal}
                 >
                   Cancel
                 </button>
                 <button
                   className="px-6 py-2 rounded-lg bg-green-600 text-white font-medium"
-                  onClick={handleConfirmEnable}
+                  // onClick={handleConfirmEnable}
                 >
                   Confirm
                 </button>

@@ -79,6 +79,12 @@ export const suspendUser = async (userId: string) => {
   return response.data;
 };
 
+// unblock user
+export const enableUser = async (userId: string) => {
+  const response = await api.patch(`/users/${userId}/unblock`);
+  return response.data;
+};
+
 // Get all users
 export const getAllUsers = async (): Promise<CompanyUser[]> => {
   try {
