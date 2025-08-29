@@ -4,6 +4,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 // components
 import UserTable from "./usertable";
 import CreateUserModal from "./modals/createusermodal";
+// import DeleteUserModal from "./modals/deleteusermodal";
 import Modal from "@/components/Modal";
 
 // ui components
@@ -41,7 +42,7 @@ const UserOverview = () => {
     <main className="">
       {/* heading */}
       <div className="flex items-center justify-between mt-[30px] md:mt-[39px] xl:mt-[47px] mx-5 md:mx-8 xl:mx-6">
-        <h2 className="text-xl md:text-2xl lg:text[1.75rem] font-bold font-Arial text-[#333333]">
+        <h2 className="text-xl md:text-2xl lg:text-[1.75rem] font-bold font-Arial text-[#333333]">
           User List
         </h2>
 
@@ -98,7 +99,7 @@ const UserOverview = () => {
             <Button onClick={() => setIsModalOpen(true)}>
               <Plus /> Create new User
             </Button>
-          )}{" "}
+          )}
         </div>
       </div>
 
@@ -223,14 +224,14 @@ const UserOverview = () => {
       {/* user table */}
       <UserTable />
 
-      {/* open user modal */}
+      {/* open create new user modal */}
       {isModalOpen && (
         <Modal
           size="xxl"
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
         >
-          <CreateUserModal />
+          <CreateUserModal closeModal={() => setIsModalOpen(false)} />
         </Modal>
       )}
     </main>
