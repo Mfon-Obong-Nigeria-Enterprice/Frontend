@@ -1,7 +1,8 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import Login from "@/features/auth/Login";
 import Notfound from "@/components/Notfound";
-import UserDetailsPage from "@/pages/UserDetailsPage";
+// import UserDetailsPage from "@/pages/UserDetailsPage";
+import UserDetailsPage from "@/features/dashboard/shared/usermanagement/userdetailpage";
 import AddProduct from "@/components/inventory/AddProduct";
 import ClientDetailsPage from "@/pages/ClientDetailsPage";
 import ImportStockPage from "@/features/import/ImportStockPage";
@@ -43,6 +44,7 @@ import NewSales from "@/features/dashboard/staff/NewSales";
 import Stock from "@/features/dashboard/staff/Stock";
 import StaffClients from "@/features/dashboard/staff/StaffClients";
 import ManagerNotifications from "@/features/dashboard/manager/ManagerNotifications";
+import ManageUser from "@/features/dashboard/maintainer/ManageUser";
 
 
 const router = createBrowserRouter([
@@ -62,6 +64,7 @@ const router = createBrowserRouter([
       { path: "manage-user", element: <UserManagement /> },
       { path: "manager-settings", element: <ManagerSettings /> },
       { path: "manager-notifications", element: <ManagerNotifications /> },
+      { path: "user-management/:id", element: <UserDetailsPage /> },
     ],
   },
   {
@@ -75,6 +78,8 @@ const router = createBrowserRouter([
       { path: "overview", element: <MaintainerDashboard /> },
       { path: "maintainer-notifications", element: <MaintainerNotification /> },
       { path: "maintainer-settings", element: <MaintainerSettings /> },
+      { path: "user", element: <ManageUser /> },
+      { path: "user-management/:id", element: <UserDetailsPage /> },
     ],
   },
   {
@@ -116,7 +121,7 @@ const router = createBrowserRouter([
     element: <ClientDetailsPage />,
   },
   { path: "import-stock", element: <ImportStockPage /> },
-  { path: "user-management/:userId", element: <UserDetailsPage /> },
+  // { path: "user-management/:userId", element: <UserDetailsPage /> },
   {
     path: "*",
     element: <Notfound />,

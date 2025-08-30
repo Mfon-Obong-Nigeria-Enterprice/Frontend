@@ -61,7 +61,7 @@
   --sidebar-ring: oklch(0.708 0 0);
   --radius: 0.625rem;
   --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --foreground: oklch(32.109% 0.00004 271.152);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -163,6 +163,30 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer base {
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px theme("colors.white") inset !important;
+    -webkit-text-fill-color: theme("colors.black") !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* Dark mode */
+  .dark input:-webkit-autofill,
+  .dark input:-webkit-autofill:hover,
+  .dark input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px theme("colors.black") inset !important;
+    -webkit-text-fill-color: theme("colors.white") !important;
   }
 }
 

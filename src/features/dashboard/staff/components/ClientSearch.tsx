@@ -21,6 +21,8 @@ import { ChevronDown } from "lucide-react";
 
 import type { Client } from "@/types/types";
 
+import { MdOutlineLocalPhone, MdOutlineLocationOn } from "react-icons/md";
+
 interface ClientSearchProps {
   selectedClient: Client | null;
   onClientSelect?: (client: Client) => void;
@@ -95,8 +97,37 @@ const ClientSearch = ({
                       setOpen(false);
                       onClientSelect?.(client);
                     }}
+                    className="flex justify-between  items-center border-b border-[#D9D9D9] hover:bg-[#D9D9D9]"
                   >
-                    {client.name}
+                    <div className="space-y-2 py-2.5 px-2">
+                      <p className="font-medium font-Inter text-[#444444]">
+                        {client.name}
+                      </p>
+                      <div className="flex items-center gap-3.5">
+                        {client.phone && (
+                          <p className="flex items-center gap-1">
+                            <MdOutlineLocalPhone fill="#444444" />
+                            <span className="text-[11px] text-[#444444] font-Inter">
+                              {client.phone}
+                            </span>
+                          </p>
+                        )}
+                        {/* address */}
+                        {client?.address && (
+                          <p className="flex items-center gap-1">
+                            <MdOutlineLocationOn fill="#333333" />
+                            <span className="text-[11px] text-[#444444] font-Inter">
+                              {client.address}
+                            </span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {client.isActive === false && (
+                      <p className="text-[11px] text-[#F95353] font-medium">
+                        Suspended
+                      </p>
+                    )}
                   </CommandItem>
                 ))}
               </CommandGroup>

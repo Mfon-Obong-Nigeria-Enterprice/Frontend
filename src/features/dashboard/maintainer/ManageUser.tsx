@@ -1,7 +1,6 @@
-// import UserList from "./component/UserList";
 import UserOverview from "../shared/usermanagement/useroverview";
 
-const UserManagement = () => {
+const ManageUser = () => {
   return (
     <>
       <UserOverview />
@@ -9,4 +8,4 @@ const UserManagement = () => {
   );
 };
 
-export default UserManagement;
+export default ManageUser;

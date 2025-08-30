@@ -109,11 +109,13 @@ export type ApiSettings = z.infer<typeof apiSettingsSchema>;
 export interface Product {
   _id: string;
   name: string;
-  categoryId: string | { 
-    _id: string; 
-    name: string; 
-    units: string[] 
-  };
+  categoryId:
+    | string
+    | {
+        _id: string;
+        name: string;
+        units: string[];
+      };
   minStockLevel: number;
   stock: number;
   unit: string;
@@ -150,6 +152,17 @@ export interface LoginUser {
   branch: string;
   branchId: string;
   createdAt: string;
+}
+export interface UserProfile {
+  // _id: string;
+  _id: string;
+  name: string;
+  email: string;
+  role: Role;
+  branch: string;
+  branchId: string;
+  createdAt: string;
+  profilePicture?: string;
 }
 
 export interface LoginResponse {
