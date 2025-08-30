@@ -1,5 +1,11 @@
-const MaintainerNotification = () => {
-  return <div>Maintainer notification</div>;
-};
 
-export default MaintainerNotification;
+
+const MaintainerNotification = () => {
+  return (
+    <div>
+      <div>Maintainer Notifications</div>
+    </div>
+  )
+}
+
+export default MaintainerNotification

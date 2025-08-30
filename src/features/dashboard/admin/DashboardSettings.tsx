@@ -11,13 +11,30 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useInventoryStore } from "@/stores/useInventoryStore";
 import { type AlertAndNotificationSettings } from "@/types/types";
 import { useHasRole } from "@/lib/roles";
+import { useCheckboxState } from "@/hooks/useCheckBox";
+
+// Mapping between frontend and API keys
+const alertMapping = {
+  lowStockAlerts: 'lowStockAlert',
+  newProductNotifications: 'newProductNotification',
+  expirationReminders: 'expirationReminder',
+  clientsDebtsAlert: 'debtAlert',
+  CustomThresholdAlerts: 'customThresholdAlert',
+  LargeBalanceAlertThreshold: 'largeBalanceAlert',
+  PriceChangeNotification: 'priceChangeNotification',
+  dashboardNotification: 'dashboardNotification',
+  emailNotification: 'emailNotification',
+  inactivityAlerts: 'inactivityAlert',
+  systemHealthAlerts: 'systemHealthAlert',
+  userLoginNotifications: 'userLoginNotification',
+} as const;
 
 export function DashboardSettings() {
   const canModifySettings = useHasRole(["SUPER_ADMIN", "ADMIN"]);
   const canModifyPrices = useHasRole(["SUPER_ADMIN", "ADMIN", "MAINTAINER"]);
 
   const { products: storeProducts, updateProduct } = useInventoryStore();
-  const { data: systemSettings, refetch: refetchSettings } = useSystemSettings();
+  const { data: systemSettings } = useSystemSettings();
   const updateProductPriceMutation = useUpdateProductPrice();
   const updateSystemSettingsMutation = useUpdateSystemSettings();
 
@@ -30,41 +47,40 @@ export function DashboardSettings() {
     setAlertSetting 
   } = useSettingsStore();
 
+  // Use local checkbox state to prevent re-render issues
+  const { checkboxStates, updateCheckboxState, resetCheckboxStates } = useCheckboxState();
+
   React.useEffect(() => {
     if (systemSettings) {
       initializeSettings(systemSettings);
+      // Initialize local checkbox states
+      resetCheckboxStates(systemSettings.alerts || {});
     }
-  }, [systemSettings, initializeSettings]);
+  }, [systemSettings, initializeSettings, resetCheckboxStates]);
 
   const handleSettingChange = async (key: keyof AlertAndNotificationSettings, value: boolean) => {
     if (!canModifySettings) return;
 
+    // Store original value for rollback
+    const originalValue = checkboxStates[key] || false;
+    
     try {
+      // Update local state immediately (no re-render from store)
+      updateCheckboxState(key, value);
+
+      // Only send the specific setting that changed
+      const apiKey = alertMapping[key];
+      await updateSystemSettingsMutation.mutateAsync({ [apiKey]: value });
+      
+      // Update global store after successful API call
       setAlertSetting(key, value);
       
-      await updateSystemSettingsMutation.mutateAsync({ 
-        alerts: {
-          [key]: value,
-          lowStockAlerts: false,
-          expirationReminders: false,
-          newProductNotifications: false,
-          clientsDebtsAlert: false,
-          CustomThresholdAlerts: false,
-          PriceChangeNotification: false,
-          LargeBalanceAlertThreshold: false,
-          dashboardNotification: false,
-          emailNotification: false,
-          inactivityAlerts: false,
-          systemHealthAlerts: false,
-          userLoginNotifications: false
-        } 
-      });
-      refetchSettings();
     } catch (error) {
       if (!import.meta.env.PROD) {
         console.error("Failed to update setting:", error);
       }
-      setAlertSetting(key, !value);
+      // Revert local state on error
+      updateCheckboxState(key, originalValue);
     }
   };
 
@@ -99,6 +115,15 @@ export function DashboardSettings() {
     }
   };
 
+  // Merge local checkbox states with current settings for display
+  const displaySettings = {
+    ...currentSettings,
+    alerts: {
+      ...currentSettings.alerts,
+      ...checkboxStates
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-6xl mx-auto">
@@ -115,7 +140,7 @@ export function DashboardSettings() {
               Alert Settings
             </h2>
             <AlertSettingsSection
-              settings={currentSettings}
+              settings={displaySettings}
               onSettingChange={handleSettingChange}
               isReadOnly={!canModifySettings}
             />
@@ -126,7 +151,7 @@ export function DashboardSettings() {
               Notification Preferences
             </h2>
             <NotificationSettingsSection
-              settings={currentSettings}
+              settings={displaySettings}
               onSettingChange={handleSettingChange}
               isReadOnly={!canModifySettings}
             />

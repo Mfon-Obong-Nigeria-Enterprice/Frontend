@@ -14,7 +14,6 @@ export const AlertSettingsSection: React.FC<AlertSettingsSectionProps> = ({
   onSettingChange,
   isReadOnly = false,
 }) => {
-  // Safe access to alerts object with fallback
   const alerts = settings.alerts || {};
 
   return (

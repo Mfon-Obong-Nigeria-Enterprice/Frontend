@@ -14,7 +14,6 @@ export const NotificationSettingsSection: React.FC<NotificationSettingsSectionPr
   onSettingChange,
   isReadOnly = false,
 }) => {
- 
   const alerts = settings.alerts || {};
 
   return (
