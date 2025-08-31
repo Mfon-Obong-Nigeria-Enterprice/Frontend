@@ -5,12 +5,11 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   UserRoundCog,
-   Settings,
-  // CreditCard,
+  Settings,
+  CreditCard,
   Bell,
   LogOut,
 } from "lucide-react";
-// import { HiMiniChartBar } from "react-icons/hi2";
 
 // hooks
 import { useLogout } from "@/hooks/uselogout";
@@ -45,15 +44,21 @@ const items = [
     icon: UserRoundCog,
   },
   {
+    title: "Activity log",
+    url: "/maintainer/dashboard/log",
+    icon: CreditCard,
+  },
+  {
     title: "Notification",
     url: "/maintainer/dashboard/maintainer-notifications",
     icon: Bell,
   },
- {
-  title: "Settings",
-  url: "/maintainer/dashboard/maintainer-settings",
-   icon: Settings,
- },
+
+  {
+    title: "Settings",
+    url: "/maintainer/dashboard/settings",
+    icon: Settings,
+  },
 ];
 
 const MaintainerSidebar = () => {

@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-// features/dashboard/maintainer/components/MaintainerSettings.tsx
 import { useState, useEffect } from "react";
 import { SettingsPage } from "./components/SettingsPage";
 import { NotificationSettingsSection3 } from "./components/NotificationSettings3";
@@ -20,7 +19,7 @@ export default function MaintainerSettings() {
       emailNotification: false,
       inactivityAlerts: false,
       systemHealthAlerts: false,
-      userLoginNotifications: false
+      userLoginNotifications: false,
     },
     system: {
       lowStockAlertThreshold: 15,
@@ -38,17 +37,20 @@ export default function MaintainerSettings() {
 
   // Load settings from localStorage
   useEffect(() => {
-    const savedSettings = localStorage.getItem('app-settings');
+    const savedSettings = localStorage.getItem("app-settings");
     if (savedSettings) {
       try {
         setSettings(JSON.parse(savedSettings));
       } catch (error) {
-        console.error('Failed to load settings from localStorage');
+        console.error("Failed to load settings from localStorage");
       }
     }
   }, []);
 
-  const handleAlertSettingChange = (key: keyof AlertAndNotificationSettings, value: boolean) => {
+  const handleAlertSettingChange = (
+    key: keyof AlertAndNotificationSettings,
+    value: boolean
+  ) => {
     // Update local state and localStorage
     const newSettings = {
       ...settings,
@@ -57,9 +59,9 @@ export default function MaintainerSettings() {
         [key]: value,
       },
     };
-    
+
     setSettings(newSettings);
-    localStorage.setItem('app-settings', JSON.stringify(newSettings));
+    localStorage.setItem("app-settings", JSON.stringify(newSettings));
   };
 
   return (
@@ -71,7 +73,7 @@ export default function MaintainerSettings() {
         </div>
 
         <SettingsPage />
-        
+
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
             Alert Preferences
@@ -85,7 +87,7 @@ export default function MaintainerSettings() {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
             Notification Preferences
-          </h2> 
+          </h2>
           <NotificationSettingsSection3
             settings={settings}
             onSettingChange={handleAlertSettingChange}

@@ -6,7 +6,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
 import DeleteUserModal from "./modals/deleteusermodal";
 import UserStatusModal from "./modals/userstatusmodal";
-
+// import Avatar from "../Avatar";
 import {
   Table,
   TableBody,
@@ -35,6 +35,8 @@ import usePagination from "@/hooks/usePagination";
 import { MoreVertical, ExternalLink } from "lucide-react";
 import type { ActivityLogs } from "@/stores/useActivityLogsStore";
 
+import { filterUsers } from "@/utils/userfilters";
+
 const UserTable = () => {
   const navigate = useNavigate();
   const users = useUserStore((s) => s.users);
@@ -55,12 +57,8 @@ const UserTable = () => {
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
 
   // Filter users according to current user's role
-  const filteredUsers = users.filter((user) => {
-    if (currentUser?.role === "SUPER_ADMIN") {
-      return user.role !== "SUPER_ADMIN";
-    }
-    return user.role !== "MAINTAINER" && user.role !== "SUPER_ADMIN";
-  });
+
+  const filteredUsers = filterUsers(users, currentUser?.role || "");
 
   // Create lookup maps for activities by both user ID and email for flexibility
   const activityByIdMap = useMemo(() => {
@@ -262,7 +260,7 @@ const UserTable = () => {
                           : "bg-[#E2F3EB] text-[#1A3C7E]"
                       }`}
                     >
-                      {user.role}
+                      {user.role === "MAINTAINER" ? "MAINT" : user.role}
                     </span>
                   </TableCell>
 

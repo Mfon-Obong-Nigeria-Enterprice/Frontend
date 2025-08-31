@@ -1,11 +1,11 @@
-
+import Notifications from "../shared/notifications/notifications";
 
 const MaintainerNotification = () => {
   return (
     <div>
-      <div>Maintainer Notifications</div>
+      <Notifications />
     </div>
-  )
-}
+  );
+};
 
-export default MaintainerNotification
+export default MaintainerNotification;

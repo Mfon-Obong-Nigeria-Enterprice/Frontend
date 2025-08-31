@@ -45,8 +45,9 @@ const UserAccountDetails = ({
             <span>Address:</span>
             <span>{user.address || "N/A"}</span>
           </p>
+
           <p className="flex justify-between text-base text-[#444] py-3">
-            <span>Sales recorded:</span>
+            <span>{user.role === "STAFF" ? "Sales recorded" : "Actions"}:</span>
             <span>--</span>
           </p>
         </div>
