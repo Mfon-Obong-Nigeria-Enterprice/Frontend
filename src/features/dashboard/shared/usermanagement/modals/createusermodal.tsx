@@ -1,3 +1,19 @@
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { createNewUser } from "@/services/userService";
+import { createUserSchema } from "@/schemas/userSchema";
+import { toast } from "react-toastify";
+// type
+import type {
+  CreateUserPayload,
+  CreateUserFormValues,
+} from "@/schemas/userSchema";
+
+//
+import { useBranchStore } from "@/stores/useBranchStore";
+
+// ui components
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -5,16 +21,59 @@ import {
   SelectTrigger,
   SelectContent,
   SelectItem,
+  SelectValue,
 } from "@/components/ui/select";
 
-const CreateUserModal = () => {
+const CreateUserModal = ({ closeModal }: { closeModal: () => void }) => {
+  const branches = useBranchStore((s) => s.branches);
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm<CreateUserFormValues>({
+    resolver: zodResolver(createUserSchema),
+  });
+
+  const mutation = useMutation({
+    mutationFn: (data: CreateUserPayload) => createNewUser(data),
+    onSuccess: (data) => {
+      toast.success(`Account created successfully for ${data.name}`);
+      closeModal();
+      reset();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to create user");
+    },
+  });
+
+  const onSubmit = (data: CreateUserFormValues) => {
+    const branch = branches.find((b) => b._id === data.branch);
+
+    if (!branch) {
+      toast.error("Selected branch not found");
+      return;
+    }
+    const payload: CreateUserPayload = {
+      ...data,
+      name: `${data.firstName} ${data.lastName}`,
+      branchId: branch._id,
+      branch: branch.name,
+    };
+
+    // payload has no firstName/lastName
+    mutation.mutate(payload);
+  };
+
   return (
     <section className="font-Inter">
       <h4 className="text-xl text-[#1E1E1E] font-medium border-b py-6 px-9">
         Create New User
       </h4>
 
-      <form>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-6 py-6 px-9">
           {/* first name */}
           <div>
@@ -27,9 +86,19 @@ const CreateUserModal = () => {
             <Input
               type="text"
               id="userfirstname"
+              {...register("firstName")}
+              disabled={mutation.isPending}
+              aria-invalid={!!errors.firstName}
               placeholder="Enter first name"
-              className="text-[#7D7D7D] md:text-sm"
+              className={`text-[#7D7D7D] md:text-sm ${
+                errors.firstName
+                  ? "border-[var(--cl-error)]"
+                  : "border-[var(--cl-gray-a1)]"
+              } ${mutation.isPending ? "cursor-not-allowed opacity-50" : ""}`}
             />
+            <p className="text-[var(--cl-error)] text-sm pt-1">
+              {errors.firstName?.message ?? ""}
+            </p>
           </div>
 
           {/* last name */}
@@ -43,9 +112,19 @@ const CreateUserModal = () => {
             <Input
               type="text"
               id="userlastname"
+              {...register("lastName")}
+              disabled={mutation.isPending}
+              aria-invalid={!!errors.lastName}
               placeholder="Enter last name"
-              className="text-[#7D7D7D] md:text-sm"
+              className={`text-[#7D7D7D] md:text-sm ${
+                errors.lastName
+                  ? "border-[var(--cl-error)]"
+                  : "border-[var(--cl-gray-a1)]"
+              } ${mutation.isPending ? "cursor-not-allowed opacity-50" : ""}`}
             />
+            <p className="text-[var(--cl-error)] text-sm pt-1">
+              {errors.lastName?.message ?? ""}
+            </p>
           </div>
 
           {/*  user phone number */}
@@ -59,9 +138,19 @@ const CreateUserModal = () => {
             <Input
               type="text"
               id="userphonenumber"
+              {...register("phone")}
+              disabled={mutation.isPending}
+              aria-invalid={!!errors.phone}
               placeholder="Enter user phone number"
-              className="text-[#7D7D7D] md:text-sm"
+              className={`text-[#7D7D7D] md:text-sm ${
+                errors.phone
+                  ? "border-[var(--cl-error)]"
+                  : "border-[var(--cl-gray-a1)]"
+              } ${mutation.isPending ? "cursor-not-allowed opacity-50" : ""}`}
             />
+            <p className="text-[var(--cl-error)] text-sm pt-1">
+              {errors.phone?.message ?? ""}
+            </p>
           </div>
 
           {/* user address */}
@@ -75,9 +164,19 @@ const CreateUserModal = () => {
             <Input
               type="text"
               id="useraddress"
+              {...register("address")}
+              disabled={mutation.isPending}
+              aria-invalid={!!errors.address}
               placeholder="Enter user address"
-              className="text-[#7D7D7D] md:text-sm"
+              className={`text-[#7D7D7D] md:text-sm ${
+                errors.address
+                  ? "border-[var(--cl-error)]"
+                  : "border-[var(--cl-gray-a1)]"
+              } ${mutation.isPending ? "cursor-not-allowed opacity-50" : ""}`}
             />
+            <p className="text-[var(--cl-error)] text-sm pt-1">
+              {errors.address?.message ?? ""}
+            </p>
           </div>
 
           {/* user password */}
@@ -91,9 +190,19 @@ const CreateUserModal = () => {
             <Input
               type="text"
               id="userpassword"
+              {...register("password")}
+              disabled={mutation.isPending}
+              aria-invalid={!!errors.password}
               placeholder="Enter user password"
-              className="text-[#7D7D7D] md:text-sm"
+              className={`text-[#7D7D7D] md:text-sm ${
+                errors.password
+                  ? "border-[var(--cl-error)]"
+                  : "border-[var(--cl-gray-a1)]"
+              } ${mutation.isPending ? "cursor-not-allowed opacity-50" : ""}`}
             />
+            <p className="text-[var(--cl-error)] text-sm pt-1">
+              {errors.password?.message ?? ""}
+            </p>
           </div>
 
           {/* user email */}
@@ -107,10 +216,21 @@ const CreateUserModal = () => {
             <Input
               type="email"
               id="useremail"
+              {...register("email")}
+              disabled={mutation.isPending}
+              aria-invalid={!!errors.email}
               placeholder="Enter user email address"
-              className="text-[#7D7D7D] md:text-sm"
+              className={`text-[#7D7D7D] md:text-sm ${
+                errors.email
+                  ? "border-[var(--cl-error)]"
+                  : "border-[var(--cl-gray-a1)]"
+              } ${mutation.isPending ? "cursor-not-allowed opacity-50" : ""}`}
             />
+            <p className="text-[var(--cl-error)] text-sm pt-1">
+              {errors.email?.message ?? ""}
+            </p>
           </div>
+
           {/* role */}
           <div>
             <label
@@ -119,13 +239,24 @@ const CreateUserModal = () => {
             >
               Role
             </label>
-            <Select>
-              <SelectTrigger className="w-full">Select Role</SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="staff">Staff</SelectItem>
-              </SelectContent>
-            </Select>
+            <Controller
+              name="role"
+              control={control}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ADMIN">Admin</SelectItem>
+                    <SelectItem value="STAFF">Staff</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <p className="text-[var(--cl-error)] text-sm pt-1">
+              {errors.role?.message ?? ""}
+            </p>
           </div>
 
           {/* branch */}
@@ -136,21 +267,34 @@ const CreateUserModal = () => {
             >
               Branch
             </label>
-            <Select>
-              <SelectTrigger className="w-full">Select Role</SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="staff">Staff</SelectItem>
-              </SelectContent>
-            </Select>
+            <Controller
+              name="branch"
+              control={control}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Branch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {branches.map((branch) => (
+                      <SelectItem key={branch._id} value={branch._id}>
+                        {branch.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
         </div>
 
         <div className="bg-[#F5F5F5] h-24 flex justify-end items-center gap-5 px-5">
-          <Button type="button" variant="outline">
+          <Button type="button" variant="outline" onClick={closeModal}>
             Cancel
           </Button>
-          <Button type="button">Create User</Button>
+          <Button type="submit" disabled={mutation.isPending}>
+            {mutation.isPending ? "Creating user..." : "Create User"}
+          </Button>
         </div>
       </form>
     </section>

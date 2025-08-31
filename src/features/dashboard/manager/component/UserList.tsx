@@ -25,7 +25,7 @@ import {
   SelectGroup,
   SelectItem,
 } from "@/components/ui/select";
-import * as XLSX from 'xlsx';
+import * as XLSX from "xlsx";
 import {
   Search,
   ExternalLink,
@@ -70,97 +70,49 @@ type RoleType = Role | string;
 type LocationType = Location | string;
 
 const UserList: React.FC = () => {
-  const [deleteModal, setDeleteModal] = useState<{
-    open: boolean;
-    name: string | null;
-  }>({ open: false, name: null });
-  const [suspendModal, setSuspendModal] = useState<{
-    open: boolean;
-    name: string | null;
-  }>({ open: false, name: null });
   const [enableModal, setEnableModal] = useState<{
     open: boolean;
     name: string | null;
   }>({ open: false, name: null });
-
-  const handleDeleteClick = (name: string) =>
-    setDeleteModal({ open: true, name });
-  const handleCloseModal = () => setDeleteModal({ open: false, name: null });
-  const handleConfirmDelete = () => {
-    // Add delete logic here
-    setDeleteModal({ open: false, name: null });
-  };
-
-  const handleSuspendClick = (name: string) => {
-    setSuspendModal({ open: true, name });
-  };
-  const handleCloseSuspendModal = () =>
-    setSuspendModal({ open: false, name: null });
-  const handleConfirmSuspend = () => {
-    // Find user by name
-    const user = users.find((u) => u.name === suspendModal.name);
-    if (!user) return setSuspendModal({ open: false, name: null });
-    const token = localStorage.getItem("token") || "";
-    fetch(
-      `https://mfon-obong-enterprise.onrender.com/api/users/${user._id}/suspend`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    )
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to suspend user");
-        // Refresh users
-        setSuspendModal({ open: false, name: null });
-        window.location.reload();
-      })
-      .catch(() => {
-        alert("Error suspending user");
-        setSuspendModal({ open: false, name: null });
-      });
-  };
 
   const handleEnableClick = (name: string) => {
     setEnableModal({ open: true, name });
   };
 
   const handleExportAllUsers = () => {
-  const wb = XLSX.utils.book_new(); // Create a new workbook
-  const ws = XLSX.utils.json_to_sheet(users); // Convert users data to a worksheet
-  XLSX.utils.book_append_sheet(wb, ws, "Users"); // Append the worksheet to the workbook
-  XLSX.writeFile(wb, "users_export.csv"); // Export the workbook to a CSV file
-};
-
-  const handleCloseEnableModal = () =>
-    setEnableModal({ open: false, name: null });
-  const handleConfirmEnable = () => {
-    // Find user by name
-    const user = users.find((u) => u.name === enableModal.name);
-    if (!user) return setEnableModal({ open: false, name: null });
-    const token = localStorage.getItem("token") || "";
-    fetch(
-      `https://mfon-obong-enterprise.onrender.com/api/users/${user._id}/enable`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    )
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to enable user");
-        setEnableModal({ open: false, name: null });
-        window.location.reload();
-      })
-      .catch(() => {
-        alert("Error enabling user");
-        setEnableModal({ open: false, name: null });
-      });
+    const wb = XLSX.utils.book_new(); // Create a new workbook
+    const ws = XLSX.utils.json_to_sheet(users); // Convert users data to a worksheet
+    XLSX.utils.book_append_sheet(wb, ws, "Users"); // Append the worksheet to the workbook
+    XLSX.writeFile(wb, "users_export.csv"); // Export the workbook to a CSV file
   };
+
+  // const handleCloseEnableModal = () =>
+  //   setEnableModal({ open: false, name: null });
+  // const handleConfirmEnable = () => {
+  //   // Find user by name
+  //   const user = users.find((u) => u.name === enableModal.name);
+  //   if (!user) return setEnableModal({ open: false, name: null });
+  //   const token = localStorage.getItem("token") || "";
+  //   fetch(
+  //     `https://mfon-obong-enterprise.onrender.com/api/users/${user._id}/enable`,
+  //     {
+  //       method: "PATCH",
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //         "Content-Type": "application/json",
+  //       },
+  //     }
+  //   )
+  //     .then((res) => {
+  //       if (!res.ok) throw new Error("Failed to enable user");
+  //       setEnableModal({ open: false, name: null });
+  //       window.location.reload();
+  //     })
+  //     .catch(() => {
+  //       alert("Error enabling user");
+  //       setEnableModal({ open: false, name: null });
+  //     });
+  // };
   const [users, setUsers] = useState<User[]>([]);
   const defaultRoles: Role[] = [
     { name: "Admin" },
@@ -279,7 +231,10 @@ const UserList: React.FC = () => {
                 className="w-64 p-0 rounded-lg shadow-lg border border-[#F0F0F0]"
               >
                 <>
-                  <button className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-t-lg font-medium" onClick= {handleExportAllUsers}>
+                  <button
+                    className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-t-lg font-medium"
+                    onClick={handleExportAllUsers}
+                  >
                     <span className="flex-1 text-left">
                       {">  "} Export All Users
                     </span>
@@ -331,10 +286,14 @@ const UserList: React.FC = () => {
                     <SelectItem value="all">All Roles</SelectItem>
                     {roles.map((role) => (
                       <SelectItem
-                        key={typeof role === 'string' ? role : (role.id || role._id || role.name)}
-                        value={typeof role === 'string' ? role : role.name}
+                        key={
+                          typeof role === "string"
+                            ? role
+                            : role.id || role._id || role.name
+                        }
+                        value={typeof role === "string" ? role : role.name}
                       >
-                        {typeof role === 'string' ? role : role.name}
+                        {typeof role === "string" ? role : role.name}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -357,10 +316,14 @@ const UserList: React.FC = () => {
                     <SelectItem value="all">All Locations</SelectItem>
                     {locations.map((loc) => (
                       <SelectItem
-                        key={typeof loc === 'string' ? loc : (loc.id || loc._id || loc.name)}
-                        value={typeof loc === 'string' ? loc : loc.name}
+                        key={
+                          typeof loc === "string"
+                            ? loc
+                            : loc.id || loc._id || loc.name
+                        }
+                        value={typeof loc === "string" ? loc : loc.name}
                       >
-                        {typeof loc === 'string' ? loc : loc.name}
+                        {typeof loc === "string" ? loc : loc.name}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -593,13 +556,6 @@ const UserList: React.FC = () => {
                           {/* Three dots popover menu at end of row */}
                           <TableCell className="py-3 px-4 text-right">
                             {!(
-                              deleteModal.open && deleteModal.name === user.name
-                            ) &&
-                            !(
-                              suspendModal.open &&
-                              suspendModal.name === user.name
-                            ) &&
-                            !(
                               enableModal.open && enableModal.name === user.name
                             ) ? (
                               <Popover>
@@ -643,22 +599,12 @@ const UserList: React.FC = () => {
                                         Enable User
                                       </span>
                                     </button>
-                                    <button
-                                      className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
-                                      onClick={() =>
-                                        handleSuspendClick(user.name)
-                                      }
-                                    >
+                                    <button className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium">
                                       <span className="flex-1 text-left">
                                         Suspend User
                                       </span>
                                     </button>
-                                    <button
-                                      className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium text-red-600"
-                                      onClick={() =>
-                                        handleDeleteClick(user.name)
-                                      }
-                                    >
+                                    <button className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium text-red-600">
                                       <span className="flex-1 text-left">
                                         Delete User
                                       </span>
@@ -688,67 +634,9 @@ const UserList: React.FC = () => {
             </Table>
           </div>
         </div>
-        {/* Delete Confirmation Modal (rendered outside main for stacking) */}
-        {deleteModal.open && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-xl p-8 w-full max-w-md mx-auto text-center">
-              <h2 className="text-xl font-bold mb-4 ">Confirm Action</h2>
-              <p className="mb-6 text-base text-[#444]">
-                You are about to delete{" "}
-                <span className="font-semibold">{deleteModal.name}</span>.<br />
-                Are you sure you want to perform this action?
-                <br />
-                <span className="font-medium">This can’t be undone...</span>
-              </p>
-              <div className="flex gap-4 justify-center">
-                <button
-                  className="px-6 py-2 rounded-lg text-[#444] font-medium border-2"
-                  onClick={handleCloseModal}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="px-6 py-2 rounded-lg bg-red-600 text-white font-medium"
-                  onClick={handleConfirmDelete}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+
         {/* Suspend Confirmation Modal (customized) */}
-        {suspendModal.open && suspendModal.name && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-xl p-8 w-full max-w-md mx-auto text-center">
-              <h2 className="text-xl font-bold mb-4 ">Confirm Action</h2>
-              <p className="mb-6 text-base text-[#444]">
-                You are about to suspend{" "}
-                <span className="font-semibold">{suspendModal.name}</span>.
-                <br />
-                Are you sure you want to perform this action?
-                <br />
-                <span className="font-medium">
-                  This will restrict the user's access.
-                </span>
-              </p>
-              <div className="flex gap-4 justify-center">
-                <button
-                  className="px-6 py-2 rounded-lg text-[#444] font-medium border-2"
-                  onClick={handleCloseSuspendModal}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="px-6 py-2 rounded-lg bg-green-600 text-white font-medium"
-                  onClick={handleConfirmSuspend}
-                >
-                  Confirm
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+
         {/* Enable Confirmation Modal (customized) */}
         {enableModal.open && enableModal.name && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -766,13 +654,13 @@ const UserList: React.FC = () => {
               <div className="flex gap-4 justify-center">
                 <button
                   className="px-6 py-2 rounded-lg text-[#444] font-medium border-2"
-                  onClick={handleCloseEnableModal}
+                  // onClick={handleCloseEnableModal}
                 >
                   Cancel
                 </button>
                 <button
                   className="px-6 py-2 rounded-lg bg-green-600 text-white font-medium"
-                  onClick={handleConfirmEnable}
+                  // onClick={handleConfirmEnable}
                 >
                   Confirm
                 </button>

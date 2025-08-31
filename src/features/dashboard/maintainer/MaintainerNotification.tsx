@@ -1,5 +1,11 @@
+import Notifications from "../shared/notifications/notifications";
+
 const MaintainerNotification = () => {
-  return <div>Maintainer notification</div>;
+  return (
+    <div>
+      <Notifications />
+    </div>
+  );
 };
 
 export default MaintainerNotification;

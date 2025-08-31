@@ -9,11 +9,12 @@ interface NotificationSettingsSectionProps {
   isReadOnly?: boolean;
 }
 
-export const NotificationSettingsSection: React.FC<NotificationSettingsSectionProps> = ({
+export const NotificationSettingsSection3: React.FC<NotificationSettingsSectionProps> = ({
   settings,
   onSettingChange,
   isReadOnly = false,
 }) => {
+ 
   const alerts = settings.alerts || {};
 
   return (
