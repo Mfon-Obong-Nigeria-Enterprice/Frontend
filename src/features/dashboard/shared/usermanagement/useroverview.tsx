@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 // components
@@ -22,6 +23,7 @@ import {
   SelectGroup,
   SelectItem,
 } from "@/components/ui/select";
+
 // icons
 import {
   Search,
@@ -33,8 +35,10 @@ import {
   Zap,
   Plus,
 } from "lucide-react";
+import { MdOutlineHome } from "react-icons/md";
 
 const UserOverview = () => {
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -67,7 +71,7 @@ const UserOverview = () => {
               </PopoverTrigger>
               <PopoverContent
                 align="end"
-                className="w-64 p-0 rounded-lg shadow-lg border border-[#F0F0F0]"
+                className="w-64 p-0 rounded-lg shadow-lg border border-[#F0F0F0] cursor-pointer"
               >
                 <>
                   <button
@@ -79,18 +83,40 @@ const UserOverview = () => {
                     </span>
                   </button>
                   <hr className="border-[#F0F0F0]" />
-                  <button
-                    className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] font-medium"
-                    //   onClick={() => navigate("/manager/dashboard/activity-log")}
+                  {user?.role === "SUPER_ADMIN" && (
+                    <>
+                      <button
+                        className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] font-medium"
+                        onClick={() => navigate("/manager/dashboard/log")}
+                      >
+                        <span className="flex-1 text-left">User Audit Log</span>
+                        <ExternalLink className="size-4 text-muted-foreground" />
+                      </button>
+                      <hr className="border-[#F0F0F0]" />
+                    </>
+                  )}
+                  <Button
+                    variant="ghost"
+                    className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium"
                   >
-                    <span className="flex-1 text-left">User Audit Log</span>
+                    <span className="flex-1 text-left py-5">
+                      Columns Settings
+                    </span>
                     <ExternalLink className="size-4 text-muted-foreground" />
-                  </button>
-                  <hr className="border-[#F0F0F0]" />
-                  <button className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium">
-                    <span className="flex-1 text-left">Columns Settings</span>
-                    <ExternalLink className="size-4 text-muted-foreground" />
-                  </button>
+                  </Button>
+
+                  {user?.role === "MAINTAINER" && (
+                    <>
+                      <hr className="border-[#F0F0F0]" />
+                      <button className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium">
+                        <span className="flex-1 text-left">
+                          Add Bussiness Locations
+                        </span>
+                        <MdOutlineHome className="size-5 text-muted-foreground" />
+                      </button>
+                      <hr className="border-[#F0F0F0]" />
+                    </>
+                  )}
                 </>
               </PopoverContent>
             </Popover>

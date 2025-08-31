@@ -18,11 +18,12 @@ import ManagerClients from "@/features/dashboard/manager/ManagerClients";
 import RevenueAnalytics from "@/features/dashboard/manager/RevenueAnalytics";
 import UserManagement from "@/features/dashboard/manager/UserManagement";
 import ManagerSettings from "@/features/dashboard/manager/ManagerSettings";
-import ActivityLogPage from "@/pages/ActivityLogPage";
 
 // maintainer
 import MaintainerLayout from "@/layout/MaintainerLayout";
 import MaintainerDashboard from "@/features/dashboard/maintainer/MaintainerDashboard";
+import ActivityLog from "@/features/dashboard/maintainer/ActivityLog";
+import MaintainerSettings from "@/features/dashboard/maintainer/MaintainerSettings";
 
 // admin
 import AdminDashboardLayout from "@/layout/AdminDashboardLayout";
@@ -43,6 +44,7 @@ import Stock from "@/features/dashboard/staff/Stock";
 import StaffClients from "@/features/dashboard/staff/StaffClients";
 import ManagerNotifications from "@/features/dashboard/manager/ManagerNotifications";
 import ManageUser from "@/features/dashboard/maintainer/ManageUser";
+import MaintainerNotification from "@/features/dashboard/maintainer/MaintainerNotification";
 
 const router = createBrowserRouter([
   { path: "/", element: <Login /> },
@@ -56,12 +58,12 @@ const router = createBrowserRouter([
       { path: "business-report", element: <BusinessReport /> },
       { path: "manage-clients", element: <ManagerClients /> },
       { path: "manage-transactions", element: <ManagerTransactions /> },
-      { path: "activity-log", element: <ActivityLogPage /> },
       { path: "revenue-analytics", element: <RevenueAnalytics /> },
       { path: "manage-user", element: <UserManagement /> },
       { path: "manager-settings", element: <ManagerSettings /> },
       { path: "manager-notifications", element: <ManagerNotifications /> },
       { path: "user-management/:id", element: <UserDetailsPage /> },
+      { path: "log", element: <ActivityLog /> },
     ],
   },
   {
@@ -75,6 +77,9 @@ const router = createBrowserRouter([
       { path: "overview", element: <MaintainerDashboard /> },
       { path: "user", element: <ManageUser /> },
       { path: "user-management/:id", element: <UserDetailsPage /> },
+      { path: "maintainer-notifications", element: <MaintainerNotification /> },
+      { path: "log", element: <ActivityLog /> },
+      { path: "settings", element: <MaintainerSettings /> },
     ],
   },
   {
@@ -116,7 +121,6 @@ const router = createBrowserRouter([
     element: <ClientDetailsPage />,
   },
   { path: "import-stock", element: <ImportStockPage /> },
-  // { path: "user-management/:userId", element: <UserDetailsPage /> },
   {
     path: "*",
     element: <Notfound />,
