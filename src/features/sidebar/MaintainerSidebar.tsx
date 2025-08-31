@@ -5,7 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   UserRoundCog,
-  // Settings,
+   Settings,
   // CreditCard,
   Bell,
   LogOut,
@@ -49,12 +49,11 @@ const items = [
     url: "/maintainer/dashboard/maintainer-notifications",
     icon: Bell,
   },
-  // /manager/dashboard/manage-user
-  // {
-  //   title: "Settings",
-  //   url: "/manager/dashboard/manager-settings",
-  //   icon: Settings,
-  // },
+ {
+  title: "Settings",
+  url: "/maintainer/dashboard/maintainer-settings",
+   icon: Settings,
+ },
 ];
 
 const MaintainerSidebar = () => {

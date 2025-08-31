@@ -9,16 +9,17 @@ interface NotificationSettingsSectionProps {
   isReadOnly?: boolean;
 }
 
-export const NotificationSettingsSection: React.FC<NotificationSettingsSectionProps> = ({
+export const NotificationSettingsSection1: React.FC<NotificationSettingsSectionProps> = ({
   settings,
   onSettingChange,
   isReadOnly = false,
 }) => {
+ 
   const alerts = settings.alerts || {};
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-6">
+      <div className="flex items-center gap-6">
         <div className="flex items-center space-x-3">
           <Checkbox
             id="dashboardNotification"
