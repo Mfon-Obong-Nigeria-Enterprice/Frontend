@@ -5,9 +5,7 @@ import type {
   Product,
   ApiResponse,
   ProductUpdatePricePayload,
-  UpdateSettingsPayload,
-  ApiSettings
-} from '@/types/types';
+  UpdateSettingsPayload} from '@/types/types';
 import { toast } from 'sonner';
 
 // Configuration
@@ -38,6 +36,20 @@ api.interceptors.response.use(
     if (!import.meta.env.PROD) {
       console.error('API Error:', error);
     }
+    
+    // Show user-friendly error messages
+    if (error.response?.status === 401) {
+      toast.error('Session expired. Please login again.');
+      localStorage.removeItem('authToken');
+      window.location.href = '/login';
+    } else if (error.response?.status === 403) {
+      toast.error('You do not have permission to perform this action.');
+    } else if (error.response?.data?.message) {
+      toast.error(error.response.data.message);
+    } else {
+      toast.error('An unexpected error occurred');
+    }
+    
     return Promise.reject(error);
   }
 );
@@ -50,86 +62,51 @@ export const handleApiResponse = <T>(response: AxiosResponse<ApiResponse<T>>): T
   return response.data.data;
 };
 
+// Since you don't have a settings API, we'll use localStorage as fallback
 // Convert API settings to frontend format
-const convertApiToFrontendSettings = (apiSettings: ApiSettings): Settings => {
-  return {
-    alerts: {
-      lowStockAlerts: apiSettings.lowStockAlert ?? true,
-      newProductNotifications: apiSettings.newProductNotification ?? true,
-      expirationReminders: apiSettings.expirationReminder ?? true,
-      clientsDebtsAlert: apiSettings.debtAlert ?? false,
-      CustomThresholdAlerts: apiSettings.customThresholdAlert ?? false,
-      LargeBalanceAlertThreshold: apiSettings.largeBalanceAlert ?? false,
-      PriceChangeNotification: apiSettings.priceChangeNotification ?? false,
-      dashboardNotification: apiSettings.dashboardNotification ?? false,
-      emailNotification: apiSettings.emailNotification ?? false,
-      inactivityAlerts: apiSettings.inactivityAlert ?? false,
-      systemHealthAlerts: apiSettings.systemHealthAlert ?? false,
-      userLoginNotifications: apiSettings.userLoginNotification ?? false,
-    },
-    system: {
-      lowStockAlertThreshold: apiSettings.lowStockThreshold ?? 15,
-      maximumDiscount: apiSettings.maxDiscount ?? 10,
-      bulkDiscountThreshold: apiSettings.bulkDiscountThreshold ?? 10000,
-      minimumPurchaseForBulkDiscount: apiSettings.minPurchaseForBulkDiscount ?? 500,
-      allowNegativeBalances: apiSettings.allowNegativeBalance ?? false,
-      largeBalanceThreshold: apiSettings.largeBalanceThreshold ?? 50000,
-    },
-    clientAccount: {
-      defaultCreditLimit: apiSettings.defaultCreditLimit ?? 800000,
-      inactivePeriodDays: apiSettings.inactivePeriodDays ?? 30,
-    },
-  };
-};
 
 // Convert frontend settings to API format
-const convertFrontendToApiSettings = (frontendSettings: UpdateSettingsPayload): Partial<ApiSettings> => {
-  const apiSettings: Partial<ApiSettings> = {};
 
-  // Alert settings
-  if (frontendSettings.alerts) {
-    const alerts = frontendSettings.alerts;
-    apiSettings.lowStockAlert = alerts.lowStockAlerts;
-    apiSettings.newProductNotification = alerts.newProductNotifications;
-    apiSettings.expirationReminder = alerts.expirationReminders;
-    apiSettings.debtAlert = alerts.clientsDebtsAlert;
-    apiSettings.customThresholdAlert = alerts.CustomThresholdAlerts;
-    apiSettings.largeBalanceAlert = alerts.LargeBalanceAlertThreshold;
-    apiSettings.priceChangeNotification = alerts.PriceChangeNotification;
-    apiSettings.dashboardNotification = alerts.dashboardNotification;
-    apiSettings.emailNotification = alerts.emailNotification;
-    apiSettings.inactivityAlert = alerts.inactivityAlerts;
-    apiSettings.systemHealthAlert = alerts.systemHealthAlerts;
-    apiSettings.userLoginNotification = alerts.userLoginNotifications;
-  }
-
-  // System settings
-  if (frontendSettings.system) {
-    const system = frontendSettings.system;
-    apiSettings.lowStockThreshold = system.lowStockAlertThreshold;
-    apiSettings.maxDiscount = system.maximumDiscount;
-    apiSettings.bulkDiscountThreshold = system.bulkDiscountThreshold;
-    apiSettings.minPurchaseForBulkDiscount = system.minimumPurchaseForBulkDiscount;
-    apiSettings.allowNegativeBalance = system.allowNegativeBalances;
-    apiSettings.largeBalanceThreshold = system.largeBalanceThreshold;
-  }
-
-  // Client account settings
-  if (frontendSettings.clientAccount) {
-    const clientAccount = frontendSettings.clientAccount;
-    apiSettings.defaultCreditLimit = clientAccount.defaultCreditLimit;
-    apiSettings.inactivePeriodDays = clientAccount.inactivePeriodDays;
-  }
-
-  return apiSettings;
-};
-
-// Settings API
+// Settings API - FALLBACK to localStorage since you don't have settings API
 export const fetchSettings = async (): Promise<Settings> => {
   try {
-    const response = await api.get<ApiResponse<ApiSettings>>('/system-preferences');
-    const apiSettings = handleApiResponse(response);
-    return convertApiToFrontendSettings(apiSettings);
+    // Try to get from localStorage first
+    const savedSettings = localStorage.getItem('app-settings');
+    if (savedSettings) {
+      return JSON.parse(savedSettings);
+    }
+
+    // Return default settings if nothing in localStorage
+    const defaultSettings: Settings = {
+      alerts: {
+        lowStockAlerts: false,
+        newProductNotifications: false,
+        expirationReminders: false,
+        clientsDebtsAlert: false,
+        CustomThresholdAlerts: false,
+        LargeBalanceAlertThreshold: false,
+        PriceChangeNotification: false,
+        dashboardNotification: false,
+        emailNotification: false,
+        inactivityAlerts: false,
+        systemHealthAlerts: false,
+        userLoginNotifications: false
+      },
+      system: {
+        lowStockAlertThreshold: 15,
+        maximumDiscount: 10,
+        bulkDiscountThreshold: 10000,
+        minimumPurchaseForBulkDiscount: 500,
+        allowNegativeBalances: false,
+        largeBalanceThreshold: 50000,
+      },
+      clientAccount: {
+        defaultCreditLimit: 800000,
+        inactivePeriodDays: 30,
+      }
+    };
+
+    return defaultSettings;
   } catch (error) {
     if (!import.meta.env.PROD) {
       console.error('Error fetching settings:', error);
@@ -140,17 +117,32 @@ export const fetchSettings = async (): Promise<Settings> => {
 
 export const updateSettings = async (payload: UpdateSettingsPayload): Promise<Settings> => {
   try {
-    const apiPayload = convertFrontendToApiSettings(payload);
+    // Get current settings
+    const currentSettings = await fetchSettings();
     
-    const response = await api.patch<ApiResponse<ApiSettings>>(
-      '/system-preferences', 
-      apiPayload
-    );
+    // Merge with new settings
+    const updatedSettings: Settings = {
+      ...currentSettings,
+      ...payload,
+      alerts: {
+        ...currentSettings.alerts,
+        ...payload.alerts,
+      },
+      system: {
+        ...currentSettings.system,
+        ...payload.system,
+      },
+      clientAccount: {
+        ...currentSettings.clientAccount,
+        ...payload.clientAccount,
+      }
+    };
+
+    // Save to localStorage
+    localStorage.setItem('app-settings', JSON.stringify(updatedSettings));
     
-    const updatedApiSettings = handleApiResponse(response);
     toast.success('Settings updated successfully');
-    
-    return convertApiToFrontendSettings(updatedApiSettings);
+    return updatedSettings;
   } catch (error) {
     if (!import.meta.env.PROD) {
       console.error('Error updating settings:', error);
@@ -159,10 +151,10 @@ export const updateSettings = async (payload: UpdateSettingsPayload): Promise<Se
   }
 };
 
-// Products API
+// Products API - Use your actual endpoints
 export const fetchProducts = async (): Promise<Product[]> => {
   try {
-    const response = await api.get<ApiResponse<Product[]>>('/find-all-products');
+    const response = await api.get<ApiResponse<Product[]>>('/products');
     const data = handleApiResponse(response);
     
     if (!Array.isArray(data)) {
@@ -184,11 +176,8 @@ export const fetchProducts = async (): Promise<Product[]> => {
 export const updateProductPrice = async (payload: ProductUpdatePricePayload): Promise<Product> => {
   try {
     const response = await api.patch<ApiResponse<Product>>(
-      '/update-price',
-      { 
-        productId: payload.productId, 
-        newPrice: payload.newPrice 
-      }
+      `/products/${payload.productId}/update-price`,
+      { price: payload.newPrice }
     );
     
     const data = handleApiResponse(response);

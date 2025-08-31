@@ -1,3 +1,4 @@
+// features/dashboard/super-admin/components/AlertSettings.tsx
 import * as React from 'react';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -19,11 +20,13 @@ export const AlertSettingsSection: React.FC<AlertSettingsSectionProps> = ({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <div className="flex items-center space-x-3 p-3 ">
+        <div className="flex items-center space-x-3 p-3">
           <Checkbox
             id="clientsDebtsAlert"
             checked={alerts.clientsDebtsAlert || false}
-            onCheckedChange={(checked) => onSettingChange('clientsDebtsAlert', checked as boolean)}
+            onCheckedChange={(checked) =>
+              onSettingChange('clientsDebtsAlert', checked as boolean)
+            }
             disabled={isReadOnly}
             className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
           />
@@ -32,24 +35,28 @@ export const AlertSettingsSection: React.FC<AlertSettingsSectionProps> = ({
           </Label>
         </div>
 
-        <div className="flex items-center space-x-3 p-3 ">
+        <div className="flex items-center space-x-3 p-3">
           <Checkbox
-            id="LargeBalanceAlertThreshold"
+            id="largeBalanceAlertThreshold"
             checked={alerts.LargeBalanceAlertThreshold || false}
-            onCheckedChange={(checked) => onSettingChange('LargeBalanceAlertThreshold', checked as boolean)}
+            onCheckedChange={(checked) =>
+              onSettingChange('LargeBalanceAlertThreshold', checked as boolean)
+            }
             disabled={isReadOnly}
             className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
           />
-          <Label htmlFor="LargeBalanceAlertThreshold" className="text-gray-700 text-sm font-medium cursor-pointer">
+          <Label htmlFor="largeBalanceAlertThreshold" className="text-gray-700 text-sm font-medium cursor-pointer">
             Large Balance Alert
           </Label>
         </div>
 
-        <div className="flex items-center space-x-3 p-3 ">
+        <div className="flex items-center space-x-3 p-3">
           <Checkbox
             id="lowStockAlerts"
             checked={alerts.lowStockAlerts || false}
-            onCheckedChange={(checked) => onSettingChange('lowStockAlerts', checked as boolean)}
+            onCheckedChange={(checked) =>
+              onSettingChange('lowStockAlerts', checked as boolean)
+            }
             disabled={isReadOnly}
             className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
           />
@@ -58,11 +65,13 @@ export const AlertSettingsSection: React.FC<AlertSettingsSectionProps> = ({
           </Label>
         </div>
 
-        <div className="flex items-center space-x-3 p-3 ">
+        <div className="flex items-center space-x-3 p-3">
           <Checkbox
             id="inactivityAlerts"
             checked={alerts.inactivityAlerts || false}
-            onCheckedChange={(checked) => onSettingChange('inactivityAlerts', checked as boolean)}
+            onCheckedChange={(checked) =>
+              onSettingChange('inactivityAlerts', checked as boolean)
+            }
             disabled={isReadOnly}
             className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
           />

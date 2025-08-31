@@ -1,3 +1,4 @@
+// features/dashboard/manager/component/AlertSettingsSection1.tsx
 import * as React from 'react';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -19,13 +20,15 @@ export const AlertSettingsSection1: React.FC<AlertSettingsSectionProps> = ({
 }) => {
   
   const alerts = settings.alerts || {};
+  const systemSettings = settings.system || {};
+  
   const [localThreshold, setLocalThreshold] = React.useState(
-    settings.system.largeBalanceThreshold?.toString() || '50000'
+    systemSettings.largeBalanceThreshold?.toString() || '50000'
   );
 
   React.useEffect(() => {
-    setLocalThreshold(settings.system.largeBalanceThreshold?.toString() || '50000');
-  }, [settings.system.largeBalanceThreshold]);
+    setLocalThreshold(systemSettings.largeBalanceThreshold?.toString() || '50000');
+  }, [systemSettings.largeBalanceThreshold]);
 
   const handleThresholdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -85,6 +88,7 @@ export const AlertSettingsSection1: React.FC<AlertSettingsSectionProps> = ({
             min="0"
             step="1"
             placeholder="Enter amount"
+            disabled={isReadOnly}
           />
         </div>
 

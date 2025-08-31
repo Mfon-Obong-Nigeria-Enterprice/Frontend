@@ -1,18 +1,17 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+// features/dashboard/maintainer/components/MaintainerSettings.tsx
 import { useState, useEffect } from "react";
 import { SettingsPage } from "./components/SettingsPage";
 import { NotificationSettingsSection3 } from "./components/NotificationSettings3";
 import { AlertSettingsSection3 } from "./components/AlertSettings3";
-import { useSystemSettings, useUpdateSystemSettings } from "@/hooks/useSetting";
 import type { Settings, AlertAndNotificationSettings } from "@/types/types";
 
-const MaintainerSettings = () => {
-  const { data: systemSettings, refetch: refetchSettings } = useSystemSettings();
-  const updateSystemSettingsMutation = useUpdateSystemSettings();
+export default function MaintainerSettings() {
   const [settings, setSettings] = useState<Settings>({
     alerts: {
-      lowStockAlerts: true,
-      newProductNotifications: true,
-      expirationReminders: true,
+      lowStockAlerts: false,
+      newProductNotifications: false,
+      expirationReminders: false,
       clientsDebtsAlert: false,
       CustomThresholdAlerts: false,
       LargeBalanceAlertThreshold: false,
@@ -37,64 +36,38 @@ const MaintainerSettings = () => {
     },
   });
 
+  // Load settings from localStorage
   useEffect(() => {
-    if (systemSettings) {
-      setSettings(systemSettings);
-    }
-  }, [systemSettings]);
-
-  const handleAlertSettingChange = async (key: keyof AlertAndNotificationSettings, value: boolean) => {
-    try {
-      setSettings(prev => ({
-        ...prev,
-        alerts: {
-          ...prev.alerts,
-          [key]: value,
-        },
-      }));
-
-      await updateSystemSettingsMutation.mutateAsync({ 
-        alerts: {
-          [key]: value,
-          lowStockAlerts: false,
-          expirationReminders: false,
-          newProductNotifications: false,
-          clientsDebtsAlert: false,
-          CustomThresholdAlerts: false,
-          PriceChangeNotification: false,
-          LargeBalanceAlertThreshold: false,
-          dashboardNotification: false,
-          emailNotification: false,
-          inactivityAlerts: false,
-          systemHealthAlerts: false,
-          userLoginNotifications: false
-        } 
-      });
-      refetchSettings();
-    } catch (error) {
-      if (!import.meta.env.PROD) {
-        console.error("Failed to update setting:", error);
+    const savedSettings = localStorage.getItem('app-settings');
+    if (savedSettings) {
+      try {
+        setSettings(JSON.parse(savedSettings));
+      } catch (error) {
+        console.error('Failed to load settings from localStorage');
       }
-      setSettings(prev => ({
-        ...prev,
-        alerts: {
-          ...prev.alerts,
-          [key]: !value,
-        },
-      }));
     }
+  }, []);
+
+  const handleAlertSettingChange = (key: keyof AlertAndNotificationSettings, value: boolean) => {
+    // Update local state and localStorage
+    const newSettings = {
+      ...settings,
+      alerts: {
+        ...settings.alerts,
+        [key]: value,
+      },
+    };
+    
+    setSettings(newSettings);
+    localStorage.setItem('app-settings', JSON.stringify(newSettings));
   };
 
   return (
     <div className="min-h-screen py-8 px-4">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-           Settings
-          </h1>
-          <p className="text-gray-600">
-            Manage your system preferences
-          </p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Settings</h1>
+          <p className="text-gray-600">Manage your system preferences</p>
         </div>
 
         <SettingsPage />
@@ -122,5 +95,3 @@ const MaintainerSettings = () => {
     </div>
   );
 }
-
-export default MaintainerSettings;

@@ -47,6 +47,7 @@ export const systemPreferencesSchema = z.object({
   minimumPurchaseForBulkDiscount: z.number().min(0, "Must be a positive number"),
   allowNegativeBalances: z.boolean(),
   largeBalanceThreshold: z.number().min(0, "Must be a positive number"),
+  
 });
 
 export const clientAccountSettingsSchema = z.object({
@@ -66,9 +67,9 @@ export const settingsSchema = z.object({
 // Define the update settings schema
 export const updateSettingsSchema = settingsSchema.partial();
 
-// API Settings Schema (what comes from backend)
+
 export const apiSettingsSchema = z.object({
-  // Alert settings
+  
   lowStockAlert: z.boolean().optional(),
   newProductNotification: z.boolean().optional(),
   expirationReminder: z.boolean().optional(),

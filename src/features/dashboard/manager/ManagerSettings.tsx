@@ -1,56 +1,25 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+// features/dashboard/manager/components/ManagerSettings.tsx
 import { useState, useEffect } from "react";
 import { SystemPreferencesForm } from "./component/SystemPreferanceForm.tsx";
 import { ClientAccountSettingsForm } from "./component/ClientAccountSettingsForm";
 import { NotificationSettingsSection1 } from "./component/NotificationSettings1";
 import { AlertSettingsSection1 } from "./component/AlertSettingsSection1";
-import { useSystemSettings, useUpdateSystemSettings } from "@/hooks/useSetting";
 import type { Settings, AlertAndNotificationSettings } from "@/types/types";
 
-// Mapping between frontend and API keys
-const alertMapping = {
-  lowStockAlerts: 'lowStockAlert',
-  newProductNotifications: 'newProductNotification',
-  expirationReminders: 'expirationReminder',
-  clientsDebtsAlert: 'debtAlert',
-  CustomThresholdAlerts: 'customThresholdAlert',
-  LargeBalanceAlertThreshold: 'largeBalanceAlert',
-  PriceChangeNotification: 'priceChangeNotification',
-  dashboardNotification: 'dashboardNotification',
-  emailNotification: 'emailNotification',
-  inactivityAlerts: 'inactivityAlert',
-  systemHealthAlerts: 'systemHealthAlert',
-  userLoginNotifications: 'userLoginNotification',
-} as const;
-
-const systemMapping = {
-  lowStockAlertThreshold: 'lowStockThreshold',
-  maximumDiscount: 'maxDiscount',
-  bulkDiscountThreshold: 'bulkDiscountThreshold',
-  minimumPurchaseForBulkDiscount: 'minPurchaseForBulkDiscount',
-  allowNegativeBalances: 'allowNegativeBalance',
-  largeBalanceThreshold: 'largeBalanceThreshold',
-} as const;
-
-const clientAccountMapping = {
-  defaultCreditLimit: 'defaultCreditLimit',
-  inactivePeriodDays: 'inactivePeriodDays',
-} as const;
-
 export default function ManagerSettings() {
-  const { data: systemSettings } = useSystemSettings();
-  const updateSystemSettingsMutation = useUpdateSystemSettings();
   const [settings, setSettings] = useState<Settings>({
     alerts: {
       lowStockAlerts: true,
       newProductNotifications: true,
       expirationReminders: true,
-      clientsDebtsAlert: false,
-      CustomThresholdAlerts: false,
-      LargeBalanceAlertThreshold: false,
+      clientsDebtsAlert: true,
+      CustomThresholdAlerts: true,
+      LargeBalanceAlertThreshold: true,
       PriceChangeNotification: false,
       dashboardNotification: false,
       emailNotification: false,
-      inactivityAlerts: false,
+      inactivityAlerts: true,
       systemHealthAlerts: false,
       userLoginNotifications: false
     },
@@ -68,78 +37,56 @@ export default function ManagerSettings() {
     },
   });
 
+  // Load settings from localStorage on component mount
   useEffect(() => {
-    if (systemSettings) {
-      setSettings(systemSettings);
-    }
-  }, [systemSettings]);
-
-  const handleAlertSettingChange = async (key: keyof AlertAndNotificationSettings, value: boolean) => {
-    try {
-      // Optimistically update UI first for instant feedback
-      setSettings(prev => ({
-        ...prev,
-        alerts: {
-          ...prev.alerts,
-          [key]: value,
-        },
-      }));
-
-      const apiKey = alertMapping[key];
-      await updateSystemSettingsMutation.mutateAsync({ [apiKey]: value });
-      
-    } catch (error) {
-      if (!import.meta.env.PROD) {
-        console.error("Failed to update setting:", error);
+    const savedSettings = localStorage.getItem('app-settings');
+    if (savedSettings) {
+      try {
+        const parsedSettings = JSON.parse(savedSettings);
+        setSettings(parsedSettings);
+      } catch (error) {
+        console.error('Failed to load settings from localStorage');
       }
-      // Revert on error
-      setSettings(prev => ({
-        ...prev,
-        alerts: {
-          ...prev.alerts,
-          [key]: !value,
-        },
-      }));
     }
+  }, []);
+
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('app-settings', JSON.stringify(settings));
+  }, [settings]);
+
+  const handleAlertSettingChange = (key: keyof AlertAndNotificationSettings, value: boolean) => {
+    // Update local state only - no API call
+    setSettings(prev => ({
+      ...prev,
+      alerts: {
+        ...prev.alerts,
+        [key]: value,
+      },
+    }));
   };
 
-  const handleSystemThresholdChange = async (key: string, value: number) => {
-    try {
-      setSettings(prev => ({
-        ...prev,
-        system: {
-          ...prev.system,
-          [key]: value,
-        },
-      }));
-
-      const apiKey = systemMapping[key as keyof typeof systemMapping];
-      await updateSystemSettingsMutation.mutateAsync({ [apiKey]: value });
-    } catch (error) {
-      if (!import.meta.env.PROD) {
-        console.error("Failed to update system threshold:", error);
-      }
-    }
+  const handleSystemThresholdChange = (key: string, value: number) => {
+    // Update local state only - no API call
+    setSettings(prev => ({
+      ...prev,
+      system: {
+        ...prev.system,
+        [key]: value,
+      },
+    }));
   };
 
-  const handleClientAccountChange = async (key: string, value: number) => {
-    try {
-      setSettings(prev => ({
-        ...prev,
-        clientAccount: {
-          ...prev.clientAccount,
-          [key]: value,
-        },
-      }));
-
-      const apiKey = clientAccountMapping[key as keyof typeof clientAccountMapping];
-      await updateSystemSettingsMutation.mutateAsync({ [apiKey]: value });
-    } catch (error) {
-      if (!import.meta.env.PROD) {
-        console.error("Failed to update client account setting:", error);
-      }
-    }
-  }; // <-- This was the missing closing brace for the function
+  const handleClientAccountChange = (key: string, value: number) => {
+    // Update local state only - no API call
+    setSettings(prev => ({
+      ...prev,
+      clientAccount: {
+        ...prev.clientAccount,
+        [key]: value,
+      },
+    }));
+  };
 
   return (
     <div className="min-h-screen py-8 px-4">
@@ -155,11 +102,11 @@ export default function ManagerSettings() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <SystemPreferencesForm 
-            settings={settings.system}
+            settings={settings.system || {}}
             onThresholdChange={handleSystemThresholdChange}
           />
           <ClientAccountSettingsForm 
-            settings={settings.clientAccount}
+            settings={settings.clientAccount || {}}
             onThresholdChange={handleClientAccountChange}
           /> 
         </div>
