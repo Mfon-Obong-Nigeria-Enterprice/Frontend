@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import DashboardTitle from "../shared/DashboardTitle";
 import MySalesActivity from "./components/desktop/MySalesActivity";
 import MobileSalesActivity from "./components/mobile/MobileSalesActivity";
+import WaybillModal from "./components/WaybillModal"; // Import the new modal
 
 // ui
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ const StaffSales = () => {
   );
 
   const [filter, setFilter] = useState<"today" | "week" | "month">("today");
+  const [isWaybillModalOpen, setIsWaybillModalOpen] = useState(false); // Add modal state
 
   // filter transaction
   const filteredTransactions = useMemo(() => {
@@ -104,7 +106,10 @@ const StaffSales = () => {
             <VscRefresh />
             Refresh
           </Button>
-          <Button className="min-w-40">
+          <Button
+            className="min-w-40"
+            onClick={() => setIsWaybillModalOpen(true)} // Open modal on click
+          >
             <img src="/icons/brick.svg" alt="" className="w-4" />
             Add Waybill
           </Button>
@@ -186,6 +191,13 @@ const StaffSales = () => {
             </div>
           )}
       </section>
+
+      {/* Waybill Modal */}
+      <WaybillModal
+        isOpen={isWaybillModalOpen}
+        onClose={() => setIsWaybillModalOpen(false)}
+        transactions={transactions} // Pass all transactions for recent selection
+      />
     </div>
   );
 };

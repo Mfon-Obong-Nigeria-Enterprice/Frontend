@@ -77,7 +77,7 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
 
   return (
     <section
-      className="gap-4 mt-2 px-3 md:px-0"
+      className="gap-4 mt-2 "
       style={{
         display: "grid",
         gridTemplateColumns:

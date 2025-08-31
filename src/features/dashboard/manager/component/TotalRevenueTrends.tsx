@@ -341,7 +341,7 @@ function TotalRevenueTrends() {
         </div>
       </div>
 
-      <div className="h-64 w-full">
+      <div className="h-64 w-full max-w-7xl">
         {isLoading || !transactions ? (
           <LoadingSkeleton />
         ) : chartData.length === 0 ? (

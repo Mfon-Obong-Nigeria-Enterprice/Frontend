@@ -116,9 +116,11 @@ const BusinessReport = () => {
         <MonthlySalesChart />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 items-center justify-center gap-5 mt-2">
-        <TopSellingProducts />
-        <div className="bg-white flex flex-col justify-center w-full h-full p-7 border border-[#d9d9d9] rounded-xl">
+      <div className="grid grid-cols-1 lg:grid-cols-5 items-center justify-center gap-5 mt-2">
+        <div className="lg:col-span-3">
+          <TopSellingProducts />
+        </div>
+        <div className="bg-white w-full h-full p-7 border border-[#d9d9d9] rounded-xl  lg:col-span-2">
           <h4 className="text-xl font-medium text-[#1E1E1E] mb-4">
             Sales by Category
           </h4>

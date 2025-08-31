@@ -66,12 +66,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
   const mergedTransactions = useMemo(() => {
     if (!transactions || !clients) return [];
-    console.log(
-      "🔄 Merging transactions:",
-      transactions.length,
-      "clients:",
-      clients.length
-    );
     const merged = mergeTransactionsWithClients(transactions, clients);
     console.log("✅ Merged transactions:", merged.length);
     return merged;

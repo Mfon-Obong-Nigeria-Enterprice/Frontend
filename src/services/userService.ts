@@ -65,23 +65,67 @@ export const getAllUsers = async (): Promise<CompanyUser[]> => {
 };
 
 // Get user by ID
-export const getUserById = async (id: string): Promise<UserProfile> => {
+// export const getUserById = async (id: string): Promise<UserProfile> => {
+//   try {
+//     const response = await api.get(`/users/${id}`);
+//     console.log("user by id:", response);
+//     return response.data;
+//   } catch (error) {
+//     if (isAxiosError(error)) {
+//       console.error(
+//         "Error fetching users:",
+//         error.response?.data || error.message
+//       );
+//     }
+//     let errorMessage = "Failed to fetch user";
+//     if (typeof error === "object" && error !== null) {
+//       const err = error as { response?: { data?: { message?: string } } };
+//       errorMessage = err.response?.data?.message || errorMessage;
+//     }
+//     throw new Error(errorMessage);
+//   }
+// };
+
+export const getUserById = async (id: string): Promise<UserProfile | null> => {
+  if (!id) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("getUserById called with empty id");
+    }
+    return null;
+  }
+
   try {
-    const response = await api.get(`/users/${id}/`);
+    const response = await api.get(`/users/${id}`);
+    if (process.env.NODE_ENV === "development") {
+      console.log("user by id:", response.data);
+    }
     return response.data;
   } catch (error) {
     if (isAxiosError(error)) {
-      console.error(
-        "Error fetching users:",
-        error.response?.data || error.message
-      );
+      const status = error.response?.status;
+      const serverMessage = error.response?.data?.message || error.message;
+
+      if (status === 404) {
+        if (process.env.NODE_ENV === "development") {
+          console.warn(`User ${id} not found (404)`, error.response?.data);
+        }
+        return null; // gracefully handle not found
+      }
+
+      if (process.env.NODE_ENV === "development") {
+        console.error(
+          "Error fetching user:",
+          error.response?.data ?? error.message
+        );
+      }
+      throw new Error(serverMessage);
     }
-    let errorMessage = "Failed to fetch user";
-    if (typeof error === "object" && error !== null) {
-      const err = error as { response?: { data?: { message?: string } } };
-      errorMessage = err.response?.data?.message || errorMessage;
+
+    // Non-Axios unexpected error
+    if (process.env.NODE_ENV === "development") {
+      console.error("Unexpected error fetching user:", error);
     }
-    throw new Error(errorMessage);
+    throw new Error("Failed to fetch user");
   }
 };
 

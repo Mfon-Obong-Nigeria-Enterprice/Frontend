@@ -343,14 +343,16 @@ const Transactions = () => {
       <Stats data={stats} />
 
       {/* Search bar for invoice number */}
-      <div className="flex flex-col md:flex-row justify-between gap-10 items-center my-10 px-5 md:px-0">
-        <SearchBar
-          type="invoice"
-          fetchSuggestions={fetchSuggestions}
-          onSelect={onSelect}
-          placeholder="Search by invoice..."
-        />
-        <div className="flex justify-between items-center gap-4">
+      <div className="flex justify-between gap-2 items-center  sm:py-5 mt-5 mb-4 sm:mb-0 flex-wrap-reverse md:flex-nowrap">
+        <div className="bg-[#F5F5F5] flex items-center gap-1 rounded-md w-full md:w-1/2">
+          <SearchBar
+            type="invoice"
+            fetchSuggestions={fetchSuggestions}
+            onSelect={onSelect}
+            placeholder="Search by invoice..."
+          />
+        </div>
+        <div className="flex items-center gap-4 pt-4 sm:pt-0 md:gap-3">
           <Button
             onClick={handleExportExcel}
             variant="secondary"
@@ -365,10 +367,10 @@ const Transactions = () => {
       </div>
 
       {/* filter buttons */}
-      <div className="flex gap-4 px-5 md:px-0 overflow-x-auto">
+      <div className="flex gap-2 flex-wrap md:gap-4 ">
         {/* filter by registered or unregisterd clients */}
         <Select value={clientFilter} onValueChange={setClientFilter}>
-          <SelectTrigger className="bg-[#d9d9d9]! h-10 w-46 text-[#444444] border-[#7D7D7D]">
+          <SelectTrigger className="bg-[#d9d9d9]! h-10 w-full md:w-46 text-[#444444] border-[#7D7D7D]">
             <SelectValue placeholder="Clients Filter" />
           </SelectTrigger>
           <SelectContent>
@@ -388,6 +390,7 @@ const Transactions = () => {
         <DateRangePicker
           value={dateRangeFilter}
           onChange={(range) => setDateRangeFilter(range)}
+          className=" h-9 w-full md:w-46"
         />
 
         {/* filter by transaction type */}
@@ -395,7 +398,7 @@ const Transactions = () => {
           value={transactionTypeFilter}
           onValueChange={setTransactionTypeFilter}
         >
-          <SelectTrigger className="!bg-[#d9d9d9] h-10 w-46 text-[#444444] border-[#7D7D7D]">
+          <SelectTrigger className="!bg-[#d9d9d9] h-10 w-full md:w-46 text-[#444444] border-[#7D7D7D]">
             <SelectValue placeholder="Transaction Type"></SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -409,7 +412,7 @@ const Transactions = () => {
       </div>
 
       {/* Transaction table */}
-      <div className="my-16 xl:shadow-lg rounded-xl overflow-hidden">
+      <div className="my-4 xl:shadow-lg rounded-xl overflow-hidden">
         <div className="xl:bg-white xl:border">
           <h5 className="bg-white text-[#1E1E1E] text-xl font-medium py-3 my-4 pl-8 rounded-xl">
             All Transactions
