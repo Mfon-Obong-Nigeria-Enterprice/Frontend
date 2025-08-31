@@ -225,11 +225,11 @@ const Header = ({ userRole }: HeaderProps) => {
             <span className="capitalize font-medium text-gray-700">
               {getDisplayName()}
             </span>
-            <span
+            {/* <span
               className={`capitalize text-xs px-2 py-1 rounded-full ${getRoleBadgeColor()}`}
             >
               {(user?.role || "user").toLowerCase()}
-            </span>
+            </span> */}
           </div>
 
           {/* User avatar button */}
