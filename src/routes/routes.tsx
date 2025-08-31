@@ -25,6 +25,7 @@ import MaintainerDashboard from "@/features/dashboard/maintainer/MaintainerDashb
 import ActivityLog from "@/features/dashboard/maintainer/ActivityLog";
 import MaintainerSettings from "@/features/dashboard/maintainer/MaintainerSettings";
 import MaintainerNotification from "@/features/dashboard/maintainer/MaintainerNotification";
+import ColumnSettings from "@/features/dashboard/shared/usermanagement/columnsettings";
 
 // admin
 import AdminDashboardLayout from "@/layout/AdminDashboardLayout";
@@ -63,6 +64,7 @@ const router = createBrowserRouter([
       { path: "manager-settings", element: <ManagerSettings /> },
       { path: "manager-notifications", element: <ManagerNotifications /> },
       { path: "user-management/:id", element: <UserDetailsPage /> },
+      { path: "user-management/col-settings", element: <ColumnSettings /> },
       { path: "log", element: <ActivityLog /> },
     ],
   },
@@ -79,6 +81,7 @@ const router = createBrowserRouter([
       { path: "maintainer-settings", element: <MaintainerSettings /> },
       { path: "user", element: <ManageUser /> },
       { path: "user-management/:id", element: <UserDetailsPage /> },
+      { path: "user-management/col-settings", element: <ColumnSettings /> },
       { path: "maintainer-notifications", element: <MaintainerNotification /> },
       { path: "log", element: <ActivityLog /> },
       { path: "settings", element: <MaintainerSettings /> },
