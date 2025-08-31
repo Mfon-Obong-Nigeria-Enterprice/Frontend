@@ -24,6 +24,7 @@ import MaintainerLayout from "@/layout/MaintainerLayout";
 import MaintainerDashboard from "@/features/dashboard/maintainer/MaintainerDashboard";
 import ActivityLog from "@/features/dashboard/maintainer/ActivityLog";
 import MaintainerSettings from "@/features/dashboard/maintainer/MaintainerSettings";
+import MaintainerNotification from "@/features/dashboard/maintainer/MaintainerNotification";
 
 // admin
 import AdminDashboardLayout from "@/layout/AdminDashboardLayout";
@@ -44,7 +45,6 @@ import Stock from "@/features/dashboard/staff/Stock";
 import StaffClients from "@/features/dashboard/staff/StaffClients";
 import ManagerNotifications from "@/features/dashboard/manager/ManagerNotifications";
 import ManageUser from "@/features/dashboard/maintainer/ManageUser";
-import MaintainerNotification from "@/features/dashboard/maintainer/MaintainerNotification";
 
 const router = createBrowserRouter([
   { path: "/", element: <Login /> },
@@ -75,6 +75,8 @@ const router = createBrowserRouter([
         element: <Navigate to="/maintainer/dashboard/overview" replace />,
       },
       { path: "overview", element: <MaintainerDashboard /> },
+      { path: "maintainer-notifications", element: <MaintainerNotification /> },
+      { path: "maintainer-settings", element: <MaintainerSettings /> },
       { path: "user", element: <ManageUser /> },
       { path: "user-management/:id", element: <UserDetailsPage /> },
       { path: "maintainer-notifications", element: <MaintainerNotification /> },

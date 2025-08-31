@@ -1,11 +1,12 @@
+// features/dashboard/super-admin/components/AlertSettings.tsx
 import * as React from 'react';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { type Settings } from '@/types/types';
+import { type Settings, type AlertAndNotificationSettings } from '@/types/types';
 
 interface AlertSettingsSectionProps {
   settings: Settings;
-  onSettingChange: (key: keyof Settings, value: boolean) => void;
+  onSettingChange: (key: keyof AlertAndNotificationSettings, value: boolean) => void;
   isReadOnly?: boolean;
 }
 
@@ -14,51 +15,69 @@ export const AlertSettingsSection: React.FC<AlertSettingsSectionProps> = ({
   onSettingChange,
   isReadOnly = false,
 }) => {
+  const alerts = settings.alerts || {};
+
   return (
-    <div className="space-y-3">
-      <div className='flex items-center gap-9'>
-        <div className="flex items-center space-x-3">
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="flex items-center space-x-3 p-3">
           <Checkbox
             id="clientsDebtsAlert"
-            checked={settings.clientsDebtsAlert}
-            onCheckedChange={(checked) => onSettingChange('clientsDebtsAlert', checked as boolean)}
+            checked={alerts.clientsDebtsAlert || false}
+            onCheckedChange={(checked) =>
+              onSettingChange('clientsDebtsAlert', checked as boolean)
+            }
             disabled={isReadOnly}
             className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
           />
-          <Label htmlFor="clientsDebtsAlert" className="text-gray-700">Clients Debts Alerts</Label>
+          <Label htmlFor="clientsDebtsAlert" className="text-gray-700 text-sm font-medium cursor-pointer">
+            Clients Debts Alerts
+          </Label>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 p-3">
           <Checkbox
-            id="largeBalanceAlert"
-            checked={settings.largeBalanceAlert}
-            onCheckedChange={(checked) => onSettingChange('largeBalanceAlert', checked as boolean)}
+            id="largeBalanceAlertThreshold"
+            checked={alerts.LargeBalanceAlertThreshold || false}
+            onCheckedChange={(checked) =>
+              onSettingChange('LargeBalanceAlertThreshold', checked as boolean)
+            }
             disabled={isReadOnly}
             className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
           />
-          <Label htmlFor="largeBalanceAlert" className="text-gray-700">Large Balance Alert</Label>
+          <Label htmlFor="largeBalanceAlertThreshold" className="text-gray-700 text-sm font-medium cursor-pointer">
+            Large Balance Alert
+          </Label>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 p-3">
           <Checkbox
-            id="lowStockAlert"
-            checked={settings.lowStockAlert}
-            onCheckedChange={(checked) => onSettingChange('lowStockAlert', checked as boolean)}
+            id="lowStockAlerts"
+            checked={alerts.lowStockAlerts || false}
+            onCheckedChange={(checked) =>
+              onSettingChange('lowStockAlerts', checked as boolean)
+            }
             disabled={isReadOnly}
             className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
           />
-          <Label htmlFor="lowStockAlert" className="text-gray-700">Low Stock Alerts</Label>
+          <Label htmlFor="lowStockAlerts" className="text-gray-700 text-sm font-medium cursor-pointer">
+            Low Stock Alerts
+          </Label>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 p-3">
           <Checkbox
             id="inactivityAlerts"
-            checked={settings.inactivityAlerts}
-            onCheckedChange={(checked) => onSettingChange('inactivityAlerts', checked as boolean)}
+            checked={alerts.inactivityAlerts || false}
+            onCheckedChange={(checked) =>
+              onSettingChange('inactivityAlerts', checked as boolean)
+            }
             disabled={isReadOnly}
             className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
           />
-          <Label htmlFor="inactivityAlerts" className="text-gray-700">Inactivity Alerts</Label>
+          <Label htmlFor="inactivityAlerts" className="text-gray-700 text-sm font-medium cursor-pointer">
+            Inactivity Alerts
+          </Label>
         </div>
       </div>
     </div>

@@ -1,9 +1,9 @@
-import DashboardTitle from "../shared/DashboardTitle";
+import Notifications from "../shared/notifications/notifications";
 
 const MaintainerNotification = () => {
   return (
     <div>
-      <DashboardTitle heading="Maintainer Notification" description="" />
+      <Notifications />
     </div>
   );
 };
