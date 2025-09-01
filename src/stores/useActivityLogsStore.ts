@@ -79,7 +79,7 @@ export const useActivityLogsStore = create<ActivityLogsState>((set, get) => ({
     return activities.filter((activity) =>
       modificationActions.some(
         (action) =>
-          activity.action.includes(action.toLocaleLowerCase()) ||
+          activity.action.includes(action) ||
           activity.details.toLowerCase().includes(action.toLowerCase())
       )
     ).length;
