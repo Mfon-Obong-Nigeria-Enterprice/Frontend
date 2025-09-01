@@ -277,7 +277,7 @@ export default function AdminUserModal({
               <h3 className="text-xl font-semibold text-gray-800">
                 {adminData.adminName || "Admin User"}
               </h3>
-              <p className="text-sm text-gray-600">ID: {userId || "No ID"}</p>
+              {/* <p className="text-sm text-gray-600">ID: {userId || "No ID"}</p> */}
               <p className="text-sm text-gray-600">
                 Last Login: {new Date(adminData.lastLogin).toLocaleString()}
               </p>

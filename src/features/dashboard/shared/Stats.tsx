@@ -60,6 +60,7 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
 const Stats: React.FC<StatsProps> = ({ data }) => {
   const { getMOMRevenue } = useRevenueStore();
   const monthlyRevenue = getMOMRevenue();
+
   const getColor = (color?: string) => {
     switch (color) {
       case "green":
@@ -94,6 +95,19 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
           key={index}
           className="bg-white rounded-lg border border-[#D9D9D9] p-4 sm:p-6 flex flex-col justify-evenly items-start gap-3 sm:gap-4 hover:shadow-md transition-shadow duration-200 relative"
         >
+          {/* Icon at the top right */}
+          {stat.icon && (
+            <div className="absolute top-4 right-4">
+              <div className="w-10 h-10 flex items-center justify-center">
+                <img
+                  src={stat.icon}
+                  alt={`${stat.heading} icon`}
+                  className="w-10 h-10 object-contain"
+                />
+              </div>
+            </div>
+          )}
+
           <div className="font-Inter text-xs sm:text-sm text-[#7D7D7D]">
             {stat.heading}
           </div>

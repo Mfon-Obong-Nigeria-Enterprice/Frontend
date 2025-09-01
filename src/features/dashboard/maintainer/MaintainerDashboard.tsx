@@ -1,34 +1,49 @@
 /** @format */
 
 import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
-// import Stats, {
-//   type StatCard,
-// } from "@/features/dashboard/maintainer/components/Stats";
-// import { Button } from "@/components/ui/button";
-
 import { SystemHealth } from "./components/SystemHealth";
+import type { StatCard } from "@/types/stats";
+import Stats from "../shared/Stats";
+import { useUserStore } from "@/stores/useUserStore";
+import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
 
 const MaintainerDashboard = () => {
-  // const stats: StatCard[] = [
-  //   {
-  //     heading: "Total Activity (Today)",
-  //     salesValue: "₦ 135,500",
-  //     statValue: "15% from yesterday",
-  //     color: "green",
-  //   },
-  //   {
-  //     heading: "Monthly Revenue",
-  //     salesValue: "₦ 446,850",
-  //     statValue: "8% from last month",
-  //     color: "green",
-  //   },
-  //   {
-  //     heading: "Outstanding balances",
-  //     salesValue: "₦ 1,355,800",
-  //     statValue: "5 Clients with overdue balances",
-  //     color: "orange",
-  //   },
-  // ];
+  const users = useUserStore((s) => s.users);
+  const {
+    getTotalActivityToday,
+    getFailedLoginAttempts,
+    getDataModifications,
+  } = useActivityLogsStore();
+
+  const activeUsers = users.filter(
+    (user) => user.isActive && !user.isBlocked
+  ).length;
+  const totalActivityToday = getTotalActivityToday();
+  const failedLoginAttempts = getFailedLoginAttempts();
+  const dataModifications = getDataModifications();
+
+  const stats: StatCard[] = [
+    {
+      salesValue: totalActivityToday.toString(),
+      heading: "Total Activity Today",
+      icon: "/icons/total 1.svg",
+    },
+    {
+      salesValue: failedLoginAttempts.toString(),
+      heading: "Failed Login Attempts",
+      icon: "/icons/failed 1.svg",
+    },
+    {
+      salesValue: activeUsers.toString(),
+      heading: "Active Users",
+      icon: "/icons/active 1.svg",
+    },
+    {
+      salesValue: dataModifications.toString(),
+      heading: "Data Modifications",
+      icon: "/icons/data 1.svg",
+    },
+  ];
 
   return (
     <main>
@@ -38,7 +53,7 @@ const MaintainerDashboard = () => {
           description="Welcome back, Maintainer! Here's an overview of your business"
         />
       </div>
-      {/* <Stats data={stats} /> */}
+      <Stats data={stats} />
       <SystemHealth />
     </main>
   );

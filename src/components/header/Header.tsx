@@ -30,6 +30,39 @@ type UpdatedUserData = {
   [key: string]: unknown;
 };
 
+// Generate consistent color based on user ID or name
+const generateUserColor = (identifier: string): string => {
+  const colors = [
+    "bg-blue-500",
+    "bg-green-500",
+    "bg-purple-500",
+    "bg-pink-500",
+    "bg-indigo-500",
+    "bg-yellow-500",
+    "bg-red-500",
+    "bg-teal-500",
+    "bg-orange-500",
+    "bg-cyan-500",
+    "bg-emerald-500",
+    "bg-violet-500",
+    "bg-rose-500",
+    "bg-amber-500",
+    "bg-lime-500",
+    "bg-sky-500",
+  ];
+
+  // Simple hash function to get consistent color for same identifier
+  let hash = 0;
+  for (let i = 0; i < identifier.length; i++) {
+    const char = identifier.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
+};
+
 // Enhanced profile picture management
 const useProfilePicture = (userRole?: string) => {
   const { userProfile, user } = useAuthStore();
@@ -44,15 +77,15 @@ const useProfilePicture = (userRole?: string) => {
         localStorage.getItem(`user-profile-picture-${user?.id}`),
       ];
 
-      // Return first valid source
+      // Return first valid source, otherwise return empty string to use initials
       for (const source of sources) {
         if (source && source.trim() !== "") {
           return source;
         }
       }
 
-      // Final fallback to default avatar
-      return `/images/${userRole}-avatar.png`;
+      // Return empty string to trigger fallback to initials
+      return "";
     };
 
     setProfileImageUrl(getProfileImageUrl());
@@ -92,24 +125,41 @@ const Header = ({ userRole }: HeaderProps) => {
     return userProfile?.name || user?.name || "User";
   };
 
-  const getRoleBadgeColor = () => {
-    const role = (userProfile?.role || user?.role || "").toLowerCase();
-    switch (role) {
-      case "admin":
-        return "bg-blue-100 text-blue-800";
-      case "maintainer":
-        return "bg-purple-100 text-purple-800";
-      case "manager":
-        return "bg-green-100 text-green-800";
-      case "super_admin":
-      case "superadmin":
-        return "bg-red-100 text-red-800";
-      case "staff":
-        return "bg-orange-100 text-orange-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  // Get user initials for fallback
+  const getUserInitials = (): string => {
+    const name = getDisplayName();
+    return name
+      .split(" ")
+      .map((word) => word.charAt(0))
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
+
+  // Get consistent background color for user
+  const getUserBackgroundColor = (): string => {
+    const identifier = user?.id || user?.email || getDisplayName();
+    return generateUserColor(identifier);
+  };
+
+  // const getRoleBadgeColor = () => {
+  //   const role = (userProfile?.role || user?.role || "").toLowerCase();
+  //   switch (role) {
+  //     case "admin":
+  //       return "bg-blue-100 text-blue-800";
+  //     case "maintainer":
+  //       return "bg-purple-100 text-purple-800";
+  //     case "manager":
+  //       return "bg-green-100 text-green-800";
+  //     case "super_admin":
+  //     case "superadmin":
+  //       return "bg-red-100 text-red-800";
+  //     case "staff":
+  //       return "bg-orange-100 text-orange-800";
+  //     default:
+  //       return "bg-gray-100 text-gray-800";
+  //   }
+  // };
 
   const handleProfileUpdate = async (updatedData: UpdatedUserData) => {
     console.log("=== Header Profile Update ===");
@@ -149,31 +199,14 @@ const Header = ({ userRole }: HeaderProps) => {
     }
   };
 
-  // Enhanced error handling for profile images
+  // Enhanced error handling for profile images - fallback to initials
   const handleImageError = (
     e: React.SyntheticEvent<HTMLImageElement, Event>
   ) => {
     console.warn("Failed to load profile image:", profileImageUrl);
     const img = e.target as HTMLImageElement;
-
-    // Try fallback image
-    if (img.src !== `/images/${userRole}-avatar.png`) {
-      img.src = `/images/${userRole}-avatar.png`;
-    } else {
-      // Hide broken image
-      img.style.display = "none";
-    }
-  };
-
-  // Get user initials for fallback
-  const getUserInitials = (): string => {
-    const name = getDisplayName();
-    return name
-      .split(" ")
-      .map((word) => word.charAt(0))
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+    // Hide the image to show initials fallback
+    img.style.display = "none";
   };
 
   return (
@@ -239,13 +272,17 @@ const Header = ({ userRole }: HeaderProps) => {
             aria-label="User settings"
           >
             <Avatar key={`${profileImageUrl}-${Date.now()}`}>
-              <AvatarImage
-                src={profileImageUrl}
-                alt={`${getDisplayName()} avatar`}
-                onError={handleImageError}
-                className="object-cover"
-              />
-              <AvatarFallback className="bg-gray-200 text-gray-700 font-medium">
+              {profileImageUrl && (
+                <AvatarImage
+                  src={profileImageUrl}
+                  alt={`${getDisplayName()} avatar`}
+                  onError={handleImageError}
+                  className="object-cover"
+                />
+              )}
+              <AvatarFallback
+                className={`${getUserBackgroundColor()} text-white font-medium`}
+              >
                 {getUserInitials()}
               </AvatarFallback>
             </Avatar>
