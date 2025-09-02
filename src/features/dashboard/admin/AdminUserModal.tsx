@@ -1,9 +1,8 @@
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import type { DragEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -18,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Eye, EyeOff, Camera } from "lucide-react";
 import { useUser, useUserMutations } from "@/hooks/useUserMutation";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { toast } from "react-toastify";
 
 const passwordSchema = z
   .object({
@@ -53,10 +53,6 @@ export default function AdminUserModal({
   adminData,
   onProfileUpdate,
 }: AdminUserModalProps) {
-  const [profileImage, setProfileImage] = useState<string | null>(
-    adminData.profilePicture || null
-  );
-  const [imagePreview, setImagePreview] = useState<string>("");
   const [isDragging, setIsDragging] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -65,31 +61,17 @@ export default function AdminUserModal({
   // Get the user ID and handle undefined case
   const userId = adminData._id || adminData.id;
 
-  // Use the user mutations hook
+  // Use the user mutations hook - consistent naming
   const { updatePassword, updateProfilePicture } = useUserMutations();
 
   // Only call useUser if userId exists
-  const { data: userProfile, refetch } = useUser(userId || "");
+  const { data: userProfile } = useUser(userId || "");
 
   // Add auth store hook
   const { syncUserWithProfile } = useAuthStore();
 
-  useEffect(() => {
-    if (open) {
-      console.log("📂 Admin Data when modal opens:", adminData);
-      console.log("📂 User Profile from API:", userProfile);
-    }
-  }, [open, adminData, userProfile]);
-
-  // Update profile image when adminData or userProfile changes
-  useEffect(() => {
-    const currentProfilePicture =
-      adminData.profilePicture || userProfile?.profilePicture;
-    setProfileImage(currentProfilePicture || null);
-  }, [adminData.profilePicture, userProfile?.profilePicture]);
-
   // Sync with auth store when userProfile is loaded
-  useEffect(() => {
+  const handleSyncUserWithProfile = useCallback(() => {
     if (userProfile && userId) {
       syncUserWithProfile({
         _id: userId,
@@ -99,7 +81,18 @@ export default function AdminUserModal({
         profilePicture: userProfile.profilePicture,
       });
     }
-  }, [userProfile, userId, syncUserWithProfile, adminData]);
+  }, [
+    userProfile,
+    userId,
+    adminData.adminName,
+    adminData.email,
+    adminData.userRole,
+    syncUserWithProfile,
+  ]);
+
+  useEffect(() => {
+    handleSyncUserWithProfile();
+  }, [handleSyncUserWithProfile]);
 
   const passwordForm = useForm<z.infer<typeof passwordSchema>>({
     resolver: zodResolver(passwordSchema),
@@ -113,12 +106,12 @@ export default function AdminUserModal({
   const handlePasswordSubmit = async (
     values: z.infer<typeof passwordSchema>
   ) => {
-    try {
-      if (!userId) {
-        toast.error("User ID is required");
-        return;
-      }
+    if (!userId) {
+      toast.error("User ID is required");
+      return;
+    }
 
+    try {
       await updatePassword.mutateAsync({
         userId,
         passwordData: {
@@ -128,86 +121,45 @@ export default function AdminUserModal({
       });
 
       onProfileUpdate(adminData);
-
-      // Success is handled by the mutation's onSuccess callback
       passwordForm.reset();
       onOpenChange(false);
     } catch (error) {
-      // Error handling is done by the mutation's onError callback
       console.error("Password update failed:", error);
     }
   };
 
+  // File handling with proper error handling and success callback
   const handleFileInputChange = (
     event: ChangeEvent<HTMLInputElement>
   ): void => {
     const files = event?.target.files;
     const selectedFile = files && files.length > 0 ? files[0] : null;
 
-    if (!selectedFile) {
-      return;
-    }
+    if (!selectedFile) return;
 
     if (!selectedFile.type.startsWith("image/")) {
       toast.error("Please select an image file");
       return;
     }
 
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(selectedFile);
-
-    // Upload immediately
-    handleProfilePictureUpload(selectedFile);
-  };
-
-  const handleProfilePictureUpload = async (file: File) => {
-    try {
-      if (!userId) {
-        toast.error("User ID is required");
-        return;
-      }
-
-      const imageUrl = await updateProfilePicture.mutateAsync({
-        userId,
-        imageFile: file,
-      });
-
-      // Update the profile image state
-      setProfileImage(imageUrl);
-
-      // Sync with auth store
-      syncUserWithProfile({
-        _id: userId,
-        name: adminData.adminName,
-        email: adminData.email,
-        profilePicture: imageUrl,
-      });
-
-      // Update the parent component with new profile picture
-      const updatedAdminData: AdminData = {
-        ...adminData,
-        profilePicture: imageUrl,
-      };
-      onProfileUpdate(updatedAdminData);
-
-      // Refetch user data to ensure consistency
-      if (refetch) {
-        await refetch();
-      }
-
-      // Clear preview
-      setImagePreview("");
-
-      toast.success("Profile picture updated successfully");
-    } catch (error) {
-      console.error("Profile picture upload failed:", error);
-      // Clear the failed upload preview
-      setImagePreview("");
+    if (!userId) {
+      toast.error("User ID is required");
+      return;
     }
+
+    // Use the mutation with proper success handling
+    updateProfilePicture.mutate(
+      { userId, imageFile: selectedFile },
+      {
+        onSuccess: (imageUrl) => {
+          const updatedAdminData: AdminData = {
+            ...adminData,
+            profilePicture: imageUrl,
+          };
+          onProfileUpdate(updatedAdminData);
+        },
+      }
+    );
   };
 
   const handleDragOver = (event: DragEvent<HTMLDivElement>): void => {
@@ -240,18 +192,29 @@ export default function AdminUserModal({
       return;
     }
 
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    if (!userId) {
+      toast.error("User ID is required");
+      return;
+    }
 
-    // Upload immediately
-    handleProfilePictureUpload(file);
+    // Use the mutation with proper success handling
+    updateProfilePicture.mutate(
+      { userId, imageFile: file },
+      {
+        onSuccess: (imageUrl) => {
+          const updatedAdminData: AdminData = {
+            ...adminData,
+            profilePicture: imageUrl,
+          };
+          onProfileUpdate(updatedAdminData);
+        },
+      }
+    );
   };
 
-  const displayImage = imagePreview || profileImage;
+  // Current profile picture comes from userProfile or fallback to adminData
+  const currentProfilePicture =
+    userProfile?.profilePicture || adminData.profilePicture;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -267,9 +230,9 @@ export default function AdminUserModal({
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
-              {displayImage ? (
+              {currentProfilePicture ? (
                 <img
-                  src={displayImage}
+                  src={currentProfilePicture}
                   alt=""
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -314,7 +277,7 @@ export default function AdminUserModal({
               <h3 className="text-xl font-semibold text-gray-800">
                 {adminData.adminName || "Admin User"}
               </h3>
-              <p className="text-sm text-gray-600">ID: {userId || "No ID"}</p>
+              {/* <p className="text-sm text-gray-600">ID: {userId || "No ID"}</p> */}
               <p className="text-sm text-gray-600">
                 Last Login: {new Date(adminData.lastLogin).toLocaleString()}
               </p>

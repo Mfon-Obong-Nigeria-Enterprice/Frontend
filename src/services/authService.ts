@@ -7,14 +7,12 @@ export const login = async (
 ): Promise<{ user: LoginUser }> => {
   const response = await api.post("/auth/login", { email, password });
 
-  // const accessToken = response.data.access_token;
-  // const refreshToken = response.data.refresh_token;
   const user = response.data.user;
 
-  // if (!accessToken || !refreshToken || !user) {
-  //   console.error("Login response missing token or user", response.data);
-  //   throw new Error("Invalid login response");
-  //  }
+  if (!user) {
+    console.error("Login response missing token or user", response.data);
+    throw new Error("Invalid login response");
+  }
 
   return { user };
 };

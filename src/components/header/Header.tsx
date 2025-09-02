@@ -30,6 +30,39 @@ type UpdatedUserData = {
   [key: string]: unknown;
 };
 
+// Generate consistent color based on user ID or name
+const generateUserColor = (identifier: string): string => {
+  const colors = [
+    "bg-blue-500",
+    "bg-green-500",
+    "bg-purple-500",
+    "bg-pink-500",
+    "bg-indigo-500",
+    "bg-yellow-500",
+    "bg-red-500",
+    "bg-teal-500",
+    "bg-orange-500",
+    "bg-cyan-500",
+    "bg-emerald-500",
+    "bg-violet-500",
+    "bg-rose-500",
+    "bg-amber-500",
+    "bg-lime-500",
+    "bg-sky-500",
+  ];
+
+  // Simple hash function to get consistent color for same identifier
+  let hash = 0;
+  for (let i = 0; i < identifier.length; i++) {
+    const char = identifier.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
+};
+
 // Enhanced profile picture management
 const useProfilePicture = (userRole?: string) => {
   const { userProfile, user } = useAuthStore();
@@ -40,20 +73,19 @@ const useProfilePicture = (userRole?: string) => {
       // Priority order for profile picture sources
       const sources = [
         userProfile?.profilePicture,
-
         // Fallback to localStorage for persistence
         localStorage.getItem(`user-profile-picture-${user?.id}`),
       ];
 
-      // Return first valid source
+      // Return first valid source, otherwise return empty string to use initials
       for (const source of sources) {
         if (source && source.trim() !== "") {
           return source;
         }
       }
 
-      // Final fallback to default avatar
-      return `/images/${userRole}-avatar.png`;
+      // Return empty string to trigger fallback to initials
+      return "";
     };
 
     setProfileImageUrl(getProfileImageUrl());
@@ -87,6 +119,28 @@ const Header = ({ userRole }: HeaderProps) => {
 
   // Role-based capabilities
   const capabilities = getRoleBasedCapabilities(user?.role || "");
+
+  // Get the current display name with proper priority
+  const getDisplayName = () => {
+    return userProfile?.name || user?.name || "User";
+  };
+
+  // Get user initials for fallback
+  const getUserInitials = (): string => {
+    const name = getDisplayName();
+    return name
+      .split(" ")
+      .map((word) => word.charAt(0))
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  // Get consistent background color for user
+  const getUserBackgroundColor = (): string => {
+    const identifier = user?.id || user?.email || getDisplayName();
+    return generateUserColor(identifier);
+  };
 
   // const getRoleBadgeColor = () => {
   //   const role = (userProfile?.role || user?.role || "").toLowerCase();
@@ -127,7 +181,7 @@ const Header = ({ userRole }: HeaderProps) => {
           ...updatedData,
         };
 
-        // Apply updates
+        // Apply updates to both user and userProfile
         updateUser(updates);
 
         // Persist profile picture if updated
@@ -145,31 +199,14 @@ const Header = ({ userRole }: HeaderProps) => {
     }
   };
 
-  // Enhanced error handling for profile images
+  // Enhanced error handling for profile images - fallback to initials
   const handleImageError = (
     e: React.SyntheticEvent<HTMLImageElement, Event>
   ) => {
     console.warn("Failed to load profile image:", profileImageUrl);
     const img = e.target as HTMLImageElement;
-
-    // Try fallback image
-    if (img.src !== `/images/${userRole}-avatar.png`) {
-      img.src = `/images/${userRole}-avatar.png`;
-    } else {
-      // Hide broken image
-      img.style.display = "none";
-    }
-  };
-
-  // Get user initials for fallback
-  const getUserInitials = (): string => {
-    const name = user?.name || userProfile?.name || "User";
-    return name
-      .split(" ")
-      .map((word) => word.charAt(0))
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+    // Hide the image to show initials fallback
+    img.style.display = "none";
   };
 
   return (
@@ -219,7 +256,7 @@ const Header = ({ userRole }: HeaderProps) => {
           {/* User info display */}
           <div className="hidden sm:flex items-center gap-2">
             <span className="capitalize font-medium text-gray-700">
-              {user?.name || "User"}
+              {getDisplayName()}
             </span>
             {/* <span
               className={`capitalize text-xs px-2 py-1 rounded-full ${getRoleBadgeColor()}`}
@@ -235,13 +272,17 @@ const Header = ({ userRole }: HeaderProps) => {
             aria-label="User settings"
           >
             <Avatar key={`${profileImageUrl}-${Date.now()}`}>
-              <AvatarImage
-                src={profileImageUrl}
-                alt={`${user?.name || userRole} avatar`}
-                onError={handleImageError}
-                className="object-cover"
-              />
-              <AvatarFallback className="bg-gray-200 text-gray-700 font-medium">
+              {profileImageUrl && (
+                <AvatarImage
+                  src={profileImageUrl}
+                  alt={`${getDisplayName()} avatar`}
+                  onError={handleImageError}
+                  className="object-cover"
+                />
+              )}
+              <AvatarFallback
+                className={`${getUserBackgroundColor()} text-white font-medium`}
+              >
                 {getUserInitials()}
               </AvatarFallback>
             </Avatar>
@@ -259,7 +300,7 @@ const Header = ({ userRole }: HeaderProps) => {
             email: user?.email ?? "",
             lastLogin: new Date().toISOString(),
             userRole: user?.role ?? "user",
-            adminName: user?.name ?? "",
+            adminName: getDisplayName(),
             profilePicture: profileImageUrl,
           }}
           onProfileUpdate={handleProfileUpdate}
@@ -273,7 +314,7 @@ const Header = ({ userRole }: HeaderProps) => {
             email: user?.email ?? "",
             lastLogin: new Date().toISOString(),
             userRole: user?.role ?? "",
-            name: user?.name ?? "",
+            name: getDisplayName(),
             location: user?.branch ?? "",
             profilePicture: profileImageUrl,
           }}

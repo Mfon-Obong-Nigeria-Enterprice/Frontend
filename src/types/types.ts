@@ -166,7 +166,6 @@ export interface UserProfile {
   profilePicture?: string;
 }
 export interface UserProfile {
-  // _id: string;
   _id: string;
   name: string;
   email: string;

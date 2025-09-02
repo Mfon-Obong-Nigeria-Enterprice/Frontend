@@ -4,10 +4,11 @@ import {
   getAllUsers,
   getUserById,
   updateUser,
-  updateProfilePicture,
+  updateProfilePicture as updateProfilePictureService,
   updateUserPassword,
 } from "@/services/userService";
 import { toast } from "react-toastify";
+import { isAxiosError } from "axios";
 
 // Query keys
 export const userKeys = {
@@ -40,41 +41,34 @@ export const useUser = (userId: string) => {
 // User mutation hooks
 export const useUserMutations = () => {
   const queryClient = useQueryClient();
-  const { updateUser: updateAuthUser } = useAuthStore();
+  const { syncUserWithProfile } = useAuthStore();
 
-  // Update user profile mutation
+  // Update user data mutation
   const updateUserMutation = useMutation({
-    mutationFn: ({
-      userId,
-      userData,
-    }: {
-      userId: string;
-      userData: {
-        fullName?: string;
-        name?: string;
-        location?: string;
-        branch?: string;
-      };
-    }) => updateUser(userId, userData),
+    mutationFn: ({ userId, userData }: { userId: string; userData: any }) =>
+      updateUser(userId, userData),
+
     onSuccess: (data, variables) => {
-      // Invalidate and refetch user queries
+      // Update auth store
+      syncUserWithProfile({
+        name: data.fullName || data.name,
+        branch: data.location || data.branch,
+      });
+
+      // Invalidate queries
       queryClient.invalidateQueries({
         queryKey: userKeys.detail(variables.userId),
       });
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
 
-      // Update auth store with new data
-      updateAuthUser({
-        name: data.fullName || data.name,
-        branch: data.location || data.branch,
-        // Add other fields as needed
-      });
-
       toast.success("Profile updated successfully");
     },
+
     onError: (error) => {
-      console.error("Failed to update user:", error);
-      toast.error(error.message || "Failed to update profile");
+      if (isAxiosError(error)) {
+        console.error("Failed to update user:", error);
+        toast.error(error.message || "Failed to update profile");
+      }
     },
   });
 
@@ -85,46 +79,78 @@ export const useUserMutations = () => {
       passwordData,
     }: {
       userId: string;
-      passwordData: {
-        previousPassword: string;
-        newPassword: string;
-      };
+      passwordData: { previousPassword: string; newPassword: string };
     }) => updateUserPassword(userId, passwordData),
-    onSuccess: (data) => {
-      console.log("Password update successful:", data);
-      toast.success(data.message || "Password updated successfully");
+
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: userKeys.detail(variables.userId),
+      });
+      toast.success("Password updated successfully");
     },
+
     onError: (error) => {
-      console.error("Failed to update password:", error);
-      toast.error(error.message || "Failed to update password");
+      if (isAxiosError(error)) {
+        console.error("Failed to update password:", error);
+        toast.error(error.message || "Failed to update password");
+      }
     },
   });
 
   // Update profile picture mutation
   const updateProfilePictureMutation = useMutation({
     mutationFn: ({ userId, imageFile }: { userId: string; imageFile: File }) =>
-      updateProfilePicture(userId, imageFile),
+      updateProfilePictureService(userId, imageFile),
+
+    onMutate: async ({ userId, imageFile }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: userKeys.detail(userId) });
+
+      // Snapshot previous value
+      const previousUser = queryClient.getQueryData(userKeys.detail(userId));
+
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(imageFile);
+
+      // Optimistically update cache
+      queryClient.setQueryData(userKeys.detail(userId), (old: any) => ({
+        ...old,
+        profilePicture: previewUrl,
+      }));
+
+      // Update auth store
+      syncUserWithProfile({ profilePicture: previewUrl });
+
+      return { previousUser };
+    },
+
     onSuccess: (imageUrl, variables) => {
-      // Invalidate and refetch user queries
+      // Update with real URL
+      syncUserWithProfile({ profilePicture: imageUrl });
       queryClient.invalidateQueries({
         queryKey: userKeys.detail(variables.userId),
-      });
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-
-      // Update auth store with new profile picture
-      updateAuthUser({
-        profilePicture: imageUrl,
       });
 
       toast.success("Profile picture updated successfully");
     },
-    onError: (error) => {
-      console.error("Failed to update profile picture:", error);
-      toast.error(error.message || "Failed to update profile picture");
+
+    onError: (error, variables, context) => {
+      // Rollback optimistic update
+      if (context?.previousUser) {
+        queryClient.setQueryData(
+          userKeys.detail(variables.userId),
+          context.previousUser
+        );
+      }
+
+      if (isAxiosError(error)) {
+        console.error("Failed to update profile picture:", error);
+        toast.error(error.message || "Failed to update profile picture");
+      }
     },
   });
 
-  // Combined profile update mutation (for updating both profile data and picture)
+  // Combined profile update mutation
   const updateProfileMutation = useMutation({
     mutationFn: async ({
       userId,
@@ -132,44 +158,70 @@ export const useUserMutations = () => {
       imageFile,
     }: {
       userId: string;
-      userData?: {
-        fullName?: string;
-        name?: string;
-        location?: string;
-        branch?: string;
-      };
+      userData?: { fullName?: string; location?: string };
       imageFile?: File;
     }) => {
-      const results: {
-        user?: any;
-        profilePicture?: string;
-      } = {};
+      const results: { user?: any; profilePicture?: string } = {};
 
-      // Update profile picture first if provided
+      // Execute both operations in parallel for faster completion
+      const promises: Promise<any>[] = [];
+
       if (imageFile) {
-        results.profilePicture = await updateProfilePicture(userId, imageFile);
+        promises.push(
+          updateProfilePictureService(userId, imageFile).then((url) => {
+            results.profilePicture = url;
+            return url;
+          })
+        );
       }
 
-      // Update user data if provided
       if (userData) {
-        results.user = await updateUser(userId, userData);
+        promises.push(
+          updateUser(userId, userData).then((user) => {
+            results.user = user;
+            return user;
+          })
+        );
       }
 
+      // Wait for all operations to complete
+      await Promise.all(promises);
       return results;
     },
-    onSuccess: (data, variables) => {
-      // Invalidate and refetch user queries
-      queryClient.invalidateQueries({
-        queryKey: userKeys.detail(variables.userId),
-      });
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
 
-      // Update auth store with new data
-      const updates: Partial<{
-        name?: string;
-        branch?: string;
-        profilePicture?: string;
-      }> = {};
+    // Optimistic updates for immediate UI feedback
+    onMutate: async ({ userId, userData, imageFile }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: userKeys.detail(userId) });
+
+      // Snapshot previous value
+      const previousUser = queryClient.getQueryData(userKeys.detail(userId));
+
+      // Optimistically update cache
+      if (userData || imageFile) {
+        queryClient.setQueryData(userKeys.detail(userId), (old: any) => ({
+          ...old,
+          ...userData,
+          profilePicture: imageFile
+            ? URL.createObjectURL(imageFile)
+            : old?.profilePicture,
+        }));
+
+        // Immediate auth store update
+        const updates: any = {};
+        if (userData?.fullName) updates.name = userData.fullName;
+        if (userData?.location) updates.branch = userData.location;
+        if (imageFile) updates.profilePicture = URL.createObjectURL(imageFile);
+
+        syncUserWithProfile(updates);
+      }
+
+      return { previousUser };
+    },
+
+    onSuccess: (data, variables) => {
+      // Update with real server data
+      const updates: any = {};
 
       if (data.user) {
         updates.name = data.user.fullName || data.user.name;
@@ -180,15 +232,33 @@ export const useUserMutations = () => {
         updates.profilePicture = data.profilePicture;
       }
 
+      // Sync auth store with real server data
       if (Object.keys(updates).length > 0) {
-        updateAuthUser(updates);
+        syncUserWithProfile(updates);
       }
+
+      // Invalidate and refetch to ensure consistency
+      queryClient.invalidateQueries({
+        queryKey: userKeys.detail(variables.userId),
+      });
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
 
       toast.success("Profile updated successfully");
     },
-    onError: (error) => {
-      console.error("Failed to update profile:", error);
-      toast.error(error.message || "Failed to update profile");
+
+    onError: (error, variables, context) => {
+      // Rollback optimistic update
+      if (context?.previousUser) {
+        queryClient.setQueryData(
+          userKeys.detail(variables.userId),
+          context.previousUser
+        );
+      }
+
+      if (isAxiosError(error)) {
+        console.error("Failed to update profile:", error);
+        toast.error(error.message || "Failed to update profile");
+      }
     },
   });
 

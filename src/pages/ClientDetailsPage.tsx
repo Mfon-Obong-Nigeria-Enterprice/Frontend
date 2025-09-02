@@ -30,6 +30,9 @@ import DeleteClientDialog from "@/features/dashboard/manager/component/DeleteCli
 import EditClientDialog from "@/features/dashboard/manager/component/EditClientDialog";
 import { toast } from "react-toastify";
 import BlockUnblockClient from "@/features/dashboard/manager/BlockUnblockClient";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 interface ClientDetailsPageProps {
   isManagerView?: boolean;
@@ -64,14 +67,217 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showBlockUnblockDialog, setShowBlockUnblockDialog] = useState(false);
 
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+
+    // Set up document header
+    doc.setFontSize(18);
+    doc.text(
+      `Transaction Details - ${client?.name || "Unknown Client"}`,
+      14,
+      20
+    );
+
+    doc.setFontSize(12);
+    doc.text(`Client: ${client?.name || "N/A"}`, 14, 32);
+    doc.text(`Phone: ${client?.phone || "N/A"}`, 14, 40);
+    doc.text(`Email: ${client?.email || "N/A"}`, 14, 48);
+    doc.text(
+      `Current Balance: ${formatCurrency(client?.balance || 0).trim()}`,
+      14,
+      56
+    );
+
+    // Add filter information
+    doc.setFontSize(10);
+    let filterText = "Filters Applied: ";
+    const filters = [];
+
+    if (transactionTypeFilter !== "all") {
+      filters.push(`Type: ${transactionTypeFilter}`);
+    }
+    if (staffFilter !== "all-staff") {
+      filters.push(`Staff: ${staffFilter}`);
+    }
+    if (dateFrom) {
+      filters.push(`From: ${dateFrom.toLocaleDateString()}`);
+    }
+    if (dateTo) {
+      filters.push(`To: ${dateTo.toLocaleDateString()}`);
+    }
+
+    filterText += filters.length > 0 ? filters.join(", ") : "None";
+    doc.text(filterText, 14, 64);
+
+    doc.text(
+      `Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`,
+      14,
+      72
+    );
+
+    // Calculate balance progression for transactions
+    const calculateTransactionsWithBalance = () => {
+      if (!clientTransactions?.length) return [];
+
+      let runningBalance = client?.balance || 0;
+
+      const sortedTransactions = [...clientTransactions].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+      return sortedTransactions.map((txn) => {
+        const balanceAfter = runningBalance;
+        const transactionImpact =
+          txn.type === "DEPOSIT" ? -txn.total : txn.total;
+        const balanceBefore = runningBalance - transactionImpact;
+        runningBalance = balanceBefore;
+
+        return {
+          ...txn,
+          balanceAfter,
+          balanceBefore,
+        };
+      });
+    };
+
+    const transactionsWithBalance = calculateTransactionsWithBalance();
+
+    // Define table columns for transactions
+    const columns = [
+      { header: "Date", dataKey: "date" },
+      { header: "Time", dataKey: "time" },
+      { header: "Type", dataKey: "type" },
+      { header: "Amount", dataKey: "amount" },
+      { header: "Method", dataKey: "method" },
+      { header: "Staff", dataKey: "staff" },
+      { header: "Balance Before", dataKey: "balanceBefore" },
+      { header: "Balance After", dataKey: "balanceAfter" },
+      { header: "Invoice No", dataKey: "invoice" },
+      { header: "Items", dataKey: "itemCount" },
+    ];
+
+    // Prepare transaction data for the table
+    const transactionRows = transactionsWithBalance.map((txn) => {
+      const transactionDate = new Date(txn.createdAt);
+
+      return {
+        date: transactionDate.toLocaleDateString(),
+        time: transactionDate.toLocaleTimeString(),
+        type: txn.type,
+        amount: `${formatCurrency(txn.total || 0).replace(/^\s+/, "")}`,
+        method: txn.paymentMethod || "N/A",
+        staff: txn.userId?.name || "Unknown",
+        balanceBefore: `${formatCurrency(txn.balanceBefore || 0).replace(
+          /^\s+/,
+          ""
+        )}`,
+        balanceAfter: `${formatCurrency(txn.balanceAfter || 0).replace(
+          /^\s+/,
+          ""
+        )}`,
+        invoice: txn.invoiceNumber || "N/A",
+        itemCount: txn.items?.length || 0,
+      };
+    });
+
+    // Add transactions table
+    autoTable(doc, {
+      startY: 80,
+      head: [columns.map((col) => col.header)],
+      body: transactionRows.map((row) =>
+        columns.map((col) => row[col.dataKey as keyof typeof row])
+      ),
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+        lineColor: [200, 200, 200],
+        lineWidth: 0.1,
+        valign: "middle",
+        halign: "center",
+      },
+      headStyles: {
+        fillColor: [46, 204, 113],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        valign: "middle",
+        halign: "center",
+      },
+      alternateRowStyles: {
+        fillColor: [248, 249, 250],
+      },
+      columnStyles: {
+        0: { cellWidth: 18, halign: "left" }, // Date
+        1: { cellWidth: 18, halign: "left" }, // Time
+        2: { cellWidth: 20, halign: "left" }, // Type
+        3: { cellWidth: 25, halign: "left" }, // Amount
+        4: { cellWidth: 18, halign: "left" }, // Method
+        5: { cellWidth: 22, halign: "left" }, // Staff
+        6: { cellWidth: 24, halign: "left" }, // Balance Before
+        7: { cellWidth: 24, halign: "left" }, // Balance After
+        8: { cellWidth: 22, halign: "left" }, // Invoice
+        9: { cellWidth: 12, halign: "left" }, // Items
+      },
+      margin: { left: 3, right: 3 },
+    });
+
+    // Add summary section
+    const finalY =
+      (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable
+        ?.finalY || 80;
+
+    doc.setFontSize(12);
+    doc.text("Transaction Summary", 14, finalY + 15);
+
+    doc.setFontSize(10);
+    const summaryY = finalY + 25;
+
+    // Calculate summary statistics from filtered transactions
+    const totalTransactions = clientTransactions.length;
+    const purchaseTransactions = clientTransactions.filter(
+      (t) => t.type === "PURCHASE"
+    ).length;
+    const pickupTransactions = clientTransactions.filter(
+      (t) => t.type === "PICKUP"
+    ).length;
+    const depositTransactions = clientTransactions.filter(
+      (t) => t.type === "DEPOSIT"
+    ).length;
+    const totalAmount = clientTransactions.reduce(
+      (sum, t) => sum + (t.total || 0),
+      0
+    );
+    const totalDiscount = clientTransactions.reduce(
+      (sum, t) => sum + (t.discount || 0),
+      0
+    );
+
+    doc.text(`Total Transactions: ${totalTransactions}`, 14, summaryY);
+    doc.text(`Purchases: ${purchaseTransactions}`, 14, summaryY + 8);
+    doc.text(`Pickups: ${pickupTransactions}`, 14, summaryY + 16);
+    doc.text(`Deposits: ${depositTransactions}`, 14, summaryY + 24);
+    doc.text(
+      `Total Amount: ${formatCurrency(totalAmount).replace(/^\s+/, "")}`,
+      14,
+      summaryY + 32
+    );
+    doc.text(
+      `Total Savings: ${formatCurrency(totalDiscount)}`,
+      14,
+      summaryY + 40
+    );
+
+    // Generate filename with client name and current date
+    const fileName = `${
+      client?.name?.replace(/[^a-zA-Z0-9]/g, "_") || "Client"
+    }_Transactions_${new Date().toISOString().split("T")[0]}.pdf`;
+
+    doc.save(fileName);
+  };
+  //
+
   const mergedTransactions = useMemo(() => {
     if (!transactions || !clients) return [];
-    console.log(
-      "🔄 Merging transactions:",
-      transactions.length,
-      "clients:",
-      clients.length
-    );
     const merged = mergeTransactionsWithClients(transactions, clients);
     console.log("✅ Merged transactions:", merged.length);
     return merged;
@@ -239,7 +445,10 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
           </p>
         </div>
         <div className="flex justify-end gap-4 my-4 md:mx-7 col-span-3 md:col-span-3 border-t-[#D9D9D9] md:border-none border-t-2 pt-2 md:pt-0 transition-all px-5 md:px-0">
-          <Button className="bg-white hover:bg-gray-100 text-text-dark border border-[#7D7D7D]">
+          <Button
+            className="bg-white hover:bg-gray-100 text-text-dark border border-[#7D7D7D]"
+            onClick={handleExportPDF}
+          >
             <ChevronUp />
             <span>Export data</span>
           </Button>

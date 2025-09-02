@@ -14,12 +14,6 @@ interface clientTrasactionDetailsProps {
 export const ClientTransactionDetails: React.FC<
   clientTrasactionDetailsProps
 > = ({ clientTransactions, client }) => {
-  console.log("clientTransactionDetails:", {
-    transactionCount: clientTransactions.length,
-    clientBalance: client.balance,
-    clientName: client.name,
-  });
-
   const transactionWithBalance = useMemo(() => {
     if (!clientTransactions?.length) {
       return [];
@@ -73,15 +67,18 @@ export const ClientTransactionDetails: React.FC<
               className="border rounded-lg px-5 py-3 shadow"
             >
               {/* type, date and time, balance */}
-              <header className="py-4 border-b border-[#d7d7d7] flex justify-between">
-                <div className="flex gap-3 items-center">
-                  <span
-                    className={`text-xs p-[6px] rounded-lg ${getTypeStyles(
-                      txn.type
-                    )}`}
-                  >
-                    {getTypeDisplay(txn.type)}
-                  </span>
+              <header className="py-4 border-b border-[#d7d7d7] flex justify-between flex-wrap">
+                <div className="flex gap-3 items-center mb-2 sm:mb-0">
+                  <div>
+                    {" "}
+                    <span
+                      className={`text-xs p-[6px] rounded-lg ${getTypeStyles(
+                        txn.type
+                      )}`}
+                    >
+                      {getTypeDisplay(txn.type)}
+                    </span>
+                  </div>
                   <div className="flex flex-col">
                     <span className="text-xs">
                       {new Date(txn.createdAt).toLocaleDateString()}
@@ -91,10 +88,33 @@ export const ClientTransactionDetails: React.FC<
                     </span>
                   </div>
                 </div>
-                <p className={`${balanceTextClass(txn.balanceAfter)}`}>
-                  {txn.balanceAfter < 0 ? "-" : ""} ₦
-                  {Math.abs(Number(txn.balanceAfter)).toLocaleString()}
-                </p>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <div>
+                      <p className="text-[#2ECC71] font-normal font-Inter text-lg">
+                        ₦{txn.discount?.toLocaleString()} saved
+                      </p>
+                    </div>
+                    <div>
+                      {txn?.total ? (
+                        <p className="text-[#7D7D7D] text-sm font-Inter">
+                          {(
+                            ((txn?.discount ?? 0) / (txn?.subtotal ?? 0)) *
+                            100
+                          ).toFixed(1)}
+                          % discount
+                        </p>
+                      ) : (
+                        "No discount"
+                      )}
+                    </div>
+                  </div>
+
+                  <p className={`${balanceTextClass(txn.balanceAfter)}`}>
+                    {txn.balanceAfter < 0 ? "-" : ""} ₦
+                    {Math.abs(Number(txn.balanceAfter)).toLocaleString()}
+                  </p>
+                </div>
               </header>
 
               <div className="w-full max-w-7xl mx-auto py-4">
@@ -174,13 +194,22 @@ export const ClientTransactionDetails: React.FC<
                             {txn.userId?.name || "Unknown"}
                           </span>
                         </li>
-                        <li>
-                          <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center">
-                            <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
-                              {txn.invoiceNumber || "N/A"}
-                            </span>
-                          </div>
-                        </li>
+                        <div className="">
+                          <li className="mb-2">
+                            <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center">
+                              <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
+                                {txn.invoiceNumber || "N/A"}
+                              </span>
+                            </div>
+                          </li>
+                          <li>
+                            <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center">
+                              <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
+                                {txn.waybillNumber || "N/A"}
+                              </span>
+                            </div>
+                          </li>
+                        </div>
                       </ul>
                     </div>
                   </div>

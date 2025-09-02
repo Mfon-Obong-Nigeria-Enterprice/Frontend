@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { Transaction } from "@/types/transactions";
 import type { Product } from "@/types/types";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 type CategoryObj = { name: string };
 
@@ -1010,11 +1011,94 @@ export const useRevenueStore = create<RevenueState>((set, get) => ({
     };
   },
 
+  // getPaymentMethodRevenue: () => {
+  //   const { transactions } = get();
+  //   if (!transactions) return [];
+
+  //   const paymentMethodTotals: { [key: string]: number } = {};
+
+  //   transactions.forEach((transaction) => {
+  //     if (
+  //       transaction.type === "PURCHASE" ||
+  //       transaction.type === "PICKUP" ||
+  //       transaction.type === "DEPOSIT"
+  //     ) {
+  //       const method = transaction.paymentMethod || "Cash";
+  //       const amount =
+  //         transaction.total ||
+  //         transaction.amountPaid ||
+  //         transaction.amount ||
+  //         0;
+
+  //       if (!paymentMethodTotals[method]) {
+  //         paymentMethodTotals[method] = 0;
+  //       }
+  //       paymentMethodTotals[method] += amount;
+  //     }
+  //   });
+
+  //   // Convert to required format
+  //   return Object.entries(paymentMethodTotals)
+  //     .map(([method, amount]) => {
+  //       let displayMethod = method;
+  //       let color = "text-green-600";
+
+  //       // Handle different method names and set colors
+  //       if (
+  //         method.toLowerCase().includes("transfer") ||
+  //         method.toLowerCase().includes("bank")
+  //       ) {
+  //         displayMethod = "Bank Transfer";
+  //         color = "text-green-600";
+  //       } else if (
+  //         method.toLowerCase().includes("credit") ||
+  //         method.toLowerCase().includes("pay later")
+  //       ) {
+  //         displayMethod = "Credit (Pay Later)";
+  //         color = "text-red-600";
+  //       } else if (method.toLowerCase().includes("cash")) {
+  //         displayMethod = "Cash";
+  //         color = "text-green-600";
+  //       }
+
+  //       return {
+  //         method: displayMethod,
+  //         revenue: `₦${amount.toLocaleString()}`,
+  //         amount,
+  //         color,
+  //       };
+  //     })
+  //     .sort((a, b) => b.amount - a.amount);
+  // },
+
   getPaymentMethodRevenue: () => {
     const { transactions } = get();
     if (!transactions) return [];
 
-    const paymentMethodTotals: { [key: string]: number } = {};
+    // Normalize raw payment method string into canonical buckets
+    const normalizeMethod = (raw?: string) => {
+      if (!raw || typeof raw !== "string") return "Cash";
+      const m = raw.trim().toLowerCase();
+
+      if (m.includes("cash")) return "Cash";
+
+      if (
+        m.includes("transfer") ||
+        m.includes("bank") ||
+        m.includes("deposit") ||
+        m.includes("card") ||
+        m.includes("pos")
+      )
+        return "Bank Transfer";
+
+      if (m.includes("credit") || m.includes("pay later"))
+        return "Credit (Pay Later)";
+
+      return "Other";
+    };
+
+    // Aggregate totals by normalized method
+    const totals: Record<string, number> = {};
 
     transactions.forEach((transaction) => {
       if (
@@ -1022,51 +1106,45 @@ export const useRevenueStore = create<RevenueState>((set, get) => ({
         transaction.type === "PICKUP" ||
         transaction.type === "DEPOSIT"
       ) {
-        const method = transaction.paymentMethod || "Cash";
+        const rawMethod = transaction.paymentMethod || "Cash";
+        const methodKey = normalizeMethod(rawMethod);
         const amount =
           transaction.total ||
           transaction.amountPaid ||
           transaction.amount ||
           0;
 
-        if (!paymentMethodTotals[method]) {
-          paymentMethodTotals[method] = 0;
-        }
-        paymentMethodTotals[method] += amount;
+        if (!totals[methodKey]) totals[methodKey] = 0;
+        totals[methodKey] += amount;
       }
     });
 
-    // Convert to required format
-    return Object.entries(paymentMethodTotals)
-      .map(([method, amount]) => {
-        let displayMethod = method;
-        let color = "text-green-600";
+    // Map aggregated totals to the required return format
+    const methodMeta: Record<string, { display: string; color: string }> = {
+      Cash: { display: "Cash", color: "text-green-600" },
+      "Bank Transfer": { display: "Bank Transfer", color: "text-green-600" },
+      "Credit (Pay Later)": {
+        display: "Credit (Pay Later)",
+        color: "text-red-600",
+      },
+      Other: { display: "Other", color: "text-gray-600" },
+    };
 
-        // Handle different method names and set colors
-        if (
-          method.toLowerCase().includes("transfer") ||
-          method.toLowerCase().includes("bank")
-        ) {
-          displayMethod = "Bank Transfer";
-          color = "text-green-600";
-        } else if (
-          method.toLowerCase().includes("credit") ||
-          method.toLowerCase().includes("pay later")
-        ) {
-          displayMethod = "Credit (Pay Later)";
-          color = "text-red-600";
-        } else if (method.toLowerCase().includes("cash")) {
-          displayMethod = "Cash";
-          color = "text-green-600";
-        }
-
+    const result = Object.entries(totals)
+      .map(([key, amount]) => {
+        const meta = methodMeta[key] || {
+          display: key,
+          color: "text-gray-600",
+        };
         return {
-          method: displayMethod,
-          revenue: `₦${amount.toLocaleString()}`,
+          method: meta.display,
+          revenue: `${formatCurrency(amount)}`,
           amount,
-          color,
+          color: meta.color,
         };
       })
-      .sort((a, b) => b.amount - a.amount);
+      .sort((a, b) => b.amount - a.amount); // largest first
+
+    return result;
   },
 }));

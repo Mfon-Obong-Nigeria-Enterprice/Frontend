@@ -279,7 +279,7 @@ const ManagerClients = () => {
           </div>
 
           {/* Search and filters */}
-          <div className="flex justify-between gap-2 items-center px-4 sm:py-5 mt-5 flex-wrap md:flex-nowrap sm:px-2 md:px-8">
+          <div className="flex justify-between gap-2 items-center px-4 sm:py-5 my-5 flex-wrap md:flex-nowrap sm:px-2 md:px-8">
             <div className="bg-[#F5F5F5] flex items-center gap-1 px-4 rounded-md w-full md:w-1/2">
               <Search size={18} />
               <input
