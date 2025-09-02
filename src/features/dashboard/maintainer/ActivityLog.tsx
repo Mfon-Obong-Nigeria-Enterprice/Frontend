@@ -185,7 +185,7 @@ const ActivityLog = () => {
                   {a.action.toLowerCase().replace("-", " ")}
                 </TableCell>
                 <TableCell
-                  onMouseEnter={() => toggleRow(i)}
+                  onClick={() => toggleRow(i)}
                   title={!expandedRows[i] ? a.details : ""}
                   className={`cursor-pointer ${
                     expandedRows[i] ? "whitespace-pre-wrap" : "truncate"

@@ -14,12 +14,6 @@ interface clientTrasactionDetailsProps {
 export const ClientTransactionDetails: React.FC<
   clientTrasactionDetailsProps
 > = ({ clientTransactions, client }) => {
-  console.log("clientTransactionDetails:", {
-    transactionCount: clientTransactions.length,
-    clientBalance: client.balance,
-    clientName: client.name,
-  });
-
   const transactionWithBalance = useMemo(() => {
     if (!clientTransactions?.length) {
       return [];
