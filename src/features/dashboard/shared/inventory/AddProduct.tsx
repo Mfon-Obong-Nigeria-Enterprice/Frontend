@@ -20,10 +20,10 @@ import {
   SelectValue,
   SelectGroup,
 } from "@/components/ui/select";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Button } from "../ui/button";
-import LoadingSpinner from "../LoadingSpinner";
+import { Input } from "../../../../components/ui/input";
+import { Label } from "../../../../components/ui/label";
+import { Button } from "../../../../components/ui/button";
+import LoadingSpinner from "../../../../components/LoadingSpinner";
 
 const AddProduct = () => {
   // const navigate = useNavigate();
@@ -64,7 +64,6 @@ const AddProduct = () => {
       const err = error as AxiosError<{ message: string }>;
       const message = err?.response?.data.message || "Error creating product";
       toast.error(message);
-      console.error(error);
     } finally {
       setIsLoading(false);
     }

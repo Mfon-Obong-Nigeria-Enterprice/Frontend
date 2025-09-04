@@ -66,7 +66,7 @@ export const useUserMutations = () => {
 
     onError: (error) => {
       if (isAxiosError(error)) {
-        console.error("Failed to update user:", error);
+        // console.error("Failed to update user:", error);
         toast.error(error.message || "Failed to update profile");
       }
     },

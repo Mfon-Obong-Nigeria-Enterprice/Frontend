@@ -1,12 +1,6 @@
 /** @format */
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// import {
-//   ChartContainer,
-//   ChartTooltip,
-//   ChartTooltipContent,
-// } from "@/components/ui/chart";
-// import { Cell, Pie, PieChart } from "recharts";
 
 interface CategoryData {
   name: string;
@@ -20,11 +14,6 @@ interface SalesCategoryChartProps {
 const COLORS = ["#3D80FF", "#FFA500", "#F95353"];
 
 const SalesCategoryChart: React.FC<SalesCategoryChartProps> = ({ data }) => {
-  //   const chartConfig = {
-  //     Building: { label: "Building materials", color: "#FFA500" },
-  //     Construction: { label: "Construction services", color: "#3D80FF" },
-  //     Equipment: { label: "Equipment rental", color: "#F95353" },
-  //   };
   return (
     <div className="mt-4 lg:mt-0">
       <Card className="w-full relative">
@@ -74,7 +63,7 @@ const SalesCategoryChart: React.FC<SalesCategoryChartProps> = ({ data }) => {
                       style={{ backgroundColor: COLORS[index % COLORS.length] }}
                     />
                     <span className="text-sm font-medium">{category.name}</span>
-                  </div>  
+                  </div>
                   <div>
                     <p className="text-sm">({category.value}%)</p>
                   </div>

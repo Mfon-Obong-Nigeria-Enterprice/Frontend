@@ -1,28 +1,31 @@
 // src/lib/api.ts
-import axios, { type AxiosResponse } from 'axios';
+import axios, { type AxiosResponse } from "axios";
 import type {
   Settings,
   Product,
   ApiResponse,
   ProductUpdatePricePayload,
-  UpdateSettingsPayload} from '@/types/types';
-import { toast } from 'sonner';
+  UpdateSettingsPayload,
+} from "@/types/types";
+import { toast } from "sonner";
 
 // Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://mfon-obong-enterprise.onrender.com/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://mfon-obong-enterprise.onrender.com/api";
 
 // Create axios instance
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // Add auth token to requests
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('authToken');
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("authToken");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -31,33 +34,35 @@ api.interceptors.request.use(config => {
 
 // Handle API errors
 api.interceptors.response.use(
-  response => response,
-  error => {
+  (response) => response,
+  (error) => {
     if (!import.meta.env.PROD) {
-      console.error('API Error:', error);
+      alert("API Error:" + error);
     }
-    
+
     // Show user-friendly error messages
     if (error.response?.status === 401) {
-      toast.error('Session expired. Please login again.');
-      localStorage.removeItem('authToken');
-      window.location.href = '/login';
+      toast.error("Session expired. Please login again.");
+
+      window.location.href = "/login";
     } else if (error.response?.status === 403) {
-      toast.error('You do not have permission to perform this action.');
+      toast.error("You do not have permission to perform this action.");
     } else if (error.response?.data?.message) {
       toast.error(error.response.data.message);
     } else {
-      toast.error('An unexpected error occurred');
+      toast.error("An unexpected error occurred");
     }
-    
+
     return Promise.reject(error);
   }
 );
 
 // Helper to handle API responses
-export const handleApiResponse = <T>(response: AxiosResponse<ApiResponse<T>>): T => {
+export const handleApiResponse = <T>(
+  response: AxiosResponse<ApiResponse<T>>
+): T => {
   if (!response.data.success) {
-    throw new Error(response.data.message || 'API request failed');
+    throw new Error(response.data.message || "API request failed");
   }
   return response.data.data;
 };
@@ -71,7 +76,7 @@ export const handleApiResponse = <T>(response: AxiosResponse<ApiResponse<T>>): T
 export const fetchSettings = async (): Promise<Settings> => {
   try {
     // Try to get from localStorage first
-    const savedSettings = localStorage.getItem('app-settings');
+    const savedSettings = localStorage.getItem("app-settings");
     if (savedSettings) {
       return JSON.parse(savedSettings);
     }
@@ -90,7 +95,7 @@ export const fetchSettings = async (): Promise<Settings> => {
         emailNotification: false,
         inactivityAlerts: false,
         systemHealthAlerts: false,
-        userLoginNotifications: false
+        userLoginNotifications: false,
       },
       system: {
         lowStockAlertThreshold: 15,
@@ -103,23 +108,25 @@ export const fetchSettings = async (): Promise<Settings> => {
       clientAccount: {
         defaultCreditLimit: 800000,
         inactivePeriodDays: 30,
-      }
+      },
     };
 
     return defaultSettings;
   } catch (error) {
     if (!import.meta.env.PROD) {
-      console.error('Error fetching settings:', error);
+      console.error("Error fetching settings:", error);
     }
     throw error;
   }
 };
 
-export const updateSettings = async (payload: UpdateSettingsPayload): Promise<Settings> => {
+export const updateSettings = async (
+  payload: UpdateSettingsPayload
+): Promise<Settings> => {
   try {
     // Get current settings
     const currentSettings = await fetchSettings();
-    
+
     // Merge with new settings
     const updatedSettings: Settings = {
       ...currentSettings,
@@ -135,17 +142,17 @@ export const updateSettings = async (payload: UpdateSettingsPayload): Promise<Se
       clientAccount: {
         ...currentSettings.clientAccount,
         ...payload.clientAccount,
-      }
+      },
     };
 
     // Save to localStorage
-    localStorage.setItem('app-settings', JSON.stringify(updatedSettings));
-    
-    toast.success('Settings updated successfully');
+    localStorage.setItem("app-settings", JSON.stringify(updatedSettings));
+
+    toast.success("Settings updated successfully");
     return updatedSettings;
   } catch (error) {
     if (!import.meta.env.PROD) {
-      console.error('Error updating settings:', error);
+      console.error("Error updating settings:", error);
     }
     throw error;
   }
@@ -154,34 +161,36 @@ export const updateSettings = async (payload: UpdateSettingsPayload): Promise<Se
 // Products API - Use your actual endpoints
 export const fetchProducts = async (): Promise<Product[]> => {
   try {
-    const response = await api.get<ApiResponse<Product[]>>('/products');
+    const response = await api.get<ApiResponse<Product[]>>("/products");
     const data = handleApiResponse(response);
-    
+
     if (!Array.isArray(data)) {
       if (!import.meta.env.PROD) {
-        console.error('Expected array of products but got:', data);
+        console.error("Expected array of products but got:", data);
       }
       return [];
     }
-    
+
     return data;
   } catch (error) {
     if (!import.meta.env.PROD) {
-      console.error('Error fetching products:', error);
+      console.error("Error fetching products:", error);
     }
     return [];
   }
 };
 
-export const updateProductPrice = async (payload: ProductUpdatePricePayload): Promise<Product> => {
+export const updateProductPrice = async (
+  payload: ProductUpdatePricePayload
+): Promise<Product> => {
   try {
     const response = await api.patch<ApiResponse<Product>>(
       `/products/${payload.productId}/update-price`,
       { price: payload.newPrice }
     );
-    
+
     const data = handleApiResponse(response);
-    toast.success('Product price updated successfully');
+    toast.success("Product price updated successfully");
     return data;
   } catch (error) {
     if (!import.meta.env.PROD) {

@@ -1,5 +1,5 @@
 import React from "react";
-import Header from "@/components/header/Header";
+import Header from "@/features/dashboard/shared/header/Header";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { StaffSidebar } from "@/features/sidebar/StaffSidebar";

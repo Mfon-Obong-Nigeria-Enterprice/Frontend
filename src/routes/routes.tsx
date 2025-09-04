@@ -3,7 +3,7 @@ import Login from "@/features/auth/Login";
 import Notfound from "@/components/Notfound";
 // import UserDetailsPage from "@/pages/UserDetailsPage";
 import UserDetailsPage from "@/features/dashboard/shared/usermanagement/userdetailpage";
-import AddProduct from "@/components/inventory/AddProduct";
+import AddProduct from "@/features/dashboard/shared/inventory/AddProduct";
 import ClientDetailsPage from "@/pages/ClientDetailsPage";
 import ImportStockPage from "@/features/import/ImportStockPage";
 // import RootInterceptorLayout from "@/layout/RootInterceptorLayout";

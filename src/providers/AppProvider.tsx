@@ -455,15 +455,15 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   });
 
   // Sync immediately when data is successfully fetched
-  useEffect(() => {
-    console.log("Auth state:", {
-      user: user?.role,
-      isAuthLoading,
-      shouldFetchUsers: !isAuthLoading && !!user && isAdminOrSuperAdmin,
-      usersQueryEnabled: usersQuery.fetchStatus,
-      usersQueryData: usersQuery.data,
-    });
-  }, [user, isAuthLoading, usersQuery.data, usersQuery.fetchStatus]);
+  // useEffect(() => {
+  //   console.log("Auth state:", {
+  //     user: user?.role,
+  //     isAuthLoading,
+  //     shouldFetchUsers: !isAuthLoading && !!user && isAdminOrSuperAdmin,
+  //     usersQueryEnabled: usersQuery.fetchStatus,
+  //     usersQueryData: usersQuery.data,
+  //   });
+  // }, [user, isAuthLoading, usersQuery.data, usersQuery.fetchStatus]);
 
   // Sync data to stores when available
   useEffect(() => {
@@ -502,15 +502,14 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   ]);
 
   useEffect(() => {
-    console.log("Users query effect:", {
-      data: usersQuery.data,
-      isSuccess: usersQuery.isSuccess,
-      shouldSetUsers: isAdminOrSuperAdmin,
-      userRole: user?.role,
-    });
+    // console.log("Users query effect:", {
+    //   data: usersQuery.data,
+    //   isSuccess: usersQuery.isSuccess,
+    //   shouldSetUsers: isAdminOrSuperAdmin,
+    //   userRole: user?.role,
+    // });
 
     if (usersQuery.data && usersQuery.isSuccess && isAdminOrSuperAdmin) {
-      console.log("Setting users in store:", usersQuery.data);
       if (
         usersQuery.data &&
         usersQuery.data.length > 0 &&
@@ -529,7 +528,6 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   ]);
 
   useEffect(() => {
-    console.log("activity query data:", activitiesQuery.data);
     if (
       activitiesQuery.data
       // &&
@@ -537,7 +535,6 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
       // user?.role !== "ADMIN"
     ) {
       setActivities(activitiesQuery.data);
-      console.log("setting activities in store", activitiesQuery);
     }
   }, [activitiesQuery.dataUpdatedAt, setActivities, user?.role]);
 
@@ -686,72 +683,3 @@ export { AppProviderOptimized as AppProvider };
 
 // // Export the recommended version
 // export { AppProviderOptimized as AppProvider };
-
-// // export const AppProvider = ({ children }: { children: ReactNode }) => {
-// //   const { setProducts, setCategories } = useInventoryStore();
-// //   const { setTransactions } = useTransactionsStore();
-// //   const { setClients } = useClientStore();
-// //   // const { setUsers } = useUserStore();
-// //   const { setBranches } = useBranchStore();
-// //   const { user } = useAuthStore();
-// //   const inventoryStore = useInventoryStore();
-// //   const transactionStore = useTransactionsStore();
-// //   const clientStore = useClientStore();
-// //   const branchStore = useBranchStore();
-
-// //   const { data: categories = [] } = useSuspenseQuery({
-// //     queryKey: ["categories"],
-// //     queryFn: getAllCategories,
-// //   });
-
-// //   const { data: products = [] } = useSuspenseQuery({
-// //     queryKey: ["products"],
-// //     queryFn: getAllProducts,
-// //   });
-
-// //   const { data: transactions = [] } = useSuspenseQuery({
-// //     queryKey: ["transactions"],
-// //     queryFn: getAllTransactions,
-// //   });
-
-// //   const { data: clients = [] } = useSuspenseQuery({
-// //     queryKey: ["clients"],
-// //     queryFn: getAllClients,
-// //   });
-// //   const { data: branches = [] } = useQuery({
-// //     queryKey: ["branches"],
-// //     queryFn: getAllBranches,
-// //     enabled: user?.role !== "STAFF",
-// //   });
-
-// //   // const { data: users } = useQuery({
-// //   //   queryKey: ["users"],
-// //   //   queryFn: getAllUsers,
-// //   // });
-
-// //   // save to zustand store
-// //   useEffect(() => {
-// //     // if (products) setProducts(products);
-// //     // if (categories) setCategories(categories);
-// //     // if (transactions) setTransactions(transactions);
-// //     // if (clients) setClients(clients);
-// //     // if (branches && user?.role !== "STAFF") setBranches(branches);
-// //     if (products && products !== inventoryStore.products) {
-// //       inventoryStore.setProducts(products);
-// //     }
-// //     if (categories && categories !== inventoryStore.categories) {
-// //       inventoryStore.setCategories(categories);
-// //     }
-// //     if (transactions && transactions !== transactionStore.transactions) {
-// //       transactionStore.setTransactions(transactions);
-// //     }
-// //     if (clients && clients !== clientStore.clients) {
-// //       clientStore.setClients(clients);
-// //     }
-// //     if (branches && branchStore.branches !== branches) {
-// //       branchStore.setBranches(branches);
-// //     }
-// //   }, [products, categories, transactions, clients, branches]);
-
-// //   return <>{children}</>;
-// // };

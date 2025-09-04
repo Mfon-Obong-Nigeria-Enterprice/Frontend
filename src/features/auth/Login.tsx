@@ -68,11 +68,14 @@ const Login = () => {
           break;
 
         default:
-          console.error("Unknown user role detected:", {
-            originalRole: data.user.role,
-            normalizedRole,
-            //  data.user,
-          });
+          alert(
+            "Unknown user role detected:" +
+              {
+                originalRole: data.user.role,
+                normalizedRole,
+                //  data.user,
+              }
+          );
           throw new Error(`Unknown user role: ${data.user.role}`);
       }
 
@@ -103,7 +106,6 @@ const Login = () => {
 
       setErrorMessage(backendMessage);
       setErrorCode(backendCode);
-      console.error("Login failed", backendMessage);
       openModal("error");
       toast.error(backendMessage);
     },

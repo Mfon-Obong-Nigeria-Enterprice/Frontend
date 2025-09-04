@@ -59,7 +59,7 @@ function useClientFiltering(clients: Client[] = []) {
     if (!clients || !Array.isArray(clients)) {
       return [];
     }
-    console.log("📊 Original clients count:", clients.length);
+    // console.log("📊 Original clients count:", clients.length);
 
     // Apply status filter first
     const statusFiltered = clients.filter((client) => {

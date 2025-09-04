@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 
 // stores
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -18,7 +19,7 @@ export const useLogout = () => {
       queryClient.clear();
     },
     onError: (error) => {
-      console.error("Logout failed:", error);
+      toast.error("Logout failed:" + error);
       logout();
       queryClient.clear();
     },

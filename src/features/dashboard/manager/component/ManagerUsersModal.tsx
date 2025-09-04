@@ -142,7 +142,7 @@ export function ManagerUsersModal({
       // Clear form state
       setProfileData((prev) => ({ ...prev, image: null }));
     } catch (error) {
-      console.error("Update error:", error);
+      toast.error("Update error:" + error);
       // Error toast is handled by the mutation hook
     }
   };
@@ -222,10 +222,10 @@ export function ManagerUsersModal({
                     alt={`${userData.userRole} Avatar`}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      console.error(
-                        "Failed to load profile image:",
-                        displayImage
-                      );
+                      // console.error(
+                      //   "Failed to load profile image:",
+                      //   displayImage
+                      // );
                       (e.target as HTMLImageElement).style.display = "none";
                     }}
                   />

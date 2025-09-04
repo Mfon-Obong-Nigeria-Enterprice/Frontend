@@ -85,14 +85,14 @@ export default function RevenueAnalytics() {
   // Handle errors with toast notifications
   useEffect(() => {
     if (transactionsError) {
-      console.error("Failed to fetch transactions:", transactionsError);
+      // console.error("Failed to fetch transactions:", transactionsError);
       toast.error("Failed to load transaction data");
     }
   }, [transactionsError]);
 
   useEffect(() => {
     if (productsError) {
-      console.error("Failed to fetch products:", productsError);
+      // console.error("Failed to fetch products:", productsError);
       toast.error("Failed to load product data");
     }
   }, [productsError]);
