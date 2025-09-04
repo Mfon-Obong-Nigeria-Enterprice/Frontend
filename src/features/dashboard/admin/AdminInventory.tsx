@@ -7,7 +7,7 @@ import { useDebouncedCallback } from "use-debounce";
 import DashboardTitle from "../shared/DashboardTitle";
 import InventoryTab from "./components/InventoryTab";
 import Modal from "@/components/Modal";
-import AddCategory from "@/components/inventory/AddCategory";
+import AddCategory from "@/features/dashboard/shared/inventory/AddCategory";
 
 import { useInventoryStore } from "@/stores/useInventoryStore";
 
@@ -88,10 +88,6 @@ const AdminInventory = () => {
 
   //
   const handleSave = (updatedProducts: Product[]) => {
-    console.log(
-      "AdminInventory: Saving updated products to store:",
-      updatedProducts
-    );
     updateProductsBulk(updatedProducts); // This now correctly calls the bulk update action
     setIsModalOpen(false);
   };
@@ -272,7 +268,7 @@ const AdminInventory = () => {
       {products?.length > 0 ? (
         <section className="bg-white xl:rounded-xl mt-5 max-w-[74vw] 2xl:max-w-full">
           <div className="flex gap-4 justify-between items-center py-5 px-4 sm:px-5 bg-[#f0f0f3] border-b border-[#d9d9d9] md:border-0">
-            <h3 className="text-xl font-medium text-text-dark">
+            <h3 className="text-xl font-medium text-text-dark pt-5 sm:pt-0">
               Product & Categories
             </h3>
             {/*  */}

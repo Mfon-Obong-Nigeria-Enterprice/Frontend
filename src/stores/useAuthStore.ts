@@ -81,10 +81,13 @@ export const useAuthStore = create<AuthState>()(
             return state;
           }
 
+          // Clean and process the name
+          const cleanName = updates.name ? updates.name.trim() : undefined;
+
           // Update both user and userProfile
           const updatedUser: LoginUser = {
             ...state.user,
-            name: updates.name || state.user.name,
+            name: cleanName || state.user.name,
             email: updates.email || state.user.email,
             branch: updates.branch || state.user.branch,
           };
@@ -92,6 +95,7 @@ export const useAuthStore = create<AuthState>()(
           const updatedUserProfile: UserProfile = {
             ...state.userProfile,
             ...updates,
+            name: cleanName || state.userProfile.name, // Use cleaned name
           };
 
           console.log("Updated user object:", updatedUser);
@@ -107,21 +111,41 @@ export const useAuthStore = create<AuthState>()(
       // Fixed method to sync user data with fresh profile data
       syncUserWithProfile: (profileData) => {
         set((state) => {
-          if (!state.user) {
-            console.warn("No user to sync with profile data");
+          if (!state.user || !state.userProfile) {
+            console.warn("No user or userProfile to sync with profile data");
             return state;
           }
 
-          // If no existing userProfile, we can't sync
-          if (!state.userProfile) {
-            console.warn("No userProfile to sync with profile data");
+          // Clean the name if it exists in profileData
+          const cleanName = profileData.name
+            ? profileData.name.trim()
+            : undefined;
+
+          // Check if there are actual changes to prevent unnecessary updates
+          const hasUserChanges =
+            cleanName !== state.user.name ||
+            profileData.email !== state.user.email ||
+            profileData.branch !== state.user.branch;
+
+          const hasProfileChanges = Object.keys(profileData).some((key) => {
+            const newValue =
+              key === "name"
+                ? cleanName
+                : profileData[key as keyof typeof profileData];
+            const currentValue = state.userProfile![key as keyof UserProfile];
+            return newValue !== currentValue && newValue !== undefined;
+          });
+
+          // If no changes, don't update the state
+          if (!hasUserChanges && !hasProfileChanges) {
+            console.log("No changes detected, skipping sync");
             return state;
           }
 
           // Update user object with fresh profile data
           const updatedUser: LoginUser = {
             ...state.user,
-            name: profileData.name || state.user.name,
+            name: cleanName || state.user.name,
             email: profileData.email || state.user.email,
             branch: profileData.branch || state.user.branch,
           };
@@ -130,9 +154,9 @@ export const useAuthStore = create<AuthState>()(
           const updatedUserProfile: UserProfile = {
             ...state.userProfile,
             ...profileData,
-            // Override with explicit fallbacks for required fields
+            // Override with explicit fallbacks for required fields and use cleaned name
             _id: profileData._id || state.userProfile._id,
-            name: profileData.name || state.userProfile.name,
+            name: cleanName || state.userProfile.name,
             email: profileData.email || state.userProfile.email,
             role: profileData.role || state.userProfile.role,
             branch: profileData.branch || state.userProfile.branch,
@@ -142,6 +166,7 @@ export const useAuthStore = create<AuthState>()(
 
           console.log("Syncing user with profile data:", {
             profileData,
+            cleanName,
             updatedUser,
             updatedUserProfile,
           });

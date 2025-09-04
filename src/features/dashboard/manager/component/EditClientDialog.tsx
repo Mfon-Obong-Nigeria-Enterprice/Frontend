@@ -115,7 +115,7 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
       onEditSuccess(); // Call the success callback if provided
       onOpenChange(false);
     } catch (err) {
-      console.error("Failed to add client:", err);
+      // console.error("Failed to add client:", err);
 
       if (isAxiosError(err)) {
         const axiosError = err as AxiosError<{ message: string }>;

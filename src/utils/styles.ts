@@ -47,6 +47,14 @@ export function balanceClass(balance: number | null | undefined) {
       balance !== null && balance && balance < 0,
   });
 }
+export function balanceClassT(balance: number | null | undefined) {
+  return cn("text-sm text-center ", {
+    "text-[#2ECC71]  border-[#2ECC71] ": balance != null && balance > 0,
+    "text-[#7d7d7d]  border-[#7D7D7D]": balance == null || balance === 0,
+    "text-[#F95353] border-[#F95353]":
+      balance !== null && balance && balance < 0,
+  });
+}
 
 // export function balanceTextClass(balance: number | null | undefined) {
 //   if (balance && balance > 0) {

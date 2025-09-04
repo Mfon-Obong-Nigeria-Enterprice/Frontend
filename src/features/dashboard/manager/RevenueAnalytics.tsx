@@ -1,4 +1,3 @@
-import React from "react";
 import {
   LineChart,
   Line,
@@ -27,6 +26,7 @@ import type { StatCard } from "@/types/stats";
 import { getAllTransactions } from "@/services/transactionService";
 import { getPreviousMonthName } from "@/utils/helpersfunction";
 import { getAllProducts } from "@/services/productService";
+import { useEffect } from "react";
 
 export default function RevenueAnalytics() {
   const {
@@ -70,29 +70,29 @@ export default function RevenueAnalytics() {
   });
 
   // Update store when data is fetched
-  React.useEffect(() => {
+  useEffect(() => {
     if (transactionData) {
       setTransactions(transactionData);
     }
   }, [transactionData, setTransactions]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (productData) {
       setProducts(productData);
     }
   }, [productData, setProducts]);
 
   // Handle errors with toast notifications
-  React.useEffect(() => {
+  useEffect(() => {
     if (transactionsError) {
-      console.error("Failed to fetch transactions:", transactionsError);
+      // console.error("Failed to fetch transactions:", transactionsError);
       toast.error("Failed to load transaction data");
     }
   }, [transactionsError]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (productsError) {
-      console.error("Failed to fetch products:", productsError);
+      // console.error("Failed to fetch products:", productsError);
       toast.error("Failed to load product data");
     }
   }, [productsError]);
@@ -292,7 +292,7 @@ export default function RevenueAnalytics() {
               </div>
 
               {/* Year Over Year Comparison */}
-              <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 shadow-sm">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 sm:py-10 sm:px-6 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-gray-900">
                     Year-Over-Year Comparison
@@ -370,7 +370,7 @@ export default function RevenueAnalytics() {
                       paymentMethods.map((method, index) => (
                         <div
                           key={index}
-                          className="grid grid-cols-2 gap-4 items-center py-2 border-b border-gray-200 pb-2"
+                          className="grid grid-cols-2 justify-between gap-4 py-2 border-b border-gray-200 pb-2"
                         >
                           <span className="text-sm text-gray-900">
                             {method.method}
@@ -501,7 +501,7 @@ export default function RevenueAnalytics() {
                         </div>
                       </div>
 
-                      <div className="space-y-2 absolute right-3 bottom-1.5 flex gap-4 md:gap-0 justify-between lg:flex-col">
+                      <div className="space-y-2 absolute right-3 bottom-1.5 flex gap-4 lg:gap-0 justify-between lg:flex-col">
                         {productMarginData.slice(0, 3).map((item, index) => (
                           <div key={index}>
                             <div className="flex items-center gap-2">

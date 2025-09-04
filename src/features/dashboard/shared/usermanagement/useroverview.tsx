@@ -98,6 +98,13 @@ const UserOverview = () => {
                   <Button
                     variant="ghost"
                     className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium"
+                    onClick={() => {
+                      const url =
+                        user?.role === "SUPER_ADMIN" ? "manager" : "maintainer";
+                      navigate(
+                        `/${url}/dashboard/user-management/col-settings`
+                      );
+                    }}
                   >
                     <span className="flex-1 text-left py-5">
                       Columns Settings
@@ -139,7 +146,6 @@ const UserOverview = () => {
             type="text"
             placeholder="Search"
             className="pl-10 pr-4 py-5 rounded-lg border border-[#E0E0E0] w-full text-sm bg-[#F9F9F9] text-[#444] placeholder:text-[#B0B0B0]"
-            style={{ fontFamily: "inherit" }}
           />
         </div>
         {/* Filters row - below search on tablet, beside on desktop */}

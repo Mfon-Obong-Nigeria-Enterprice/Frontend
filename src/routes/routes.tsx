@@ -3,7 +3,7 @@ import Login from "@/features/auth/Login";
 import Notfound from "@/components/Notfound";
 // import UserDetailsPage from "@/pages/UserDetailsPage";
 import UserDetailsPage from "@/features/dashboard/shared/usermanagement/userdetailpage";
-import AddProduct from "@/components/inventory/AddProduct";
+import AddProduct from "@/features/dashboard/shared/inventory/AddProduct";
 import ClientDetailsPage from "@/pages/ClientDetailsPage";
 import ImportStockPage from "@/features/import/ImportStockPage";
 // import RootInterceptorLayout from "@/layout/RootInterceptorLayout";
@@ -25,6 +25,7 @@ import MaintainerDashboard from "@/features/dashboard/maintainer/MaintainerDashb
 import ActivityLog from "@/features/dashboard/maintainer/ActivityLog";
 import MaintainerSettings from "@/features/dashboard/maintainer/MaintainerSettings";
 import MaintainerNotification from "@/features/dashboard/maintainer/MaintainerNotification";
+import ColumnSettings from "@/features/dashboard/shared/usermanagement/columnsettings";
 
 // admin
 import AdminDashboardLayout from "@/layout/AdminDashboardLayout";
@@ -63,6 +64,7 @@ const router = createBrowserRouter([
       { path: "manager-settings", element: <ManagerSettings /> },
       { path: "manager-notifications", element: <ManagerNotifications /> },
       { path: "user-management/:id", element: <UserDetailsPage /> },
+      { path: "user-management/col-settings", element: <ColumnSettings /> },
       { path: "log", element: <ActivityLog /> },
     ],
   },
@@ -77,8 +79,9 @@ const router = createBrowserRouter([
       { path: "overview", element: <MaintainerDashboard /> },
       { path: "maintainer-notifications", element: <MaintainerNotification /> },
       { path: "maintainer-settings", element: <MaintainerSettings /> },
-      { path: "user", element: <ManageUser /> },
+      { path: "user-management", element: <ManageUser /> },
       { path: "user-management/:id", element: <UserDetailsPage /> },
+      { path: "user-management/col-settings", element: <ColumnSettings /> },
       { path: "maintainer-notifications", element: <MaintainerNotification /> },
       { path: "log", element: <ActivityLog /> },
       { path: "settings", element: <MaintainerSettings /> },

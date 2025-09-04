@@ -32,7 +32,6 @@ const DashboardOverview: React.FC = () => {
   const activeClients = getActiveClients();
   const outstandingBalance = getOutStandingBalanceData();
   const activeClientsPercentage = getActiveClientsPercentage();
-  
 
   const stats: StatCard[] = [
     {
@@ -73,10 +72,10 @@ const DashboardOverview: React.FC = () => {
       statValue: `${activeClientsPercentage}% of total`,
       statColor: "green",
     },
-  ]; 
+  ];
 
   return (
-    <main>
+    <main className="p-2">
       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4 mb-7">
         <DashboardTitle
           heading="Dashboard"

@@ -96,25 +96,25 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
   return (
     <div className="mt-7 mb-2 px-4 hidden lg:block">
       <Card>
-        <CardContent className="text-center">
+        <CardContent>
           <Table>
             <TableHeader className="bg-[#D9D9D9] ">
               <TableRow>
-                <TableHead className="text-center">Date</TableHead>
-                <TableHead className="text-center">Clients</TableHead>
-                <TableHead className="text-center">Type</TableHead>
-                <TableHead className="text-center">Amount</TableHead>
-                <TableHead className="text-center">Balance</TableHead>
-                <TableHead className="text-center">Action</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Clients</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Balance</TableHead>
+                <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="text-center">
+            <TableBody>
               {currentClient.map((client) => {
                 const lastTransaction = getClientTransaction(client);
 
                 const isOwing = client.balance < 0;
                 return (
-                  <TableRow key={client._id} className="text-center">
+                  <TableRow key={client._id} className="text-start">
                     <TableCell>
                       <div>
                         <p className="font-[400] text-[#444444] text-sm">
@@ -128,9 +128,9 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                     </TableCell>
 
                     {/* registered clients */}
-                    <TableCell>
+                    <TableCell className=" md:w-[95px]  lg:w-[125px] lg:pr-5 pr-10">
                       <div>
-                        <p className="font-[400] text-[#444444] text-sm">
+                        <p className="font-[400] text-[#444444] text-sm ">
                           {client.name}
                         </p>
                       </div>
@@ -140,7 +140,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                     <TableCell>
                       <Badge
                         variant="outline"
-                        className={`uppercase p-2 w-[85px] text-[12px] border rounded-2xl ${
+                        className={`uppercase p-2 md:w-full  lg:w-[85px] text-[12px] border rounded-2xl ${
                           lastTransaction?.type === "PURCHASE"
                             ? "border border-[#F95353] bg-[#FFCACA] text-[#F95353] rounded-2xl"
                             : lastTransaction?.type === "PICKUP"

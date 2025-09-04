@@ -137,7 +137,7 @@ const NewSales: React.FC = () => {
     return null;
   }
 
-  console.log("showReceipt:", showReceipt, "receiptData:", receiptData);
+  // console.log("showReceipt:", showReceipt, "receiptData:", receiptData);
 
   // Check if selected client is blocked/suspended
   const isClientBlocked = selectedClient?.isActive === false;

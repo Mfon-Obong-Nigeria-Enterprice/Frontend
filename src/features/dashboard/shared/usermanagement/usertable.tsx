@@ -4,9 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useUserStore } from "@/stores/useUserStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
-import DeleteUserModal from "./modals/deleteusermodal";
-import UserStatusModal from "./modals/userstatusmodal";
-// import Avatar from "../Avatar";
+import { useModalStore } from "@/stores/useModalStore";
+
 import {
   Table,
   TableBody,
@@ -42,22 +41,11 @@ const UserTable = () => {
   const users = useUserStore((s) => s.users);
   const currentUser = useAuthStore((s) => s.user);
   const activityLogs = useActivityLogsStore((s) => s.activities);
-
-  const [deleteModal, setDeleteModal] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-
-  const [statusModal, setStatusModal] = useState<{
-    id: string;
-    name: string;
-    action: "suspend" | "enable";
-  } | null>(null);
+  const { openDelete, openStatus } = useModalStore();
 
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
 
   // Filter users according to current user's role
-
   const filteredUsers = filterUsers(users, currentUser?.role || "");
 
   // Create lookup maps for activities by both user ID and email for flexibility
@@ -328,7 +316,7 @@ const UserTable = () => {
                                 );
 
                               const url =
-                                user?.role === "MAINTAINER"
+                                currentUser?.role === "MAINTAINER"
                                   ? "maintainer"
                                   : "manager";
 
@@ -361,11 +349,12 @@ const UserTable = () => {
                             <button
                               className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
                               onClick={() => {
-                                setStatusModal({
-                                  id: user._id,
-                                  name: user.name,
-                                  action: "enable",
-                                });
+                                openStatus(user._id, user.name, "enable");
+                                // setStatusModal({
+                                //   id: user._id,
+                                //   name: user.name,
+                                //   action: "enable",
+                                // });
                                 setPopoverOpen(null);
                               }}
                             >
@@ -377,11 +366,7 @@ const UserTable = () => {
                             <button
                               className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
                               onClick={() => {
-                                setStatusModal({
-                                  id: user._id,
-                                  name: user.name,
-                                  action: "suspend",
-                                });
+                                openStatus(user._id, user.name, "suspend");
                                 setPopoverOpen(null);
                               }}
                             >
@@ -394,7 +379,7 @@ const UserTable = () => {
                           <button
                             className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium text-red-600"
                             onClick={() => {
-                              setDeleteModal({ id: user._id, name: user.name });
+                              openDelete(user._id, user.name);
                               setPopoverOpen(null);
                             }}
                           >
@@ -456,21 +441,6 @@ const UserTable = () => {
             </PaginationContent>
           </Pagination>
         </div>
-      )}
-
-      {/* Modals */}
-      {deleteModal && (
-        <DeleteUserModal
-          user={deleteModal}
-          onClose={() => setDeleteModal(null)}
-        />
-      )}
-      {statusModal && (
-        <UserStatusModal
-          user={{ id: statusModal.id, name: statusModal.name }}
-          action={statusModal.action} // 👈 dynamic action
-          onClose={() => setStatusModal(null)}
-        />
       )}
     </div>
   );

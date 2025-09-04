@@ -1,34 +1,47 @@
-/** @format */
-
 import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
-// import Stats, {
-//   type StatCard,
-// } from "@/features/dashboard/maintainer/components/Stats";
-// import { Button } from "@/components/ui/button";
-
 import { SystemHealth } from "./components/SystemHealth";
+import type { StatCard } from "@/types/stats";
+import Stats from "../shared/Stats";
+import { useUserStore } from "@/stores/useUserStore";
+import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
 
 const MaintainerDashboard = () => {
-  // const stats: StatCard[] = [
-  //   {
-  //     heading: "Total Activity (Today)",
-  //     salesValue: "₦ 135,500",
-  //     statValue: "15% from yesterday",
-  //     color: "green",
-  //   },
-  //   {
-  //     heading: "Monthly Revenue",
-  //     salesValue: "₦ 446,850",
-  //     statValue: "8% from last month",
-  //     color: "green",
-  //   },
-  //   {
-  //     heading: "Outstanding balances",
-  //     salesValue: "₦ 1,355,800",
-  //     statValue: "5 Clients with overdue balances",
-  //     color: "orange",
-  //   },
-  // ];
+  const users = useUserStore((s) => s.users);
+  const {
+    getTotalActivityToday,
+    getFailedLoginAttempts,
+    getDataModifications,
+  } = useActivityLogsStore();
+
+  const activeUsers = users.filter(
+    (user) => user.isActive && !user.isBlocked
+  ).length;
+  const totalActivityToday = getTotalActivityToday();
+  const failedLoginAttempts = getFailedLoginAttempts();
+  const dataModifications = getDataModifications();
+
+  const stats: StatCard[] = [
+    {
+      salesValue: totalActivityToday.toString(),
+      heading: "Total Activity Today",
+      icon: "/icons/total 1.svg",
+    },
+    {
+      salesValue: failedLoginAttempts.toString(),
+      heading: "Failed Login Attempts",
+      icon: "/icons/failed 1.svg",
+    },
+    {
+      salesValue: activeUsers.toString(),
+      heading: "Active Users",
+      icon: "/icons/active 1.svg",
+    },
+    {
+      salesValue: dataModifications.toString(),
+      heading: "Data Modifications",
+      icon: "/icons/data 1.svg",
+    },
+  ];
 
   return (
     <main>
@@ -38,8 +51,39 @@ const MaintainerDashboard = () => {
           description="Welcome back, Maintainer! Here's an overview of your business"
         />
       </div>
-      {/* <Stats data={stats} /> */}
-      <SystemHealth />
+      <Stats data={stats} />
+      <div className="grid grid-cols-1 md:grid-cols-[60fr_40fr] gap-5">
+        <SystemHealth />
+
+        {/* recent activity */}
+        <div className="bg-white rounded-[10px]">
+          <h5>Recent Activity</h5>
+
+          {/* list */}
+          {/* <ul>
+            {[
+              ...activities
+                .sort(
+                  (a, b) =>
+                    new Date(b.timestamp).getTime() -
+                    new Date(a.timestamp).getTime()
+                )
+                .slice(0, 8)
+                .map((a, i) => (
+                  <li key={i} className="flex justify-between border-b py-1">
+                    <div>
+                      <p>{a.details}</p>
+                      <span className="block">{a.timestamp}</span>
+                    </div>
+
+                    {/* device *
+                    <p>{a.device}</p>
+                  </li>
+                )),
+            ]}
+          </ul> */}
+        </div>
+      </div>
     </main>
   );
 };

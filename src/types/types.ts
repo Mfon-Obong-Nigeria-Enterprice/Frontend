@@ -33,8 +33,8 @@ export const alertAndNotificationSettingsSchema = z.object({
   CustomThresholdAlerts: z.boolean(),
   PriceChangeNotification: z.boolean(),
   LargeBalanceAlertThreshold: z.boolean(),
-  dashboardNotification: z.boolean(), 
-  emailNotification: z.boolean(), 
+  dashboardNotification: z.boolean(),
+  emailNotification: z.boolean(),
   inactivityAlerts: z.boolean(),
   systemHealthAlerts: z.boolean(),
   userLoginNotifications: z.boolean(),
@@ -42,12 +42,16 @@ export const alertAndNotificationSettingsSchema = z.object({
 
 export const systemPreferencesSchema = z.object({
   lowStockAlertThreshold: z.number().min(0, "Must be a positive number"),
-  maximumDiscount: z.number().min(0, "Must be a positive number").max(100, "Cannot exceed 100%"),
+  maximumDiscount: z
+    .number()
+    .min(0, "Must be a positive number")
+    .max(100, "Cannot exceed 100%"),
   bulkDiscountThreshold: z.number().min(0, "Must be a positive number"),
-  minimumPurchaseForBulkDiscount: z.number().min(0, "Must be a positive number"),
+  minimumPurchaseForBulkDiscount: z
+    .number()
+    .min(0, "Must be a positive number"),
   allowNegativeBalances: z.boolean(),
   largeBalanceThreshold: z.number().min(0, "Must be a positive number"),
-  
 });
 
 export const clientAccountSettingsSchema = z.object({
@@ -67,9 +71,7 @@ export const settingsSchema = z.object({
 // Define the update settings schema
 export const updateSettingsSchema = settingsSchema.partial();
 
-
 export const apiSettingsSchema = z.object({
-  
   lowStockAlert: z.boolean().optional(),
   newProductNotification: z.boolean().optional(),
   expirationReminder: z.boolean().optional(),
@@ -82,7 +84,7 @@ export const apiSettingsSchema = z.object({
   inactivityAlert: z.boolean().optional(),
   systemHealthAlert: z.boolean().optional(),
   userLoginNotification: z.boolean().optional(),
-  
+
   // System settings
   lowStockThreshold: z.number().optional(),
   maxDiscount: z.number().optional(),
@@ -90,7 +92,7 @@ export const apiSettingsSchema = z.object({
   minPurchaseForBulkDiscount: z.number().optional(),
   allowNegativeBalance: z.boolean().optional(),
   largeBalanceThreshold: z.number().optional(),
-  
+
   // Client account settings
   defaultCreditLimit: z.number().optional(),
   inactivePeriodDays: z.number().optional(),
@@ -99,7 +101,9 @@ export const apiSettingsSchema = z.object({
 // Export all types
 export type MaintenanceModeSettings = z.infer<typeof maintenanceModeSchema>;
 export type SessionSettings = z.infer<typeof sessionSettingsSchema>;
-export type AlertAndNotificationSettings = z.infer<typeof alertAndNotificationSettingsSchema>;
+export type AlertAndNotificationSettings = z.infer<
+  typeof alertAndNotificationSettingsSchema
+>;
 export type SystemPreferences = z.infer<typeof systemPreferencesSchema>;
 export type ClientAccountSettings = z.infer<typeof clientAccountSettingsSchema>;
 export type Settings = z.infer<typeof settingsSchema>;
@@ -154,8 +158,8 @@ export interface LoginUser {
   branchId: string;
   createdAt: string;
 }
+
 export interface UserProfile {
-  // _id: string;
   _id: string;
   name: string;
   email: string;
@@ -165,8 +169,8 @@ export interface UserProfile {
   createdAt: string;
   profilePicture?: string;
 }
+
 export interface UserProfile {
-  // _id: string;
   _id: string;
   name: string;
   email: string;
@@ -250,6 +254,7 @@ export interface NewProduct {
   unitPrice: number;
   stock: number;
   minStockLevel: number;
+  // branchId: string;
 }
 
 export type ProductImportRow = {
