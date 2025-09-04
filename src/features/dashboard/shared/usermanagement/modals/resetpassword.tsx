@@ -173,7 +173,7 @@ const ResetPassword = ({ user, onClose }: ResetPasswordProps) => {
             New Temporary Password
           </label>
           <div className="flex gap-2">
-            <div className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 font-mono text-sm">
+            <div className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 font-mono text-sm truncate">
               {temporaryPassword || "Click 'Generate New Password' to create"}
             </div>
             <Button

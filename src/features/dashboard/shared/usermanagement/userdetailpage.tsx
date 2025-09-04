@@ -305,7 +305,7 @@ const UserDetailsPage = () => {
         <Modal
           isOpen={isPasswordModal}
           onClose={handleClosePasswordModal}
-          size="lg"
+          size="xl"
         >
           <ResetPassword user={user} onClose={handleClosePasswordModal} />
         </Modal>
