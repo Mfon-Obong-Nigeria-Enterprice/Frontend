@@ -43,7 +43,7 @@ const WaybillModal = ({
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
-    .slice(0, 10);
+    .slice(0, 15);
 
   const handleTransactionSelect = (transaction: Transaction) => {
     setSelectedTransaction(transaction);

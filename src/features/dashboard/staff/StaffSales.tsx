@@ -15,6 +15,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // icons
 import { VscRefresh } from "react-icons/vsc";
@@ -127,7 +128,7 @@ const StaffSales = () => {
               <p
                 key={f}
                 onClick={() => setFilter(f as "today" | "week" | "month")}
-                className={`cursor-pointer px-5 py-3 rounded-[2px] text-sm font-Inter ${
+                className={`cursor-pointer px-5 py-3 rounded-[2px] text-sm font-Inter  hidden md:block ${
                   filter === f
                     ? "bg-[#D8E5FE] text-[#3D80FF]"
                     : "bg-transparent text-[#444444]"
@@ -140,6 +141,41 @@ const StaffSales = () => {
                   : "This Month"}
               </p>
             ))}
+            <div className="md:hidden w-full">
+              <Tabs
+                value={filter}
+                onValueChange={(val) =>
+                  setFilter(val as "today" | "week" | "month")
+                }
+              >
+                <TabsList className="grid grid-cols-3 w-full md:hidden">
+                  <TabsTrigger
+                    value="today"
+                    className="w-full px-5 py-3 text-sm font-Inter 
+                 data-[state=active]:bg-[#3D80FF] data-[state=active]:text-white 
+                 data-[state=inactive]:bg-transparent data-[state=inactive]:text-[#444444]"
+                  >
+                    Today
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="week"
+                    className="w-full px-5 py-3 text-sm font-Inter 
+                  data-[state=active]:bg-[#3D80FF] data-[state=active]:text-white 
+                  data-[state=inactive]:bg-transparent data-[state=inactive]:text-[#444444]"
+                  >
+                    This Week
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="month"
+                    className="w-full px-5 py-3 text-sm font-Inter 
+                 data-[state=active]:bg-[#3D80FF] data-[state=active]:text-white 
+                 data-[state=inactive]:bg-transparent data-[state=inactive]:text-[#444444]"
+                  >
+                    This Month
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
           </div>
         </div>
         <MySalesActivity filteredTransactions={currentTransaction} />

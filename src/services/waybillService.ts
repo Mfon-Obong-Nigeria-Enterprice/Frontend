@@ -7,7 +7,6 @@ export interface WaybillResponse {
   data?: {
     waybillNumber: string;
     transactionId: string;
-    // Add other properties that your API returns
   };
 }
 
