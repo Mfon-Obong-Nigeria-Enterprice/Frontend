@@ -1,6 +1,7 @@
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, QueryClient } from "@tanstack/react-query";
+
 import { createNewUser } from "@/services/userService";
 import { createUserSchema } from "@/schemas/userSchema";
 import { toast } from "react-toastify";
@@ -26,6 +27,7 @@ import {
 
 const CreateUserModal = ({ closeModal }: { closeModal: () => void }) => {
   const branches = useBranchStore((s) => s.branches);
+  const query = new QueryClient();
 
   const {
     register,
@@ -41,6 +43,7 @@ const CreateUserModal = ({ closeModal }: { closeModal: () => void }) => {
     mutationFn: (data: CreateUserPayload) => createNewUser(data),
     onSuccess: (data) => {
       toast.success(`Account created successfully for ${data.name}`);
+      query.invalidateQueries({ queryKey: ["users"] });
       closeModal();
       reset();
     },

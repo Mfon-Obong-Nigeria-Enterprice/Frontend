@@ -1,8 +1,10 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, QueryClient } from "@tanstack/react-query";
 import { useUserStore } from "@/stores/useUserStore";
 import { deleteUser } from "@/services/userService";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 interface DeleteUserModalProps {
   user: { id: string; name: string };
@@ -10,14 +12,26 @@ interface DeleteUserModalProps {
 }
 
 const DeleteUserModal = ({ user, onClose }: DeleteUserModalProps) => {
+  const query = new QueryClient();
   const removeUser = useUserStore((s) => s.removeUser);
+  const role = useAuthStore((s) => s.user?.role);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { id } = useParams<{ id?: string }>();
 
   const mutation = useMutation({
     mutationFn: () => deleteUser(user.id),
     onSuccess: () => {
       removeUser(user.id); // update store
+      query.invalidateQueries({ queryKey: ["users"] }); // refetch users
       toast.success(`${user.name} deleted successfully`);
       onClose();
+
+      // redirect if the deleted user is the one being viewed
+      if (id && location.pathname.includes(`/user-management/${id}`)) {
+        const url = role === "MAINTAINER" ? "maintainer" : "manager";
+        navigate(`/${url}/dashboard/user-management`);
+      }
     },
     onError: () => {
       toast.error("Failed to delete user");
