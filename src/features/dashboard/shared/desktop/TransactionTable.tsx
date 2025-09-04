@@ -185,14 +185,21 @@ const TransactionTable = ({
             ))
           ) : (
             <tr>
-              <td
-                colSpan={7}
-                className="text-gray-400 text-center font-normal text-sm py-10 "
-              >
-                {/* {searchTerm ?
-                 "No transactions found matching your search"
-                  : "Loading transactions..."} */}
-                No transactions found
+              <td colSpan={8} className="py-16">
+                <div className="flex flex-col items-center justify-center text-center space-y-3">
+                  {/* Icon / visual */}
+                  <div className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 border border-gray-200">
+                    <ChevronDown className="w-6 h-6 text-gray-400" />
+                  </div>
+
+                  {/* Message */}
+                  <p className="text-gray-500 text-sm font-medium">
+                    No transactions found
+                  </p>
+                  <p className="text-gray-400 text-xs">
+                    Your transactions will appear here once they are recorded.
+                  </p>
+                </div>
               </td>
             </tr>
           )}

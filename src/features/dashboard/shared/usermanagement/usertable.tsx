@@ -328,7 +328,7 @@ const UserTable = () => {
                                 );
 
                               const url =
-                                user?.role === "MAINTAINER"
+                                currentUser?.role === "MAINTAINER"
                                   ? "maintainer"
                                   : "manager";
 

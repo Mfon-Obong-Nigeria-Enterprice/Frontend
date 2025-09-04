@@ -165,6 +165,9 @@
     @apply bg-background text-foreground;
   }
 }
+.menu-item {
+  @apply cursor-pointer transition-transform duration-200 hover:scale-90;
+}
 
 @layer base {
   input:-webkit-autofill,
