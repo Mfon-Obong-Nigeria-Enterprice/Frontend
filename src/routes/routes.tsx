@@ -79,7 +79,7 @@ const router = createBrowserRouter([
       { path: "overview", element: <MaintainerDashboard /> },
       { path: "maintainer-notifications", element: <MaintainerNotification /> },
       { path: "maintainer-settings", element: <MaintainerSettings /> },
-      { path: "user", element: <ManageUser /> },
+      { path: "user-management", element: <ManageUser /> },
       { path: "user-management/:id", element: <UserDetailsPage /> },
       { path: "user-management/col-settings", element: <ColumnSettings /> },
       { path: "maintainer-notifications", element: <MaintainerNotification /> },

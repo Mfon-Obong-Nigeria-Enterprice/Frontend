@@ -4,9 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { useUserStore } from "@/stores/useUserStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
-import DeleteUserModal from "./modals/deleteusermodal";
-import UserStatusModal from "./modals/userstatusmodal";
+import { useModalStore } from "@/stores/useModalStore";
+
+// import DeleteUserModal from "./modals/deleteusermodal";
+// import UserStatusModal from "./modals/userstatusmodal";
 // import Avatar from "../Avatar";
+
 import {
   Table,
   TableBody,
@@ -42,17 +45,18 @@ const UserTable = () => {
   const users = useUserStore((s) => s.users);
   const currentUser = useAuthStore((s) => s.user);
   const activityLogs = useActivityLogsStore((s) => s.activities);
+  const { openDelete, openStatus } = useModalStore();
 
-  const [deleteModal, setDeleteModal] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
+  // const [deleteModal, setDeleteModal] = useState<{
+  //   id: string;
+  //   name: string;
+  // } | null>(null);
 
-  const [statusModal, setStatusModal] = useState<{
-    id: string;
-    name: string;
-    action: "suspend" | "enable";
-  } | null>(null);
+  // const [statusModal, setStatusModal] = useState<{
+  //   id: string;
+  //   name: string;
+  //   action: "suspend" | "enable";
+  // } | null>(null);
 
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
 
@@ -361,11 +365,12 @@ const UserTable = () => {
                             <button
                               className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
                               onClick={() => {
-                                setStatusModal({
-                                  id: user._id,
-                                  name: user.name,
-                                  action: "enable",
-                                });
+                                openStatus(user._id, user.name, "enable");
+                                // setStatusModal({
+                                //   id: user._id,
+                                //   name: user.name,
+                                //   action: "enable",
+                                // });
                                 setPopoverOpen(null);
                               }}
                             >
@@ -377,11 +382,12 @@ const UserTable = () => {
                             <button
                               className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
                               onClick={() => {
-                                setStatusModal({
-                                  id: user._id,
-                                  name: user.name,
-                                  action: "suspend",
-                                });
+                                openStatus(user._id, user.name, "suspend");
+                                // setStatusModal({
+                                //   id: user._id,
+                                //   name: user.name,
+                                //   action: "suspend",
+                                // });
                                 setPopoverOpen(null);
                               }}
                             >
@@ -394,7 +400,8 @@ const UserTable = () => {
                           <button
                             className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium text-red-600"
                             onClick={() => {
-                              setDeleteModal({ id: user._id, name: user.name });
+                              openDelete(user._id, user.name);
+                              // setDeleteModal({ id: user._id, name: user.name });
                               setPopoverOpen(null);
                             }}
                           >
@@ -459,7 +466,7 @@ const UserTable = () => {
       )}
 
       {/* Modals */}
-      {deleteModal && (
+      {/* {deleteModal && (
         <DeleteUserModal
           user={deleteModal}
           onClose={() => setDeleteModal(null)}
@@ -471,7 +478,7 @@ const UserTable = () => {
           action={statusModal.action} // 👈 dynamic action
           onClose={() => setStatusModal(null)}
         />
-      )}
+      )} */}
     </div>
   );
 };

@@ -1,11 +1,8 @@
 import { useState } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 // components
 import UserAccountDetails from "./useraccountdetails";
-import Modal from "@/components/Modal";
 
 // hooks
 import { useGoBack } from "@/hooks/useGoBack";
@@ -14,9 +11,7 @@ import { useGoBack } from "@/hooks/useGoBack";
 import { useUserStore } from "@/stores/useUserStore";
 import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
 import { useAuthStore } from "@/stores/useAuthStore";
-
-// services
-import { deleteUser, suspendUser, enableUser } from "@/services/userService";
+import { useModalStore } from "@/stores/useModalStore";
 
 // ui components
 import { Button } from "@/components/ui/button";
@@ -38,6 +33,7 @@ import { RxHamburgerMenu } from "react-icons/rx";
 // types
 import type { CompanyUser } from "@/stores/useUserStore";
 import ResetPassword from "./modals/resetpassword";
+import Modal from "@/components/Modal";
 
 const UserDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,12 +41,8 @@ const UserDetailsPage = () => {
   const navigate = useNavigate();
   const goback = useGoBack();
   const userAccount = useAuthStore((s) => s.user);
-  const {
-    users,
-    removeUser,
-    suspendUser: suspend,
-    enableUser: enable,
-  } = useUserStore();
+  const { users } = useUserStore();
+  const { openDelete, openStatus } = useModalStore();
 
   const activityLogs = useActivityLogsStore((s) => s.activities);
   const [isPasswordModal, setIsPasswordModal] = useState<boolean>(false);
@@ -62,49 +54,19 @@ const UserDetailsPage = () => {
   // Fallback: if no state passed, fetch from store
   const user: CompanyUser = userData || users.find((u) => u._id === id);
 
+  const handleResetPassword = () => {
+    setIsPasswordModal(true);
+  };
+  const handleClosePasswordModal = () => {
+    setIsPasswordModal(false);
+  };
+
   // If no activities passed, fetch from store
   const userActivities =
     activities ||
     activityLogs.filter(
       (log) => log.performedBy === user?._id || log.performedBy === user?.email
     );
-
-  const deleteMutation = useMutation({
-    mutationFn: () => deleteUser(id!),
-    onSuccess: () => {
-      removeUser(id!);
-      toast.success("User deleted successfully");
-      navigate(-1);
-    },
-    onError: () => toast.error("Failed to delete user"),
-  });
-
-  const suspendMutation = useMutation({
-    mutationFn: () => suspendUser(id!),
-    onSuccess: () => {
-      suspend(id!);
-      toast.success("User suspended successfully");
-    },
-    onError: () => toast.error("Failed to suspend user"),
-  });
-
-  const enableMutation = useMutation({
-    mutationFn: () => enableUser(id!),
-    onSuccess: () => {
-      enable(id!);
-      toast.success("User enabled successfully");
-    },
-    onError: () => toast.error("Failed to enable user"),
-  });
-
-  // Handle reset password modal
-  const handleResetPassword = () => {
-    setIsPasswordModal(true);
-  };
-
-  const handleClosePasswordModal = () => {
-    setIsPasswordModal(false);
-  };
 
   // Fallback if no user found
   if (!user) {
@@ -142,15 +104,15 @@ const UserDetailsPage = () => {
             <PopoverContent className="space-y-3 w-fit mr-4">
               {user.isBlocked ? (
                 <span
-                  onClick={() => enableMutation.mutate()}
-                  className="menu-item"
+                  onClick={() => openStatus(user._id, user.name, "enable")}
+                  className="pb-2"
                 >
                   Enable user
                 </span>
               ) : (
                 <span
-                  onClick={() => suspendMutation.mutate()}
-                  className="menu-item"
+                  onClick={() => openStatus(user._id, user.name, "suspend")}
+                  className="pb-2"
                 >
                   Suspend user
                 </span>
@@ -165,10 +127,10 @@ const UserDetailsPage = () => {
               )}
 
               <Separator />
-
               <span
-                onClick={() => deleteMutation.mutate()}
-                className="menu-item"
+                onClick={() => {
+                  openDelete(user._id, user.name);
+                }}
               >
                 Delete User
               </span>
@@ -185,14 +147,14 @@ const UserDetailsPage = () => {
             {user.isBlocked ? (
               <Button
                 variant="blueoutline"
-                onClick={() => enableMutation.mutate()}
+                onClick={() => openStatus(user._id, user.name, "enable")}
               >
                 Enable user
               </Button>
             ) : (
               <Button
                 variant="blueoutline"
-                onClick={() => suspendMutation.mutate()}
+                onClick={() => openStatus(user._id, user.name, "suspend")}
               >
                 Suspend user
               </Button>
@@ -209,7 +171,9 @@ const UserDetailsPage = () => {
           )}
           <Button
             variant="destructive"
-            onClick={() => deleteMutation.mutate()}
+            onClick={() => {
+              openDelete(user._id, user.name);
+            }}
             className="hidden md:flex"
           >
             <Trash2 /> Delete User

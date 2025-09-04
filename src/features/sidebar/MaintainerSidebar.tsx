@@ -40,7 +40,7 @@ const items = [
 
   {
     title: "User Management",
-    url: "/maintainer/dashboard/user",
+    url: "/maintainer/dashboard/user-management",
     icon: UserRoundCog,
   },
   {
