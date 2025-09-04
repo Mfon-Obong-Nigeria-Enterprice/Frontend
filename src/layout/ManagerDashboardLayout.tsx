@@ -1,12 +1,15 @@
 import Header from "@/components/header/Header";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import ManagerSidebar from "@/features/sidebar/ManagerSidebar";
 import { AppProvider } from "@/providers/AppProvider";
-import { useLocation } from "react-router-dom";
+import { useModalStore } from "@/stores/useModalStore";
+import DeleteUserModal from "@/features/dashboard/shared/usermanagement/modals/deleteusermodal";
+import UserStatusModal from "@/features/dashboard/shared/usermanagement/modals/userstatusmodal";
 
 const ManagerDashboardLayout = () => {
   const pathname = useLocation();
+  const { deleteModal, statusModal, closeModals } = useModalStore();
 
   return (
     <SidebarProvider>
@@ -26,6 +29,18 @@ const ManagerDashboardLayout = () => {
             <Outlet />
           </AppProvider>
         </div>
+        {/* Global modals for maintainer */}
+        {deleteModal && (
+          <DeleteUserModal user={deleteModal} onClose={closeModals} />
+        )}
+
+        {statusModal && (
+          <UserStatusModal
+            user={{ id: statusModal.id, name: statusModal.name }}
+            action={statusModal.action}
+            onClose={closeModals}
+          />
+        )}
       </div>
     </SidebarProvider>
   );

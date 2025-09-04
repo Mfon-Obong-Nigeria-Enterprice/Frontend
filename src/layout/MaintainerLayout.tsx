@@ -1,8 +1,6 @@
-/** @format */
-
 import Header from "@/components/header/Header";
-import { Outlet } from "react-router-dom";
-import { useLocation } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
+
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import MaintainerSidebar from "@/features/sidebar/MaintainerSidebar";
 import { AppProvider } from "@/providers/AppProvider";
