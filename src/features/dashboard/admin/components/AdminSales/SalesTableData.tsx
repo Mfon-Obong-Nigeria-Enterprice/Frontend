@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table";
 
 // icons
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Receipt, TrendingUp } from "lucide-react";
 
 // stores
 import { useTransactionsStore } from "@/stores/useTransactionStore";
@@ -34,6 +34,29 @@ import type { Transaction } from "@/types/transactions";
 
 //hooks
 import { useTransactionSearch } from "@/hooks/useTransactionSearch";
+
+// Empty State Component
+function EmptySalesState() {
+  return (
+    <div className="w-full py-16 px-4 text-center">
+      <div className="flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-6 mx-auto">
+        <Receipt className="w-10 h-10 text-gray-400" />
+      </div>
+      <h3 className="text-xl font-medium text-gray-900 mb-3">
+        No Sales Transactions Yet
+      </h3>
+      <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
+        Start processing sales transactions to see them appear here. All your
+        recent sales activities will be displayed in this table for easy
+        tracking and management.
+      </p>
+      <div className="flex items-center justify-center text-xs text-gray-400">
+        <TrendingUp className="w-4 h-4 mr-1" />
+        <span>Your sales data will be automatically tracked and organized</span>
+      </div>
+    </div>
+  );
+}
 
 const SalesTableData = ({
   currentTransaction,
@@ -52,8 +75,10 @@ const SalesTableData = ({
 
   const formatCurrency = (value: number) => `₦${value.toLocaleString()}`;
 
+  const hasTransactions = currentTransaction && currentTransaction.length > 0;
+
   return (
-    <div className="bg-white px-8 py-6 rounded-lg font-Inter">
+    <div className="bg-white px-3 md:px-6 py-3 md:py-6 rounded-lg font-Inter">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
@@ -72,30 +97,34 @@ const SalesTableData = ({
         </CardHeader>
 
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-[#D9D9D9]">
-                <TableHead className="text-[#333333] text-base">Time</TableHead>
-                <TableHead className="text-[#333333] text-base">
-                  Client
-                </TableHead>
-                <TableHead className="text-[#333333] text-base">
-                  Items
-                </TableHead>
-                <TableHead className="text-[#333333] text-base">
-                  Amount
-                </TableHead>
-                <TableHead className="text-[#333333] text-base">
-                  Staff
-                </TableHead>
-                <TableHead className="text-[#333333] text-base">
-                  Actions
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentTransaction && currentTransaction.length > 0 ? (
-                currentTransaction.map((transaction) => (
+          {!hasTransactions ? (
+            <EmptySalesState />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-[#D9D9D9]">
+                  <TableHead className="text-[#333333] text-base">
+                    Time
+                  </TableHead>
+                  <TableHead className="text-[#333333] text-base">
+                    Client
+                  </TableHead>
+                  <TableHead className="text-[#333333] text-base">
+                    Items
+                  </TableHead>
+                  <TableHead className="text-[#333333] text-base">
+                    Amount
+                  </TableHead>
+                  <TableHead className="text-[#333333] text-base">
+                    Staff
+                  </TableHead>
+                  <TableHead className="text-[#333333] text-base">
+                    Actions
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {currentTransaction.map((transaction) => (
                   <TableRow
                     key={transaction._id}
                     id={`invoice-${transaction.invoiceNumber}`}
@@ -161,16 +190,10 @@ const SalesTableData = ({
                       </button>
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-gray-500">
-                    Loading data...
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                ))}
+              </TableBody>
+            </Table>
+          )}
 
           {open &&
             (selectedTransaction?.clientId ? (

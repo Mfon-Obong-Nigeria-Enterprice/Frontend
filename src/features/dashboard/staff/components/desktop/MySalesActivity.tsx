@@ -13,13 +13,35 @@ import {
 import { Button } from "@/components/ui/button";
 
 //  icons
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Receipt, TrendingUp } from "lucide-react";
 
 const MySalesActivity = ({
   filteredTransactions,
 }: {
   filteredTransactions: Transaction[];
 }) => {
+  const EmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-16 px-8">
+      <div className="flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-6">
+        <Receipt className="w-10 h-10 text-gray-400" />
+      </div>
+
+      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+        No Sales Activity Yet
+      </h3>
+
+      <p className="text-gray-500 text-center max-w-md mb-6">
+        Your sales transactions will appear here once you start making sales.
+        Get started by creating your first transaction.
+      </p>
+
+      <div className="flex items-center gap-2 text-sm text-gray-400">
+        <TrendingUp className="w-4 h-4" />
+        <span>Track your sales performance and activity</span>
+      </div>
+    </div>
+  );
+
   return (
     <div className="hidden md:block">
       <table className="w-full">
@@ -98,8 +120,8 @@ const MySalesActivity = ({
             ))
           ) : (
             <tr>
-              <td colSpan={4} className="text-[#333] text-center py-5">
-                No transactions
+              <td colSpan={4} className="p-0">
+                <EmptyState />
               </td>
             </tr>
           )}

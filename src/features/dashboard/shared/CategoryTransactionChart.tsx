@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { isCategoryObject } from "@/utils/helpers";
+import { TrendingUp, BarChart3 } from "lucide-react";
 
 const COLORS = ["#4285F4", "#FBBC05", "#EA4335"];
 
@@ -39,8 +40,38 @@ function useCategoryChartData() {
   }, [transactionsWithCategories]);
 }
 
+// Empty State Component
+function EmptyChartState() {
+  return (
+    <div className="w-full h-full min-h-[200px] flex flex-col items-center justify-center p-6">
+      <div className="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+        <BarChart3 className="w-8 h-8 text-gray-400" />
+      </div>
+      <h3 className="text-lg font-medium text-gray-900 mb-2">
+        No Sales Data Available
+      </h3>
+      <p className="text-sm text-gray-500 text-center max-w-sm mb-4">
+        There are no sales transactions to display in the chart. Start making
+        sales to see your category breakdown here.
+      </p>
+      <div className="flex items-center text-xs text-gray-400">
+        <TrendingUp className="w-4 h-4 mr-1" />
+        <span>Sales data will appear here once you have transactions</span>
+      </div>
+    </div>
+  );
+}
+
 export default function SalesByCategoryChart() {
   const data = useCategoryChartData();
+
+  // Check if we have any data
+  const hasData = data.length > 0 && data.some((item) => item.value > 0);
+
+  // If no data, show empty state
+  if (!hasData) {
+    return <EmptyChartState />;
+  }
 
   // Calculate total once
   const total = data.reduce((sum, item) => sum + item.value, 0);

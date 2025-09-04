@@ -21,7 +21,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
-// import Modal from "@/components/Modal";
 
 // icons
 import { ChevronLeft, ChevronRight, MapPin, Trash2 } from "lucide-react";
@@ -33,6 +32,8 @@ import { RxHamburgerMenu } from "react-icons/rx";
 
 // types
 import type { CompanyUser } from "@/stores/useUserStore";
+import ResetPassword from "./modals/resetpassword";
+import Modal from "@/components/Modal";
 
 const UserDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -44,7 +45,7 @@ const UserDetailsPage = () => {
   const { openDelete, openStatus } = useModalStore();
 
   const activityLogs = useActivityLogsStore((s) => s.activities);
-  const [, setIsPasswordModal] = useState<boolean>(false);
+  const [isPasswordModal, setIsPasswordModal] = useState<boolean>(false);
 
   // Get the passed data from navigation state
   const { userData, activities, lastLogin, activityCount } =
@@ -52,6 +53,13 @@ const UserDetailsPage = () => {
 
   // Fallback: if no state passed, fetch from store
   const user: CompanyUser = userData || users.find((u) => u._id === id);
+
+  const handleResetPassword = () => {
+    setIsPasswordModal(true);
+  };
+  const handleClosePasswordModal = () => {
+    setIsPasswordModal(false);
+  };
 
   // If no activities passed, fetch from store
   const userActivities =
@@ -64,7 +72,9 @@ const UserDetailsPage = () => {
   if (!user) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="text-lg text-[#444] mt-20">Loading user details...</div>
+        <div className="text-lg text-[#444] mt-20">
+          This user details is not found...
+        </div>
       </div>
     );
   }
@@ -88,8 +98,9 @@ const UserDetailsPage = () => {
           </h4>
           <Popover>
             <PopoverTrigger>
-              <RxHamburgerMenu className="md:hidden fill-[#7D7D7D]" />
+              <RxHamburgerMenu className="md:hidden fill-[#7D7D7D] cursor-pointer" />
             </PopoverTrigger>
+
             <PopoverContent className="space-y-3 w-fit mr-4">
               {user.isBlocked ? (
                 <span
@@ -106,12 +117,15 @@ const UserDetailsPage = () => {
                   Suspend user
                 </span>
               )}
+
               <Separator />
+
               {userAccount?.role === "MAINTAINER" && (
-                <span onClick={() => setIsPasswordModal(true)} className="pb-2">
+                <span onClick={handleResetPassword} className="menu-item">
                   Reset Password
                 </span>
               )}
+
               <Separator />
               <span
                 onClick={() => {
@@ -148,12 +162,12 @@ const UserDetailsPage = () => {
           </div>
 
           {userAccount?.role === "MAINTAINER" && (
-            <Button
-              onClick={() => setIsPasswordModal(true)}
-              className="hidden md:block"
+            <button
+              onClick={handleResetPassword}
+              className="hidden md:block item-center cursor-pointer text-sm bg-[#2ECC71] text-[#FFFFFF] px-4 py-2 rounded-[10px] hover:bg-[#2ecc7090] transition-colors font-medium items-center gap-2"
             >
               Reset Password
-            </Button>
+            </button>
           )}
           <Button
             variant="destructive"
@@ -172,13 +186,21 @@ const UserDetailsPage = () => {
         {/*  user profile */}
         <div className="flex gap-3 md:gap-10">
           {/* image */}
-          <div className="max-w-[94px] w-full max-h-[94px] h-full aspect-auto rounded-full overflow-hidden">
-            <img
-              src={user?.profilePicture}
-              alt={user?.name}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
+          <div className="max-w-[94px] w-full max-h-[94px] shadow-md aspect-auto rounded-full border-2 overflow-hidden">
+            {user.profilePicture ? (
+              <img
+                src={user?.profilePicture}
+                alt={user?.name}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-full max-w-[94px] bg-gray-300 rounded-full flex items-center justify-center">
+                <span className="text-gray-600 font-medium text-3xl">
+                  {user.name?.charAt(0)?.toUpperCase() || "U"}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* details with name, status, email*/}
@@ -277,6 +299,17 @@ const UserDetailsPage = () => {
         lastLogin={lastLogin}
         activityCount={activityCount}
       />
+
+      {/* reset password modal */}
+      {isPasswordModal && (
+        <Modal
+          isOpen={isPasswordModal}
+          onClose={handleClosePasswordModal}
+          size="xl"
+        >
+          <ResetPassword user={user} onClose={handleClosePasswordModal} />
+        </Modal>
+      )}
     </section>
   );
 };

@@ -96,11 +96,19 @@ const OutstandingBalance = () => {
           <TableBody>
             {debtors.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={4}
-                  className="text-center py-8 text-gray-500"
-                >
-                  No outstanding balances.
+                <TableCell colSpan={4}>
+                  <div className="flex flex-col items-center justify-center py-10 text-center text-gray-500">
+                    <p className="text-sm sm:text-base">
+                      No outstanding balances
+                    </p>
+                    <Button
+                      onClick={handleButtonNavigate}
+                      className="mt-4"
+                      variant="outline"
+                    >
+                      Manage Clients
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
