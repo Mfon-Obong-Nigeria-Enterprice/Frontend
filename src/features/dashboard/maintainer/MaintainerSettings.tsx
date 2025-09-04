@@ -42,7 +42,7 @@ export default function MaintainerSettings() {
       try {
         setSettings(JSON.parse(savedSettings));
       } catch (error) {
-        console.error("Failed to load settings from localStorage");
+        // console.error("Failed to load settings from localStorage");
       }
     }
   }, []);

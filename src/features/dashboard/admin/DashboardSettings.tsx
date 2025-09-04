@@ -6,8 +6,12 @@ import { NotificationSettingsSection } from "./components/NotificationSettings";
 import { PriceUpdateTableSection } from "./components/PriceUpdate";
 import { useUpdateProductPrice } from "@/hooks/useSetting";
 import { useInventoryStore } from "@/stores/useInventoryStore";
-import { type AlertAndNotificationSettings, type Settings } from "@/types/types";
+import {
+  type AlertAndNotificationSettings,
+  type Settings,
+} from "@/types/types";
 import { useHasRole } from "@/lib/roles";
+import { toast } from "react-toastify";
 
 // Default settings structure
 const defaultSettings: Settings = {
@@ -23,7 +27,7 @@ const defaultSettings: Settings = {
     emailNotification: false,
     inactivityAlerts: false,
     systemHealthAlerts: false,
-    userLoginNotifications: false
+    userLoginNotifications: false,
   },
   system: {
     lowStockAlertThreshold: 15,
@@ -36,7 +40,7 @@ const defaultSettings: Settings = {
   clientAccount: {
     defaultCreditLimit: 800000,
     inactivePeriodDays: 30,
-  }
+  },
 };
 
 export function DashboardSettings() {
@@ -46,15 +50,23 @@ export function DashboardSettings() {
   const { products: storeProducts, updateProduct } = useInventoryStore();
   const updateProductPriceMutation = useUpdateProductPrice();
 
-  const [editingPrices, setEditingPrices] = React.useState<{ [key: string]: number }>({});
-  const [loadingProductId, setLoadingProductId] = React.useState<string | null>(null);
-  const [localSettings, setLocalSettings] = React.useState<Settings>(defaultSettings);
+  const [editingPrices, setEditingPrices] = React.useState<{
+    [key: string]: number;
+  }>({});
+  const [loadingProductId, setLoadingProductId] = React.useState<string | null>(
+    null
+  );
+  const [localSettings, setLocalSettings] =
+    React.useState<Settings>(defaultSettings);
 
-  const handleSettingChange = (key: keyof AlertAndNotificationSettings, value: boolean) => {
+  const handleSettingChange = (
+    key: keyof AlertAndNotificationSettings,
+    value: boolean
+  ) => {
     if (!canModifySettings) return;
 
     // Update local state only - no API call since settings API doesn't exist
-    setLocalSettings(prev => ({
+    setLocalSettings((prev) => ({
       ...prev,
       alerts: {
         ...prev.alerts,
@@ -63,18 +75,21 @@ export function DashboardSettings() {
     }));
 
     // Optional: Store in localStorage for persistence
-    localStorage.setItem('app-settings', JSON.stringify({
-      ...localSettings,
-      alerts: { ...localSettings.alerts, [key]: value }
-    }));
+    localStorage.setItem(
+      "app-settings",
+      JSON.stringify({
+        ...localSettings,
+        alerts: { ...localSettings.alerts, [key]: value },
+      })
+    );
   };
 
   const handlePriceChange = (productId: string, newPrice: number) => {
-    setEditingPrices(prev => ({ ...prev, [productId]: newPrice }));
+    setEditingPrices((prev) => ({ ...prev, [productId]: newPrice }));
   };
 
   const handleResetPrice = (productId: string) => {
-    setEditingPrices(prev => {
+    setEditingPrices((prev) => {
       const newState = { ...prev };
       delete newState[productId];
       return newState;
@@ -83,12 +98,13 @@ export function DashboardSettings() {
 
   const handleUpdatePrice = async (productId: string, newPrice: number) => {
     if (!canModifyPrices) return;
-    
+
     setLoadingProductId(productId);
     try {
-      const updatedProduct = await updateProductPriceMutation.mutateAsync(
-        { productId, newPrice }
-      );
+      const updatedProduct = await updateProductPriceMutation.mutateAsync({
+        productId,
+        newPrice,
+      });
       updateProduct(updatedProduct);
       handleResetPrice(productId);
     } catch (error) {
@@ -100,12 +116,12 @@ export function DashboardSettings() {
 
   // Load settings from localStorage on mount
   React.useEffect(() => {
-    const savedSettings = localStorage.getItem('app-settings');
+    const savedSettings = localStorage.getItem("app-settings");
     if (savedSettings) {
       try {
         setLocalSettings(JSON.parse(savedSettings));
       } catch (error) {
-        console.error('Failed to load settings from localStorage');
+        toast.error("Failed to load settings from localStorage");
       }
     }
   }, []);
@@ -142,10 +158,10 @@ export function DashboardSettings() {
               isReadOnly={!canModifySettings}
             />
           </div>
-          
+
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <PriceUpdateTableSection
-              products={storeProducts} 
+              products={storeProducts}
               editingPrices={editingPrices}
               loadingProductId={loadingProductId}
               onPriceChange={handlePriceChange}

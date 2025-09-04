@@ -7,7 +7,7 @@ import { useDebouncedCallback } from "use-debounce";
 import DashboardTitle from "../shared/DashboardTitle";
 import InventoryTab from "./components/InventoryTab";
 import Modal from "@/components/Modal";
-import AddCategory from "@/components/inventory/AddCategory";
+import AddCategory from "@/features/dashboard/shared/inventory/AddCategory";
 
 import { useInventoryStore } from "@/stores/useInventoryStore";
 
@@ -88,10 +88,6 @@ const AdminInventory = () => {
 
   //
   const handleSave = (updatedProducts: Product[]) => {
-    console.log(
-      "AdminInventory: Saving updated products to store:",
-      updatedProducts
-    );
     updateProductsBulk(updatedProducts); // This now correctly calls the bulk update action
     setIsModalOpen(false);
   };

@@ -7,11 +7,11 @@ import { z } from "zod"; // Add this import
 import { categorySchema } from "@/schemas/categorySchema";
 import { type Category } from "@/types/types";
 import { createCategory } from "@/services/categoryService";
-import TagInput from "../TagInput";
-import InputField from "../InputField";
-import { Button } from "../ui/button";
+import TagInput from "../../../../components/TagInput";
+import InputField from "../../../../components/InputField";
+import { Button } from "../../../../components/ui/button";
 import { toast } from "react-toastify";
-import LoadingSpinner from "../LoadingSpinner";
+import LoadingSpinner from "../../../../components/LoadingSpinner";
 import { useNotificationStore } from "@/stores/useNotificationStore";
 import type { Role } from "@/types/types";
 import { v4 as uuidv4 } from "uuid"; // for unique IDs

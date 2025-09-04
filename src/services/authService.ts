@@ -10,7 +10,6 @@ export const login = async (
   const user = response.data.user;
 
   if (!user) {
-    console.error("Login response missing token or user", response.data);
     throw new Error("Invalid login response");
   }
 

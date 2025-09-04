@@ -6,10 +6,6 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
 import { useModalStore } from "@/stores/useModalStore";
 
-// import DeleteUserModal from "./modals/deleteusermodal";
-// import UserStatusModal from "./modals/userstatusmodal";
-// import Avatar from "../Avatar";
-
 import {
   Table,
   TableBody,
@@ -47,21 +43,9 @@ const UserTable = () => {
   const activityLogs = useActivityLogsStore((s) => s.activities);
   const { openDelete, openStatus } = useModalStore();
 
-  // const [deleteModal, setDeleteModal] = useState<{
-  //   id: string;
-  //   name: string;
-  // } | null>(null);
-
-  // const [statusModal, setStatusModal] = useState<{
-  //   id: string;
-  //   name: string;
-  //   action: "suspend" | "enable";
-  // } | null>(null);
-
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
 
   // Filter users according to current user's role
-
   const filteredUsers = filterUsers(users, currentUser?.role || "");
 
   // Create lookup maps for activities by both user ID and email for flexibility
@@ -383,11 +367,6 @@ const UserTable = () => {
                               className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
                               onClick={() => {
                                 openStatus(user._id, user.name, "suspend");
-                                // setStatusModal({
-                                //   id: user._id,
-                                //   name: user.name,
-                                //   action: "suspend",
-                                // });
                                 setPopoverOpen(null);
                               }}
                             >
@@ -401,7 +380,6 @@ const UserTable = () => {
                             className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium text-red-600"
                             onClick={() => {
                               openDelete(user._id, user.name);
-                              // setDeleteModal({ id: user._id, name: user.name });
                               setPopoverOpen(null);
                             }}
                           >
@@ -464,21 +442,6 @@ const UserTable = () => {
           </Pagination>
         </div>
       )}
-
-      {/* Modals */}
-      {/* {deleteModal && (
-        <DeleteUserModal
-          user={deleteModal}
-          onClose={() => setDeleteModal(null)}
-        />
-      )}
-      {statusModal && (
-        <UserStatusModal
-          user={{ id: statusModal.id, name: statusModal.name }}
-          action={statusModal.action} // 👈 dynamic action
-          onClose={() => setStatusModal(null)}
-        />
-      )} */}
     </div>
   );
 };

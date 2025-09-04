@@ -279,7 +279,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   const mergedTransactions = useMemo(() => {
     if (!transactions || !clients) return [];
     const merged = mergeTransactionsWithClients(transactions, clients);
-    console.log("✅ Merged transactions:", merged.length);
+
     return merged;
   }, [transactions, clients]);
 
@@ -395,12 +395,12 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
   const handleApplyFilters = () => {
     // Filters are applied automatically via useMemo
-    console.log("Filters applied:", {
-      transactionTypeFilter,
-      staffFilter,
-      dateFrom,
-      dateTo,
-    });
+    // console.log("Filters applied:", {
+    //   transactionTypeFilter,
+    //   staffFilter,
+    //   dateFrom,
+    //   dateTo,
+    // });
   };
 
   // Loading states

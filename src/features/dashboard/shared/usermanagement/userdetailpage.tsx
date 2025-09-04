@@ -44,6 +44,7 @@ const UserDetailsPage = () => {
   const { openDelete, openStatus } = useModalStore();
 
   const activityLogs = useActivityLogsStore((s) => s.activities);
+
   const [, setIsPasswordModal] = useState<boolean>(false);
 
   // Get the passed data from navigation state
@@ -213,7 +214,7 @@ const UserDetailsPage = () => {
             </div>
 
             {/* right with phone number */}
-            <div className="flex items-center gap-3 w-fit border border-[#d9d9d9] p-2 md:px-6  rounded-[8px] text-[#333333]">
+            <div className="h-12 flex items-center gap-3 w-fit border border-[#d9d9d9] p-2 md:px-6 rounded-[8px] text-[#333333]">
               <MdOutlineCall className="size-3 md:size-4.5" />
               <span className="text-xs md:text-base">Cell: {user?.phone}</span>
             </div>
@@ -277,6 +278,15 @@ const UserDetailsPage = () => {
         lastLogin={lastLogin}
         activityCount={activityCount}
       />
+
+      <div className="md:flex md:justify-end mt-5">
+        <Button
+          variant="outline"
+          className="w-full md:w-fit h-[46px] cursor-pointer"
+        >
+          Export User Report
+        </Button>
+      </div>
     </section>
   );
 };

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Bell, BellDot } from "lucide-react";
-import Logo from "../Logo";
-import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
+import Logo from "@/components/Logo";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import AdminUserModal from "@/features/dashboard/admin/AdminUserModal";
 import { ManagerUsersModal } from "@/features/dashboard/manager/component/ManagerUsersModal";
 import { useNotificationStore } from "@/stores/useNotificationStore";
@@ -162,41 +162,38 @@ const Header = ({ userRole }: HeaderProps) => {
   // };
 
   const handleProfileUpdate = async (updatedData: UpdatedUserData) => {
-    console.log("=== Header Profile Update ===");
-    console.log("Updated data received:", updatedData);
+    // try {
+    // Update the user store with new data immediately for optimistic updates
+    if (updateUser) {
+      const updates = {
+        name:
+          updatedData.fullName ||
+          updatedData.adminName ||
+          updatedData.name ||
+          userProfile?.name ||
+          user?.name,
+        profilePicture:
+          updatedData.profilePicture || userProfile?.profilePicture,
+        branch: updatedData.location || userProfile?.branch || user?.branch,
+        ...updatedData,
+      };
 
-    try {
-      // Update the user store with new data immediately for optimistic updates
-      if (updateUser) {
-        const updates = {
-          name:
-            updatedData.fullName ||
-            updatedData.adminName ||
-            updatedData.name ||
-            userProfile?.name ||
-            user?.name,
-          profilePicture:
-            updatedData.profilePicture || userProfile?.profilePicture,
-          branch: updatedData.location || userProfile?.branch || user?.branch,
-          ...updatedData,
-        };
+      // Apply updates to both user and userProfile
+      updateUser(updates);
 
-        // Apply updates to both user and userProfile
-        updateUser(updates);
-
-        // Persist profile picture if updated
-        if (updatedData.profilePicture && user?.id) {
-          localStorage.setItem(
-            `user-profile-picture-${user.id}`,
-            updatedData.profilePicture
-          );
-        }
-
-        console.log("Profile updates applied:", updates);
+      // Persist profile picture if updated
+      if (updatedData.profilePicture && user?.id) {
+        localStorage.setItem(
+          `user-profile-picture-${user.id}`,
+          updatedData.profilePicture
+        );
       }
-    } catch (error) {
-      console.error("Error updating profile in header:", error);
+
+      // console.log("Profile updates applied:", updates);
     }
+    // } catch (error) {
+    //   console.error("Error updating profile in header:", error);
+    // }
   };
 
   // Enhanced error handling for profile images - fallback to initials
