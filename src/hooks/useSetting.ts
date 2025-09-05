@@ -1,19 +1,51 @@
-// hooks/useSetting.ts
+// src/hooks/useProducts.ts
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
-  fetchProducts,
+  getAllProducts,
+  getAllProductsByBranch,
+  createProduct,
+  updateProduct,
   updateProductPrice
-} from '@/lib/api';
+} from '@/services/productService';
 import type { 
   Product,  
+  NewProduct,
   ProductUpdatePricePayload
 } from '@/types/types';
 
 export const useProducts = () => {
   return useQuery<Product[], Error>({
     queryKey: ['products'],
-    queryFn: fetchProducts,
+    queryFn: getAllProducts,
     staleTime: 5 * 60 * 1000 // 5 minutes
+  });
+};
+
+export const useProductsByBranch = (branchId?: string) => {
+  return useQuery<Product[], Error>({
+    queryKey: ['products', 'branch', branchId],
+    queryFn: () => getAllProductsByBranch(branchId),
+    staleTime: 5 * 60 * 1000 // 5 minutes
+  });
+};
+
+export const useCreateProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation<Product, Error, NewProduct>({
+    mutationFn: createProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    }
+  });
+};
+
+export const useUpdateProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation<Product, Error, { id: string; data: Partial<NewProduct> }>({
+    mutationFn: ({ id, data }) => updateProduct(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    }
   });
 };
 
@@ -27,11 +59,3 @@ export const useUpdateProductPrice = () => {
     }
   });
 };
-
-// Remove non-existent settings hooks since you don't have settings API
-// export const useSystemSettings = () => { ... } - REMOVE THIS
-// export const useUpdateSystemSettings = () => { ... } - REMOVE THIS
-
-// Remove aliases too
-// export const useSettings = useSystemSettings; - REMOVE
-// export const useUpdateSettings = useUpdateSystemSettings; - REMOVE

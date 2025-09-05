@@ -6,7 +6,7 @@ import { NotificationSettingsSection } from "./components/NotificationSettings";
 import { PriceUpdateTableSection } from "./components/PriceUpdate";
 import { useUpdateProductPrice } from "@/hooks/useSetting";
 import { useInventoryStore } from "@/stores/useInventoryStore";
-import { type AlertAndNotificationSettings, type Settings } from "@/types/types";
+import { type AlertAndNotificationSettings, type Settings } from "@/schemas/SettingsSchemas";
 import { useHasRole } from "@/lib/roles";
 
 // Default settings structure
@@ -36,7 +36,13 @@ const defaultSettings: Settings = {
   clientAccount: {
     defaultCreditLimit: 800000,
     inactivePeriodDays: 30,
-  }
+  },
+  clientsDebtsAlert: false,
+  largeBalanceAlert: false,
+  lowStockAlert: false,
+  inactivityAlerts: false,
+  dashboardNotification: false,
+  emailNotification: false
 };
 
 export function DashboardSettings() {

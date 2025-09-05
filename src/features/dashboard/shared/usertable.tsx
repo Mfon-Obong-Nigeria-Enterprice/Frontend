@@ -4,9 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useUserStore } from "@/stores/useUserStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
-import DeleteUserModal from "./modals/deleteusermodal";
-import UserStatusModal from "./modals/userstatusmodal";
-// import Avatar from "../Avatar";
+import DeleteUserModal from "./usermanagement/modals/deleteusermodal";
+import UserStatusModal from "./usermanagement/modals/userstatusmodal";
 import {
   Table,
   TableBody,
@@ -37,7 +36,24 @@ import type { ActivityLogs } from "@/stores/useActivityLogsStore";
 
 import { filterUsers } from "@/utils/userfilters";
 
-const UserTable = () => {
+// Define the props interface
+interface UserTableProps {
+  searchQuery?: string;
+  filters?: {
+    role: string;
+    dateRange: string;
+    status: string;
+  };
+}
+
+const UserTable: React.FC<UserTableProps> = ({ 
+  searchQuery = "", 
+  filters = { 
+    role: "all", 
+    dateRange: "all", 
+    status: "all" 
+  } 
+}) => {
   const navigate = useNavigate();
   const users = useUserStore((s) => s.users);
   const currentUser = useAuthStore((s) => s.user);
@@ -57,8 +73,67 @@ const UserTable = () => {
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
 
   // Filter users according to current user's role
+  const roleFilteredUsers = filterUsers(users, currentUser?.role || "");
 
-  const filteredUsers = filterUsers(users, currentUser?.role || "");
+  // Apply search and additional filters
+  const filteredUsers = useMemo(() => {
+    let result = roleFilteredUsers;
+
+    // Apply search query filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(user => 
+        user.name.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query) ||
+        user.role.toLowerCase().includes(query) ||
+        (user.branch && user.branch.toLowerCase().includes(query))
+      );
+    }
+
+    // Apply role filter
+    if (filters.role !== "all") {
+      result = result.filter(user => user.role === filters.role);
+    }
+
+    // Apply status filter
+    if (filters.status !== "all") {
+      if (filters.status === "active") {
+        result = result.filter(user => user.isActive && !user.isBlocked);
+      } else if (filters.status === "inactive") {
+        result = result.filter(user => !user.isActive && !user.isBlocked);
+      } else if (filters.status === "suspended") {
+        result = result.filter(user => user.isBlocked);
+      } else if (filters.status === "pending") {
+        // Adjust this based on your user model
+        result = result.filter(user => !user.isActive && !user.isBlocked);
+      }
+    }
+
+    // Apply date range filter (you'll need to implement this based on your data)
+    if (filters.dateRange !== "all") {
+      const now = new Date();
+      result = result.filter(user => {
+        const createdAt = new Date(user.createdAt);
+        
+        switch (filters.dateRange) {
+          case "today":
+            return createdAt.toDateString() === now.toDateString();
+          case "week":
+            { const weekAgo = new Date(now);
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            return createdAt >= weekAgo; }
+          case "month":
+            { const monthAgo = new Date(now);
+            monthAgo.setMonth(monthAgo.getMonth() - 1);
+            return createdAt >= monthAgo; }
+          default:
+            return true;
+        }
+      });
+    }
+
+    return result;
+  }, [roleFilteredUsers, searchQuery, filters]);
 
   // Create lookup maps for activities by both user ID and email for flexibility
   const activityByIdMap = useMemo(() => {
@@ -202,7 +277,9 @@ const UserTable = () => {
                 colSpan={9}
                 className="text-center py-8 text-muted-foreground"
               >
-                No users found
+                {searchQuery || Object.values(filters).some(f => f !== "all") 
+                  ? "No users match your search criteria" 
+                  : "No users found"}
               </TableCell>
             </TableRow>
           ) : (

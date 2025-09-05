@@ -3,36 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 // components
-import UserTable from "./usertable";
+import UserTable from "../usertable";
 import CreateUserModal from "./modals/createusermodal";
-// import DeleteUserModal from "./modals/deleteusermodal";
+import UserSearchList from "../UserSearchList"; 
 import Modal from "@/components/Modal";
 
 // ui components
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-} from "@/components/ui/select";
 
 // icons
 import {
-  Search,
   ExternalLink,
   MoreVertical,
-  MapPin,
-  Users,
-  CalendarDays,
-  Zap,
   Plus,
 } from "lucide-react";
 import { MdOutlineHome } from "react-icons/md";
@@ -41,6 +28,27 @@ const UserOverview = () => {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState({
+    role: "all",
+    location: "all",
+    dateRange: "all",
+    status: "all"
+  });
+
+  // Sample data for filters (replace with your actual data)
+  const roles = ["Admin", "Maintainer", "Manager", "Staff"];
+  const locations = ["Uyo", "Lagos", "Abuja", "Port Harcourt"];
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    // Implement your search logic here
+  };
+
+  const handleFilterChange = (filterName: string, value: string) => {
+    setFilters(prev => ({ ...prev, [filterName]: value }));
+    // Implement your filter logic here
+  };
 
   return (
     <main className="">
@@ -136,125 +144,19 @@ const UserOverview = () => {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row justify-between gap-6 px-4 py-5 font-sans w-full">
-        {/* Search Input with Icon - full width on large screens, smaller height */}
-        <div className="relative w-full mb-2 lg:mb-0 flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground ">
-            <Search className="size-5" />
-          </span>
-          <Input
-            type="text"
-            placeholder="Search"
-            className="pl-10 pr-4 py-5 rounded-lg border border-[#E0E0E0] w-full text-sm bg-[#F9F9F9] text-[#444] placeholder:text-[#B0B0B0]"
-          />
-        </div>
-        {/* Filters row - below search on tablet, beside on desktop */}
-        <div className="flex flex-col md:flex-row gap-2 w-full lg:w-auto flex-1">
-          <div className="flex gap-2 w-full overflow-x-auto scrollbar-hide md:overflow-visible">
-            <Select>
-              {/* <Select value={selectedRole} onValueChange={setSelectedRole}> */}
-              <SelectTrigger className="w-full md:w-40 flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-[#F9F9F9] text-[#444] text-sm font-medium">
-                <Users className="size-4 text-muted-foreground" />
-                {/* <span>
-                  {selectedRole === "all" ? "All Roles" : selectedRole}
-                </span> */}
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  {/* {roles.map((role) => (
-                    <SelectItem
-                      key={
-                        typeof role === "string"
-                          ? role
-                          : role.id || role._id || role.name
-                      }
-                      value={typeof role === "string" ? role : role.name}
-                    >
-                      {typeof role === "string" ? role : role.name}
-                    </SelectItem>
-                  ))} */}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <Select>
-              {/* <Select
-              value={selectedLocation}
-              onValueChange={setSelectedLocation}
-            > */}
-              <SelectTrigger className="w-full md:w-40 flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-[#F9F9F9] text-[#444] text-sm font-medium">
-                <MapPin className="size-4 text-muted-foreground" />
-                {/* <span> */}
-                {/* {selectedLocation === "all"
-                    ? "All Locations"
-                    : selectedLocation}
-                </span> */}
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">All Locations</SelectItem>
-                  {/* {locations.map((loc) => (
-                    <SelectItem
-                      key={
-                        typeof loc === "string"
-                          ? loc
-                          : loc.id || loc._id || loc.name
-                      }
-                      value={typeof loc === "string" ? loc : loc.name}
-                    >
-                      {typeof loc === "string" ? loc : loc.name} */}
-                  {/* </SelectItem>
-                  ))} */}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <Select
-            //   value={selectedDateRange}
-            //   onValueChange={setSelectedDateRange}
-            >
-              <SelectTrigger className="w-full md:w-40 flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-[#F9F9F9] text-[#444] text-sm font-medium">
-                <CalendarDays className="size-4 text-muted-foreground" />
-                {/* <span>
-                  {selectedDateRange === "all"
-                    ? "Date Range"
-                    : selectedDateRange}
-                </span> */}
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">Date Range</SelectItem>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="week">This Week</SelectItem>
-                  <SelectItem value="month">This Month</SelectItem>
-                  <SelectItem value="custom">Custom Range</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <Select
-            //   value={selectedStatus} onValueChange={setSelectedStatus}
-            >
-              <SelectTrigger className="w-full md:w-40 flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-[#F9F9F9] text-[#444] text-sm font-medium">
-                <Zap className="size-4 text-muted-foreground fill-[#7D7D7D]" />
-                {/* <span>
-                  {selectedStatus === "all" ? "All Status" : selectedStatus}
-                </span> */}
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
+      {/* Use the UserSearchList component */}
+      <UserSearchList 
+        onSearch={handleSearch}
+        onFilterChange={handleFilterChange}
+        roles={roles}
+        locations={locations}
+      />
 
       {/* user table */}
-      <UserTable />
+      <UserTable 
+        searchQuery={searchQuery}
+        filters={filters}
+      />
 
       {/* open create new user modal */}
       {isModalOpen && (
@@ -270,4 +172,4 @@ const UserOverview = () => {
   );
 };
 
-export default UserOverview;
+export default UserOverview; 

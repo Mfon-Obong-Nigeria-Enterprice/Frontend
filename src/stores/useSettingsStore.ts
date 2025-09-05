@@ -1,3 +1,5 @@
+// src/stores/useSettingsStore.ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { 
@@ -6,38 +8,36 @@ import type {
   ClientAccountSettings, 
   AlertAndNotificationSettings,
   MaintenanceModeSettings,
-  SessionSettings
-} from "@/types/types";
+  SessionSettings } from "@/schemas/SettingsSchemas"
+import { settingsService } from "@/services/settingsService";
 
 interface SettingsStore {
-  // Existing state
+  // State
   currentSettings: Settings;
   systemPreferences: SystemPreferences;
   clientAccountSettings: ClientAccountSettings;
-  
-  // New state for maintenance and session
   maintenanceMode: MaintenanceModeSettings;
   sessionSettings: SessionSettings;
   loading: boolean;
   error: string | null;
   lastUpdated: Date | null;
 
-  // Existing actions
+  // Actions
   initializeSettings: (settings: Settings) => void;
   setAlertSetting: (key: keyof AlertAndNotificationSettings, value: boolean) => void;
   setLargeBalanceThreshold: (value: number) => void;
-  saveSettings: () => Promise<void>;
   setSystemPreferences: (prefs: SystemPreferences) => void;
   setClientAccountSettings: (settings: ClientAccountSettings) => void;
-
-  // New actions for maintenance and session
-  fetchSettings: () => Promise<void>;
   updateMaintenanceMode: (settings: MaintenanceModeSettings) => void;
   updateSessionSettings: (settings: SessionSettings) => void;
+  
+  // API actions that use the service
+  fetchSettings: () => Promise<void>;
   saveAllSettings: () => Promise<void>;
+  toggleMaintenanceMode: (isActive: boolean) => Promise<void>;
 }
 
-// Default maintenance and session settings
+// Default settings
 const defaultMaintenanceMode: MaintenanceModeSettings = {
   enabled: false,
   message: "",
@@ -71,30 +71,34 @@ const defaultSettings: Settings = {
     bulkDiscountThreshold: 10000,
     minimumPurchaseForBulkDiscount: 500,
     allowNegativeBalances: false,
-    largeBalanceThreshold: 50000, 
+    largeBalanceThreshold: 50000,
   },
   clientAccount: {
     defaultCreditLimit: 800000,
     inactivePeriodDays: 30,
   },
+  clientsDebtsAlert: false,
+  largeBalanceAlert: false,
+  lowStockAlert: false,
+  inactivityAlerts: false,
+  dashboardNotification: false,
+  emailNotification: false
 };
 
 export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set, get) => ({
-      // Existing state
+      // State
       currentSettings: defaultSettings,
       systemPreferences: defaultSettings.system,
       clientAccountSettings: defaultSettings.clientAccount,
-      
-      // New state
       maintenanceMode: defaultMaintenanceMode,
       sessionSettings: defaultSessionSettings,
       loading: false,
       error: null,
       lastUpdated: null,
 
-      // Existing actions
+      // Actions
       initializeSettings: (settings) => {
         set({ currentSettings: settings });
       },
@@ -123,12 +127,6 @@ export const useSettingsStore = create<SettingsStore>()(
         }));
       },
       
-      saveSettings: async () => {
-        const { currentSettings } = get();
-        console.log("Saving settings:", currentSettings);
-        return new Promise((resolve) => setTimeout(resolve, 500));
-      },
-      
       setSystemPreferences: (prefs) => set({ 
         systemPreferences: prefs,
         currentSettings: {
@@ -145,28 +143,6 @@ export const useSettingsStore = create<SettingsStore>()(
         }
       }),
 
-      // New actions for maintenance and session
-      fetchSettings: async () => {
-        set({ loading: true, error: null });
-        try {
-          // Simulate API call - replace with your actual API
-          const response = await fetch('/api/settings/maintenance-session');
-          const data = await response.json();
-          
-          set({ 
-            maintenanceMode: data.maintenanceMode || defaultMaintenanceMode,
-            sessionSettings: data.sessionSettings || defaultSessionSettings,
-            loading: false,
-            lastUpdated: new Date(),
-          });
-        } catch (err) {
-          set({ 
-            error: err instanceof Error ? err.message : 'Failed to fetch settings',
-            loading: false 
-          });
-        }
-      },
-
       updateMaintenanceMode: (maintenanceSettings) => {
         set({
           maintenanceMode: maintenanceSettings,
@@ -179,33 +155,66 @@ export const useSettingsStore = create<SettingsStore>()(
         });
       },
 
-      saveAllSettings: async () => {
-        const { maintenanceMode, sessionSettings } = get();
+      // API actions that use the service
+      fetchSettings: async () => {
         set({ loading: true, error: null });
-        
         try {
-          // Simulate API call - replace with your actual API
-          const response = await fetch('/api/settings/maintenance-session', {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ maintenanceMode, sessionSettings }),
-          });
-          
-          if (!response.ok) {
-            throw new Error('Failed to save maintenance and session settings');
-          }
-
+          const settings = await settingsService.fetchSettings();
           set({ 
+            currentSettings: settings,
+            systemPreferences: settings.system,
+            clientAccountSettings: settings.clientAccount,
             loading: false,
             lastUpdated: new Date(),
           });
-        } catch (err) {
+        } catch (err: any) {
+          const errorMessage = err.message || 'Failed to fetch settings';
           set({ 
-            error: err instanceof Error ? err.message : 'Failed to save settings',
+            error: errorMessage,
             loading: false 
           });
+        }
+      },
+
+      saveAllSettings: async () => {
+        set({ loading: true, error: null });
+        
+        try {
+          const { currentSettings } = get();
+          const updatedSettings = await settingsService.updateSettings(currentSettings);
+          
+          set({ 
+            currentSettings: updatedSettings,
+            loading: false,
+            lastUpdated: new Date(),
+          });
+        } catch (err: any) {
+          const errorMessage = err.message || 'Failed to save settings';
+          set({ 
+            error: errorMessage,
+            loading: false 
+          });
+        }
+      },
+      
+      toggleMaintenanceMode: async (isActive: boolean) => {
+        set({ loading: true, error: null });
+        
+        try {
+          const maintenanceMode = await settingsService.toggleMaintenanceMode(isActive);
+          
+          set({ 
+            maintenanceMode,
+            loading: false,
+            lastUpdated: new Date(),
+          });
+        } catch (err: any) {
+          const errorMessage = err.message || 'Failed to toggle maintenance mode';
+          set({ 
+            error: errorMessage,
+            loading: false 
+          });
+          throw err;
         }
       },
     }),

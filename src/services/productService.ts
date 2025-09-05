@@ -1,5 +1,5 @@
 import api from "./baseApi";
-import { type Product, type NewProduct } from "@/types/types";
+import type { Product, NewProduct, ProductUpdatePricePayload } from "@/types/types";
 
 export const getAllProducts = async (): Promise<Product[]> => {
   const response = await api.get("/products");
@@ -26,5 +26,15 @@ export const updateProduct = async (
   updatedData: Partial<NewProduct>
 ) => {
   const response = await api.patch(`/products/${id}`, updatedData);
+  return response.data;
+};
+
+export const updateProductPrice = async (
+  payload: ProductUpdatePricePayload
+): Promise<Product> => {
+  // Use the general update endpoint with only price information
+  const response = await api.patch(`/products/${payload.productId}`, {
+    unitPrice: payload.newPrice
+  });
   return response.data;
 };
