@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import DashboardTitle from "../shared/DashboardTitle";
 import MySalesActivity from "./components/desktop/MySalesActivity";
 import MobileSalesActivity from "./components/mobile/MobileSalesActivity";
+import WaybillModal from "./components/WaybillModal"; // Import the new modal
 
 // ui
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // icons
 import { VscRefresh } from "react-icons/vsc";
@@ -31,6 +33,7 @@ const StaffSales = () => {
   );
 
   const [filter, setFilter] = useState<"today" | "week" | "month">("today");
+  const [isWaybillModalOpen, setIsWaybillModalOpen] = useState(false); // Add modal state
 
   // filter transaction
   const filteredTransactions = useMemo(() => {
@@ -104,7 +107,10 @@ const StaffSales = () => {
             <VscRefresh />
             Refresh
           </Button>
-          <Button className="min-w-40">
+          <Button
+            className="min-w-40"
+            onClick={() => setIsWaybillModalOpen(true)} // Open modal on click
+          >
             <img src="/icons/brick.svg" alt="" className="w-4" />
             Add Waybill
           </Button>
@@ -122,7 +128,7 @@ const StaffSales = () => {
               <p
                 key={f}
                 onClick={() => setFilter(f as "today" | "week" | "month")}
-                className={`cursor-pointer px-5 py-3 rounded-[2px] text-sm font-Inter ${
+                className={`cursor-pointer px-5 py-3 rounded-[2px] text-sm font-Inter  hidden md:block ${
                   filter === f
                     ? "bg-[#D8E5FE] text-[#3D80FF]"
                     : "bg-transparent text-[#444444]"
@@ -135,6 +141,41 @@ const StaffSales = () => {
                   : "This Month"}
               </p>
             ))}
+            <div className="md:hidden w-full">
+              <Tabs
+                value={filter}
+                onValueChange={(val) =>
+                  setFilter(val as "today" | "week" | "month")
+                }
+              >
+                <TabsList className="grid grid-cols-3 w-full md:hidden">
+                  <TabsTrigger
+                    value="today"
+                    className="w-full px-5 py-3 text-sm font-Inter 
+                 data-[state=active]:bg-[#3D80FF] data-[state=active]:text-white 
+                 data-[state=inactive]:bg-transparent data-[state=inactive]:text-[#444444]"
+                  >
+                    Today
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="week"
+                    className="w-full px-5 py-3 text-sm font-Inter 
+                  data-[state=active]:bg-[#3D80FF] data-[state=active]:text-white 
+                  data-[state=inactive]:bg-transparent data-[state=inactive]:text-[#444444]"
+                  >
+                    This Week
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="month"
+                    className="w-full px-5 py-3 text-sm font-Inter 
+                 data-[state=active]:bg-[#3D80FF] data-[state=active]:text-white 
+                 data-[state=inactive]:bg-transparent data-[state=inactive]:text-[#444444]"
+                  >
+                    This Month
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
           </div>
         </div>
         <MySalesActivity filteredTransactions={currentTransaction} />
@@ -186,6 +227,13 @@ const StaffSales = () => {
             </div>
           )}
       </section>
+
+      {/* Waybill Modal */}
+      <WaybillModal
+        isOpen={isWaybillModalOpen}
+        onClose={() => setIsWaybillModalOpen(false)}
+        transactions={transactions} // Pass all transactions for recent selection
+      />
     </div>
   );
 };

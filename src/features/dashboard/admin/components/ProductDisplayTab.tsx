@@ -130,8 +130,7 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
       toast.success("Product updated successfully");
       setEditMode(false); // Close modal on success
     } catch (err) {
-      toast.error("Failed to update product");
-      console.error("Failed to update product", err);
+      toast.error("Failed to update product" + err);
     } finally {
       setIsLoading(false); // Ensure loading is off regardless of outcome
     }
@@ -141,15 +140,14 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
   const handleDelete = async () => {
     try {
       setIsLoading(true);
-      // In a real application, you would call a deleteProduct API here:
+
       // For example: await deleteProduct(product._id); // You need to implement this service
 
       // Remove from Zustand store to update UI immediately
       removeProductFromStore(product._id);
       toast.success("Product deleted successfully");
     } catch (error) {
-      toast.error("Failed to delete product");
-      console.error("Failed to delete product", error);
+      toast.error("Failed to delete product" + error);
     } finally {
       setIsLoading(false);
       setIsDeleteModalOpen(false); // Always close delete modal

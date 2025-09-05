@@ -82,8 +82,20 @@ const MobileSalesActivity = ({
             ))
           ) : (
             <tr>
-              <td colSpan={4} className="text-[#333] text-center py-5">
-                No transactions
+              <td colSpan={4}>
+                <div className="flex flex-col items-center justify-center py-10 text-center text-[#666]">
+                  {/* Icon */}
+                  <div className="w-12 h-12 rounded-full bg-[#F5F5F5] flex items-center justify-center mb-3">
+                    <ChevronDown className="w-6 h-6 text-[#A1A1A1] rotate-90" />
+                  </div>
+                  {/* Title */}
+                  <p className="text-sm font-medium">No transactions yet</p>
+                  {/* Subtitle */}
+                  <p className="text-xs text-[#999] mt-1">
+                    Your sales activity will appear here once transactions are
+                    recorded.
+                  </p>
+                </div>
               </td>
             </tr>
           )}

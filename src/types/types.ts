@@ -61,8 +61,8 @@ export interface LoginUser {
   branchId: string;
   createdAt: string;
 }
+
 export interface UserProfile {
-  // _id: string;
   _id: string;
   name: string;
   email: string;
@@ -72,8 +72,8 @@ export interface UserProfile {
   createdAt: string;
   profilePicture?: string;
 }
+
 export interface UserProfile {
-  // _id: string;
   _id: string;
   name: string;
   email: string;
@@ -157,6 +157,7 @@ export interface NewProduct {
   unitPrice: number;
   stock: number;
   minStockLevel: number;
+  // branchId: string;
 }
 
 export type ProductImportRow = {

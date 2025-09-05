@@ -9,6 +9,8 @@ export interface StatCard {
   hideArrow?: boolean;
   percentage?: number;
   displayType?: "default" | "circular" | "linear";
+  icon?: string;
+  // iconColor?: string;
 }
 
 export type StatCardProps = {

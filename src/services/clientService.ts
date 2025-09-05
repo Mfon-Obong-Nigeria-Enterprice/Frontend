@@ -28,7 +28,12 @@ export const getAllClients = async ({
 };
 
 export const getClientById = async (id: string): Promise<Client> => {
-  const response = await api(`/clients/${id}`);
+  const response = await api.get(`/clients/${id}`);
+  return response.data;
+};
+export const getClientDebt = async (): Promise<Client[]> => {
+  const response = await api.get(`/clients/debtors`);
+  console.log("Client with debt:", response.data);
   return response.data;
 };
 

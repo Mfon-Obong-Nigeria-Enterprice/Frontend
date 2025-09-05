@@ -47,7 +47,7 @@ const DeleteClientDialog: React.FC<DeleteClientDialogProps> = ({
       setIsDeleting(false);
     }
     // Handle delete logic here
-    console.log("Client deleted");
+    // console.log("Client deleted");
     // Close the dialog after deletion
   };
   return (

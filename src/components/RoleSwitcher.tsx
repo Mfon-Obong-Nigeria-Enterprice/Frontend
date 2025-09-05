@@ -46,12 +46,7 @@ const DevRoleSwitcher = () => {
       await login(username, password);
       const user = useAuthStore.getState().user;
 
-      if (!user || !user.role) {
-        console.error("No user/role returned from backend");
-        return;
-      }
-
-      const role = user.role.toString().trim().toUpperCase();
+      const role = user?.role.toString().trim().toUpperCase();
 
       switch (role) {
         case "SUPER_ADMIN":
@@ -67,10 +62,10 @@ const DevRoleSwitcher = () => {
           navigate("/staff/dashboard/s-overview");
           break;
         default:
-          console.error("Unknown role:", role);
+          alert("Unknown role:" + role);
       }
     } catch (error) {
-      console.error("Dev login failed:", error);
+      alert("Dev login failed:" + error);
     } finally {
       setLoadingRole(null);
     }

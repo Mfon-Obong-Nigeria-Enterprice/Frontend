@@ -14,10 +14,17 @@ import { MdKeyboardArrowRight } from "react-icons/md";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { toSentenceCaseName } from "@/utils/styles";
 
-// this is recent sales for the admin dashboard
 const RecentSales: React.FC = () => {
   const navigate = useNavigate();
   const { transactions } = useTransactionsStore();
+
+  // sort + slice for recent 5
+  const recentTxns = [...(transactions || [])]
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+    .slice(0, 5);
 
   return (
     <div className="bg-white p-4 sm:px-8 sm:py-6 mx-2 rounded-lg font-Inter">
@@ -25,25 +32,33 @@ const RecentSales: React.FC = () => {
         Recent sales
       </h4>
 
-      <Table className="mt-5 sm:mt-8 rounded-t-xl overflow-hidden">
-        <TableHeader>
-          <TableRow className="bg-[#F0F0F3]">
-            <TableHead className="w-[100px] text-center text-[#444444]">
-              Clients
-            </TableHead>
-            <TableHead className="text-center text-[#444444]">Amount</TableHead>
-            <TableHead className="text-center text-[#444444]">Time</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {[...(transactions || [])]
-            .sort(
-              (a, b) =>
-                new Date(b.createdAt).getTime() -
-                new Date(a.createdAt).getTime()
-            )
-            .slice(0, 5)
-            .map((txn, index) => (
+      {recentTxns.length === 0 ? (
+        // 🔹 Empty state
+        <div className="flex flex-col items-center justify-center py-10 text-center text-gray-500">
+          <p className="text-sm sm:text-base">No recent sales yet</p>
+          <Button
+            onClick={() => navigate("/admin/dashboard/sales")}
+            className="mt-4"
+          >
+            Record a Sale
+          </Button>
+        </div>
+      ) : (
+        // 🔹 Normal table
+        <Table className="mt-5 sm:mt-8 rounded-t-xl overflow-hidden">
+          <TableHeader>
+            <TableRow className="bg-[#F0F0F3]">
+              <TableHead className="w-[100px] text-center text-[#444444]">
+                Clients
+              </TableHead>
+              <TableHead className="text-center text-[#444444]">
+                Amount
+              </TableHead>
+              <TableHead className="text-center text-[#444444]">Time</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {recentTxns.map((txn, index) => (
               <TableRow
                 key={txn._id}
                 className={index % 2 !== 0 ? "bg-[#F0F0F3]" : ""}
@@ -56,7 +71,7 @@ const RecentSales: React.FC = () => {
                   )}
                 </TableCell>
                 <TableCell
-                  className={`text-center text-xs  ${
+                  className={`text-center text-xs ${
                     txn.total > 0 ? "text-green-400" : "text-[#F95353]"
                   }`}
                 >
@@ -70,8 +85,11 @@ const RecentSales: React.FC = () => {
                 </TableCell>
               </TableRow>
             ))}
-        </TableBody>
-      </Table>
+          </TableBody>
+        </Table>
+      )}
+
+      {/* Footer always visible */}
       <div className="flex justify-between items-center bg-[#f0f0f3] mt-10 sm:mt-[13dvh]">
         <div>
           <Button

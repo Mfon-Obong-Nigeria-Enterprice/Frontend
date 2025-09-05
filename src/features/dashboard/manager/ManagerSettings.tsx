@@ -113,9 +113,9 @@ export default function ManagerSettings() {
           <ClientAccountSettingsForm 
             settings={currentSettings.clientAccount}
             onThresholdChange={handleClientAccountChange}
-          /> 
+          />
         </div>
-        
+
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
             Alert Preferences
@@ -130,7 +130,7 @@ export default function ManagerSettings() {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
             Notification Preferences
-          </h2> 
+          </h2>
           <NotificationSettingsSection1
             settings={currentSettings}
             onSettingChange={handleAlertSettingChange}

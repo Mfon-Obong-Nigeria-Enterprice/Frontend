@@ -86,7 +86,7 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
         address: "",
       });
     } catch (err) {
-      console.error("Failed to add client:", err);
+      // console.error("Failed to add client:", err);
 
       if (isAxiosError(err)) {
         const axiosError = err as AxiosError<{ message: string }>;
