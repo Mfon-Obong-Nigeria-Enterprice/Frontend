@@ -3,8 +3,8 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import {
   getAllUsers,
   getUserById,
-  updateUser,
   updateProfilePicture as updateProfilePictureService,
+  updateUserData,
   updateUserPassword,
 } from "@/services/userService";
 import { toast } from "react-toastify";
@@ -46,7 +46,7 @@ export const useUserMutations = () => {
   // Update user data mutation
   const updateUserMutation = useMutation({
     mutationFn: ({ userId, userData }: { userId: string; userData: any }) =>
-      updateUser(userId, userData),
+      updateUserData(userId, userData),
 
     onSuccess: (data, variables) => {
       // Update auth store
@@ -177,7 +177,7 @@ export const useUserMutations = () => {
 
       if (userData) {
         promises.push(
-          updateUser(userId, userData).then((user) => {
+          updateUserData(userId, userData).then((user) => {
             results.user = user;
             return user;
           })

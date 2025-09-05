@@ -107,28 +107,6 @@ export const getAllUsers = async (): Promise<CompanyUser[]> => {
   }
 };
 
-// Get user by ID
-// export const getUserById = async (id: string): Promise<UserProfile> => {
-//   try {
-//     const response = await api.get(`/users/${id}`);
-//     console.log("user by id:", response);
-//     return response.data;
-//   } catch (error) {
-//     if (isAxiosError(error)) {
-//       console.error(
-//         "Error fetching users:",
-//         error.response?.data || error.message
-//       );
-//     }
-//     let errorMessage = "Failed to fetch user";
-//     if (typeof error === "object" && error !== null) {
-//       const err = error as { response?: { data?: { message?: string } } };
-//       errorMessage = err.response?.data?.message || errorMessage;
-//     }
-//     throw new Error(errorMessage);
-//   }
-// };
-
 export const getUserById = async (id: string): Promise<UserProfile | null> => {
   if (!id) {
     if (process.env.NODE_ENV === "development") {
@@ -173,7 +151,7 @@ export const getUserById = async (id: string): Promise<UserProfile | null> => {
 };
 
 // Update user profile (name, location, etc.)
-export const updateUser = async (
+export const updateUserData = async (
   userId: string,
   userData: UpdateUserPayload
 ): Promise<UpdateUserResponse> => {
