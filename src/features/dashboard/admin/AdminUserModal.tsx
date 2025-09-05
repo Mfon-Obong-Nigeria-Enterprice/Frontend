@@ -124,7 +124,7 @@ export default function AdminUserModal({
       passwordForm.reset();
       onOpenChange(false);
     } catch (error) {
-      console.error("Password update failed:", error);
+      toast.error("Password update failed:" + error);
     }
   };
 
@@ -236,7 +236,7 @@ export default function AdminUserModal({
                   alt=""
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    console.error("Failed to load profile image");
+                    toast.error("Failed to load profile image");
                     (e.target as HTMLImageElement).style.display = "none";
                   }}
                 />

@@ -1,5 +1,6 @@
 import api from "./baseApi";
 import { type Product, type NewProduct } from "@/types/types";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 export const getAllProducts = async (): Promise<Product[]> => {
   const response = await api.get("/products");
@@ -17,7 +18,11 @@ export const getAllProductsByBranch = async (
 };
 
 export const createProduct = async (product: NewProduct) => {
-  const response = await api.post("/products", product);
+  const branchId = useAuthStore.getState().user?.branchId;
+  if (!branchId) {
+    throw new Error("Branch ID is required to create a product");
+  }
+  const response = await api.post("/products", { ...product, branchId });
   return response.data;
 };
 

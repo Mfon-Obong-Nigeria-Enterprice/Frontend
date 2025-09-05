@@ -6,6 +6,7 @@ import { ClientAccountSettingsForm } from "./component/ClientAccountSettingsForm
 import { NotificationSettingsSection1 } from "./component/NotificationSettings1";
 import { AlertSettingsSection1 } from "./component/AlertSettingsSection1";
 import type { Settings, AlertAndNotificationSettings } from "@/types/types";
+import { toast } from "react-toastify";
 
 export default function ManagerSettings() {
   const [settings, setSettings] = useState<Settings>({
@@ -21,7 +22,7 @@ export default function ManagerSettings() {
       emailNotification: false,
       inactivityAlerts: true,
       systemHealthAlerts: false,
-      userLoginNotifications: false
+      userLoginNotifications: false,
     },
     system: {
       lowStockAlertThreshold: 15,
@@ -39,25 +40,28 @@ export default function ManagerSettings() {
 
   // Load settings from localStorage on component mount
   useEffect(() => {
-    const savedSettings = localStorage.getItem('app-settings');
+    const savedSettings = localStorage.getItem("app-settings");
     if (savedSettings) {
       try {
         const parsedSettings = JSON.parse(savedSettings);
         setSettings(parsedSettings);
       } catch (error) {
-        console.error('Failed to load settings from localStorage');
+        toast.error("Failed to load settings from localStorage");
       }
     }
   }, []);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('app-settings', JSON.stringify(settings));
+    localStorage.setItem("app-settings", JSON.stringify(settings));
   }, [settings]);
 
-  const handleAlertSettingChange = (key: keyof AlertAndNotificationSettings, value: boolean) => {
+  const handleAlertSettingChange = (
+    key: keyof AlertAndNotificationSettings,
+    value: boolean
+  ) => {
     // Update local state only - no API call
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
       alerts: {
         ...prev.alerts,
@@ -68,7 +72,7 @@ export default function ManagerSettings() {
 
   const handleSystemThresholdChange = (key: string, value: number) => {
     // Update local state only - no API call
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
       system: {
         ...prev.system,
@@ -79,7 +83,7 @@ export default function ManagerSettings() {
 
   const handleClientAccountChange = (key: string, value: number) => {
     // Update local state only - no API call
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
       clientAccount: {
         ...prev.clientAccount,
@@ -95,22 +99,20 @@ export default function ManagerSettings() {
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
             System Configuration
           </h1>
-          <p className="text-gray-600">
-            Manage your system preferences
-          </p>
+          <p className="text-gray-600">Manage your system preferences</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <SystemPreferencesForm 
+          <SystemPreferencesForm
             settings={settings.system || {}}
             onThresholdChange={handleSystemThresholdChange}
           />
-          <ClientAccountSettingsForm 
+          <ClientAccountSettingsForm
             settings={settings.clientAccount || {}}
             onThresholdChange={handleClientAccountChange}
-          /> 
+          />
         </div>
-        
+
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
             Alert Preferences
@@ -125,7 +127,7 @@ export default function ManagerSettings() {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
             Notification Preferences
-          </h2> 
+          </h2>
           <NotificationSettingsSection1
             settings={settings}
             onSettingChange={handleAlertSettingChange}

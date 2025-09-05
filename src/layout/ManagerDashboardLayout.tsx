@@ -1,4 +1,4 @@
-import Header from "@/components/header/Header";
+import Header from "@/features/dashboard/shared/header/Header";
 import { Outlet, useLocation } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import ManagerSidebar from "@/features/sidebar/ManagerSidebar";

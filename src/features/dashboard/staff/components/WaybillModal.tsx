@@ -73,7 +73,7 @@ const WaybillModal = ({
         onWaybillGenerated(selectedTransaction._id);
       }
 
-      console.log("Waybill generated:", result.data);
+      // console.log("Waybill generated:", result.data);
     } catch (error) {
       const waybillError = error as WaybillError;
 
@@ -81,11 +81,11 @@ const WaybillModal = ({
       toast.error(waybillError.message || "Failed to generate waybill");
 
       // Log error details for debugging
-      console.error("Error generating waybill:", {
-        message: waybillError.message,
-        status: waybillError.status,
-        transactionId: selectedTransaction._id,
-      });
+      // console.error("Error generating waybill:", {
+      //   message: waybillError.message,
+      //   status: waybillError.status,
+      //   transactionId: selectedTransaction._id,
+      // });
     } finally {
       setIsLoading(false);
     }

@@ -153,15 +153,14 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   ]);
 
   useEffect(() => {
-    console.log("Users query effect:", {
-      data: usersQuery.data,
-      isSuccess: usersQuery.isSuccess,
-      shouldSetUsers: isAdminOrSuperAdmin,
-      userRole: user?.role,
-    });
+    // console.log("Users query effect:", {
+    //   data: usersQuery.data,
+    //   isSuccess: usersQuery.isSuccess,
+    //   shouldSetUsers: isAdminOrSuperAdmin,
+    //   userRole: user?.role,
+    // });
 
     if (usersQuery.data && usersQuery.isSuccess && isAdminOrSuperAdmin) {
-      console.log("Setting users in store:", usersQuery.data);
       if (
         usersQuery.data &&
         usersQuery.data.length > 0 &&
@@ -180,7 +179,6 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   ]);
 
   useEffect(() => {
-    // console.log("activity query data:", activitiesQuery.data);
     if (
       activitiesQuery.data
       // &&
@@ -188,7 +186,6 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
       // user?.role !== "ADMIN"
     ) {
       setActivities(activitiesQuery.data);
-      // console.log("setting activities in store", activitiesQuery);
     }
   }, [activitiesQuery.dataUpdatedAt, setActivities, user?.role]);
 

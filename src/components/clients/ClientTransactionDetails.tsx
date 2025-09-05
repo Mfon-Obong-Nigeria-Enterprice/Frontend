@@ -25,21 +25,21 @@ export const ClientTransactionDetails: React.FC<
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
-    const transactions = sortedTransactions.map((txn, index) => {
+    const transactions = sortedTransactions.map((txn) => {
       const balanceAfter = runningBal;
 
       const transactionImpact = txn.type === "DEPOSIT" ? -txn.total : txn.total;
       const balanceBefore = runningBal - transactionImpact;
       runningBal = balanceBefore;
 
-      console.log(`Transaction update ${index + 1}:`, {
-        type: txn.type,
-        amount: txn.total,
-        impact: transactionImpact,
-        balanceBefore,
-        balanceAfter,
-        date: new Date(txn.createdAt).toLocaleString(),
-      });
+      // console.log(`Transaction update ${index + 1}:`, {
+      //   type: txn.type,
+      //   amount: txn.total,
+      //   impact: transactionImpact,
+      //   balanceBefore,
+      //   balanceAfter,
+      //   date: new Date(txn.createdAt).toLocaleString(),
+      // });
 
       return {
         ...txn,

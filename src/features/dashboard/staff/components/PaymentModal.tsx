@@ -96,8 +96,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       onClose();
     },
     onError: (error) => {
-      console.error("Error creating transaction:", error);
-      toast.error("Failed to process payment. Please try again.");
+      toast.error("Failed to process payment. Please try again." + error);
     },
   });
 
@@ -144,10 +143,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       setReference("");
       setDescription("");
       setPaymentMethod("Cash");
-      console.log("Payment processed successfully");
     } catch (error) {
-      console.error("Payment processing failed:", error);
-      toast.error("Failed to process payment. Please try again.");
+      toast.error("Failed to process payment. Please try again." + error);
     } finally {
       setIsProcessing(false);
     }

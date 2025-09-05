@@ -51,17 +51,17 @@ const BlockUnblockClient: React.FC<BlockUnblockClientProps> = ({
           err.response?.data?.message ||
           `Failed to ${isBlocked ? "unblock" : "block"} client`;
         toast.error(errorMessage);
-        console.error(
-          `Error ${isBlocked ? "unblocking" : "blocking"} client:`,
-          err.response?.data
-        );
+        // console.error(
+        //   `Error ${isBlocked ? "unblocking" : "blocking"} client:`,
+        //   err.response?.data
+        // );
       } else {
         toast.error(
           `An unexpected error occurred while ${
             isBlocked ? "unblocking" : "blocking"
           } the client`
         );
-        console.error("Unexpected error:", err);
+        // console.error("Unexpected error:", err);
       }
     } finally {
       setIsProcessing(false);
