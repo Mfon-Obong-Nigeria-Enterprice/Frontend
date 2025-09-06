@@ -668,7 +668,7 @@ const NewSales: React.FC = () => {
 
       {showReceipt && receiptData && (
         <Modal
-          size="xxl"
+          size="2xl"
           isOpen={showReceipt}
           onClose={() => setShowReceipt(false)}
         >
