@@ -6,6 +6,9 @@ import Avatar from "../shared/Avatar";
 
 // ui component
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
   Table,
   TableBody,
@@ -177,11 +180,116 @@ const ActivityLog = () => {
     return Array.from(uniqueRoles);
   }, [users]);
 
+  // Export functionality
+  const exportToPDF = () => {
+    console.log("Export button clicked!");
+    console.log("Activities data:", mergedAllActivities);
+    
+    try {
+      // Check if we have data
+      if (!mergedAllActivities || mergedAllActivities.length === 0) {
+        toast.error("No activity data to export");
+        return;
+      }
+
+      // Create new PDF document
+      const doc = new jsPDF();
+      console.log("PDF document created");
+      
+      // Add title
+      doc.setFontSize(20);
+      doc.setFont("helvetica", "bold");
+      doc.text("User Activity Report", 20, 30);
+      
+      // Add date
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 45);
+      
+      // Add company info
+      doc.text("Mfon-Obong Nigeria Enterprise", 20, 55);
+      
+      // Prepare table data
+      const tableData = mergedAllActivities.map(activity => [
+        new Date(activity.timestamp).toLocaleDateString(),
+        new Date(activity.timestamp).toLocaleTimeString(),
+        activity.user?.name || "System",
+        activity.performedBy,
+        activity.role === "MAINTAINER" ? "MAINT" : 
+        activity.role === "SUPER_ADMIN" ? "MANAGER" : activity.role,
+        activity.action.toLowerCase().replace("-", " "),
+        activity.details.length > 50 ? activity.details.substring(0, 50) + "..." : activity.details,
+        activity.device
+      ]);
+
+      console.log("Table data prepared:", tableData);
+
+      // Add table
+      autoTable(doc, {
+        head: [["Date", "Time", "User", "Email", "Role", "Action", "Details", "Device"]],
+        body: tableData,
+        startY: 70,
+        styles: {
+          fontSize: 8,
+          cellPadding: 3,
+        },
+        headStyles: {
+          fillColor: [44, 204, 113], // Green color matching the button
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245],
+        },
+        columnStyles: {
+          0: { cellWidth: 20 }, // Date
+          1: { cellWidth: 15 }, // Time
+          2: { cellWidth: 25 }, // User
+          3: { cellWidth: 30 }, // Email
+          4: { cellWidth: 15 }, // Role
+          5: { cellWidth: 20 }, // Action
+          6: { cellWidth: 35 }, // Details
+          7: { cellWidth: 15 }, // Device
+        },
+        margin: { left: 20, right: 20 },
+      });
+
+      console.log("Table added to PDF");
+
+      // Add footer
+      const pageCount = (doc as any).internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.text(
+          `Page ${i} of ${pageCount}`,
+          doc.internal.pageSize.width - 30,
+          doc.internal.pageSize.height - 10
+        );
+      }
+
+      // Save the PDF
+      const fileName = `user-activity-report-${new Date().toISOString().split('T')[0]}.pdf`;
+      console.log("Saving PDF with filename:", fileName);
+      doc.save(fileName);
+      
+      toast.success("User activity report exported as PDF successfully!");
+    } catch (error) {
+      console.error("PDF export failed:", error);
+      toast.error(`Failed to export user activity report as PDF: ${error.message}`);
+    }
+  };
+
   return (
     <main>
       <div className="flex flex-col md:flex-row justify-between items-center">
         <DashboardTitle heading="System Activity Log" description="" />
-        <Button>Export User Report</Button>
+        <Button 
+          onClick={exportToPDF}
+          className="bg-green-600 hover:bg-green-700 text-white"
+        >
+          Export User Report
+        </Button>
       </div>
 <div className="bg-white mt-8 ">
       <h2 className="p-3 font-medium"> Filter & Controls </h2>
