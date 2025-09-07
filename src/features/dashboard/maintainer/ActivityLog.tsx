@@ -180,53 +180,68 @@ const ActivityLog = () => {
     return Array.from(uniqueRoles);
   }, [users]);
 
-  // Export functionality
+  // export functionality
   const exportToPDF = () => {
     console.log("Export button clicked!");
     console.log("Activities data:", mergedAllActivities);
-    
+
     try {
-      // Check if we have data
       if (!mergedAllActivities || mergedAllActivities.length === 0) {
         toast.error("No activity data to export");
         return;
       }
 
-      // Create new PDF document
+      // create new pdf document
       const doc = new jsPDF();
       console.log("PDF document created");
-      
-      // Add title
+
+      // add title
       doc.setFontSize(20);
       doc.setFont("helvetica", "bold");
       doc.text("User Activity Report", 20, 30);
-      
-      // Add date
+
+      // add date
       doc.setFontSize(12);
       doc.setFont("helvetica", "normal");
       doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 45);
-      
-      // Add company info
+
+      // add company information
       doc.text("Mfon-Obong Nigeria Enterprise", 20, 55);
-      
-      // Prepare table data
-      const tableData = mergedAllActivities.map(activity => [
+
+      // prepare a table data
+      const tableData = mergedAllActivities.map((activity) => [
         new Date(activity.timestamp).toLocaleDateString(),
         new Date(activity.timestamp).toLocaleTimeString(),
         activity.user?.name || "System",
         activity.performedBy,
-        activity.role === "MAINTAINER" ? "MAINT" : 
-        activity.role === "SUPER_ADMIN" ? "MANAGER" : activity.role,
+        activity.role === "MAINTAINER"
+          ? "MAINT"
+          : activity.role === "SUPER_ADMIN"
+          ? "MANAGER"
+          : activity.role,
         activity.action.toLowerCase().replace("-", " "),
-        activity.details.length > 50 ? activity.details.substring(0, 50) + "..." : activity.details,
-        activity.device
+        activity.details.length > 50
+          ? activity.details.substring(0, 50) + "..."
+          : activity.details,
+        activity.device,
       ]);
 
       console.log("Table data prepared:", tableData);
 
-      // Add table
+      // add table
       autoTable(doc, {
-        head: [["Date", "Time", "User", "Email", "Role", "Action", "Details", "Device"]],
+        head: [
+          [
+            "Date",
+            "Time",
+            "User",
+            "Email",
+            "Role",
+            "Action",
+            "Details",
+            "Device",
+          ],
+        ],
         body: tableData,
         startY: 70,
         styles: {
@@ -236,27 +251,27 @@ const ActivityLog = () => {
         headStyles: {
           fillColor: [44, 204, 113], // Green color matching the button
           textColor: [255, 255, 255],
-          fontStyle: 'bold',
+          fontStyle: "bold",
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
         columnStyles: {
-          0: { cellWidth: 20 }, // Date
-          1: { cellWidth: 15 }, // Time
-          2: { cellWidth: 25 }, // User
-          3: { cellWidth: 30 }, // Email
-          4: { cellWidth: 15 }, // Role
-          5: { cellWidth: 20 }, // Action
-          6: { cellWidth: 35 }, // Details
-          7: { cellWidth: 15 }, // Device
+          0: { cellWidth: 20 }, // date
+          1: { cellWidth: 15 }, // time
+          2: { cellWidth: 25 }, // user
+          3: { cellWidth: 30 }, // email
+          4: { cellWidth: 15 }, // role
+          5: { cellWidth: 20 }, // action
+          6: { cellWidth: 35 }, // details
+          7: { cellWidth: 15 }, // device
         },
         margin: { left: 20, right: 20 },
       });
 
       console.log("Table added to PDF");
 
-      // Add footer
+      // add footer
       const pageCount = (doc as any).internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
@@ -268,15 +283,23 @@ const ActivityLog = () => {
         );
       }
 
-      // Save the PDF
-      const fileName = `user-activity-report-${new Date().toISOString().split('T')[0]}.pdf`;
+      // save the pdf
+      const fileName = `user-activity-report-${new Date()
+        .toISOString()
+        .split("T")[0]}.pdf`;
       console.log("Saving PDF with filename:", fileName);
       doc.save(fileName);
-      
+
       toast.success("User activity report exported as PDF successfully!");
     } catch (error) {
       console.error("PDF export failed:", error);
-      toast.error(`Failed to export user activity report as PDF: ${error.message}`);
+
+      let message = "An unexpected error occurred";
+      if (error instanceof Error) {
+        message = error.message;
+      }
+
+      toast.error(`Failed to export user activity report as PDF: ${message}`);
     }
   };
 
@@ -284,7 +307,7 @@ const ActivityLog = () => {
     <main>
       <div className="flex flex-col md:flex-row justify-between items-center">
         <DashboardTitle heading="System Activity Log" description="" />
-        <Button 
+        <Button
           onClick={exportToPDF}
           className="bg-green-600 hover:bg-green-700 text-white"
         >
