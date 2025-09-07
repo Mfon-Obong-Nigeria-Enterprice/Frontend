@@ -1,17 +1,13 @@
 // src/components/BusinessLocationModal.tsx
 import React, { useState } from "react";
 import Modal from "@/components/Modal"; // your teammate's modal
-// removed unused Input, Label
+import { createLocation, type LocationResponse } from "@/services/locationService"; // ✅ connect to API
+import { toast } from "sonner";
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: (data: {
-    locationType: string;
-    address: string;
-    email: string;
-    phone: string;
-  }) => void;
+  onSubmit?: (data: LocationResponse) => void;
 };
 
 export default function BusinessLocationModal({ isOpen, onClose, onSubmit }: Props) {
@@ -19,6 +15,8 @@ export default function BusinessLocationModal({ isOpen, onClose, onSubmit }: Pro
   const [address, setAddress] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ [k: string]: string }>({});
 
   const reset = () => {
     setLocationType("");
@@ -27,13 +25,36 @@ export default function BusinessLocationModal({ isOpen, onClose, onSubmit }: Pro
     setPhone("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Validate
+    const newErrors: { [k: string]: string } = {};
+    if (!locationType.trim()) newErrors.locationType = "Location type is required";
+    if (!address.trim()) newErrors.address = "Address is required";
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = "Invalid email";
+    if (phone && !/^[0-9+\-()\s]{7,20}$/.test(phone)) newErrors.phone = "Invalid phone number";
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
     const payload = { locationType, address, email, phone };
-    onSubmit?.(payload);
-    // keep UX: close modal and reset form
-    onClose();
-    reset();
+
+    try {
+      setLoading(true);
+      const res = await createLocation(payload); // ✅ call backend
+      console.log("✅ Location created:", res);
+      toast.success("Business location created successfully");
+      // Notify parent with the created location
+      if (onSubmit) {
+        onSubmit(res);
+      }
+      onClose();
+      reset();
+    } catch (err) {
+      console.error("❌ Failed to create location:", err);
+      toast.error("Failed to create business location");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -47,41 +68,67 @@ export default function BusinessLocationModal({ isOpen, onClose, onSubmit }: Pro
             <label className="block text-sm mb-1">Location Type</label>
             <input
               value={locationType}
-              onChange={(e) => setLocationType(e.target.value)}
+              onChange={(e) => {
+                setLocationType(e.target.value);
+                if (errors.locationType) setErrors((p) => ({ ...p, locationType: "" }));
+              }}
               placeholder="e.g main Office/branch"
-              className="w-full rounded-md border px-3 py-2 text-sm placeholder:text-gray-400"
+              className={`w-full rounded-md border px-3 py-2 text-sm placeholder:text-gray-400 ${errors.locationType ? "border-red-500" : ""}`}
+              required
             />
+            {errors.locationType && (
+              <p className="mt-1 text-xs text-red-600">{errors.locationType}</p>
+            )}
           </div>
 
           <div>
             <label className="block text-sm mb-1">Address</label>
             <input
               value={address}
-              onChange={(e) => setAddress(e.target.value)}
+              onChange={(e) => {
+                setAddress(e.target.value);
+                if (errors.address) setErrors((p) => ({ ...p, address: "" }));
+              }}
               placeholder="e.g 233 Abak Road"
-              className="w-full rounded-md border px-3 py-2 text-sm placeholder:text-gray-400"
+              className={`w-full rounded-md border px-3 py-2 text-sm placeholder:text-gray-400 ${errors.address ? "border-red-500" : ""}`}
+              required
             />
+            {errors.address && (
+              <p className="mt-1 text-xs text-red-600">{errors.address}</p>
+            )}
           </div>
 
           <div>
             <label className="block text-sm mb-1">Email</label>
             <input
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (errors.email) setErrors((p) => ({ ...p, email: "" }));
+              }}
               type="email"
               placeholder="Enter company email address"
-              className="w-full rounded-md border px-3 py-2 text-sm placeholder:text-gray-400"
+              className={`w-full rounded-md border px-3 py-2 text-sm placeholder:text-gray-400 ${errors.email ? "border-red-500" : ""}`}
             />
+            {errors.email && (
+              <p className="mt-1 text-xs text-red-600">{errors.email}</p>
+            )}
           </div>
 
           <div>
             <label className="block text-sm mb-1">Phone</label>
             <input
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                setPhone(e.target.value);
+                if (errors.phone) setErrors((p) => ({ ...p, phone: "" }));
+              }}
               placeholder="Enter company phone number"
-              className="w-full rounded-md border px-3 py-2 text-sm placeholder:text-gray-400"
+              className={`w-full rounded-md border px-3 py-2 text-sm placeholder:text-gray-400 ${errors.phone ? "border-red-500" : ""}`}
             />
+            {errors.phone && (
+              <p className="mt-1 text-xs text-red-600">{errors.phone}</p>
+            )}
           </div>
 
           {/* Footer: grey bar with Cancel (left) and Create Location (right) */}
@@ -93,15 +140,17 @@ export default function BusinessLocationModal({ isOpen, onClose, onSubmit }: Pro
                 onClose();
               }}
               className="px-4 py-2 rounded-md border text-sm bg-white"
+              disabled={loading}
             >
               Cancel
             </button>
 
             <button
               type="submit"
-              className="px-4 py-2 rounded-md bg-green-600 text-white text-sm hover:bg-green-700"
+              className="px-4 py-2 rounded-md bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-50"
+              disabled={loading}
             >
-              Create Location
+              {loading ? "Creating..." : "Create Location"}
             </button>
           </div>
         </form>

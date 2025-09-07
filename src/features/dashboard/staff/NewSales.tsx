@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { io } from "socket.io-client";
+import { io, type Socket } from "socket.io-client";
 
 // components
 import ClientSearch from "./components/ClientSearch";
@@ -49,8 +49,10 @@ import { AlertCircle } from "lucide-react";
 // data
 import { bankNames, posNames } from "@/data/banklist";
 
-// connect to socket
-const socket = io("https://mfon-obong-enterprise.onrender.com");
+// Optional websocket connection. Enable by setting VITE_ENABLE_SOCKET=true
+const SOCKET_BASE_URL = "https://mfon-obong-enterprise.onrender.com";
+const ENABLE_SOCKET = import.meta.env.VITE_ENABLE_SOCKET === "true";
+let socket: Socket | null = null;
 
 export type Row = {
   productId: string;
@@ -120,15 +122,35 @@ const NewSales: React.FC = () => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
 
-  // ✅ listen for socket event
+  // ✅ listen for socket event (only if enabled)
   useEffect(() => {
-    socket.on("transaction_created", (data: ReceiptData) => {
-      setReceiptData(data);
-      setShowReceipt(true);
+    if (!ENABLE_SOCKET) return;
+
+    socket = io(SOCKET_BASE_URL, {
+      transports: ["websocket"],
+      reconnection: true,
+      reconnectionAttempts: 3,
+      timeout: 5000,
+      autoConnect: true,
     });
 
+    const onCreated = (data: ReceiptData) => {
+      setReceiptData(data);
+      setShowReceipt(true);
+    };
+
+    const onConnectError = () => {
+      // Swallow connection errors in UI; receipt can still render after form submit
+    };
+
+    socket.on("transaction_created", onCreated);
+    socket.on("connect_error", onConnectError);
+
     return () => {
-      socket.off("transaction_created");
+      socket?.off("transaction_created", onCreated);
+      socket?.off("connect_error", onConnectError);
+      socket?.close();
+      socket = null;
     };
   }, []);
 

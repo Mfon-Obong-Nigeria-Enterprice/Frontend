@@ -1,85 +1,83 @@
 import { useEffect } from "react";
-import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
-type ModalSize = "sm" | "md" | "lg" | "xl" | "2xl";
+type PresetModalSize = "sm" | "md" | "lg" | "xl" | "xxl";
 
 type ModalProps = {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  className?: string;        // extra classes for the panel
-  size?: ModalSize;          // width preset
-  showClose?: boolean;       // show top-right X
+  className?: string;
+  size?: PresetModalSize | string; // can be preset or custom class
 };
 
-const SIZE_CLASSES: Record<ModalSize, string> = {
-  sm:  "max-w-sm",
-  md:  "max-w-md",
-  lg:  "max-w-lg",
-  xl:  "max-w-xl",
-  "2xl": "max-w-2xl",
+const sizeClasses: Record<PresetModalSize, string> = {
+  sm: "max-w-sm",
+  md: "max-w-md",
+  lg: "max-w-lg",
+  xl: "max-w-xl",
+  xxl: "max-w-3xl",
 };
 
-export default function Modal({
+const Modal = ({
   isOpen,
   onClose,
   children,
   className,
-  size = "md",
-  showClose = true,
-}: ModalProps) {
-  // lock page scroll while open
+  size = "lg",
+}: ModalProps) => {
+  // prevent background scroll
   useEffect(() => {
-    if (!isOpen) return;
-    const { overflow } = document.body.style;
-    document.body.style.overflow = "hidden";
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    }
     return () => {
-      document.body.style.overflow = overflow;
+      document.body.style.overflow = "";
     };
   }, [isOpen]);
 
-  // close on ESC
+  // Close on ESC key
   useEffect(() => {
-    if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [isOpen, onClose]);
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [onClose]);
 
+  // Don't render if closed
   if (!isOpen) return null;
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      aria-modal="true"
-      role="dialog"
-      onClick={onClose}                 // backdrop click closes
+      className={cn(
+        "fixed inset-0 z-50 flex items-center justify-center bg-black/50",
+        className
+      )}
+      onClick={onClose}
     >
       <div
         className={cn(
-          "relative w-full rounded-lg bg-white shadow-xl",
-          "transition-all duration-150 ease-out",
-          SIZE_CLASSES[size],
-          "mx-4",                        // small margin on tiny screens
-          className
+          "relative bg-white rounded-lg shadow-xl",
+          sizeClasses[size as PresetModalSize] ?? size, // fallback to raw string if not preset
+          "w-full max-h-[98vh] overflow-y-auto hide-scrollbar"
         )}
-        onClick={(e) => e.stopPropagation()} // prevent inner clicks closing
+        onClick={(e) => e.stopPropagation()} // prevent closing on content click
       >
-        {showClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="absolute right-3 top-3 rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-          >
-            <X size={18} />
-          </button>
-        )}
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 hover:text-black"
+        >
+          <X size={20} />
+        </button>
         {children}
       </div>
     </div>,
     document.body
   );
-}
+};
+
+export default Modal;

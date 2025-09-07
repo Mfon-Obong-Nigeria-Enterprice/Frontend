@@ -1,4 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
+import TestLocationPage from "@/pages/TestLocationPage";
+
 
 // Auth
 import Login from "@/features/auth/Login";
@@ -16,7 +18,7 @@ import ManagerSettings from "@/features/dashboard/manager/ManagerSettings";
 import ManagerNotifications from "@/features/dashboard/manager/ManagerNotifications";
 
 // Modal Page
-import AddBusinessLocation from "@/pages/AddBusinessLocation";
+// import AddBusinessLocationPage from "@/pages/AddBusinessLocationPage";
 
 
 // Maintainer
@@ -73,11 +75,16 @@ const router = createBrowserRouter([
       { path: "user-management/col-settings", element: <ColumnSettings /> },
 
       // Modal Route
-      { path: "user-management/add-business-location", element: <AddBusinessLocation /> },
+      // { path: "user-management/add-business-location", element: <AddBusinessLocationPage /> },
 
       { path: "log", element: <ActivityLog /> },
     ],
   },
+// Test Location Route
+{
+  path: "/test-location",
+  element: <TestLocationPage />,
+},
 
   // Maintainer Routes
   {
