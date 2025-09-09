@@ -1,6 +1,8 @@
-import { useState } from "react";
+// src/components/UserOverview.tsx
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useUserStore } from "@/stores/useUserStore";
 
 // components
 import UserTable from "../usertable";
@@ -27,6 +29,7 @@ import { MdOutlineHome } from "react-icons/md";
 const UserOverview = () => {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const { users } = useUserStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
@@ -36,18 +39,93 @@ const UserOverview = () => {
     status: "all"
   });
 
-  // Sample data for filters (replace with your actual data)
-  const roles = ["Admin", "Maintainer", "Manager", "Staff"];
-  const locations = ["Uyo", "Lagos", "Abuja", "Port Harcourt"];
+  // Get unique roles and locations from actual user data
+  const roles = useMemo(() => {
+    const uniqueRoles = Array.from(new Set(users.map(user => user.role)));
+    return uniqueRoles;
+  }, [users]);
+
+  const locations = useMemo(() => {
+    const uniqueLocations = Array.from(new Set(users.map(user => user.location || user.branch || "")));
+    return uniqueLocations.filter(loc => loc !== "");
+  }, [users]);
+
+  // Filter users based on search and filters
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        if (!user.name.toLowerCase().includes(query) &&
+            !user.email.toLowerCase().includes(query) &&
+            !user.role.toLowerCase().includes(query) &&
+            !(user.branch && user.branch.toLowerCase().includes(query))) {
+          return false;
+        }
+      }
+      
+      // Role filter
+      if (filters.role !== "all" && user.role !== filters.role) {
+        return false;
+      }
+      
+      // Location filter - check both location and branch fields
+      if (filters.location !== "all") {
+        const userLocation = user.location || user.branch || "";
+        if (userLocation !== filters.location) {
+          return false;
+        }
+      }
+      
+      // Status filter
+      if (filters.status !== "all") {
+        if (filters.status === "active" && (!user.isActive || user.isBlocked)) {
+          return false;
+        }
+        if (filters.status === "inactive" && (user.isActive || user.isBlocked)) {
+          return false;
+        }
+        if (filters.status === "suspended" && !user.isBlocked) {
+          return false;
+        }
+        if (filters.status === "pending") {
+          // For pending status, check if user is neither active nor blocked
+          if (user.isActive || user.isBlocked) return false;
+        }
+      }
+      
+      // Date range filter
+      if (filters.dateRange !== "all") {
+        const createdDate = new Date(user.createdAt);
+        const now = new Date();
+        const diffTime = now.getTime() - createdDate.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        switch (filters.dateRange) {
+          case "today":
+            if (diffDays > 0) return false;
+            break;
+          case "week":
+            if (diffDays > 7) return false;
+            break;
+          case "month":
+            if (diffDays > 30) return false;
+            break;
+          default:
+            break;
+        }
+      }
+      
+      return true;
+    });
+  }, [users, searchQuery, filters]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    // Implement your search logic here
   };
 
   const handleFilterChange = (filterName: string, value: string) => {
     setFilters(prev => ({ ...prev, [filterName]: value }));
-    // Implement your filter logic here
   };
 
   return (
@@ -84,7 +162,6 @@ const UserOverview = () => {
                 <>
                   <button
                     className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-t-lg font-medium"
-                    //   onClick={handleExportAllUsers}
                   >
                     <span className="flex-1 text-left">
                       {">  "} Export All Users
@@ -152,10 +229,9 @@ const UserOverview = () => {
         locations={locations}
       />
 
-      {/* user table */}
+      {/* user table - pass filtered users */}
       <UserTable 
-        searchQuery={searchQuery}
-        filters={filters}
+        users={filteredUsers}
       />
 
       {/* open create new user modal */}
@@ -172,4 +248,4 @@ const UserOverview = () => {
   );
 };
 
-export default UserOverview; 
+export default UserOverview;

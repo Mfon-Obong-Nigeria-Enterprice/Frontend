@@ -1,6 +1,14 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-// First define the nested schemas to avoid reference errors
+// ---------- Maintenance Mode ----------
+export const maintenanceModeSchema = z.object({
+  isActive: z.boolean(),
+  message: z.string().optional(),
+  scheduledStart: z.string().datetime().optional(),
+  scheduledEnd: z.string().datetime().optional(),
+});
+
+// ---------- Alerts ----------
 export const alertAndNotificationSettingsSchema = z.object({
   lowStockAlerts: z.boolean(),
   expirationReminders: z.boolean(),
@@ -9,40 +17,36 @@ export const alertAndNotificationSettingsSchema = z.object({
   CustomThresholdAlerts: z.boolean(),
   PriceChangeNotification: z.boolean(),
   LargeBalanceAlertThreshold: z.boolean(),
-  dashboardNotification: z.boolean(), 
-  emailNotification: z.boolean(), 
+  dashboardNotification: z.boolean(),
+  emailNotification: z.boolean(),
   inactivityAlerts: z.boolean(),
   systemHealthAlerts: z.boolean(),
   userLoginNotifications: z.boolean(),
 });
 
+// ---------- System Preferences ----------
 export const systemPreferencesSchema = z.object({
-  lowStockAlertThreshold: z.number().min(0, "Must be a positive number"),
-  maximumDiscount: z.number().min(0, "Must be a positive number").max(100, "Cannot exceed 100%"),
-  bulkDiscountThreshold: z.number().min(0, "Must be a positive number"),
-  minimumPurchaseForBulkDiscount: z.number().min(0, "Must be a positive number"),
+  lowStockAlertThreshold: z.number().min(0),
+  maximumDiscount: z.number().min(0).max(100),
+  bulkDiscountThreshold: z.number().min(0),
+  minimumPurchaseForBulkDiscount: z.number().min(0),
   allowNegativeBalances: z.boolean(),
-  largeBalanceThreshold: z.number().min(0, "Must be a positive number"),
+  largeBalanceThreshold: z.number().min(0),
 });
 
+// ---------- Client Account ----------
 export const clientAccountSettingsSchema = z.object({
-  defaultCreditLimit: z.number().min(0, "Must be a positive number"),
-  inactivePeriodDays: z.number().min(1, "Must be at least 1 day"),
+  defaultCreditLimit: z.number().min(0),
+  inactivePeriodDays: z.number().min(1),
 });
 
-export const maintenanceModeSchema = z.object({
-  enabled: z.boolean(),
-  message: z.string().optional(),
-  scheduledStart: z.string().datetime().optional(),
-  scheduledEnd: z.string().datetime().optional(),
-});
-
+// ---------- Session ----------
 export const sessionSettingsSchema = z.object({
   timeoutHours: z.number().min(0.5).max(24),
   forceLogout: z.boolean().default(false),
 });
 
-// Now define the main settings schema
+// ---------- Root Settings ----------
 export const settingsSchema = z.object({
   clientsDebtsAlert: z.boolean(),
   largeBalanceAlert: z.boolean(),
@@ -72,23 +76,38 @@ export const apiSettingsSchema = z.object({
   inactivityAlert: z.boolean().optional(),
   systemHealthAlert: z.boolean().optional(),
   userLoginNotification: z.boolean().optional(),
-  
-  // System settings
   lowStockThreshold: z.number().optional(),
   maxDiscount: z.number().optional(),
   bulkDiscountThreshold: z.number().optional(),
   minPurchaseForBulkDiscount: z.number().optional(),
   allowNegativeBalance: z.boolean().optional(),
   largeBalanceThreshold: z.number().optional(),
-  
-  // Client account settings
   defaultCreditLimit: z.number().optional(),
   inactivePeriodDays: z.number().optional(),
 });
 
-// Export all types
+// ---------- Interfaces ----------
+export interface ActiveHoursSettings {
+  _id?: string;
+  startTime: string;
+  endTime: string;
+  timezone: string;
+  description?: string;
+  isActive?: boolean;
+  setBy?: string;
+  setByEmail?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SessionSettings {
+  timeoutHours: number;
+  forceLogout: boolean;
+  activeHours?: ActiveHoursSettings;
+}
+
+// ---------- Types ----------
 export type MaintenanceModeSettings = z.infer<typeof maintenanceModeSchema>;
-export type SessionSettings = z.infer<typeof sessionSettingsSchema>;
 export type AlertAndNotificationSettings = z.infer<typeof alertAndNotificationSettingsSchema>;
 export type SystemPreferences = z.infer<typeof systemPreferencesSchema>;
 export type ClientAccountSettings = z.infer<typeof clientAccountSettingsSchema>;
