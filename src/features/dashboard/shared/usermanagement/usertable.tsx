@@ -41,7 +41,143 @@ import {
   getInitials,
 } from "@/utils/userfilters";
 
-const UserTable = () => {
+type TableCellRendererProps = {
+  user: any;
+  column: string;
+  index: number;
+  currentPage: number;
+};
+type User = {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  isBlocked: boolean;
+  isActive: boolean;
+  branch?: string;
+  createdAt: string | Date;
+};
+
+interface UserTableProps {
+  onEditUser: (userData: User) => void;
+}
+
+// Helper function to render table cell content
+const RenderTableCell = ({
+  user,
+  column,
+  index,
+  currentPage,
+}: TableCellRendererProps) => {
+  const userId = `U-${((currentPage - 1) * 10 + index + 1)
+    .toString()
+    .padStart(3, "0")}`;
+
+  const cellContent = useMemo(() => {
+    switch (column) {
+      case "User ID":
+        return userId;
+      case "User Details":
+        return (
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-full overflow-hidden">
+              {user.profilePicture ? (
+                <img
+                  src={user.profilePicture}
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div
+                  className={`flex justify-center items-center w-full h-full text-white ${
+                    user.role === "STAFF"
+                      ? "bg-[#2ECC71]"
+                      : user.role === "ADMIN"
+                      ? "bg-[#392423]"
+                      : "bg-[#F39C12]"
+                  }`}
+                >
+                  <span>{getInitials(user.name)}</span>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[#444444] font-medium text-sm">
+                {user.name}
+              </span>
+              <span className="text-[#7D7D7D] text-xs">{user.email}</span>
+            </div>
+          </div>
+        );
+      case "Roles":
+        return (
+          <span
+            className={`min-w-16 mx-auto text-center py-2 px-2.5 rounded ${
+              user.role === "STAFF"
+                ? "bg-[#2ECC7133] text-[#05431F]"
+                : user.role === "ADMIN"
+                ? "bg-[#FFF2CE] text-[#F39C12]"
+                : "bg-[#E2F3EB] text-[#1A3C7E]"
+            }`}
+          >
+            {user.role === "MAINTAINER" ? "MAINT" : user.role}
+          </span>
+        );
+      case "Permission":
+        return (
+          <span className="font-normal text-xs">
+            {user.role === "STAFF"
+              ? "Record Sales"
+              : user.role === "ADMIN"
+              ? "Inventory, client"
+              : "System maintainer"}
+          </span>
+        );
+      case "Status":
+        return (
+          <span
+            className={`text-xs ${
+              user.isBlocked
+                ? "text-[#F95353]"
+                : user.isActive
+                ? "text-[#1AD410]"
+                : "text-[#F39C12]"
+            }`}
+          >
+            {user.isBlocked
+              ? "Suspended"
+              : user.isActive
+              ? "Active"
+              : "Inactive"}
+          </span>
+        );
+      case "Last Login":
+        return formatRelativeDate(user.lastLogin);
+      case "Location":
+        return (
+          <span className="text-[#444444] font-normal">
+            {user.branch || "N/A"}
+          </span>
+        );
+      case "Created":
+        return (
+          <span className="text-[#444444] font-normal">
+            {new Date(user.createdAt).toDateString()}
+          </span>
+        );
+      default:
+        return "";
+    }
+  }, [column, user, userId]);
+
+  return (
+    <TableCell className={column === "User ID" ? "pl-5" : ""}>
+      {cellContent}
+    </TableCell>
+  );
+};
+
+const UserTable = ({ onEditUser }: UserTableProps) => {
   const navigate = useNavigate();
   const users = useUserStore((s) => s.users);
   const currentUser = useAuthStore((s) => s.user);
@@ -137,108 +273,6 @@ const UserTable = () => {
   // Get visible columns in order from store
   const visibleColumns = getVisibleColumnsInOrder();
 
-  // Helper function to render table cell content
-  const renderTableCell = (user: any, column: string, index: number) => {
-    const userId = `U-${((currentPage - 1) * 10 + index + 1)
-      .toString()
-      .padStart(3, "0")}`;
-
-    switch (column) {
-      case "User ID":
-        return userId;
-      case "User Details":
-        return (
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-full overflow-hidden">
-              {user.profilePicture ? (
-                <img
-                  src={user.profilePicture}
-                  alt={user.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div
-                  className={`flex justify-center items-center w-full h-full text-white ${
-                    user.role === "STAFF"
-                      ? "bg-[#2ECC71]"
-                      : user.role === "ADMIN"
-                      ? "bg-[#392423]"
-                      : "bg-[#F39C12]"
-                  }`}
-                >
-                  <span>{getInitials(user.name)}</span>
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[#444444] font-medium text-sm">
-                {user.name}
-              </span>
-              <span className="text-[#7D7D7D] text-xs">{user.email}</span>
-            </div>
-          </div>
-        );
-      case "Roles":
-        return (
-          <span
-            className={`min-w-16 mx-auto text-center py-2 px-2.5 rounded ${
-              user.role === "STAFF"
-                ? "bg-[#2ECC7133] text-[#05431F]"
-                : user.role === "ADMIN"
-                ? "bg-[#FFF2CE] text-[#F39C12]"
-                : "bg-[#E2F3EB] text-[#1A3C7E]"
-            }`}
-          >
-            {user.role === "MAINTAINER" ? "MAINT" : user.role}
-          </span>
-        );
-      case "Permission":
-        return (
-          <span className="font-normal text-xs">
-            {user.role === "STAFF"
-              ? "Record Sales"
-              : user.role === "ADMIN"
-              ? "Inventory, client"
-              : "System maintainer"}
-          </span>
-        );
-      case "Status":
-        return (
-          <span
-            className={`text-xs ${
-              user.isBlocked
-                ? "text-[#F95353]"
-                : user.isActive
-                ? "text-[#1AD410]"
-                : "text-[#F39C12]"
-            }`}
-          >
-            {user.isBlocked
-              ? "Suspended"
-              : user.isActive
-              ? "Active"
-              : "Inactive"}
-          </span>
-        );
-      case "Last Login":
-        return formatRelativeDate(user.lastLogin);
-      case "Location":
-        return (
-          <span className="text-[#444444] font-normal">
-            {user.branch || "N/A"}
-          </span>
-        );
-      case "Created":
-        return (
-          <span className="text-[#444444] font-normal">
-            {new Date(user.createdAt).toDateString()}
-          </span>
-        );
-      default:
-        return "";
-    }
-  };
-
   return (
     <div className="mt-5">
       <Table>
@@ -277,12 +311,13 @@ const UserTable = () => {
                 className="relative px-5 font-Inter font-medium text-sm"
               >
                 {visibleColumns.map((column) => (
-                  <TableCell
-                    key={column}
-                    className={column === "User ID" ? "pl-5" : ""}
-                  >
-                    {renderTableCell(user, column, index)}
-                  </TableCell>
+                  <RenderTableCell
+                    key={`${user._id}-${column}`}
+                    user={user}
+                    column={column}
+                    index={index}
+                    currentPage={currentPage}
+                  />
                 ))}
 
                 <TableCell>
@@ -338,7 +373,13 @@ const UserTable = () => {
                           </span>
                           <ExternalLink className="size-4 text-muted-foreground" />
                         </button>
-                        <button className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium">
+                        <button
+                          className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
+                          onClick={() => {
+                            onEditUser(user);
+                            setPopoverOpen(null);
+                          }}
+                        >
                           <span className="flex-1 text-left">Edit User</span>
                           <ExternalLink className="size-4 text-muted-foreground" />
                         </button>

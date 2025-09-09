@@ -48,23 +48,12 @@ const items = [
     icon: RiLogoutCircleRLine,
   },
 ];
+type StaffSidebarProps = {
+  onLogoutClick: () => void;
+};
 
-export function StaffSidebar() {
+function StaffSidebar({ onLogoutClick }: StaffSidebarProps) {
   const { pathname } = useLocation();
-  const [showModal, setShowModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const logoutMutation = useLogout();
-
-  const handleConfirm = async () => {
-    setIsLoading(true);
-
-    // wait for 1 second before logout
-    setTimeout(() => {
-      logoutMutation.mutate(); // trigger logout
-      setIsLoading(false);
-      setShowModal(false);
-    }, 1000);
-  };
 
   return (
     <Sidebar className="bg-white">
@@ -100,15 +89,38 @@ export function StaffSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenuButton
-          className="cursor-pointer"
-          onClick={() => setShowModal(true)}
-        >
+        <SidebarMenuButton className="cursor-pointer" onClick={onLogoutClick}>
           <IoIosLogOut />
           <span>Logout</span>
         </SidebarMenuButton>
       </SidebarFooter>
+    </Sidebar>
+  );
+}
 
+export const StaffSidebarWithModal = () => {
+  const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const logoutMutation = useLogout();
+
+  const handleLogoutClick = () => {
+    setShowModal(true);
+  };
+
+  const handleConfirm = async () => {
+    setIsLoading(true);
+
+    // wait for 1 second before logout
+    setTimeout(() => {
+      logoutMutation.mutate(); // trigger logout
+      setIsLoading(false);
+      setShowModal(false);
+    }, 500);
+  };
+
+  return (
+    <>
+      <StaffSidebar onLogoutClick={handleLogoutClick} />
       {/* the logout modal */}
       <LogoutConfirmModal
         isOpen={showModal}
@@ -116,6 +128,6 @@ export function StaffSidebar() {
         onConfirm={handleConfirm}
         isLoading={isLoading}
       />
-    </Sidebar>
+    </>
   );
-}
+};

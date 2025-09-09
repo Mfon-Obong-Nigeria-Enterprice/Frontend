@@ -20,7 +20,6 @@ interface createUserResponse {
   updatedAt: string;
   __v: number;
 }
-// API Response interfaces
 interface UpdateUserResponse {
   _id: string;
   name?: string;
@@ -117,9 +116,6 @@ export const getUserById = async (id: string): Promise<UserProfile | null> => {
 
   try {
     const response = await api.get(`/users/${id}`);
-    if (process.env.NODE_ENV === "development") {
-      console.log("user by id:", response.data);
-    }
     return response.data;
   } catch (error) {
     if (isAxiosError(error)) {
@@ -203,8 +199,6 @@ export const updateUserPassword = async (
         },
       }
     );
-
-    console.log("Password update response:", response.data);
     return response.data;
   } catch (error) {
     if (isAxiosError(error)) {
@@ -250,8 +244,6 @@ export const updateProfilePicture = async (
     const formData = new FormData();
     formData.append("file", imageFile); // Use "file" since it's the working field name
 
-    console.log("Uploading profile picture with field name: file");
-
     const response = await api.patch(
       `/users/${userId}/profile-picture`,
       formData,
@@ -290,85 +282,3 @@ export const updateProfilePicture = async (
     throw new Error(errorMessage);
   }
 };
-
-// Alternative: Keep the fallback mechanism but prioritize "file"
-// export const updateProfilePictureWithFallback = async (
-//   userId: string,
-//   imageFile: File
-// ): Promise<string> => {
-//   try {
-//     // Try "file" first since we know it works
-//     const fieldNames = [
-//       "file", // This is the one that works
-//       "image", // Keep as fallback
-//       "profilePicture",
-//       "profile_picture",
-//       "photo",
-//     ];
-
-//     for (const fieldName of fieldNames) {
-//       try {
-//         const formData = new FormData();
-//         formData.append(fieldName, imageFile);
-
-//         console.log(`Attempting upload with field name: ${fieldName}`);
-
-//         const response = await api.patch(
-//           `/users/${userId}/profile-picture/`,
-//           formData,
-//           {
-//             headers: {
-//               "Content-Type": "multipart/form-data",
-//             },
-//           }
-//         );
-
-//         const data: ProfilePictureResponse = response.data;
-//         const imageUrl = data.profilePicture || data.image || data.url;
-
-//         if (imageUrl) {
-//           console.log(`Upload successful with field: ${fieldName}`);
-//           return imageUrl;
-//         }
-
-//         throw new Error("No image URL in response");
-//       } catch (error: unknown) {
-//         if (isAxiosError(error)) {
-//           console.error(
-//             `Failed with field name ${fieldName}:`,
-//             error.response?.status || error.message
-//           );
-//         }
-
-//         // If it's the last field name and still failing, throw the error
-//         if (fieldName === fieldNames[fieldNames.length - 1]) {
-//           throw error;
-//         }
-
-//         // Continue to next field name if it's a 400/403 error
-//         // continue;
-//       }
-//     }
-
-//     throw new Error(
-//       "All field name attempts failed for profile picture upload"
-//     );
-//   } catch (error: unknown) {
-//     console.error("Failed to upload profile picture:", error);
-
-//     let errorMessage = "Failed to upload profile picture";
-//     if (typeof error === "object" && error !== null) {
-//       const err = error as {
-//         response?: { data?: { message?: string; error?: string } };
-//         message?: string;
-//       };
-//       errorMessage =
-//         err.response?.data?.message ||
-//         err.response?.data?.error ||
-//         err.message ||
-//         errorMessage;
-//     }
-
-//     throw new Error(errorMessage);
-//   }
-// };

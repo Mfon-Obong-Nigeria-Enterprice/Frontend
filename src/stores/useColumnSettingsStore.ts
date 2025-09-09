@@ -43,6 +43,10 @@ export const useColumnSettingsStore = create<ColumnSettingsState>()(
       visibleColumns: DEFAULT_VISIBLE_COLUMNS,
       hiddenColumns: DEFAULT_HIDDEN_COLUMNS,
       columnOrder: INITIAL_COLUMNS,
+      // Getters to avoid unnecessary re-renders
+      getVisibleColumns: () => get().visibleColumns,
+      getHiddenColumns: () => get().hiddenColumns,
+      getColumnOrder: () => get().columnOrder,
 
       setVisibleColumns: (columns) => set({ visibleColumns: columns }),
 

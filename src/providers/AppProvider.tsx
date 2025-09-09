@@ -105,17 +105,6 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
     // enabled: user?.role !== "STAFF" && user?.role === "ADMIN",
   });
 
-  // Sync immediately when data is successfully fetched
-  // useEffect(() => {
-  //   console.log("Auth state:", {
-  //     user: user?.role,
-  //     isAuthLoading,
-  //     shouldFetchUsers: !isAuthLoading && !!user && isAdminOrSuperAdmin,
-  //     usersQueryEnabled: usersQuery.fetchStatus,
-  //     usersQueryData: usersQuery.data,
-  //   });
-  // }, [user, isAuthLoading, usersQuery.data, usersQuery.fetchStatus]);
-
   // Sync data to stores when available
   useEffect(() => {
     if (categoriesQuery.data && categoriesQuery.isSuccess) {
@@ -153,12 +142,7 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   ]);
 
   useEffect(() => {
-    // console.log("Users query effect:", {
-    //   data: usersQuery.data,
-    //   isSuccess: usersQuery.isSuccess,
-    //   shouldSetUsers: isAdminOrSuperAdmin,
-    //   userRole: user?.role,
-    // });
+
 
     if (usersQuery.data && usersQuery.isSuccess && isAdminOrSuperAdmin) {
       if (

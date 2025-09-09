@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -47,175 +47,14 @@ const INITIAL_COLUMNS = [
 type ColumnType = (typeof INITIAL_COLUMNS)[number];
 type Source = "visible" | "hidden";
 
-export default function ColumnSettings() {
-  const users = useUserStore((s) => s.users);
-  const currentUser = useAuthStore((s) => s.user);
-  const activityLogs = useActivityLogsStore((s) => s.activities);
-  const navigate = useNavigate();
+// Memoized table cell renderer for preview
+type PreviewTableCellProps = {
+  user: any;
+  column: ColumnType;
+};
 
-  // Column settings store
-  const {
-    visibleColumns,
-    hiddenColumns,
-    // setVisibleColumns,
-    // setHiddenColumns,
-    hideColumn,
-    showColumn,
-    resetToDefault,
-    getVisibleColumnsInOrder,
-  } = useColumnSettingsStore();
-  const [openDiscardModal, setOpenDiscardModal] = useState(false);
-  const [dragging, setDragging] = useState<{
-    col: ColumnType;
-    from: Source;
-  } | null>(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
-  // Filter users according to current user's role
-  const filteredUsers = filterUsers(users, currentUser?.role || "");
-
-  // Create lookup maps for activities by both user ID and email for flexibility
-  const activityByIdMap = useMemo(() => {
-    return activityLogs.reduce((acc, log) => {
-      if (!acc[log.performedBy]) acc[log.performedBy] = [];
-      acc[log.performedBy].push(log);
-      return acc;
-    }, {} as Record<string, ActivityLogs[]>);
-  }, [activityLogs]);
-
-  const activityByEmailMap = useMemo(() => {
-    return activityLogs.reduce((acc, log) => {
-      if (log.performedBy.includes("@")) {
-        if (!acc[log.performedBy]) acc[log.performedBy] = [];
-        acc[log.performedBy].push(log);
-      }
-      return acc;
-    }, {} as Record<string, ActivityLogs[]>);
-  }, [activityLogs]);
-
-  // Merge filtered users with their activities and last LOGIN timestamp
-  const usersWithActivities = useMemo(() => {
-    return filteredUsers.map((user, index) => {
-      const logsByUserId = activityByIdMap[user._id] || [];
-      const logsByEmail = activityByEmailMap[user.email] || [];
-
-      const allLogs = [...logsByUserId, ...logsByEmail];
-      const uniqueLogs = allLogs.filter(
-        (log, index, array) =>
-          array.findIndex((l) => l._id === log._id) === index
-      );
-
-      const loginLogs = uniqueLogs
-        .filter((log) => log.action === "LOGIN")
-        .sort(
-          (a, b) =>
-            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        );
-
-      const lastLogin =
-        loginLogs.length > 0 ? new Date(loginLogs[0].timestamp) : null;
-
-      const sortedActivities = uniqueLogs.sort(
-        (a, b) =>
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      );
-
-      return {
-        ...user,
-        userId: `U-${(index + 1).toString().padStart(3, "0")}`,
-        activities: sortedActivities,
-        lastActivity: sortedActivities[0] || null,
-        lastLogin,
-        activityCount: uniqueLogs.length,
-      };
-    });
-  }, [filteredUsers, activityByIdMap, activityByEmailMap]);
-
-  const handleDragStart = (col: ColumnType, from: Source) => {
-    setDragging({ col, from });
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (to: Source) => {
-    if (!dragging) return;
-    const { col, from } = dragging;
-    if (to === from) return;
-
-    if (from === "visible" && to === "hidden") {
-      if (hiddenColumns.length >= 3) {
-        toast.warn("You can't hide more than 3 columns");
-        setDragging(null);
-        return;
-      }
-      try {
-        hideColumn(col);
-        setHasUnsavedChanges(true);
-      } catch (error) {
-        alert((error as Error).message);
-      }
-    }
-
-    if (from === "hidden" && to === "visible") {
-      showColumn(col);
-      setHasUnsavedChanges(true);
-    }
-
-    setDragging(null);
-  };
-
-  const handleCheckboxChange = (col: ColumnType, checked: boolean) => {
-    if (!checked) {
-      if (hiddenColumns.length >= 3) {
-        toast.warn("You can't hide more than 3 columns");
-        return;
-      }
-      try {
-        hideColumn(col);
-        setHasUnsavedChanges(true);
-      } catch (error) {
-        toast.error((error as Error).message);
-      }
-    } else {
-      showColumn(col);
-      setHasUnsavedChanges(true);
-    }
-  };
-
-  const handleRemoveFromHidden = (col: ColumnType) => {
-    showColumn(col);
-    setHasUnsavedChanges(true);
-  };
-
-  const handleResetToDefault = () => {
-    resetToDefault();
-    setHasUnsavedChanges(false);
-  };
-
-  const handleSaveChanges = () => {
-    // Changes are automatically saved due to Zustand persist
-    // This just resets the unsaved changes flag
-    setHasUnsavedChanges(false);
-    toast.success("Column settings saved successfully!");
-  };
-
-  const handleCancel = () => {
-    if (hasUnsavedChanges) {
-      setOpenDiscardModal(true); // open modal instead of confirm()
-    } else {
-      navigate(-1);
-    }
-  };
-
-  const confirmDiscard = () => {
-    window.location.reload(); // Restore persisted state
-  };
-
-  const closeModal = () => setOpenDiscardModal(false);
-
-  const renderTableCell = (user: any, column: string) => {
+const PreviewTableCell = ({ user, column }: PreviewTableCellProps) => {
+  const cellContent = useMemo(() => {
     switch (column) {
       case "User ID":
         return user.userId;
@@ -306,13 +145,268 @@ export default function ColumnSettings() {
       default:
         return "";
     }
-  };
+  }, [user, column]);
 
-  // Get visible columns in the correct order
-  const orderedVisibleColumns = getVisibleColumnsInOrder();
+  return <TableCell className="px-4 py-3">{cellContent}</TableCell>;
+};
+
+// Memoized draggable column item
+const DraggableColumnItem = ({
+  col,
+  source,
+  onDragStart,
+  onCheckboxChange,
+  onRemove,
+}: {
+  col: ColumnType;
+  source: Source;
+  onDragStart: (col: ColumnType, source: Source) => void;
+  onCheckboxChange: (col: ColumnType, checked: boolean) => void;
+  onRemove: (col: ColumnType) => void;
+}) => {
+  const handleDragStart = useCallback(() => {
+    onDragStart(col, source);
+  }, [col, source, onDragStart]);
+
+  const handleCheckboxChange = useCallback(
+    (checked: boolean) => {
+      onCheckboxChange(col, checked);
+    },
+    [col, onCheckboxChange]
+  );
+
+  const handleRemove = useCallback(() => {
+    onRemove(col);
+  }, [col, onRemove]);
+
+  if (source === "visible") {
+    return (
+      <div
+        draggable
+        onDragStart={handleDragStart}
+        className="flex items-center gap-3 p-3 rounded hover:bg-gray-50 cursor-grab border border-transparent hover:border-gray-200 transition-colors"
+      >
+        <Checkbox
+          checked={true}
+          onCheckedChange={handleCheckboxChange}
+          className="border border-gray-400 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+        />
+        <span className="text-sm font-light text-[#444444]">{col}</span>
+      </div>
+    );
+  }
 
   return (
-    <div className=" p-2 md:p-6 space-y-3 bg-gray-50 ">
+    <div
+      draggable
+      onDragStart={handleDragStart}
+      className="flex items-center gap-2 px-3 py-1 bg-red-100 text-red-800 rounded-md cursor-grab border border-red-200 hover:bg-red-200 transition-colors"
+    >
+      <span className="text-sm">{col}</span>
+      <button
+        onClick={handleRemove}
+        className="text-red-600 hover:text-red-800"
+      >
+        ×
+      </button>
+    </div>
+  );
+};
+
+export default function ColumnSettings() {
+  const users = useUserStore((s) => s.users);
+  const currentUser = useAuthStore((s) => s.user);
+  const activityLogs = useActivityLogsStore((s) => s.activities);
+  const navigate = useNavigate();
+
+  // Column settings store
+  const {
+    visibleColumns,
+    hiddenColumns,
+    hideColumn,
+    showColumn,
+    resetToDefault,
+    getVisibleColumnsInOrder,
+  } = useColumnSettingsStore();
+
+  const [openDiscardModal, setOpenDiscardModal] = useState(false);
+  const [dragging, setDragging] = useState<{
+    col: ColumnType;
+    from: Source;
+  } | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Filter users according to current user's role - memoized
+  const filteredUsers = useMemo(
+    () => filterUsers(users, currentUser?.role || ""),
+    [users, currentUser?.role]
+  );
+
+  // Create lookup maps for activities - optimized
+  const { activityByIdMap, activityByEmailMap } = useMemo(() => {
+    const byIdMap: Record<string, ActivityLogs[]> = {};
+    const byEmailMap: Record<string, ActivityLogs[]> = {};
+
+    activityLogs.forEach((log) => {
+      if (!byIdMap[log.performedBy]) byIdMap[log.performedBy] = [];
+      byIdMap[log.performedBy].push(log);
+
+      if (log.performedBy.includes("@")) {
+        if (!byEmailMap[log.performedBy]) byEmailMap[log.performedBy] = [];
+        byEmailMap[log.performedBy].push(log);
+      }
+    });
+
+    return { activityByIdMap: byIdMap, activityByEmailMap: byEmailMap };
+  }, [activityLogs]);
+
+  // Merge filtered users with their activities - optimized
+  const usersWithActivities = useMemo(() => {
+    return filteredUsers.map((user, index) => {
+      const logsByUserId = activityByIdMap[user._id] || [];
+      const logsByEmail = activityByEmailMap[user.email] || [];
+
+      // Use Map for deduplication (more efficient)
+      const allLogsMap = new Map();
+      [...logsByUserId, ...logsByEmail].forEach((log) => {
+        allLogsMap.set(log._id, log);
+      });
+      const uniqueLogs = Array.from(allLogsMap.values());
+
+      const loginLogs = uniqueLogs
+        .filter((log) => log.action === "LOGIN")
+        .sort(
+          (a, b) =>
+            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+
+      const lastLogin =
+        loginLogs.length > 0 ? new Date(loginLogs[0].timestamp) : null;
+
+      const sortedActivities = uniqueLogs.sort(
+        (a, b) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+
+      return {
+        ...user,
+        userId: `U-${(index + 1).toString().padStart(3, "0")}`,
+        activities: sortedActivities,
+        lastActivity: sortedActivities[0] || null,
+        lastLogin,
+        activityCount: uniqueLogs.length,
+      };
+    });
+  }, [filteredUsers, activityByIdMap, activityByEmailMap]);
+
+  // Event handlers with useCallback for performance
+  const handleDragStart = useCallback((col: ColumnType, from: Source) => {
+    setDragging({ col, from });
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+  }, []);
+
+  const handleDrop = useCallback(
+    (to: Source) => {
+      if (!dragging) return;
+      const { col, from } = dragging;
+      if (to === from) return;
+
+      if (from === "visible" && to === "hidden") {
+        if (hiddenColumns.length >= 3) {
+          toast.warn("You can't hide more than 3 columns");
+          setDragging(null);
+          return;
+        }
+        try {
+          hideColumn(col);
+          setHasUnsavedChanges(true);
+        } catch (error) {
+          toast.error((error as Error).message);
+        }
+      }
+
+      if (from === "hidden" && to === "visible") {
+        showColumn(col);
+        setHasUnsavedChanges(true);
+      }
+
+      setDragging(null);
+    },
+    [dragging, hiddenColumns.length, hideColumn, showColumn]
+  );
+
+  const handleCheckboxChange = useCallback(
+    (col: ColumnType, checked: boolean) => {
+      if (!checked) {
+        if (hiddenColumns.length >= 3) {
+          toast.warn("You can't hide more than 3 columns");
+          return;
+        }
+        try {
+          hideColumn(col);
+          setHasUnsavedChanges(true);
+        } catch (error) {
+          toast.error((error as Error).message);
+        }
+      } else {
+        showColumn(col);
+        setHasUnsavedChanges(true);
+      }
+    },
+    [hiddenColumns.length, hideColumn, showColumn]
+  );
+
+  const handleRemoveFromHidden = useCallback(
+    (col: ColumnType) => {
+      showColumn(col);
+      setHasUnsavedChanges(true);
+    },
+    [showColumn]
+  );
+
+  const handleResetToDefault = useCallback(() => {
+    resetToDefault();
+    setHasUnsavedChanges(false);
+  }, [resetToDefault]);
+
+  const handleSaveChanges = useCallback(() => {
+    setHasUnsavedChanges(false);
+    toast.success("Column settings saved successfully!");
+  }, []);
+
+  const handleCancel = useCallback(() => {
+    if (hasUnsavedChanges) {
+      setOpenDiscardModal(true);
+    } else {
+      navigate(-1);
+    }
+  }, [hasUnsavedChanges, navigate]);
+
+  const confirmDiscard = useCallback(() => {
+    window.location.reload();
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setOpenDiscardModal(false);
+  }, []);
+
+  // Get ordered visible columns - memoized
+  const orderedVisibleColumns = useMemo(
+    () => getVisibleColumnsInOrder(),
+    [getVisibleColumnsInOrder]
+  );
+
+  // Preview data - only show first 4 users for performance
+  const previewData = useMemo(
+    () => usersWithActivities.slice(0, 4),
+    [usersWithActivities]
+  );
+
+  return (
+    <div className="p-2 md:p-6 space-y-3 bg-gray-50">
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg md:text-2xl font-semibold">Columns Settings</h2>
@@ -351,11 +445,11 @@ export default function ColumnSettings() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* LEFT: Visible Columns */}
         <Card className="py-5">
-          <div className="flex flex-col gap-2 border-b-2 border-gray-200 px-4 ">
+          <div className="flex flex-col gap-2 border-b-2 border-gray-200 px-4">
             <h3 className="font-semibold text-[#333333] text-[18px]">
               Choose Which Columns to show
             </h3>
-            <p className="text-sm text-gray-500 pb-2 ">
+            <p className="text-sm text-gray-500 pb-2">
               Drag to reorder • Uncheck to hide • Adjust width
             </p>
           </div>
@@ -366,30 +460,22 @@ export default function ColumnSettings() {
             onDrop={() => handleDrop("visible")}
           >
             {visibleColumns.map((col) => (
-              <div
+              <DraggableColumnItem
                 key={col}
-                draggable
-                onDragStart={() => handleDragStart(col, "visible")}
-                className="flex items-center gap-3 p-3 rounded hover:bg-gray-50 cursor-grab border border-transparent hover:border-gray-200 transition-colors"
-              >
-                <Checkbox
-                  checked={true}
-                  onCheckedChange={(checked) =>
-                    handleCheckboxChange(col, checked as boolean)
-                  }
-                  className="border border-gray-400 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-                />
-
-                <span className="text-sm font-light text-[#444444]">{col}</span>
-              </div>
+                col={col}
+                source="visible"
+                onDragStart={handleDragStart}
+                onCheckboxChange={handleCheckboxChange}
+                onRemove={handleRemoveFromHidden}
+              />
             ))}
           </div>
         </Card>
 
         {/* RIGHT: Hidden Columns */}
         <Card className="py-4">
-          <div className="flex flex-col gap-2 border-b-2 border-gray-200 px-4 ">
-            <h3 className="font-semibold text-[#333333] text-[18px] ">
+          <div className="flex flex-col gap-2 border-b-2 border-gray-200 px-4">
+            <h3 className="font-semibold text-[#333333] text-[18px]">
               Hidden Columns
             </h3>
             <p className="text-sm text-gray-500 pb-2">
@@ -408,7 +494,7 @@ export default function ColumnSettings() {
             onDrop={() => handleDrop("hidden")}
           >
             {hiddenColumns.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-gray-400 text-sm ">
+              <div className="flex items-center justify-center h-full text-gray-400 text-sm">
                 Drop Columns here to hide them
                 <br />
                 or uncheck them from visible columns
@@ -416,20 +502,14 @@ export default function ColumnSettings() {
             ) : (
               <div className="flex flex-wrap gap-2">
                 {hiddenColumns.map((col) => (
-                  <div
+                  <DraggableColumnItem
                     key={col}
-                    draggable
-                    onDragStart={() => handleDragStart(col, "hidden")}
-                    className="flex items-center gap-2 px-3 py-1 bg-red-100 text-red-800 rounded-md cursor-grab border border-red-200 hover:bg-red-200 transition-colors"
-                  >
-                    <span className="text-sm">{col}</span>
-                    <button
-                      onClick={() => handleRemoveFromHidden(col)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      ×
-                    </button>
-                  </div>
+                    col={col}
+                    source="hidden"
+                    onDragStart={handleDragStart}
+                    onCheckboxChange={handleCheckboxChange}
+                    onRemove={handleRemoveFromHidden}
+                  />
                 ))}
               </div>
             )}
@@ -460,7 +540,8 @@ export default function ColumnSettings() {
       <Card className="p-5">
         <h3 className="font-semibold mb-2">Table Preview</h3>
         <p className="text-sm text-gray-500 mb-4">
-          Preview how your table will look with current settings
+          Preview how your table will look with current settings (showing first
+          4 users)
         </p>
 
         <div className="mt-5">
@@ -479,12 +560,14 @@ export default function ColumnSettings() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {usersWithActivities.slice(0, 4).map((user) => (
+              {previewData.map((user) => (
                 <TableRow key={user._id} className="border-t hover:bg-gray-50">
                   {orderedVisibleColumns.map((col) => (
-                    <TableCell key={col} className="px-4 py-3">
-                      {renderTableCell(user, col)}
-                    </TableCell>
+                    <PreviewTableCell
+                      key={`${user._id}-${col}`}
+                      user={user}
+                      column={col}
+                    />
                   ))}
                   <TableCell className="px-4 py-3">
                     <button className="p-1 rounded hover:bg-gray-200">
@@ -513,6 +596,7 @@ export default function ColumnSettings() {
           Save Changes
         </Button>
       </div>
+
       {/* Modal for discard confirmation */}
       <Dialog open={openDiscardModal} onOpenChange={setOpenDiscardModal}>
         <DialogContent className="sm:max-w-md">

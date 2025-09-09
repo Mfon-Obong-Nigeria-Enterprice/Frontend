@@ -2,11 +2,11 @@ import Header from "@/features/dashboard/shared/header/Header";
 import { Outlet, useLocation } from "react-router-dom";
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import MaintainerSidebar from "@/features/sidebar/MaintainerSidebar";
 import { AppProvider } from "@/providers/AppProvider";
 import { useModalStore } from "@/stores/useModalStore";
 import DeleteUserModal from "@/features/dashboard/shared/usermanagement/modals/deleteusermodal";
 import UserStatusModal from "@/features/dashboard/shared/usermanagement/modals/userstatusmodal";
+import MaintainerSidebarWithModal from "@/features/sidebar/MaintainerSidebar";
 
 const MaintainerLayout = () => {
   const pathname = useLocation();
@@ -14,7 +14,7 @@ const MaintainerLayout = () => {
 
   return (
     <SidebarProvider>
-      <MaintainerSidebar />
+      <MaintainerSidebarWithModal />
       <div className="w-full">
         <Header userRole="maintainer" />
         <SidebarTrigger className="fixed z-50" />

@@ -170,17 +170,6 @@ export interface UserProfile {
   profilePicture?: string;
 }
 
-export interface UserProfile {
-  _id: string;
-  name: string;
-  email: string;
-  role: Role;
-  branch: string;
-  branchId: string;
-  createdAt: string;
-  profilePicture?: string;
-}
-
 export interface LoginResponse {
   status: number;
   message: string;
