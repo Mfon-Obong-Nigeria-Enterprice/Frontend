@@ -1,4 +1,4 @@
-/** @format */
+import { useNavigate } from "react-router-dom";
 
 //components
 import DashboardTitle from "../shared/DashboardTitle";
@@ -7,7 +7,6 @@ import SalesTableData from "./components/AdminSales/SalesTableData";
 import Stats from "../shared/Stats";
 
 // libs
-// import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -40,6 +39,7 @@ import { formatChangeText, getChangeText } from "@/utils/helpersfunction";
 import SalesByCategoryChart from "../shared/CategoryTransactionChart";
 
 const DashboardSales = () => {
+  const navigate = useNavigate();
   const {
     transactions,
     getTodaysSales,
@@ -217,15 +217,16 @@ const DashboardSales = () => {
         description="Process orders & manage customer purchases"
       />
       <section className="p-2">
-        <div className="flex gap-[24px] items-end justify-end ">
-          <Button
-            variant="secondary"
-            onClick={handleExportExcel}
-            className="bg-white border border-[#7d7d7d]"
-          >
+        <div className="flex gap-[24px] items-end justify-end mb-5">
+          <Button variant="tertiary" onClick={handleExportExcel}>
             Download Excel
           </Button>
-          <Button onClick={handleExportPDF}>Export PDF</Button>
+          <Button variant="tertiary" onClick={handleExportPDF}>
+            Export PDF
+          </Button>
+          <Button onClick={() => navigate("/admin/dashboard/sale")}>
+            Add Sales
+          </Button>
         </div>
         <Stats data={stats} />
 

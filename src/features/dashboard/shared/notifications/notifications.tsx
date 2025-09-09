@@ -52,7 +52,9 @@ const Notifications = () => {
     <div>
       <DashboardTitle
         heading={
-          user?.role === "MAINTAINER" ? "Maintainer Notification" : "Notifi"
+          user?.role === "MAINTAINER"
+            ? "Maintainer Notification"
+            : "Notification"
         }
         description="Stay updated with your business activities"
       />
