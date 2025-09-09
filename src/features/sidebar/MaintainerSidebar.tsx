@@ -60,23 +60,12 @@ const items = [
     icon: Settings,
   },
 ];
+type MaintainerSidebarProps = {
+  onLogoutClick: () => void;
+};
 
-const MaintainerSidebar = () => {
+const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
   const { pathname } = useLocation();
-  const [showModal, setShowModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const logoutMutation = useLogout();
-
-  const handleConfirm = async () => {
-    setIsLoading(true);
-
-    // wait for 1 second before logout
-    setTimeout(() => {
-      logoutMutation.mutate(); // trigger logout
-      setIsLoading(false);
-      setShowModal(false);
-    }, 1000);
-  };
 
   return (
     <Sidebar>
@@ -115,13 +104,39 @@ const MaintainerSidebar = () => {
       <SidebarFooter>
         <SidebarMenuButton
           className="cursor-pointer"
-          onClick={() => setShowModal(true)}
+          onClick={() => onLogoutClick()}
         >
           <LogOut />
           <span>Logout</span>
         </SidebarMenuButton>
       </SidebarFooter>
+    </Sidebar>
+  );
+};
 
+const MaintainerSidebarWithModal = () => {
+  const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const logoutMutation = useLogout();
+
+  const handleLogoutClick = () => {
+    setShowModal(true);
+  };
+
+  const handleConfirm = async () => {
+    setIsLoading(true);
+
+    // wait for 1 second before logout
+    setTimeout(() => {
+      logoutMutation.mutate(); // trigger logout
+      setIsLoading(false);
+      setShowModal(false);
+    }, 500);
+  };
+
+  return (
+    <>
+      <MaintainerSidebar onLogoutClick={handleLogoutClick} />
       {/* the logout modal */}
       <LogoutConfirmModal
         isOpen={showModal}
@@ -129,7 +144,7 @@ const MaintainerSidebar = () => {
         onConfirm={handleConfirm}
         isLoading={isLoading}
       />
-    </Sidebar>
+    </>
   );
 };
-export default MaintainerSidebar;
+export default MaintainerSidebarWithModal;

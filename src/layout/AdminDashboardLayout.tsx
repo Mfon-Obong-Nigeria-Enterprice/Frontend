@@ -1,14 +1,14 @@
 import Header from "@/features/dashboard/shared/header/Header";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AdminSidebar } from "@/features/sidebar/AdminSidebar";
+import { AdminSidebarWithModal } from "@/features/sidebar/AdminSidebar";
 import { AppProvider } from "@/providers/AppProvider";
 import { Toaster } from "sonner";
 
 const AdminDashboardLayout = () => {
   return (
     <SidebarProvider>
-      <AdminSidebar />
+      <AdminSidebarWithModal />
 
       <div className="w-full">
         <Header userRole="admin" />
