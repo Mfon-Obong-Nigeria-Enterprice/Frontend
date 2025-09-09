@@ -17,7 +17,11 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
   const lifetimeValue = useMemo(() => {
     if (!client.transactions || client.transactions.length === 0) return "₦0";
     const total = client.transactions.reduce((sum, txn) => {
-      if (txn.type === "PURCHASE" || txn.type === "DEPOSIT") {
+      if (
+        txn.type === "PURCHASE" ||
+        txn.type === "DEPOSIT" ||
+        txn.type === "PICKUP"
+      ) {
         return sum + Math.abs(txn.amount);
       }
       return sum;
@@ -33,7 +37,7 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
   }, [client.balance]);
 
   return (
-    <section className=" bg-white py-8 px-5 rounded">
+    <section className=" bg-white py-8 px-5 rounded sticky top-20 h-fit">
       {client && (
         <div>
           <p className="text-lg text-[#333333] mb-6">

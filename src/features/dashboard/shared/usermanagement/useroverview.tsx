@@ -5,7 +5,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 // components
 import UserTable from "./usertable";
 import CreateUserModal from "./modals/createusermodal";
-// import DeleteUserModal from "./modals/deleteusermodal";
+import EditUserModal from "./modals/EditUserModal";
 import Modal from "@/components/Modal";
 
 // ui components
@@ -37,10 +37,38 @@ import {
 } from "lucide-react";
 import { MdOutlineHome } from "react-icons/md";
 
+type UserDataProps = {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  role: string;
+  branchId?:
+    | {
+        _id: string;
+        name: string;
+      }
+    | string;
+};
+
 const UserOverview = () => {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedUserData, setSelectedUserData] =
+    useState<UserDataProps | null>(null);
+
+  const handleEditUser = (userData: UserDataProps) => {
+    setSelectedUserData(userData);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedUserData(null);
+  };
 
   return (
     <main className="">
@@ -74,10 +102,7 @@ const UserOverview = () => {
                 className="w-64 p-0 rounded-lg shadow-lg border border-[#F0F0F0] cursor-pointer"
               >
                 <>
-                  <button
-                    className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-t-lg font-medium"
-                    //   onClick={handleExportAllUsers}
-                  >
+                  <button className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-t-lg font-medium">
                     <span className="flex-1 text-left">
                       {">  "} Export All Users
                     </span>
@@ -87,7 +112,7 @@ const UserOverview = () => {
                     <>
                       <button
                         className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] font-medium"
-                        onClick={() => navigate("/manager/dashboard/log")}
+                        onClick={() => navigate("/manager/dashboard/user-log")}
                       >
                         <span className="flex-1 text-left">User Audit Log</span>
                         <ExternalLink className="size-4 text-muted-foreground" />
@@ -129,7 +154,7 @@ const UserOverview = () => {
             </Popover>
           </div>
           {user?.role === "MAINTAINER" && (
-            <Button onClick={() => setIsModalOpen(true)}>
+            <Button onClick={() => setIsCreateModalOpen(true)}>
               <Plus /> Create new User
             </Button>
           )}
@@ -254,16 +279,30 @@ const UserOverview = () => {
       </div>
 
       {/* user table */}
-      <UserTable />
+      <UserTable onEditUser={handleEditUser} />
 
-      {/* open create new user modal */}
-      {isModalOpen && (
+      {/* create new user modal */}
+      {isCreateModalOpen && (
         <Modal
           size="xxl"
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
         >
-          <CreateUserModal closeModal={() => setIsModalOpen(false)} />
+          <CreateUserModal closeModal={() => setIsCreateModalOpen(false)} />
+        </Modal>
+      )}
+
+      {/* edit user modal */}
+      {isEditModalOpen && selectedUserData && (
+        <Modal
+          size="xxl"
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+        >
+          <EditUserModal
+            closeModal={handleCloseEditModal}
+            userData={selectedUserData}
+          />
         </Modal>
       )}
     </main>
