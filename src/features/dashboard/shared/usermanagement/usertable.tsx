@@ -1,3 +1,5 @@
+// Fixed UserTable component with better error handling for column settings
+
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -5,7 +7,9 @@ import { useUserStore } from "@/stores/useUserStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
 import { useModalStore } from "@/stores/useModalStore";
-import { useColumnSettingsStore } from "@/stores/useColumnSettingsStore";
+// Replace Zustand store with React Query hook
+import { useColumnSettingsManager } from "@/hooks/useColumnSettings";
+import { INITIAL_COLUMNS } from "@/services/columnSettingsAPI";
 
 import {
   Table,
@@ -47,6 +51,7 @@ type TableCellRendererProps = {
   index: number;
   currentPage: number;
 };
+
 type User = {
   _id: string;
   name: string;
@@ -184,8 +189,9 @@ const UserTable = ({ onEditUser }: UserTableProps) => {
   const activityLogs = useActivityLogsStore((s) => s.activities);
   const { openDelete, openStatus } = useModalStore();
 
-  // Get column settings from store
-  const { getVisibleColumnsInOrder } = useColumnSettingsStore();
+  // Use React Query hook instead of Zustand store
+  const { getVisibleColumnsInOrder, isLoading: columnSettingsLoading } =
+    useColumnSettingsManager();
 
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
 
@@ -270,8 +276,68 @@ const UserTable = ({ onEditUser }: UserTableProps) => {
     return usersWithActivities.slice(startIndex, endIndex);
   }, [usersWithActivities, currentPage]);
 
-  // Get visible columns in order from store
-  const visibleColumns = getVisibleColumnsInOrder();
+  // Get visible columns in order from React Query with fallback
+  const visibleColumns = useMemo(() => {
+    try {
+      const columns = getVisibleColumnsInOrder();
+      // If no columns or empty array, use all columns as fallback
+      if (!columns || columns.length === 0) {
+        console.warn("No visible columns found, using default columns");
+        return [...INITIAL_COLUMNS];
+      }
+      return columns;
+    } catch (error) {
+      console.error("Error getting visible columns:", error);
+      // Fallback to all columns if there's an error
+      return [...INITIAL_COLUMNS];
+    }
+  }, [getVisibleColumnsInOrder]);
+
+  // Show loading state while column settings are loading
+  if (columnSettingsLoading) {
+    return (
+      <div className="mt-5 flex justify-center items-center py-8">
+        <div className="text-muted-foreground">Loading column settings...</div>
+      </div>
+    );
+  }
+
+  // Show message if no users found
+  if (usersWithActivities.length === 0) {
+    return (
+      <div className="mt-5">
+        <Table>
+          <TableHeader>
+            <TableRow className="w-full bg-[#F5F5F5]">
+              {visibleColumns.map((column) => (
+                <TableHead
+                  key={column}
+                  className="text-[#333] text-sm font-medium xl:font-semibold py-5 px-4 uppercase font-Inter"
+                >
+                  {column === "Roles"
+                    ? "ROLE"
+                    : column === "Permission"
+                    ? "PERMISSIONS"
+                    : column.toUpperCase()}
+                </TableHead>
+              ))}
+              <TableHead></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow>
+              <TableCell
+                colSpan={visibleColumns.length + 1}
+                className="text-center py-8 text-muted-foreground"
+              >
+                No users found
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-5">
@@ -295,137 +361,116 @@ const UserTable = ({ onEditUser }: UserTableProps) => {
         </TableHeader>
 
         <TableBody>
-          {currentUserList.length < 1 ? (
-            <TableRow>
-              <TableCell
-                colSpan={visibleColumns.length + 1}
-                className="text-center py-8 text-muted-foreground"
-              >
-                No users found
+          {currentUserList.map((user, index) => (
+            <TableRow
+              key={user._id}
+              className="relative px-5 font-Inter font-medium text-sm"
+            >
+              {visibleColumns.map((column) => (
+                <RenderTableCell
+                  key={`${user._id}-${column}`}
+                  user={user}
+                  column={column}
+                  index={index}
+                  currentPage={currentPage}
+                />
+              ))}
+
+              <TableCell>
+                <Popover
+                  open={popoverOpen === user._id}
+                  onOpenChange={(open) =>
+                    setPopoverOpen(open ? user._id : null)
+                  }
+                >
+                  <PopoverTrigger asChild>
+                    <button
+                      className="ml-2 p-1 rounded hover:bg-muted border border-[#E0E0E0]"
+                      aria-label="User actions"
+                    >
+                      <MoreVertical className="size-5 text-muted-foreground" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="end"
+                    className="w-64 p-0 rounded-lg shadow-lg border border-[#F0F0F0]"
+                  >
+                    <button
+                      className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
+                      onClick={() => {
+                        // Find the complete user data with activities
+                        const userWithActivities = usersWithActivities.find(
+                          (u) => u._id === user._id
+                        );
+
+                        const url =
+                          currentUser?.role === "MAINTAINER"
+                            ? "maintainer"
+                            : "manager";
+
+                        navigate(
+                          `/${url}/dashboard/user-management/${user._id}`,
+                          {
+                            state: {
+                              userData: userWithActivities,
+                              activities: userWithActivities?.activities || [],
+                              lastLogin: userWithActivities?.lastLogin,
+                              activityCount: userWithActivities?.activityCount,
+                            },
+                          }
+                        );
+                      }}
+                    >
+                      <span className="flex-1 text-left">View User Data</span>
+                      <ExternalLink className="size-4 text-muted-foreground" />
+                    </button>
+                    <button
+                      className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
+                      onClick={() => {
+                        onEditUser(user);
+                        setPopoverOpen(null);
+                      }}
+                    >
+                      <span className="flex-1 text-left">Edit User</span>
+                      <ExternalLink className="size-4 text-muted-foreground" />
+                    </button>
+
+                    {user.isBlocked ? (
+                      <button
+                        className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
+                        onClick={() => {
+                          openStatus(user._id, user.name, "enable");
+                          setPopoverOpen(null);
+                        }}
+                      >
+                        <span className="flex-1 text-left">Enable User</span>
+                      </button>
+                    ) : (
+                      <button
+                        className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
+                        onClick={() => {
+                          openStatus(user._id, user.name, "suspend");
+                          setPopoverOpen(null);
+                        }}
+                      >
+                        <span className="flex-1 text-left">Suspend User</span>
+                      </button>
+                    )}
+
+                    <button
+                      className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium text-red-600"
+                      onClick={() => {
+                        openDelete(user._id, user.name);
+                        setPopoverOpen(null);
+                      }}
+                    >
+                      <span className="flex-1 text-left">Delete User</span>
+                    </button>
+                  </PopoverContent>
+                </Popover>
               </TableCell>
             </TableRow>
-          ) : (
-            currentUserList.map((user, index) => (
-              <TableRow
-                key={user._id}
-                className="relative px-5 font-Inter font-medium text-sm"
-              >
-                {visibleColumns.map((column) => (
-                  <RenderTableCell
-                    key={`${user._id}-${column}`}
-                    user={user}
-                    column={column}
-                    index={index}
-                    currentPage={currentPage}
-                  />
-                ))}
-
-                <TableCell>
-                  <Popover
-                    open={popoverOpen === user._id}
-                    onOpenChange={(open) =>
-                      setPopoverOpen(open ? user._id : null)
-                    }
-                  >
-                    <PopoverTrigger asChild>
-                      <button
-                        className="ml-2 p-1 rounded hover:bg-muted border border-[#E0E0E0]"
-                        aria-label="User actions"
-                      >
-                        <MoreVertical className="size-5 text-muted-foreground" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      align="end"
-                      className="w-64 p-0 rounded-lg shadow-lg border border-[#F0F0F0]"
-                    >
-                      <>
-                        <button
-                          className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
-                          onClick={() => {
-                            // Find the complete user data with activities
-                            const userWithActivities = usersWithActivities.find(
-                              (u) => u._id === user._id
-                            );
-
-                            const url =
-                              currentUser?.role === "MAINTAINER"
-                                ? "maintainer"
-                                : "manager";
-
-                            navigate(
-                              `/${url}/dashboard/user-management/${user._id}`,
-                              {
-                                state: {
-                                  userData: userWithActivities,
-                                  activities:
-                                    userWithActivities?.activities || [],
-                                  lastLogin: userWithActivities?.lastLogin,
-                                  activityCount:
-                                    userWithActivities?.activityCount,
-                                },
-                              }
-                            );
-                          }}
-                        >
-                          <span className="flex-1 text-left">
-                            View User Data
-                          </span>
-                          <ExternalLink className="size-4 text-muted-foreground" />
-                        </button>
-                        <button
-                          className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
-                          onClick={() => {
-                            onEditUser(user);
-                            setPopoverOpen(null);
-                          }}
-                        >
-                          <span className="flex-1 text-left">Edit User</span>
-                          <ExternalLink className="size-4 text-muted-foreground" />
-                        </button>
-
-                        {user.isBlocked ? (
-                          <button
-                            className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
-                            onClick={() => {
-                              openStatus(user._id, user.name, "enable");
-                              setPopoverOpen(null);
-                            }}
-                          >
-                            <span className="flex-1 text-left">
-                              Enable User
-                            </span>
-                          </button>
-                        ) : (
-                          <button
-                            className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
-                            onClick={() => {
-                              openStatus(user._id, user.name, "suspend");
-                              setPopoverOpen(null);
-                            }}
-                          >
-                            <span className="flex-1 text-left">
-                              Suspend User
-                            </span>
-                          </button>
-                        )}
-
-                        <button
-                          className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium text-red-600"
-                          onClick={() => {
-                            openDelete(user._id, user.name);
-                            setPopoverOpen(null);
-                          }}
-                        >
-                          <span className="flex-1 text-left">Delete User</span>
-                        </button>
-                      </>
-                    </PopoverContent>
-                  </Popover>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
+          ))}
         </TableBody>
       </Table>
 
