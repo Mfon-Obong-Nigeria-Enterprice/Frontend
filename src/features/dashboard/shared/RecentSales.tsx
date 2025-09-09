@@ -37,7 +37,7 @@ const RecentSales: React.FC = () => {
         <div className="flex flex-col items-center justify-center py-10 text-center text-gray-500">
           <p className="text-sm sm:text-base">No recent sales yet</p>
           <Button
-            onClick={() => navigate("/admin/dashboard/sales")}
+            onClick={() => navigate("/admin/dashboard/sale")}
             className="mt-4"
           >
             Record a Sale
@@ -90,7 +90,7 @@ const RecentSales: React.FC = () => {
       )}
 
       {/* Footer always visible */}
-      <div className="flex justify-between items-center bg-[#f0f0f3] mt-10 sm:mt-[13dvh]">
+      <div className="flex justify-between items-center bg-[#f0f0f3] mt-10 sm:mt-[35dvh]">
         <div>
           <Button
             onClick={() => navigate("/admin/dashboard/sales")}
