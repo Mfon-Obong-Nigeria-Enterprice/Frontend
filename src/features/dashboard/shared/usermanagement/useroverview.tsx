@@ -7,6 +7,7 @@ import { useUserStore } from "@/stores/useUserStore";
 // components
 import UserTable from "../usertable";
 import CreateUserModal from "./modals/createusermodal";
+import EditUserModal from "./modals/EditUserModal";
 import UserSearchList from "../UserSearchList"; 
 import Modal from "@/components/Modal";
 
@@ -39,13 +40,21 @@ type UserDataProps = {
         name: string;
       }
     | string;
+  isActive?: boolean;
+  isBlocked?: boolean;
+  createdAt?: string;
+  branch?: string;
+  location?: string;
+  profilePicture?: string;
 };
 
 const UserOverview = () => {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const { users } = useUserStore();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedUserData, setSelectedUserData] = useState<UserDataProps | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     role: "all",
@@ -141,6 +150,16 @@ const UserOverview = () => {
 
   const handleFilterChange = (filterName: string, value: string) => {
     setFilters(prev => ({ ...prev, [filterName]: value }));
+  };
+
+  const handleEditUser = (userData: UserDataProps) => {
+    setSelectedUserData(userData);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedUserData(null);
   };
 
   return (
@@ -244,9 +263,10 @@ const UserOverview = () => {
         locations={locations}
       />
 
-      {/* user table - pass filtered users */}
+      {/* user table - pass filtered users and edit handler */}
       <UserTable 
         users={filteredUsers}
+        onEditUser={handleEditUser}
       />
 
       {/* create new user modal */}
