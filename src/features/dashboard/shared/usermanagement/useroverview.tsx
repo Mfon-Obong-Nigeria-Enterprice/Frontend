@@ -5,7 +5,6 @@ import { useAuthStore } from "@/stores/useAuthStore";
 // components
 import UserTable from "./usertable";
 import CreateUserModal from "./modals/createusermodal";
-// import DeleteUserModal from "./modals/deleteusermodal";
 import Modal from "@/components/Modal";
 
 // ui components
@@ -74,10 +73,7 @@ const UserOverview = () => {
                 className="w-64 p-0 rounded-lg shadow-lg border border-[#F0F0F0] cursor-pointer"
               >
                 <>
-                  <button
-                    className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-t-lg font-medium"
-                    //   onClick={handleExportAllUsers}
-                  >
+                  <button className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-t-lg font-medium">
                     <span className="flex-1 text-left">
                       {">  "} Export All Users
                     </span>
@@ -87,7 +83,7 @@ const UserOverview = () => {
                     <>
                       <button
                         className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] font-medium"
-                        onClick={() => navigate("/manager/dashboard/log")}
+                        onClick={() => navigate("/manager/dashboard/user-log")}
                       >
                         <span className="flex-1 text-left">User Audit Log</span>
                         <ExternalLink className="size-4 text-muted-foreground" />

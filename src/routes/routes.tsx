@@ -1,13 +1,10 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import Login from "@/features/auth/Login";
 import Notfound from "@/components/Notfound";
-// import UserDetailsPage from "@/pages/UserDetailsPage";
 import UserDetailsPage from "@/features/dashboard/shared/usermanagement/userdetailpage";
 import AddProduct from "@/features/dashboard/shared/inventory/AddProduct";
 import ClientDetailsPage from "@/pages/ClientDetailsPage";
 import ImportStockPage from "@/features/import/ImportStockPage";
-// import RootInterceptorLayout from "@/layout/RootInterceptorLayout";
-// import ErrorFallback from "@/components/ErrorFallback";
 
 // manager (super admin)
 import ManagerDashboardLayout from "@/layout/ManagerDashboardLayout";
@@ -18,6 +15,7 @@ import ManagerClients from "@/features/dashboard/manager/ManagerClients";
 import RevenueAnalytics from "@/features/dashboard/manager/RevenueAnalytics";
 import UserManagement from "@/features/dashboard/manager/UserManagement";
 import ManagerSettings from "@/features/dashboard/manager/ManagerSettings";
+import UserLog from "@/features/dashboard/manager/component/UserLog";
 
 // maintainer
 import MaintainerLayout from "@/layout/MaintainerLayout";
@@ -65,7 +63,7 @@ const router = createBrowserRouter([
       { path: "manager-notifications", element: <ManagerNotifications /> },
       { path: "user-management/:id", element: <UserDetailsPage /> },
       { path: "user-management/col-settings", element: <ColumnSettings /> },
-      { path: "log", element: <ActivityLog /> },
+      { path: "user-log", element: <UserLog /> },
     ],
   },
   {
