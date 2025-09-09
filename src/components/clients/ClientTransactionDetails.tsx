@@ -32,15 +32,6 @@ export const ClientTransactionDetails: React.FC<
       const balanceBefore = runningBal - transactionImpact;
       runningBal = balanceBefore;
 
-      // console.log(`Transaction update ${index + 1}:`, {
-      //   type: txn.type,
-      //   amount: txn.total,
-      //   impact: transactionImpact,
-      //   balanceBefore,
-      //   balanceAfter,
-      //   date: new Date(txn.createdAt).toLocaleString(),
-      // });
-
       return {
         ...txn,
         balanceAfter,
@@ -91,12 +82,14 @@ export const ClientTransactionDetails: React.FC<
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
                     <div>
-                      <p className="text-[#2ECC71] font-normal font-Inter text-lg">
-                        ₦{txn.discount?.toLocaleString()} saved
-                      </p>
+                      {txn.discount && (
+                        <p className="text-[#2ECC71] font-normal font-Inter text-lg">
+                          ₦{txn.discount?.toLocaleString()} saved
+                        </p>
+                      )}
                     </div>
                     <div>
-                      {txn?.total ? (
+                      {txn?.total > 0 ? (
                         <p className="text-[#7D7D7D] text-sm font-Inter">
                           {(
                             ((txn?.discount ?? 0) / (txn?.subtotal ?? 0)) *
@@ -104,9 +97,7 @@ export const ClientTransactionDetails: React.FC<
                           ).toFixed(1)}
                           % discount
                         </p>
-                      ) : (
-                        "No discount"
-                      )}
+                      ) : null}
                     </div>
                   </div>
 

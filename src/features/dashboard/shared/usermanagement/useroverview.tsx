@@ -5,6 +5,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 // components
 import UserTable from "./usertable";
 import CreateUserModal from "./modals/createusermodal";
+import EditUserModal from "./modals/EditUserModal";
 import Modal from "@/components/Modal";
 
 // ui components
@@ -36,10 +37,38 @@ import {
 } from "lucide-react";
 import { MdOutlineHome } from "react-icons/md";
 
+type UserDataProps = {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  role: string;
+  branchId?:
+    | {
+        _id: string;
+        name: string;
+      }
+    | string;
+};
+
 const UserOverview = () => {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedUserData, setSelectedUserData] =
+    useState<UserDataProps | null>(null);
+
+  const handleEditUser = (userData: UserDataProps) => {
+    setSelectedUserData(userData);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedUserData(null);
+  };
 
   return (
     <main className="">
@@ -125,7 +154,7 @@ const UserOverview = () => {
             </Popover>
           </div>
           {user?.role === "MAINTAINER" && (
-            <Button onClick={() => setIsModalOpen(true)}>
+            <Button onClick={() => setIsCreateModalOpen(true)}>
               <Plus /> Create new User
             </Button>
           )}
@@ -250,16 +279,30 @@ const UserOverview = () => {
       </div>
 
       {/* user table */}
-      <UserTable />
+      <UserTable onEditUser={handleEditUser} />
 
-      {/* open create new user modal */}
-      {isModalOpen && (
+      {/* create new user modal */}
+      {isCreateModalOpen && (
         <Modal
           size="xxl"
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
         >
-          <CreateUserModal closeModal={() => setIsModalOpen(false)} />
+          <CreateUserModal closeModal={() => setIsCreateModalOpen(false)} />
+        </Modal>
+      )}
+
+      {/* edit user modal */}
+      {isEditModalOpen && selectedUserData && (
+        <Modal
+          size="xxl"
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+        >
+          <EditUserModal
+            closeModal={handleCloseEditModal}
+            userData={selectedUserData}
+          />
         </Modal>
       )}
     </main>

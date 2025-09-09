@@ -76,28 +76,18 @@ const items = [
   },
 ];
 
-const ManagerSidebar = () => {
+interface ManagerSidebarProps {
+  onLogoutClick: () => void;
+}
+
+const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
   const { pathname } = useLocation();
-  const [showModal, setShowModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const logoutMutation = useLogout();
-
-  const handleConfirm = async () => {
-    setIsLoading(true);
-
-    // wait for 1 second before logout
-    setTimeout(() => {
-      logoutMutation.mutate(); // trigger logout
-      setIsLoading(false);
-      setShowModal(false);
-    }, 1000);
-  };
 
   return (
     <Sidebar>
       <SidebarHeader />
       <Logo />
-      <SidebarContent className="pt-8">
+      <SidebarContent className="pt-8 z-100">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -130,21 +120,49 @@ const ManagerSidebar = () => {
       <SidebarFooter>
         <SidebarMenuButton
           className="cursor-pointer"
-          onClick={() => setShowModal(true)}
+          onClick={() => onLogoutClick()}
         >
           <LogOut />
           <span>Logout</span>
         </SidebarMenuButton>
       </SidebarFooter>
+    </Sidebar>
+  );
+};
 
-      {/* the logout modal */}
+// Wrapper component that handles the modal
+const ManagerSidebarWithModal = () => {
+  const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const logoutMutation = useLogout();
+
+  const handleLogoutClick = () => {
+    setShowModal(true);
+  };
+
+  const handleConfirm = async () => {
+    setIsLoading(true);
+    // simulate a delay for better UX
+    setTimeout(() => {
+      logoutMutation.mutate(); // trigger logout
+      setIsLoading(false);
+      setShowModal(false);
+    }, 500);
+  };
+
+  return (
+    <>
+      <ManagerSidebar onLogoutClick={handleLogoutClick} />
+
+      {/* Modal rendered outside of sidebar - won't disappear when sidebar closes */}
       <LogoutConfirmModal
         isOpen={showModal}
         onClose={() => !isLoading && setShowModal(false)}
         onConfirm={handleConfirm}
         isLoading={isLoading}
       />
-    </Sidebar>
+    </>
   );
 };
-export default ManagerSidebar;
+
+export default ManagerSidebarWithModal;

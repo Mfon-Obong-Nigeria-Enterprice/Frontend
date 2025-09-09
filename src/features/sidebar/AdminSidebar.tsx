@@ -56,22 +56,11 @@ const items = [
   },
 ];
 
-export function AdminSidebar() {
+type AdminSidebarProps = {
+  onLogoutClick: () => void;
+};
+function AdminSidebar({ onLogoutClick }: AdminSidebarProps) {
   const { pathname } = useLocation();
-  const [showModal, setShowModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const logoutMutation = useLogout();
-
-  const handleConfirm = async () => {
-    setIsLoading(true);
-
-    // wait for 1 second before logout
-    setTimeout(() => {
-      logoutMutation.mutate(); // trigger logout
-      setIsLoading(false);
-      setShowModal(false);
-    }, 1000);
-  };
 
   return (
     <Sidebar>
@@ -107,15 +96,38 @@ export function AdminSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenuButton
-          className="cursor-pointer"
-          onClick={() => setShowModal(true)}
-        >
+        <SidebarMenuButton className="cursor-pointer" onClick={onLogoutClick}>
           <IoIosLogOut />
           <span>Logout</span>
         </SidebarMenuButton>
       </SidebarFooter>
+    </Sidebar>
+  );
+}
 
+export const AdminSidebarWithModal = () => {
+  const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const logoutMutation = useLogout();
+
+  const handleLogoutClick = () => {
+    setShowModal(true);
+  };
+
+  const handleConfirm = async () => {
+    setIsLoading(true);
+
+    // wait for 1 second before logout
+    setTimeout(() => {
+      logoutMutation.mutate(); // trigger logout
+      setIsLoading(false);
+      setShowModal(false);
+    }, 500);
+  };
+
+  return (
+    <>
+      <AdminSidebar onLogoutClick={handleLogoutClick} />
       {/* the logout modal */}
       <LogoutConfirmModal
         isOpen={showModal}
@@ -123,6 +135,6 @@ export function AdminSidebar() {
         onConfirm={handleConfirm}
         isLoading={isLoading}
       />
-    </Sidebar>
+    </>
   );
-}
+};
