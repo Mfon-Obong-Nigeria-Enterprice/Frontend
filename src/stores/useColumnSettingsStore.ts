@@ -1,3 +1,5 @@
+// @/stores/useColumnSettingsStore.ts
+// This store is now optional and serves as a fallback when API is unavailable
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -10,9 +12,9 @@ const INITIAL_COLUMNS = [
   "Last Login",
   "Location",
   "Created",
-];
+] as const;
 
-type ColumnType = (typeof INITIAL_COLUMNS)[number];
+export type ColumnType = (typeof INITIAL_COLUMNS)[number];
 
 interface ColumnSettingsState {
   visibleColumns: ColumnType[];
@@ -27,14 +29,18 @@ interface ColumnSettingsState {
   showColumn: (column: ColumnType) => void;
   reorderColumns: (columns: ColumnType[]) => void;
   resetToDefault: () => void;
+  updateFromAPI: (settings: {
+    visibleColumns: ColumnType[];
+    hiddenColumns: ColumnType[];
+    columnOrder: ColumnType[];
+  }) => void;
 
   // Getters
   isColumnVisible: (column: ColumnType) => boolean;
   getVisibleColumnsInOrder: () => ColumnType[];
 }
 
-const DEFAULT_VISIBLE_COLUMNS = INITIAL_COLUMNS; // All columns visible by default
-
+const DEFAULT_VISIBLE_COLUMNS = [...INITIAL_COLUMNS]; // All columns visible by default
 const DEFAULT_HIDDEN_COLUMNS: ColumnType[] = []; // No columns hidden by default
 
 export const useColumnSettingsStore = create<ColumnSettingsState>()(
@@ -42,11 +48,7 @@ export const useColumnSettingsStore = create<ColumnSettingsState>()(
     (set, get) => ({
       visibleColumns: DEFAULT_VISIBLE_COLUMNS,
       hiddenColumns: DEFAULT_HIDDEN_COLUMNS,
-      columnOrder: INITIAL_COLUMNS,
-      // Getters to avoid unnecessary re-renders
-      getVisibleColumns: () => get().visibleColumns,
-      getHiddenColumns: () => get().hiddenColumns,
-      getColumnOrder: () => get().columnOrder,
+      columnOrder: [...INITIAL_COLUMNS],
 
       setVisibleColumns: (columns) => set({ visibleColumns: columns }),
 
@@ -88,7 +90,16 @@ export const useColumnSettingsStore = create<ColumnSettingsState>()(
         set({
           visibleColumns: DEFAULT_VISIBLE_COLUMNS,
           hiddenColumns: DEFAULT_HIDDEN_COLUMNS,
-          columnOrder: INITIAL_COLUMNS,
+          columnOrder: [...INITIAL_COLUMNS],
+        });
+      },
+
+      // New method to update from API response
+      updateFromAPI: (settings) => {
+        set({
+          visibleColumns: settings.visibleColumns,
+          hiddenColumns: settings.hiddenColumns,
+          columnOrder: settings.columnOrder,
         });
       },
 
@@ -104,8 +115,7 @@ export const useColumnSettingsStore = create<ColumnSettingsState>()(
       },
     }),
     {
-      name: "column-settings-storage", // unique name for localStorage key
-      // Only persist the essential state
+      name: "column-settings-fallback", // Changed name to indicate this is fallback
       partialize: (state) => ({
         visibleColumns: state.visibleColumns,
         hiddenColumns: state.hiddenColumns,
@@ -114,3 +124,5 @@ export const useColumnSettingsStore = create<ColumnSettingsState>()(
     }
   )
 );
+
+export { INITIAL_COLUMNS };
