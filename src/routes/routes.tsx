@@ -1,7 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import TestLocationPage from "@/pages/TestLocationPage";
 
-
 // Auth
 import Login from "@/features/auth/Login";
 import Notfound from "@/components/Notfound";
@@ -19,7 +18,6 @@ import ManagerNotifications from "@/features/dashboard/manager/ManagerNotificati
 
 // Modal Page
 // import AddBusinessLocationPage from "@/pages/AddBusinessLocationPage";
-
 
 // Maintainer
 import MaintainerLayout from "@/layout/MaintainerLayout";
@@ -80,11 +78,9 @@ const router = createBrowserRouter([
       { path: "log", element: <ActivityLog /> },
     ],
   },
-// Test Location Route
-{
-  path: "/test-location",
-  element: <TestLocationPage />,
-},
+
+  // Test Route
+  { path: "/test-location", element: <TestLocationPage /> },
 
   // Maintainer Routes
   {
