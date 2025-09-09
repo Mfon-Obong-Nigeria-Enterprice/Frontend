@@ -26,6 +26,21 @@ import {
 } from "lucide-react";
 import { MdOutlineHome } from "react-icons/md";
 
+type UserDataProps = {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  role: string;
+  branchId?:
+    | {
+        _id: string;
+        name: string;
+      }
+    | string;
+};
+
 const UserOverview = () => {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
@@ -214,7 +229,7 @@ const UserOverview = () => {
             </Popover>
           </div>
           {user?.role === "MAINTAINER" && (
-            <Button onClick={() => setIsModalOpen(true)}>
+            <Button onClick={() => setIsCreateModalOpen(true)}>
               <Plus /> Create new User
             </Button>
           )}
@@ -234,14 +249,28 @@ const UserOverview = () => {
         users={filteredUsers}
       />
 
-      {/* open create new user modal */}
-      {isModalOpen && (
+      {/* create new user modal */}
+      {isCreateModalOpen && (
         <Modal
           size="xxl"
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
         >
-          <CreateUserModal closeModal={() => setIsModalOpen(false)} />
+          <CreateUserModal closeModal={() => setIsCreateModalOpen(false)} />
+        </Modal>
+      )}
+
+      {/* edit user modal */}
+      {isEditModalOpen && selectedUserData && (
+        <Modal
+          size="xxl"
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+        >
+          <EditUserModal
+            closeModal={handleCloseEditModal}
+            userData={selectedUserData}
+          />
         </Modal>
       )}
     </main>

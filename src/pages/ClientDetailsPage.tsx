@@ -68,29 +68,47 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   const [showBlockUnblockDialog, setShowBlockUnblockDialog] = useState(false);
 
   const handleExportPDF = () => {
-    const doc = new jsPDF();
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
 
-    // Set up document header
-    doc.setFontSize(18);
-    doc.text(
-      `Transaction Details - ${client?.name || "Unknown Client"}`,
-      14,
-      20
-    );
+    // Set Background Color
+    doc.setFillColor(211, 211, 211); // Light gray
+    doc.rect(0, 0, 210, 297, "F"); // Fills the entire page with color
 
+    // Set text color for the document
+    doc.setTextColor(0, 0, 0); // Black text
+
+    // Document Title
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.text(`Transaction Report`, 10, 30);
+
+    // Client Information Header
+    doc.setFontSize(16);
+    doc.text(`Client: ${client?.name || "Unknown Client"}`, 10, 37);
+
+    // Client Details
     doc.setFontSize(12);
-    doc.text(`Client: ${client?.name || "N/A"}`, 14, 32);
-    doc.text(`Phone: ${client?.phone || "N/A"}`, 14, 40);
-    doc.text(`Email: ${client?.email || "N/A"}`, 14, 48);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Phone: ${client?.phone || "N/A"}`, 10, 43);
+    doc.text(`Email: ${client?.email || "N/A"}`, 10, 49);
     doc.text(
       `Current Balance: ${formatCurrency(client?.balance || 0).trim()}`,
-      14,
+      8,
       56
     );
 
-    // Add filter information
+    // Filter Information Section
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("Applied Filters:", 10, 63);
+
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    let filterText = "Filters Applied: ";
+    const filterY = 70;
     const filters = [];
 
     if (transactionTypeFilter !== "all") {
@@ -106,13 +124,15 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       filters.push(`To: ${dateTo.toLocaleDateString()}`);
     }
 
-    filterText += filters.length > 0 ? filters.join(", ") : "None";
-    doc.text(filterText, 14, 64);
+    const filterText = filters.length > 0 ? filters.join(", ") : "None";
+    doc.text(filterText, 10, filterY);
 
+    // Generation Info
+    doc.setFont("helvetica", "italic");
     doc.text(
       `Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`,
-      14,
-      72
+      10,
+      filterY + 8
     );
 
     // Calculate balance progression for transactions
@@ -177,7 +197,10 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
           ""
         )}`,
         invoice: txn.invoiceNumber || "N/A",
-        itemCount: txn.items?.length || 0,
+        itemCount:
+          txn.items?.length > 0
+            ? txn.items.map((item) => item.productName).join(", ")
+            : "N/A",
       };
     });
 
@@ -189,12 +212,13 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         columns.map((col) => row[col.dataKey as keyof typeof row])
       ),
       styles: {
-        fontSize: 8,
-        cellPadding: 2,
+        fontSize: 5,
+        cellPadding: 3,
         lineColor: [200, 200, 200],
         lineWidth: 0.1,
-        valign: "middle",
-        halign: "center",
+        // valign: "middle",
+        halign: "left",
+        textColor: [0, 0, 0], // Black text for table content
       },
       headStyles: {
         fillColor: [46, 204, 113],
@@ -207,18 +231,18 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         fillColor: [248, 249, 250],
       },
       columnStyles: {
-        0: { cellWidth: 18, halign: "left" }, // Date
+        0: { cellWidth: 14, halign: "left" }, // Date
         1: { cellWidth: 18, halign: "left" }, // Time
-        2: { cellWidth: 20, halign: "left" }, // Type
+        2: { cellWidth: 18, halign: "left" }, // Type
         3: { cellWidth: 25, halign: "left" }, // Amount
         4: { cellWidth: 18, halign: "left" }, // Method
         5: { cellWidth: 22, halign: "left" }, // Staff
         6: { cellWidth: 24, halign: "left" }, // Balance Before
         7: { cellWidth: 24, halign: "left" }, // Balance After
-        8: { cellWidth: 22, halign: "left" }, // Invoice
-        9: { cellWidth: 12, halign: "left" }, // Items
+        8: { cellWidth: 20, halign: "left" }, // Invoice
+        9: { cellWidth: 26, halign: "left" }, // Items
       },
-      margin: { left: 3, right: 3 },
+      margin: { left: 2, right: 2 },
     });
 
     // Add summary section
@@ -226,11 +250,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable
         ?.finalY || 80;
 
+    // Transaction Summary Header
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text("Transaction Summary", 14, finalY + 15);
-
-    doc.setFontSize(10);
-    const summaryY = finalY + 25;
+    doc.setTextColor(0, 0, 0); // Black text
+    doc.text("Transaction Summary", 10, finalY + 6);
 
     // Calculate summary statistics from filtered transactions
     const totalTransactions = clientTransactions.length;
@@ -252,26 +276,39 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       0
     );
 
-    doc.text(`Total Transactions: ${totalTransactions}`, 14, summaryY);
-    doc.text(`Purchases: ${purchaseTransactions}`, 14, summaryY + 8);
-    doc.text(`Pickups: ${pickupTransactions}`, 14, summaryY + 16);
-    doc.text(`Deposits: ${depositTransactions}`, 14, summaryY + 24);
+    // Summary Details - Left Column
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("Total Transactions:", 10, finalY + 15);
+    doc.text("Purchases:", 10, finalY + 25);
+    doc.text("Pickups:", 10, finalY + 32);
+
+    doc.setFont("helvetica", "normal");
+    doc.text(`${totalTransactions}`, 42, finalY + 15);
+    doc.text(`${purchaseTransactions}`, 30, finalY + 25);
+    doc.text(`${pickupTransactions}`, 30, finalY + 32);
+
+    // Summary Details - Right Column
+    doc.setFont("helvetica", "bold");
+    doc.text("Deposits:", 70, finalY + 15);
+    doc.text("Total Amount:", 70, finalY + 25);
+    doc.text("Total Savings:", 70, finalY + 32);
+
+    doc.setFont("helvetica", "normal");
+    doc.text(`${depositTransactions}`, 87, finalY + 15);
     doc.text(
-      `Total Amount: ${formatCurrency(totalAmount).replace(/^\s+/, "")}`,
-      14,
-      summaryY + 32
+      `${formatCurrency(totalAmount).replace(/^\s+/, "")}`,
+      95,
+      finalY + 25
     );
-    doc.text(
-      `Total Savings: ${formatCurrency(totalDiscount)}`,
-      14,
-      summaryY + 40
-    );
+    doc.text(`${formatCurrency(totalDiscount)}`, 95, finalY + 32);
 
     // Generate filename with client name and current date
     const fileName = `${
       client?.name?.replace(/[^a-zA-Z0-9]/g, "_") || "Client"
     }_Transactions_${new Date().toISOString().split("T")[0]}.pdf`;
 
+    // Save the PDF
     doc.save(fileName);
   };
   //
@@ -431,7 +468,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
   return (
     <>
-      <header className="grid md:grid-cols-5 grid-cols-1 items-center py-3 md:px-10">
+      <header className="grid md:grid-cols-5 grid-cols-1 items-center py-1 md:px-10 sticky top-0 bg-white z-10 border-b border-[#D9D9D9]">
         <div className="flex gap-5 justify-between md:justify-start col-span-2 md:col-span-2 px-5 md:px-0">
           <button
             onClick={() => navigate(-1)}

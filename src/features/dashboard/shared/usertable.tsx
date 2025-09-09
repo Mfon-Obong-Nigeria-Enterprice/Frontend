@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
 import { useModalStore } from "@/stores/useModalStore";
+import { useColumnSettingsStore } from "@/stores/useColumnSettingsStore";
 
 import {
   Table,
@@ -44,6 +45,9 @@ const UserTable: React.FC<UserTableProps> = ({ users }) => {
   const currentUser = useAuthStore((s) => s.user);
   const activityLogs = useActivityLogsStore((s) => s.activities);
   const { openDelete, openStatus } = useModalStore();
+
+  // Get column settings from store
+  const { getVisibleColumnsInOrder } = useColumnSettingsStore();
 
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
 
@@ -133,51 +137,26 @@ const UserTable: React.FC<UserTableProps> = ({ users }) => {
     return usersWithActivities.slice(startIndex, endIndex);
   }, [usersWithActivities, currentPage]);
 
-  const formatRelativeDate = (date: Date | null) => {
-    if (!date) return "No login yet";
-
-    const now = new Date();
-    const diffTime = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-    const diffMinutes = Math.floor(diffTime / (1000 * 60));
-
-    if (diffMinutes < 60) return `${diffMinutes} minutes ago`;
-    if (diffHours < 24) return `${diffHours} hours ago`;
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Yesterday";
-    return `${diffDays} days ago`;
-  };
+  // Get visible columns in order from store
+  const visibleColumns = getVisibleColumnsInOrder();
 
   return (
     <div className="mt-5">
       <Table>
         <TableHeader>
           <TableRow className="w-full bg-[#F5F5F5]">
-            <TableHead className="text-[#333] text-sm font-medium xl:font-semibold py-5 px-4 uppercase font-Inter">
-              User ID
-            </TableHead>
-            <TableHead className="text-[#333] text-sm font-medium xl:font-semibold py-5 px-4 uppercase font-Inter">
-              USER DETAILS
-            </TableHead>
-            <TableHead className="text-[#333] text-sm font-medium xl:font-semibold py-5 px-4 uppercase font-Inter">
-              ROLE
-            </TableHead>
-            <TableHead className="text-[#333] text-sm font-medium xl:font-semibold py-5 px-4 uppercase font-Inter">
-              PERMISSIONS
-            </TableHead>
-            <TableHead className="text-[#333] text-sm font-medium xl:font-semibold py-5 px-4 uppercase font-Inter">
-              STATUS
-            </TableHead>
-            <TableHead className="text-[#333] text-sm font-medium xl:font-semibold py-5 px-4 uppercase font-Inter">
-              LAST LOGIN
-            </TableHead>
-            <TableHead className="text-[#333] text-sm font-medium xl:font-semibold py-5 px-4 uppercase font-Inter">
-              LOCATION
-            </TableHead>
-            <TableHead className="text-[#333] text-sm font-medium xl:font-semibold py-5 px-4 uppercase font-Inter">
-              CREATED
-            </TableHead>
+            {visibleColumns.map((column) => (
+              <TableHead
+                key={column}
+                className="text-[#333] text-sm font-medium xl:font-semibold py-5 px-4 uppercase font-Inter"
+              >
+                {column === "Roles"
+                  ? "ROLE"
+                  : column === "Permission"
+                  ? "PERMISSIONS"
+                  : column.toUpperCase()}
+              </TableHead>
+            ))}
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
@@ -186,7 +165,7 @@ const UserTable: React.FC<UserTableProps> = ({ users }) => {
           {currentUserList.length < 1 ? (
             <TableRow>
               <TableCell
-                colSpan={9}
+                colSpan={visibleColumns.length + 1}
                 className="text-center py-8 text-muted-foreground"
               >
                 No users found
@@ -197,6 +176,14 @@ const UserTable: React.FC<UserTableProps> = ({ users }) => {
               const userId = `U-${((currentPage - 1) * 10 + index + 1)
                 .toString()
                 .padStart(3, "0")}`;
+              function formatRelativeDate(_lastLogin: any): import("react").ReactNode {
+                throw new Error("Function not implemented.");
+              }
+
+              function onEditUser(_user: any) {
+                throw new Error("Function not implemented.");
+              }
+
               return (
                 <TableRow
                   key={user._id}
@@ -285,64 +272,69 @@ const UserTable: React.FC<UserTableProps> = ({ users }) => {
                     {new Date(user.createdAt).toDateString()}
                   </TableCell>
 
-                  <TableCell>
-                    <Popover
-                      open={popoverOpen === user._id}
-                      onOpenChange={(open) =>
-                        setPopoverOpen(open ? user._id : null)
-                      }
-                    >
-                      <PopoverTrigger asChild>
-                        <button
-                          className="ml-2 p-1 rounded hover:bg-muted border border-[#E0E0E0]"
-                          aria-label="User actions"
-                        >
-                          <MoreVertical className="size-5 text-muted-foreground" />
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        align="end"
-                        className="w-64 p-0 rounded-lg shadow-lg border border-[#F0F0F0]"
+                <TableCell>
+                  <Popover
+                    open={popoverOpen === user._id}
+                    onOpenChange={(open) =>
+                      setPopoverOpen(open ? user._id : null)
+                    }
+                  >
+                    <PopoverTrigger asChild>
+                      <button
+                        className="ml-2 p-1 rounded hover:bg-muted border border-[#E0E0E0]"
+                        aria-label="User actions"
                       >
-                        <>
-                          <button
-                            className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
-                            onClick={() => {
-                              // Find the complete user data with activities
-                              const userWithActivities =
-                                usersWithActivities.find(
-                                  (u) => u._id === user._id
-                                );
+                        <MoreVertical className="size-5 text-muted-foreground" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      align="end"
+                      className="w-64 p-0 rounded-lg shadow-lg border border-[#F0F0F0]"
+                    >
+                      <>
+                        <button
+                          className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
+                          onClick={() => {
+                            // Find the complete user data with activities
+                            const userWithActivities = usersWithActivities.find(
+                              (u) => u._id === user._id
+                            );
 
-                              const url =
-                                currentUser?.role === "MAINTAINER"
-                                  ? "maintainer"
-                                  : "manager";
+                            const url =
+                              currentUser?.role === "MAINTAINER"
+                                ? "maintainer"
+                                : "manager";
 
-                              navigate(
-                                `/${url}/dashboard/user-management/${user._id}`,
-                                {
-                                  state: {
-                                    userData: userWithActivities,
-                                    activities:
-                                      userWithActivities?.activities || [],
-                                    lastLogin: userWithActivities?.lastLogin,
-                                    activityCount:
-                                      userWithActivities?.activityCount,
-                                  },
-                                }
-                              );
-                            }}
-                          >
-                            <span className="flex-1 text-left">
-                              View User Data
-                            </span>
-                            <ExternalLink className="size-4 text-muted-foreground" />
-                          </button>
-                          <button className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium">
-                            <span className="flex-1 text-left">Edit User</span>
-                            <ExternalLink className="size-4 text-muted-foreground" />
-                          </button>
+                            navigate(
+                              `/${url}/dashboard/user-management/${user._id}`,
+                              {
+                                state: {
+                                  userData: userWithActivities,
+                                  activities:
+                                    userWithActivities?.activities || [],
+                                  lastLogin: userWithActivities?.lastLogin,
+                                  activityCount:
+                                    userWithActivities?.activityCount,
+                                },
+                              }
+                            );
+                          }}
+                        >
+                          <span className="flex-1 text-left">
+                            View User Data
+                          </span>
+                          <ExternalLink className="size-4 text-muted-foreground" />
+                        </button>
+                        <button
+                          className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
+                          onClick={() => {
+                            onEditUser(user);
+                            setPopoverOpen(null);
+                          }}
+                        >
+                          <span className="flex-1 text-left">Edit User</span>
+                          <ExternalLink className="size-4 text-muted-foreground" />
+                        </button>
 
                           {user.isBlocked ? (
                             <button
@@ -370,24 +362,21 @@ const UserTable: React.FC<UserTableProps> = ({ users }) => {
                             </button>
                           )}
 
-                          <button
-                            className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium text-red-600"
-                            onClick={() => {
-                              openDelete(user._id, user.name);
-                              setPopoverOpen(null);
-                            }}
-                          >
-                            <span className="flex-1 text-left">
-                              Delete User
-                            </span>
-                          </button>
-                        </>
-                      </PopoverContent>
-                    </Popover>
-                  </TableCell>
-                </TableRow>
-              );
-            })
+                        <button
+                          className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium text-red-600"
+                          onClick={() => {
+                            openDelete(user._id, user.name);
+                            setPopoverOpen(null);
+                          }}
+                        >
+                          <span className="flex-1 text-left">Delete User</span>
+                        </button>
+                      </>
+                    </PopoverContent>
+                  </Popover>
+                </TableCell>
+              </TableRow>
+            ))
           )}
         </TableBody>
       </Table>

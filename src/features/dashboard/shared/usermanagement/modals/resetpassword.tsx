@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 // ui components
 import { Button } from "@/components/ui/button";
@@ -25,6 +24,7 @@ import { useUserStore } from "@/stores/useUserStore";
 // types
 import type { CompanyUser } from "@/stores/useUserStore";
 import { isAxiosError } from "axios";
+import { toast } from "react-toastify";
 
 interface ResetPasswordProps {
   user: CompanyUser;
