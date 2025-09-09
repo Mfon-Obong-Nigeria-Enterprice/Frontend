@@ -42,6 +42,17 @@ interface UserTableProps {
   onEditUser?: (userData: any) => void;
 }
 
+// SUPER_ADMIN filter function (added directly to component)
+const filterUsers = (users: any[], currentUserRole: string) => {
+  // If current user is not SUPER_ADMIN, filter out SUPER_ADMIN users
+  if (currentUserRole !== "SUPER_ADMIN") {
+    return users.filter(user => user.role !== "SUPER_ADMIN");
+  }
+  
+  // If current user is SUPER_ADMIN, return all users
+  return users;
+};
+
 const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
   const navigate = useNavigate();
   const currentUser = useAuthStore((s) => s.user);
@@ -52,6 +63,11 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
   const { getVisibleColumnsInOrder } = useColumnSettingsStore();
 
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
+
+  // Apply SUPER_ADMIN filtering to the incoming users
+  const filteredUsers = useMemo(() => {
+    return filterUsers(users, currentUser?.role || "");
+  }, [users, currentUser?.role]);
 
   // Create lookup maps for activities by both user ID and email for flexibility
   const activityByIdMap = useMemo(() => {
@@ -75,7 +91,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
 
   // Merge users with their activities and last LOGIN timestamp
   const usersWithActivities = useMemo(() => {
-    return users.map((user) => {
+    return filteredUsers.map((user) => {
       // Try to get activities by user ID first, then by email
       const logsByUserId = activityByIdMap[user._id] || [];
       const logsByEmail = activityByEmailMap[user.email] || [];
@@ -113,7 +129,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
         activityCount: uniqueLogs.length,
       };
     });
-  }, [users, activityByIdMap, activityByEmailMap]);
+  }, [filteredUsers, activityByIdMap, activityByEmailMap]);
 
   const getInitials = (name = "") => {
     const parts = name.trim().split(" ");
@@ -452,14 +468,14 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                   {currentPage}
                 </PaginationItem>
                 <PaginationNext
-                  onClick={canGoNext ? goToNextPage : undefined}
-                  className={`border border-[#d9d9d9] ${
-                    !canGoNext
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }`}
-                  aria-label="Go to next page"
-                />
+                    onClick={canGoNext ? goToNextPage : undefined}
+                    className={`border border-[#d9d9d9] ${
+                      !canGoNext
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }`}
+                    aria-label="Go to next page"
+                  />
               </div>
             </PaginationContent>
           </Pagination>

@@ -263,11 +263,7 @@ const UserOverview = () => {
         locations={locations}
       />
 
-      {/* user table - pass filtered users and edit handler */}
-      <UserTable 
-        users={filteredUsers}
-        onEditUser={handleEditUser}
-      />
+      <UserTable users={filteredUsers} onEditUser={handleEditUser} />
 
       {/* create new user modal */}
       {isCreateModalOpen && (
