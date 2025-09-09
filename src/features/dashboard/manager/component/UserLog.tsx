@@ -40,6 +40,7 @@ type ActivityWithUser = ActivityLogs & {
   user?: {
     name: string;
     profilePicture: string;
+    location: string;
   };
 };
 
@@ -69,6 +70,7 @@ const UserLog = () => {
           user: {
             name: "System",
             profilePicture: "SS", // fallback system icon
+            location: "",
           },
         };
       }
@@ -78,10 +80,15 @@ const UserLog = () => {
       return {
         ...activity,
         user: user
-          ? { name: user.name, profilePicture: user.profilePicture }
+          ? {
+              name: user.name,
+              profilePicture: user.profilePicture,
+              location: user.branch,
+            }
           : {
               name: activity.performedBy, // fallback: just show the email
               profilePicture: "/default-avatar.png",
+              location: "N/A",
             },
       };
     });
@@ -231,9 +238,6 @@ const UserLog = () => {
                         : a.role}
                     </span>
                   </TableCell>
-                  <TableCell className="capitalize">
-                    {a.action.toLowerCase().replace("-", " ")}
-                  </TableCell>
                   <TableCell
                     onClick={() => toggleRow(i)}
                     title={!expandedRows[i] ? a.details : ""}
@@ -243,7 +247,10 @@ const UserLog = () => {
                   >
                     {a.details}
                   </TableCell>
-                  <TableCell>{}</TableCell>
+                  <TableCell className="text-[#1AD410]">
+                    {a.details ? "Success" : "Failed"}
+                  </TableCell>
+                  <TableCell>{a.user?.location}</TableCell>
                   <TableCell>view</TableCell>
                 </TableRow>
               ))}

@@ -1,5 +1,3 @@
-/** @format */
-
 import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
 import ManagerSidebar from "@/features/sidebar/ManagerSidebar";
 import {

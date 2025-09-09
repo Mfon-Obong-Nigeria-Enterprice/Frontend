@@ -97,6 +97,7 @@ const router = createBrowserRouter([
       { path: "transactions", element: <DashboardTransactions /> },
       { path: "settings", element: <DashboardSettings /> },
       { path: "admin-notifications", element: <AdminNotification /> },
+      { path: "sale", element: <NewSales /> },
     ],
   },
   {
