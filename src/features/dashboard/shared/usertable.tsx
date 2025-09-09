@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/components/usertable.tsx
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -177,11 +176,14 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
   // Render table cell based on column name
   const renderTableCell = (user: any, column: string) => {
     switch (column) {
-      case "User ID":
-        { const index = usersWithActivities.findIndex(u => u._id === user._id);
-        const userId = `U-${((currentPage - 1) * 10 + index + 1).toString().padStart(3, "0")}`;
-        return <TableCell className="pl-5">{userId}</TableCell>; }
-      
+      case "User ID": {
+        const index = usersWithActivities.findIndex((u) => u._id === user._id);
+        const userId = `U-${((currentPage - 1) * 10 + index + 1)
+          .toString()
+          .padStart(3, "0")}`;
+        return <TableCell className="pl-5">{userId}</TableCell>;
+      }
+
       case "User Details":
         return (
           <TableCell className="flex items-center gap-2">
@@ -210,13 +212,11 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
               <span className="text-[#444444] font-medium text-sm">
                 {user.name}
               </span>
-              <span className="text-[#7D7D7D] text-xs">
-                {user.email}
-              </span>
+              <span className="text-[#7D7D7D] text-xs">{user.email}</span>
             </div>
           </TableCell>
         );
-      
+
       case "Roles":
         return (
           <TableCell>
@@ -233,7 +233,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
             </span>
           </TableCell>
         );
-      
+
       case "Permission":
         return (
           <TableCell className="font-normal text-xs">
@@ -244,7 +244,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
               : "System maintainer"}
           </TableCell>
         );
-      
+
       case "Status":
         return (
           <TableCell
@@ -263,24 +263,24 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
               : "Inactive"}
           </TableCell>
         );
-      
+
       case "Last Login":
         return <TableCell>{formatRelativeDate(user.lastLogin)}</TableCell>;
-      
+
       case "Location":
         return (
           <TableCell className="text-[#444444] font-normal">
             {user.branch || user.location || "N/A"}
           </TableCell>
         );
-      
+
       case "Created":
         return (
           <TableCell className="text-[#444444] font-normal">
             {new Date(user.createdAt).toDateString()}
           </TableCell>
         );
-      
+
       default:
         return <TableCell>-</TableCell>;
     }
@@ -328,7 +328,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                     {renderTableCell(user, column)}
                   </React.Fragment>
                 ))}
-                
+
                 <TableCell>
                   <Popover
                     open={popoverOpen === user._id}
@@ -366,9 +366,11 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                               {
                                 state: {
                                   userData: userWithActivities,
-                                  activities: userWithActivities?.activities || [],
+                                  activities:
+                                    userWithActivities?.activities || [],
                                   lastLogin: userWithActivities?.lastLogin,
-                                  activityCount: userWithActivities?.activityCount,
+                                  activityCount:
+                                    userWithActivities?.activityCount,
                                 },
                               }
                             );

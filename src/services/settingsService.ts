@@ -1,16 +1,23 @@
-import type { MaintenanceModeSettings, ActiveHoursSettings } from "@/schemas/SettingsSchemas";
+import type {
+  MaintenanceModeSettings,
+  ActiveHoursSettings,
+} from "@/schemas/SettingsSchemas";
 import api from "./baseApi";
-import { toast } from "react-hot-toast";
+import { toast } from "react-toastify";
 
 // ------------------ Maintenance Mode ------------------
-export const toggleMaintenanceMode = async (): Promise<MaintenanceModeSettings> => {
-  const response = await api.post("/maintenance-mode/toggle");
-  const data: MaintenanceModeSettings = response.data;
-  toast.success(
-    data.message || (data.isActive ? "Maintenance mode activated" : "Maintenance mode deactivated")
-  );
-  return data;
-};
+export const toggleMaintenanceMode =
+  async (): Promise<MaintenanceModeSettings> => {
+    const response = await api.post("/maintenance-mode/toggle");
+    const data: MaintenanceModeSettings = response.data;
+    toast.success(
+      data.message ||
+        (data.isActive
+          ? "Maintenance mode activated"
+          : "Maintenance mode deactivated")
+    );
+    return data;
+  };
 
 // ------------------ Active Hours ------------------
 
@@ -34,7 +41,10 @@ export const saveActiveHoursConfig = async (
     "_id" | "setBy" | "setByEmail" | "createdAt" | "updatedAt"
   >
 ): Promise<ActiveHoursSettings> => {
-  const response = await api.post("/session-management/active-hours", activeHours);
+  const response = await api.post(
+    "/session-management/active-hours",
+    activeHours
+  );
   toast.success("Active hours updated successfully");
   return response.data as ActiveHoursSettings;
 };
@@ -42,6 +52,8 @@ export const saveActiveHoursConfig = async (
 // Deactivate active hours
 export const deactivateActiveHours = async (): Promise<{ message: string }> => {
   const response = await api.delete("/session-management/active-hours");
-  toast.success(response.data?.message || "Active hours deactivated successfully");
+  toast.success(
+    response.data?.message || "Active hours deactivated successfully"
+  );
   return response.data;
 };
