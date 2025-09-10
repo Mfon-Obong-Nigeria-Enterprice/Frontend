@@ -118,7 +118,7 @@ const StaffSales = () => {
       </div>
 
       {/* sales activity */}
-      <section className="bg-white border rounded-[10px] md:mx-4 mt-5">
+      <section className="md:bg-white md:border rounded-[10px] md:mx-4 mt-5">
         <div className="flex justify-between items-center h-[72px] border px-2 md:px-10 py-6">
           <h4 className="hidden md:block font-medium text-lg text-[#1E1E1E] font-Inter">
             Your Sales Activity

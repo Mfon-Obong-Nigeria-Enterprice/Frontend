@@ -164,6 +164,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  html {
+    font-size: clamp(14px, 2vw, 16px);
+  }
 }
 .menu-item {
   @apply cursor-pointer transition-transform duration-200 hover:scale-90;
