@@ -2,7 +2,7 @@
 import { useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 import { queryClient } from "@/lib/queryClient"; // Import the queryClient we created
 
 import {
@@ -116,7 +116,7 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
     if (categoriesQuery.data && categoriesQuery.isSuccess) {
       setCategories(categoriesQuery.data);
     }
-  }, [categoriesQuery.data, categoriesQuery.isSuccess, setCategories]);
+  }, [categoriesQuery.data, categoriesQuery.dataUpdatedAt, categoriesQuery.isSuccess, setCategories]);
 
   useEffect(() => {
     if (productsQuery.data && productsQuery.isSuccess) {
@@ -128,24 +128,19 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
     if (transactionsQuery.data && transactionsQuery.isSuccess) {
       setTransactions(transactionsQuery.data);
     }
-  }, [transactionsQuery.data, transactionsQuery.isSuccess, setTransactions]);
+  }, [transactionsQuery.dataUpdatedAt, setTransactions, transactionsQuery.isSuccess, transactionsQuery.data]);
 
   useEffect(() => {
     if (clientsQuery.data && clientsQuery.isSuccess) {
       setClients(clientsQuery.data);
     }
-  }, [clientsQuery.data, clientsQuery.isSuccess, setClients]);
+  }, [clientsQuery.data, clientsQuery.dataUpdatedAt, clientsQuery.isSuccess, setClients]);
 
   useEffect(() => {
     if (branchesQuery.data && branchesQuery.isSuccess && isAdminOrSuperAdmin) {
       setBranches(branchesQuery.data);
     }
-  }, [
-    branchesQuery.data,
-    branchesQuery.isSuccess,
-    setBranches,
-    isAdminOrSuperAdmin,
-  ]);
+  }, [branchesQuery.data, branchesQuery.dataUpdatedAt, branchesQuery.isSuccess, isAdminOrSuperAdmin, setBranches, user?.role]);
 
   useEffect(() => {
     if (usersQuery.data && usersQuery.isSuccess && isAdminOrSuperAdmin) {
@@ -175,7 +170,7 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
     ) {
       setActivities(activitiesQuery.data);
     }
-  }, [activitiesQuery.dataUpdatedAt, setActivities, user?.role]);
+  }, [activitiesQuery, activitiesQuery.dataUpdatedAt, setActivities, user?.role]);
 
   return <>{children}</>;
 };

@@ -1,6 +1,6 @@
 // @/services/productService.ts
 import api from "./baseApi";
-import { type Product, type NewProduct } from "@/types/types";
+import type { Product, NewProduct } from "@/types/types";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 export const getAllProducts = async (): Promise<Product[]> => {
