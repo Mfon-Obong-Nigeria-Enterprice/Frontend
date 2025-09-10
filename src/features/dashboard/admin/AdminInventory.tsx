@@ -34,13 +34,15 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 import UpdateStock from "./components/UpdateStock";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+// import { Badge } from "@/components/ui/badge";
 import EmptyInventory from "../shared/EmptyInventory";
 
 const AdminInventory = () => {
@@ -53,9 +55,10 @@ const AdminInventory = () => {
   const [addCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
   const [stockStatus, setStockStatus] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
+  // const [showFilters, setShowFilters] = useState(false);
+  const [showMobileActions, setShowMobileActions] = useState(false);
 
   // set the search query from zustand store
-
   const {
     products,
     categories,
@@ -86,9 +89,8 @@ const AdminInventory = () => {
     return products;
   }, [products]);
 
-  //
   const handleSave = (updatedProducts: Product[]) => {
-    updateProductsBulk(updatedProducts); // This now correctly calls the bulk update action
+    updateProductsBulk(updatedProducts);
     setIsModalOpen(false);
   };
 
@@ -158,7 +160,9 @@ const AdminInventory = () => {
     [products, searchQuery, stockStatus, priceRange]
   );
 
-  // to close both modals
+  // Check if any filters are active
+  // const hasActiveFilters = stockStatus !== "all" || priceRange !== "all";
+
   const closeBothModals = () => {
     setIsAddModalOpen(false);
     setAddCategoryModalOpen(false);
@@ -260,253 +264,289 @@ const AdminInventory = () => {
   }, [dragging, rel]);
 
   return (
-    <main>
-      <DashboardTitle
-        heading="Inventory Management"
-        description="Manage your products and categories"
-      />
-      {products?.length > 0 ? (
-        <section className="bg-white xl:rounded-xl mt-5 max-w-[74vw] 2xl:max-w-full">
-          <div className="flex gap-4 justify-between items-center py-5 px-4 sm:px-5 bg-[#f0f0f3] border-b border-[#d9d9d9] md:border-0">
-            <h3 className="text-xl font-medium text-text-dark pt-5 sm:pt-0">
-              Product & Categories
-            </h3>
-            {/*  */}
-            <div className="hidden lg:flex items-center gap-3 pt-5 lg:pt-0">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="w-40 bg-white text-[#333333] flex gap-1.5 items-center justify-center rounded-md py-2 px-4 border border-[#7d7d7d]">
-                    <IoIosArrowUp size={24} />
-                    <span>Export</span>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="p-0 w-48">
-                  <button
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                    onClick={handleExportPDF}
-                  >
-                    Export as PDF
-                  </button>
-                  <button
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                    onClick={handleExportExcel}
-                  >
-                    Export as Excel
-                  </button>
-                </PopoverContent>
-              </Popover>
-              <div>
-                <button
-                  onClick={handleOpenModal}
-                  className="w-40 bg-white text-[#333333] flex gap-1.5 items-center rounded-md py-2 px-4 border border-[#7d7d7d]"
-                >
-                  <RotateCcw size={24} />
-                  Update Stock
-                </button>
+    <main className="px-3 lg:px-4 lg:max-w-4xl xl:max-w-6xl mx-auto">
+      <div className="">
+        <DashboardTitle
+          heading="Inventory Management"
+          description="Manage your products and categories"
+        />
+
+        {products?.length > 0 ? (
+          <section className="bg-white rounded-lg shadow-sm mt-5">
+            {/* Header Section */}
+            <div className="border-b border-gray-200">
+              <div className="px-4 sm:px-6 py-4 sm:py-6">
+                <div className="flex items-center justify-between gap-4">
+                  <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">
+                    Products & Categories
+                  </h3>
+
+                  {/* Desktop Actions */}
+                  <div className="hidden lg:flex items-center gap-3">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="gap-2">
+                          <IoIosArrowUp size={20} />
+                          Export
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="p-0 w-48">
+                        <button
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-t-md"
+                          onClick={handleExportPDF}
+                        >
+                          Export as PDF
+                        </button>
+                        <button
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-b-md"
+                          onClick={handleExportExcel}
+                        >
+                          Export as Excel
+                        </button>
+                      </PopoverContent>
+                    </Popover>
+
+                    <Button
+                      variant="outline"
+                      onClick={handleOpenModal}
+                      className="gap-2"
+                    >
+                      <RotateCcw size={20} />
+                      Update Stock
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate("/import-stock")}
+                      className="gap-2"
+                    >
+                      <CiImport size={20} />
+                      Import Stock
+                    </Button>
+                  </div>
+
+                  {/* Mobile Actions Button */}
+                  <div className="lg:hidden">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowMobileActions(!showMobileActions)}
+                      className="gap-2"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Mobile Actions Dropdown */}
+                {showMobileActions && (
+                  <Card className="mt-4 lg:hidden">
+                    <CardContent className="p-3">
+                      <div className="grid grid-cols-1 gap-2">
+                        <Button
+                          variant="ghost"
+                          onClick={handleExportPDF}
+                          className="justify-start gap-2"
+                        >
+                          <IoIosArrowUp size={16} />
+                          Export as PDF
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={handleExportExcel}
+                          className="justify-start gap-2"
+                        >
+                          <IoIosArrowUp size={16} />
+                          Export as Excel
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={handleOpenModal}
+                          className="justify-start gap-2"
+                        >
+                          <RotateCcw size={16} />
+                          Update Stock
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={() => navigate("/import-stock")}
+                          className="justify-start gap-2"
+                        >
+                          <CiImport size={16} />
+                          Import Stock
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
+            </div>
+
+            {/* Search and Filters Section */}
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-5">
+              {/* Search Bar */}
+              <div className="relative md:flex-1 w-full md:w-auto">
+                <div className="relative">
+                  <IoIosSearch
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    size={20}
+                  />
+                  <input
+                    type="search"
+                    placeholder="Search products, categories..."
+                    onChange={(e) => debouncedSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+
+                {/* Search Suggestions */}
+                {searchQuery.trim() && suggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 bg-white shadow-lg z-10 border border-gray-200 rounded-b-lg max-h-50 overflow-y-auto">
+                    {suggestions.map((suggestion, i) => (
+                      <div
+                        key={i}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="font-medium text-gray-900">
+                          {suggestion.item.name}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {getCategoryName(suggestion.item)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* No Results */}
+                {searchQuery.trim() && suggestions.length === 0 && (
+                  <div className="absolute top-full left-0 right-0 bg-white shadow-lg z-10 p-4 text-center text-gray-500 border border-gray-200 rounded-b-lg">
+                    No matching products found for{" "}
+                    <span className="font-medium">"{searchQuery}"</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Filters Row */}
+
+              {/* Desktop Filters */}
+              <div className=" items-center gap-4 flex ">
+                <Select value={stockStatus} onValueChange={setStockStatus}>
+                  <SelectTrigger className="w-full sm:w-38">
+                    <SelectValue placeholder="Stock status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All products</SelectItem>
+                    <SelectItem value="high">High stock</SelectItem>
+                    <SelectItem value="low">Low stock</SelectItem>
+                    <SelectItem value="out">Out of stock</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={priceRange} onValueChange={setPriceRange}>
+                  <SelectTrigger className="w-full sm:w-38">
+                    <SelectValue placeholder="Price range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All prices</SelectItem>
+                    <SelectItem value="under-1000">Under ₦1,000</SelectItem>
+                    <SelectItem value="1000-5000">₦1,000-₦5,000</SelectItem>
+                    <SelectItem value="5000-10000">₦5,000-₦10,000</SelectItem>
+                    <SelectItem value="10000-50000">₦10,000-₦50,000</SelectItem>
+                    <SelectItem value="above-50000">Above ₦50,000</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Content Section */}
+            <div className="p-4 sm:p-6" ref={containerRef}>
+              <InventoryTab
+                products={filteredProducts}
+                categories={categories}
+                stockStatus={stockStatus}
+                priceRange={priceRange}
+              />
+
+              {/* Floating Add Button - Responsive */}
               <button
-                onClick={() => navigate("/import-stock")}
-                className="w-40 bg-white text-[#333333] flex gap-1.5 items-center rounded-md py-2 px-4 border border-[#7d7d7d]"
+                onClick={() => setIsAddModalOpen(true)}
+                onMouseDown={handleMouseDown}
+                className="fixed z-50 flex justify-center items-center bg-green-600 hover:bg-green-700 w-14 h-14 sm:w-16 sm:h-16 rounded-full text-white shadow-xl cursor-move transition-colors"
+                style={{
+                  left: `${position.xPercent}vw`,
+                  top: `${position.yPercent}vh`,
+                  transform: "translate(-50%, -50%)",
+                }}
               >
-                <CiImport size={24} />
-                <span>Import Stock</span>
+                <Plus className="h-6 w-6 sm:h-8 sm:w-8" />
               </button>
             </div>
-            {/*  */}
-            <div className="lg:hidden pt-5 lg:pt-0">
-              <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)]"
-                  >
-                    <MoreVertical className="w-5 h-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="w-48 bg-white border border-[#D9D9D9] shadow-lg"
-                >
-                  <div className="flex flex-col gap-1 p-1">
-                    <DropdownMenuItem
-                      onClick={handleExportPDF}
-                      className="cursor-pointer hover:bg-[#f5f5f5] focus:bg-[#f5f5f5] p-3 rounded-md w-full text-left px-4 py-2 "
-                    >
-                      <span className="text-[#333333] font-Inter font-medium">
-                        Export as PDF
-                      </span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={handleExportExcel}
-                      className="cursor-pointer hover:bg-[#f5f5f5] focus:bg-[#f5f5f5] p-3 rounded-md  w-full text-left px-4 py-2"
-                    >
-                      <span className="text-[#333333] font-Inter font-medium ">
-                        Export as Excel
-                      </span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={handleOpenModal}
-                      className="w-full bg-white text-[#333333] flex gap-1.5 items-center rounded-md py-2 px-4 border border-[#7d7d7d]"
-                    >
-                      <RotateCcw size={24} />
-                      Update Stock
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => navigate("/import-stock")}
-                      className="w-full bg-white text-[#333333] flex gap-1.5 items-center rounded-md py-2 px-4 border border-[#7d7d7d]"
-                    >
-                      <CiImport size={24} />
-                      <span>Import Stock</span>
-                    </DropdownMenuItem>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
 
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 px-4 md:px-5 py-5 border">
-            <div className="relative bg-[#F5F5F5] max-w-lg w-full flex items-center gap-1 md:w-1/2 px-4 rounded-md">
-              <IoIosSearch size={18} />
-              <input
-                type="search"
-                placeholder="Search products, categories..."
-                onChange={(e) => debouncedSearch(e.target.value)}
-                className="py-2 outline-0 w-full"
-              />
-              {searchQuery.trim() && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 w-full bg-white shadow-lg z-10 border border-gray-200 rounded-b-md">
-                  {suggestions.map((suggestion, i) => (
-                    <div
-                      key={i}
-                      onClick={() => handleSuggestionClick(suggestion)}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                    >
-                      {suggestion.item.name}
-                      <span className="text-xs text-gray-500 ml-2">
-                        ({getCategoryName(suggestion.item)})
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {searchQuery.trim() && suggestions.length === 0 && (
-                <div className="absolute top-full left-0 w-full bg-white shadow-lg z-10 p-4 italic text-center text-gray-500 border border-gray-200 rounded-b-md">
-                  No matching products found for{" "}
-                  <span className="text-gray-700">"{searchQuery}"</span>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center gap-4">
-              <Select value={stockStatus} onValueChange={setStockStatus}>
-                <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d]">
-                  <SelectValue placeholder="Stock status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All products</SelectItem>
-                  <SelectItem value="high">High stock</SelectItem>
-                  <SelectItem value="low">Low stock</SelectItem>
-                  <SelectItem value="out">Out of stock</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={priceRange} onValueChange={setPriceRange}>
-                <SelectTrigger className="max-w-40 w-full bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d]">
-                  <SelectValue placeholder="Price range" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All prices</SelectItem>
-                  <SelectItem value="under-1000">Under ₦1,000</SelectItem>
-                  <SelectItem value="1000-5000">₦1,000-₦5,000</SelectItem>
-                  <SelectItem value="5000-10000">₦5,000-₦10,000</SelectItem>
-                  <SelectItem value="10000-50000">₦10,000-₦50,000</SelectItem>
-                  <SelectItem value="above-50000">Above ₦50,000</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="my-5" ref={containerRef}>
-            <InventoryTab
-              products={filteredProducts}
+            {/* Modals */}
+            <UpdateStock
+              products={productsForUpdateStock}
               categories={categories}
-              stockStatus={stockStatus}
-              priceRange={priceRange}
+              isOpen={isModalOpen}
+              onClose={handleCloseModal}
+              onSave={handleSave}
             />
 
-            {/* draggable button */}
-            <button
-              onClick={() => setIsAddModalOpen(true)}
-              onMouseDown={handleMouseDown}
-              className="fixed z-50 flex justify-center items-center bg-[#2ECC71] hover:bg-[#2cCC79] w-16 h-16 rounded-full text-white shadow-2xl cursor-move"
-              style={{
-                left: `${position.xPercent}vw`,
-                top: `${position.yPercent}vh`,
-                transform: "translate(-50%, -50%)",
-              }}
+            <Modal
+              isOpen={isAddModalOpen}
+              onClose={() => setIsAddModalOpen(false)}
             >
-              <Plus className="h-8 w-8" />
-            </button>
-          </div>
+              <div className="p-4 sm:p-6">
+                <h6 className="text-lg font-semibold text-gray-900 mb-4">
+                  What would you like to add?
+                </h6>
+                <div className="space-y-3">
+                  <Link
+                    to="/add-prod"
+                    className="flex justify-between items-center border border-gray-200 p-4 rounded-lg hover:shadow-md hover:border-gray-300 transition-all"
+                    onClick={() => setIsAddModalOpen(false)}
+                  >
+                    <div>
+                      <p className="font-medium text-gray-900">Add Product</p>
+                      <p className="text-sm text-gray-600">
+                        Add a new product to your inventory
+                      </p>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                  </Link>
 
-          <UpdateStock
-            products={productsForUpdateStock}
-            categories={categories} // Now passing categories to UpdateStock
-            isOpen={isModalOpen}
-            onClose={handleCloseModal}
-            onSave={handleSave}
-          />
-
-          <Modal
-            isOpen={isAddModalOpen}
-            onClose={() => setIsAddModalOpen(false)}
-          >
-            <h6 className="text-lg font-medium text-[#333333] ml-5 mb-3">
-              What would you like to add?
-            </h6>
-            <div className="flex flex-col gap-4 px-7 pt-4 pb-6 border-t border-[#d9d9d9]">
-              <Link
-                to="/add-prod"
-                className="flex justify-between items-center border py-3 px-6 rounded-[0.625rem] hover:shadow-2xl transition-all duration-100 ease-in-out"
-                onClick={() => setIsAddModalOpen(false)}
-              >
-                <div>
-                  <p className="text-[#333333] text-sm">Add Product</p>
-                  <p className="text-[#7D7D7D] text-[0.625rem]">
-                    Add a new product to your inventory
-                  </p>
+                  <button
+                    onClick={() => {
+                      setIsAddModalOpen(false);
+                      setAddCategoryModalOpen(true);
+                    }}
+                    className="w-full flex justify-between items-center border border-gray-200 p-4 rounded-lg hover:shadow-md hover:border-gray-300 transition-all"
+                  >
+                    <div className="text-left">
+                      <p className="font-medium text-gray-900">Add Category</p>
+                      <p className="text-sm text-gray-600">
+                        Create a new product category
+                      </p>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                  </button>
                 </div>
-                <ChevronRight size={18} />
-              </Link>
-              <div
-                onClick={() => {
-                  setIsAddModalOpen(false);
-                  setAddCategoryModalOpen(true);
-                }}
-                className="flex justify-between items-center border py-3 px-6 rounded-[0.625rem] hover:shadow-2xl transition-all duration-100 ease-in-out cursor-pointer"
-              >
-                <div>
-                  <p className="text-[#333333] text-sm">Add Category</p>
-                  <p className="text-[#7D7D7D] text-[0.625rem]">
-                    Create a new product category
-                  </p>
-                </div>
-                <ChevronRight size={18} />
               </div>
-            </div>
-          </Modal>
+            </Modal>
 
-          <Modal
-            isOpen={addCategoryModalOpen}
-            onClose={() => setAddCategoryModalOpen(false)}
-            size="xxl"
-          >
-            <AddCategory closeBothModals={closeBothModals} />
-          </Modal>
-        </section>
-      ) : (
-        <EmptyInventory />
-      )}
+            <Modal
+              isOpen={addCategoryModalOpen}
+              onClose={() => setAddCategoryModalOpen(false)}
+              size="xxl"
+            >
+              <AddCategory closeBothModals={closeBothModals} />
+            </Modal>
+          </section>
+        ) : (
+          <EmptyInventory />
+        )}
+      </div>
     </main>
   );
 };

@@ -263,9 +263,6 @@ export default function ColumnSettings() {
 
   // Update local state when server state changes
   useEffect(() => {
-    console.log("Settings changed:", settings);
-    // debugColumnSettings(settings, "Server Settings");
-
     if (visibleColumns && visibleColumns.length > 0) {
       setLocalVisibleColumns([...visibleColumns]);
     } else {
