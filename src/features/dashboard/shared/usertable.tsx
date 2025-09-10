@@ -60,7 +60,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
   const { openDelete, openStatus } = useModalStore();
 
   // Use React Query hook instead of Zustand store
-  const { getVisibleColumnsInOrder, isLoading: columnSettingsLoading } =
+  const { getVisibleColumnsInOrder } =
     useColumnSettingsManager();
 
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
@@ -346,11 +346,11 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                         <MoreVertical className="size-5 text-muted-foreground" />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent
+                    <PopoverContent 
                       align="end"
                       className="w-64 p-0 rounded-lg shadow-lg border border-[#F0F0F0]"
                     >
-                      <>
+                    
                         <button
                           className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
                           onClick={() => {
@@ -431,7 +431,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                 </Popover>
               </TableCell>
             </TableRow>
-          ))}
+          )))}
         </TableBody>
       </Table>
 

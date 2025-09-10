@@ -2,7 +2,7 @@
 import { useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 import { queryClient } from "@/lib/queryClient"; // Import the queryClient we created
 
 import {
