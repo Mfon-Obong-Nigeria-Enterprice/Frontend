@@ -2,6 +2,8 @@ import { create } from "zustand";
 import type { Role } from "@/types/types";
 
 export interface CompanyUser {
+  status: string;
+  location: string;
   _id: string;
   name: string;
   address: string;

@@ -1,114 +1,83 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 // features/dashboard/manager/components/ManagerSettings.tsx
-import { useState, useEffect } from "react";
 import { SystemPreferencesForm } from "./component/SystemPreferanceForm.tsx";
 import { ClientAccountSettingsForm } from "./component/ClientAccountSettingsForm";
 import { NotificationSettingsSection1 } from "./component/NotificationSettings1";
 import { AlertSettingsSection1 } from "./component/AlertSettingsSection1";
-import type { Settings, AlertAndNotificationSettings } from "@/types/types";
-import { toast } from "react-toastify";
+import { useSettingsStore } from "@/stores/useSettingsStore";
+import type { AlertAndNotificationSettings } from "@/schemas/SettingsSchemas";
 
 export default function ManagerSettings() {
-  const [settings, setSettings] = useState<Settings>({
-    alerts: {
-      lowStockAlerts: true,
-      newProductNotifications: true,
-      expirationReminders: true,
-      clientsDebtsAlert: true,
-      CustomThresholdAlerts: true,
-      LargeBalanceAlertThreshold: true,
-      PriceChangeNotification: false,
-      dashboardNotification: false,
-      emailNotification: false,
-      inactivityAlerts: true,
-      systemHealthAlerts: false,
-      userLoginNotifications: false,
-    },
-    system: {
-      lowStockAlertThreshold: 15,
-      maximumDiscount: 10,
-      bulkDiscountThreshold: 10000,
-      minimumPurchaseForBulkDiscount: 500,
-      allowNegativeBalances: false,
-      largeBalanceThreshold: 50000,
-    },
-    clientAccount: {
-      defaultCreditLimit: 800000,
-      inactivePeriodDays: 30,
-    },
-  });
+  const {
+    currentSettings,
+    loading,
+    error,
+    setAlertSetting,
+    setSystemPreferences,
+    setClientAccountSettings,
+  } = useSettingsStore();
 
-  // Load settings from localStorage on component mount
-  useEffect(() => {
-    const savedSettings = localStorage.getItem("app-settings");
-    if (savedSettings) {
-      try {
-        const parsedSettings = JSON.parse(savedSettings);
-        setSettings(parsedSettings);
-      } catch (error) {
-        toast.error("Failed to load settings from localStorage");
-      }
-    }
-  }, []);
+  // Note: Removed fetchSettings() since there's no /settings API endpoint
 
-  // Save settings to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem("app-settings", JSON.stringify(settings));
-  }, [settings]);
-
-  const handleAlertSettingChange = (
-    key: keyof AlertAndNotificationSettings,
-    value: boolean
-  ) => {
-    // Update local state only - no API call
-    setSettings((prev) => ({
-      ...prev,
-      alerts: {
-        ...prev.alerts,
-        [key]: value,
-      },
-    }));
+  const handleAlertSettingChange = (key: keyof AlertAndNotificationSettings, value: boolean) => {
+    setAlertSetting(key, value);
   };
 
   const handleSystemThresholdChange = (key: string, value: number) => {
-    // Update local state only - no API call
-    setSettings((prev) => ({
-      ...prev,
-      system: {
-        ...prev.system,
-        [key]: value,
-      },
-    }));
+    setSystemPreferences({
+      ...currentSettings.system,
+      [key]: value,
+    });
   };
 
   const handleClientAccountChange = (key: string, value: number) => {
-    // Update local state only - no API call
-    setSettings((prev) => ({
-      ...prev,
-      clientAccount: {
-        ...prev.clientAccount,
-        [key]: value,
-      },
-    }));
+    setClientAccountSettings({
+      ...currentSettings.clientAccount,
+      [key]: value,
+    });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen py-8 px-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen py-8 px-4 flex items-center justify-center">
+        <div className="text-center text-red-600">
+          <p>Error loading settings: {error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen py-8 px-4">
       <div className="max-w-6xl mx-auto space-y-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            System Configuration
-          </h1>
-          <p className="text-gray-600">Manage your system preferences</p>
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              System Configuration
+            </h1>
+            <p className="text-gray-600">
+              Manage your system preferences and notification settings
+            </p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <SystemPreferencesForm
-            settings={settings.system || {}}
+          <SystemPreferencesForm 
+            settings={currentSettings.system}
             onThresholdChange={handleSystemThresholdChange}
           />
-          <ClientAccountSettingsForm
-            settings={settings.clientAccount || {}}
+          <ClientAccountSettingsForm 
+            settings={currentSettings.clientAccount}
             onThresholdChange={handleClientAccountChange}
           />
         </div>
@@ -118,7 +87,7 @@ export default function ManagerSettings() {
             Alert Preferences
           </h2>
           <AlertSettingsSection1
-            settings={settings}
+            settings={currentSettings}
             onSettingChange={handleAlertSettingChange}
             onThresholdChange={handleSystemThresholdChange}
           />
@@ -129,7 +98,7 @@ export default function ManagerSettings() {
             Notification Preferences
           </h2>
           <NotificationSettingsSection1
-            settings={settings}
+            settings={currentSettings}
             onSettingChange={handleAlertSettingChange}
           />
         </div>

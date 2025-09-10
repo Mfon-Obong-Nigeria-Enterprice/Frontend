@@ -1,38 +1,28 @@
-import { useState } from "react";
+// src/components/UserOverview.tsx
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useUserStore } from "@/stores/useUserStore";
 
 // components
-import UserTable from "./usertable";
+import UserTable from "../usertable";
 import CreateUserModal from "./modals/createusermodal";
 import EditUserModal from "./modals/EditUserModal";
+import UserSearchList from "../UserSearchList"; 
 import Modal from "@/components/Modal";
 
 // ui components
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-} from "@/components/ui/select";
 
 // icons
 import {
-  Search,
   ExternalLink,
   MoreVertical,
-  MapPin,
-  Users,
-  CalendarDays,
-  Zap,
   Plus,
 } from "lucide-react";
 import { MdOutlineHome } from "react-icons/md";
@@ -50,15 +40,117 @@ type UserDataProps = {
         name: string;
       }
     | string;
+  isActive?: boolean;
+  isBlocked?: boolean;
+  createdAt?: string;
+  branch?: string;
+  location?: string;
+  profilePicture?: string;
 };
 
 const UserOverview = () => {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const { users } = useUserStore();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedUserData, setSelectedUserData] =
-    useState<UserDataProps | null>(null);
+  const [selectedUserData, setSelectedUserData] = useState<UserDataProps | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState({
+    role: "all",
+    location: "all",
+    dateRange: "all",
+    status: "all"
+  });
+
+  // Get unique roles and locations from actual user data
+  const roles = useMemo(() => {
+    const uniqueRoles = Array.from(new Set(users.map(user => user.role)));
+    return uniqueRoles;
+  }, [users]);
+
+  const locations = useMemo(() => {
+    const uniqueLocations = Array.from(new Set(users.map(user => user.location || user.branch || "")));
+    return uniqueLocations.filter(loc => loc !== "");
+  }, [users]);
+
+  // Filter users based on search and filters
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        if (!user.name.toLowerCase().includes(query) &&
+            !user.email.toLowerCase().includes(query) &&
+            !user.role.toLowerCase().includes(query) &&
+            !(user.branch && user.branch.toLowerCase().includes(query))) {
+          return false;
+        }
+      }
+      
+      // Role filter
+      if (filters.role !== "all" && user.role !== filters.role) {
+        return false;
+      }
+      
+      // Location filter - check both location and branch fields
+      if (filters.location !== "all") {
+        const userLocation = user.location || user.branch || "";
+        if (userLocation !== filters.location) {
+          return false;
+        }
+      }
+      
+      // Status filter
+      if (filters.status !== "all") {
+        if (filters.status === "active" && (!user.isActive || user.isBlocked)) {
+          return false;
+        }
+        if (filters.status === "inactive" && (user.isActive || user.isBlocked)) {
+          return false;
+        }
+        if (filters.status === "suspended" && !user.isBlocked) {
+          return false;
+        }
+        if (filters.status === "pending") {
+          // For pending status, check if user is neither active nor blocked
+          if (user.isActive || user.isBlocked) return false;
+        }
+      }
+      
+      // Date range filter
+      if (filters.dateRange !== "all") {
+        const createdDate = new Date(user.createdAt);
+        const now = new Date();
+        const diffTime = now.getTime() - createdDate.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        switch (filters.dateRange) {
+          case "today":
+            if (diffDays > 0) return false;
+            break;
+          case "week":
+            if (diffDays > 7) return false;
+            break;
+          case "month":
+            if (diffDays > 30) return false;
+            break;
+          default:
+            break;
+        }
+      }
+      
+      return true;
+    });
+  }, [users, searchQuery, filters]);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleFilterChange = (filterName: string, value: string) => {
+    setFilters(prev => ({ ...prev, [filterName]: value }));
+  };
 
   const handleEditUser = (userData: UserDataProps) => {
     setSelectedUserData(userData);
@@ -102,7 +194,9 @@ const UserOverview = () => {
                 className="w-64 p-0 rounded-lg shadow-lg border border-[#F0F0F0] cursor-pointer"
               >
                 <>
-                  <button className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-t-lg font-medium">
+                  <button
+                    className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-t-lg font-medium"
+                  >
                     <span className="flex-1 text-left">
                       {">  "} Export All Users
                     </span>
@@ -161,125 +255,15 @@ const UserOverview = () => {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row justify-between gap-6 px-4 py-5 font-sans w-full">
-        {/* Search Input with Icon - full width on large screens, smaller height */}
-        <div className="relative w-full mb-2 lg:mb-0 flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground ">
-            <Search className="size-5" />
-          </span>
-          <Input
-            type="text"
-            placeholder="Search"
-            className="pl-10 pr-4 py-5 rounded-lg border border-[#E0E0E0] w-full text-sm bg-[#F9F9F9] text-[#444] placeholder:text-[#B0B0B0]"
-          />
-        </div>
-        {/* Filters row - below search on tablet, beside on desktop */}
-        <div className="flex flex-col md:flex-row gap-2 w-full lg:w-auto flex-1">
-          <div className="flex gap-2 w-full overflow-x-auto scrollbar-hide md:overflow-visible">
-            <Select>
-              {/* <Select value={selectedRole} onValueChange={setSelectedRole}> */}
-              <SelectTrigger className="w-full md:w-40 flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-[#F9F9F9] text-[#444] text-sm font-medium">
-                <Users className="size-4 text-muted-foreground" />
-                {/* <span>
-                  {selectedRole === "all" ? "All Roles" : selectedRole}
-                </span> */}
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  {/* {roles.map((role) => (
-                    <SelectItem
-                      key={
-                        typeof role === "string"
-                          ? role
-                          : role.id || role._id || role.name
-                      }
-                      value={typeof role === "string" ? role : role.name}
-                    >
-                      {typeof role === "string" ? role : role.name}
-                    </SelectItem>
-                  ))} */}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <Select>
-              {/* <Select
-              value={selectedLocation}
-              onValueChange={setSelectedLocation}
-            > */}
-              <SelectTrigger className="w-full md:w-40 flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-[#F9F9F9] text-[#444] text-sm font-medium">
-                <MapPin className="size-4 text-muted-foreground" />
-                {/* <span> */}
-                {/* {selectedLocation === "all"
-                    ? "All Locations"
-                    : selectedLocation}
-                </span> */}
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">All Locations</SelectItem>
-                  {/* {locations.map((loc) => (
-                    <SelectItem
-                      key={
-                        typeof loc === "string"
-                          ? loc
-                          : loc.id || loc._id || loc.name
-                      }
-                      value={typeof loc === "string" ? loc : loc.name}
-                    >
-                      {typeof loc === "string" ? loc : loc.name} */}
-                  {/* </SelectItem>
-                  ))} */}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <Select
-            //   value={selectedDateRange}
-            //   onValueChange={setSelectedDateRange}
-            >
-              <SelectTrigger className="w-full md:w-40 flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-[#F9F9F9] text-[#444] text-sm font-medium">
-                <CalendarDays className="size-4 text-muted-foreground" />
-                {/* <span>
-                  {selectedDateRange === "all"
-                    ? "Date Range"
-                    : selectedDateRange}
-                </span> */}
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">Date Range</SelectItem>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="week">This Week</SelectItem>
-                  <SelectItem value="month">This Month</SelectItem>
-                  <SelectItem value="custom">Custom Range</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <Select
-            //   value={selectedStatus} onValueChange={setSelectedStatus}
-            >
-              <SelectTrigger className="w-full md:w-40 flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-[#F9F9F9] text-[#444] text-sm font-medium">
-                <Zap className="size-4 text-muted-foreground fill-[#7D7D7D]" />
-                {/* <span>
-                  {selectedStatus === "all" ? "All Status" : selectedStatus}
-                </span> */}
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
+      {/* Use the UserSearchList component */}
+      <UserSearchList 
+        onSearch={handleSearch}
+        onFilterChange={handleFilterChange}
+        roles={roles}
+        locations={locations}
+      />
 
-      {/* user table */}
-      <UserTable onEditUser={handleEditUser} />
+      <UserTable users={filteredUsers} onEditUser={handleEditUser} />
 
       {/* create new user modal */}
       {isCreateModalOpen && (
