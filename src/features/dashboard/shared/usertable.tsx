@@ -5,7 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
 import { useModalStore } from "@/stores/useModalStore";
-import { useColumnSettingsStore } from "@/stores/useColumnSettingsStore";
+// Replace Zustand store with React Query hook
+import { useColumnSettingsManager } from "@/hooks/useColumnSettings";
 
 import {
   Table,
@@ -58,8 +59,9 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
   const activityLogs = useActivityLogsStore((s) => s.activities);
   const { openDelete, openStatus } = useModalStore();
 
-  // Get column settings from store
-  const { getVisibleColumnsInOrder } = useColumnSettingsStore();
+  // Use React Query hook instead of Zustand store
+  const { getVisibleColumnsInOrder, isLoading: columnSettingsLoading } =
+    useColumnSettingsManager();
 
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
 
@@ -356,10 +358,10 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                               (u) => u._id === user._id
                             );
 
-                            const url =
-                              currentUser?.role === "MAINTAINER"
-                                ? "maintainer"
-                                : "manager";
+                        const url =
+                          currentUser?.role === "MAINTAINER"
+                            ? "maintainer"
+                            : "manager";
 
                             navigate(
                               `/${url}/dashboard/user-management/${user._id}`,
@@ -394,48 +396,42 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                           <ExternalLink className="size-4 text-muted-foreground" />
                         </button>
 
-                        {user.isBlocked ? (
-                          <button
-                            className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
-                            onClick={() => {
-                              openStatus(user._id, user.name, "enable");
-                              setPopoverOpen(null);
-                            }}
-                          >
-                            <span className="flex-1 text-left">
-                              Enable User
-                            </span>
-                          </button>
-                        ) : (
-                          <button
-                            className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
-                            onClick={() => {
-                              openStatus(user._id, user.name, "suspend");
-                              setPopoverOpen(null);
-                            }}
-                          >
-                            <span className="flex-1 text-left">
-                              Suspend User
-                            </span>
-                          </button>
-                        )}
+                    {user.isBlocked ? (
+                      <button
+                        className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
+                        onClick={() => {
+                          openStatus(user._id, user.name, "enable");
+                          setPopoverOpen(null);
+                        }}
+                      >
+                        <span className="flex-1 text-left">Enable User</span>
+                      </button>
+                    ) : (
+                      <button
+                        className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
+                        onClick={() => {
+                          openStatus(user._id, user.name, "suspend");
+                          setPopoverOpen(null);
+                        }}
+                      >
+                        <span className="flex-1 text-left">Suspend User</span>
+                      </button>
+                    )}
 
-                        <button
-                          className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium text-red-600"
-                          onClick={() => {
-                            openDelete(user._id, user.name);
-                            setPopoverOpen(null);
-                          }}
-                        >
-                          <span className="flex-1 text-left">Delete User</span>
-                        </button>
-                      </>
-                    </PopoverContent>
-                  </Popover>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
+                    <button
+                      className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium text-red-600"
+                      onClick={() => {
+                        openDelete(user._id, user.name);
+                        setPopoverOpen(null);
+                      }}
+                    >
+                      <span className="flex-1 text-left">Delete User</span>
+                    </button>
+                  </PopoverContent>
+                </Popover>
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
 

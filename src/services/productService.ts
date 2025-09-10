@@ -1,10 +1,10 @@
+// @/services/productService.ts
 import api from "./baseApi";
-import type { Product, NewProduct, ProductUpdatePricePayload } from "@/types/types";
+import type { Product, NewProduct } from "@/types/types";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 export const getAllProducts = async (): Promise<Product[]> => {
   const response = await api.get("/products");
-
   return response.data ?? [];
 };
 
@@ -12,7 +12,6 @@ export const getAllProductsByBranch = async (
   branchId?: string
 ): Promise<Product[]> => {
   const url = branchId ? `/products/branch/${branchId}` : `/products/branch/`; // Let interceptor handle this
-
   const response = await api.get(url);
   return response.data ?? [];
 };
@@ -34,12 +33,8 @@ export const updateProduct = async (
   return response.data;
 };
 
-export const updateProductPrice = async (
-  payload: ProductUpdatePricePayload
-): Promise<Product> => {
-  // Use the general update endpoint with only price information
-  const response = await api.patch(`/products/${payload.productId}`, {
-    unitPrice: payload.newPrice
-  });
+// New delete product function
+export const deleteProduct = async (id: string): Promise<void> => {
+  const response = await api.delete(`/products/${id}/delete`);
   return response.data;
 };

@@ -1,5 +1,10 @@
+// @/providers/AppProvider.tsx
 import { useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { queryClient } from "@/lib/queryClient"; // Import the queryClient we created
+
 import {
   getAllProducts,
   getAllProductsByBranch,
@@ -23,7 +28,8 @@ import { useUserStore } from "@/stores/useUserStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
 
-export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
+// Data Provider Component (your existing logic)
+const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const { user, loading: isAuthLoading } = useAuthStore();
 
   // Get store setters only
@@ -137,8 +143,6 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   }, [branchesQuery.data, branchesQuery.dataUpdatedAt, branchesQuery.isSuccess, isAdminOrSuperAdmin, setBranches, user?.role]);
 
   useEffect(() => {
-
-
     if (usersQuery.data && usersQuery.isSuccess && isAdminOrSuperAdmin) {
       if (
         usersQuery.data &&
@@ -171,4 +175,18 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   return <>{children}</>;
 };
 
+// Main App Provider that wraps everything
+export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppDataProvider>{children}</AppDataProvider>
+      {/* Only show devtools in development */}
+      {process.env.NODE_ENV === "development" && (
+        <ReactQueryDevtools initialIsOpen={false} />
+      )}
+    </QueryClientProvider>
+  );
+};
+
+// Keep the old export for backward compatibility
 export { AppProviderOptimized as AppProvider };

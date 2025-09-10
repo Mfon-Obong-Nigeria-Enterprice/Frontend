@@ -1,4 +1,6 @@
-import { useMemo, useState, useCallback } from "react";
+// Debug version of ColumnSettings component with better error handling
+
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -9,7 +11,12 @@ import {
 } from "@/stores/useActivityLogsStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useUserStore } from "@/stores/useUserStore";
-import { useColumnSettingsStore } from "@/stores/useColumnSettingsStore";
+// Use React Query hook instead of Zustand store
+import {
+  useColumnSettingsManager,
+  // debugColumnSettings,
+} from "@/hooks/useColumnSettings";
+import { type ColumnType, INITIAL_COLUMNS } from "@/services/columnSettingsAPI";
 import {
   filterUsers,
   formatRelativeDate,
@@ -33,19 +40,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const INITIAL_COLUMNS = [
-  "User ID",
-  "User Details",
-  "Roles",
-  "Permission",
-  "Status",
-  "Last Login",
-  "Location",
-  "Created",
-];
-
-type ColumnType = (typeof INITIAL_COLUMNS)[number];
 type Source = "visible" | "hidden";
+
+// Debug component to show current state
 
 // Memoized table cell renderer for preview
 type PreviewTableCellProps = {
@@ -219,15 +216,17 @@ export default function ColumnSettings() {
   const activityLogs = useActivityLogsStore((s) => s.activities);
   const navigate = useNavigate();
 
-  // Column settings store
+  // Use React Query hook for column settings
   const {
+    settings,
     visibleColumns,
     hiddenColumns,
-    hideColumn,
-    showColumn,
+    saveSettings,
     resetToDefault,
-    getVisibleColumnsInOrder,
-  } = useColumnSettingsStore();
+    isLoading,
+    isSaving,
+    isResetting,
+  } = useColumnSettingsManager();
 
   const [openDiscardModal, setOpenDiscardModal] = useState(false);
   const [dragging, setDragging] = useState<{
@@ -235,6 +234,58 @@ export default function ColumnSettings() {
     from: Source;
   } | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Initialize local state properly with ALL columns
+  const [localVisibleColumns, setLocalVisibleColumns] = useState<ColumnType[]>(
+    () => {
+      if (visibleColumns && visibleColumns.length > 0) {
+        return [...visibleColumns];
+      }
+      return [...INITIAL_COLUMNS]; // Default to all columns visible
+    }
+  );
+
+  const [localHiddenColumns, setLocalHiddenColumns] = useState<ColumnType[]>(
+    () => {
+      if (hiddenColumns) {
+        return [...hiddenColumns];
+      }
+      return []; // Default to no hidden columns
+    }
+  );
+
+  const [localColumnOrder, setLocalColumnOrder] = useState<ColumnType[]>(() => {
+    if (settings.columnOrder && settings.columnOrder.length > 0) {
+      return [...settings.columnOrder];
+    }
+    return [...INITIAL_COLUMNS]; // Default order
+  });
+
+  // Update local state when server state changes
+  useEffect(() => {
+    if (visibleColumns && visibleColumns.length > 0) {
+      setLocalVisibleColumns([...visibleColumns]);
+    } else {
+      // Ensure all columns are accounted for if visibleColumns is empty
+      setLocalVisibleColumns([...INITIAL_COLUMNS]);
+    }
+
+    if (hiddenColumns) {
+      setLocalHiddenColumns([...hiddenColumns]);
+    } else {
+      setLocalHiddenColumns([]);
+    }
+
+    if (settings.columnOrder && settings.columnOrder.length > 0) {
+      setLocalColumnOrder([...settings.columnOrder]);
+    } else {
+      setLocalColumnOrder([...INITIAL_COLUMNS]);
+    }
+
+    setHasUnsavedChanges(false);
+  }, [visibleColumns, hiddenColumns, settings]);
+
+  // Debug effect
 
   // Filter users according to current user's role - memoized
   const filteredUsers = useMemo(
@@ -315,57 +366,53 @@ export default function ColumnSettings() {
       if (to === from) return;
 
       if (from === "visible" && to === "hidden") {
-        if (hiddenColumns.length >= 3) {
+        if (localHiddenColumns.length >= 3) {
           toast.warn("You can't hide more than 3 columns");
           setDragging(null);
           return;
         }
-        try {
-          hideColumn(col);
-          setHasUnsavedChanges(true);
-        } catch (error) {
-          toast.error((error as Error).message);
-        }
+
+        setLocalVisibleColumns((prev) => prev.filter((c) => c !== col));
+        setLocalHiddenColumns((prev) => [...prev, col]);
+        setHasUnsavedChanges(true);
       }
 
       if (from === "hidden" && to === "visible") {
-        showColumn(col);
+        setLocalHiddenColumns((prev) => prev.filter((c) => c !== col));
+        setLocalVisibleColumns((prev) => [...prev, col]);
         setHasUnsavedChanges(true);
       }
 
       setDragging(null);
     },
-    [dragging, hiddenColumns.length, hideColumn, showColumn]
+    [dragging, localHiddenColumns.length]
   );
 
   const handleCheckboxChange = useCallback(
     (col: ColumnType, checked: boolean) => {
       if (!checked) {
-        if (hiddenColumns.length >= 3) {
+        if (localHiddenColumns.length >= 3) {
           toast.warn("You can't hide more than 3 columns");
           return;
         }
-        try {
-          hideColumn(col);
-          setHasUnsavedChanges(true);
-        } catch (error) {
-          toast.error((error as Error).message);
-        }
+
+        setLocalVisibleColumns((prev) => prev.filter((c) => c !== col));
+        setLocalHiddenColumns((prev) => [...prev, col]);
+        setHasUnsavedChanges(true);
       } else {
-        showColumn(col);
+        setLocalHiddenColumns((prev) => prev.filter((c) => c !== col));
+        setLocalVisibleColumns((prev) => [...prev, col]);
         setHasUnsavedChanges(true);
       }
     },
-    [hiddenColumns.length, hideColumn, showColumn]
+    [localHiddenColumns.length]
   );
 
-  const handleRemoveFromHidden = useCallback(
-    (col: ColumnType) => {
-      showColumn(col);
-      setHasUnsavedChanges(true);
-    },
-    [showColumn]
-  );
+  const handleRemoveFromHidden = useCallback((col: ColumnType) => {
+    setLocalHiddenColumns((prev) => prev.filter((c) => c !== col));
+    setLocalVisibleColumns((prev) => [...prev, col]);
+    setHasUnsavedChanges(true);
+  }, []);
 
   const handleResetToDefault = useCallback(() => {
     resetToDefault();
@@ -373,9 +420,39 @@ export default function ColumnSettings() {
   }, [resetToDefault]);
 
   const handleSaveChanges = useCallback(() => {
+    const newSettings = {
+      visibleColumns: localVisibleColumns,
+      hiddenColumns: localHiddenColumns,
+      columnOrder: localColumnOrder,
+    };
+
+    console.log("Attempting to save:", newSettings);
+    // debugColumnSettings(newSettings, "Attempting to Save");
+
+    // Make sure all columns are accounted for
+    const allLocalColumns = [...localVisibleColumns, ...localHiddenColumns];
+    const missingColumns = INITIAL_COLUMNS.filter(
+      (col) => !allLocalColumns.includes(col)
+    );
+
+    if (missingColumns.length > 0) {
+      console.error("Missing columns detected:", missingColumns);
+      // Add missing columns to visible columns
+      const fixedSettings = {
+        visibleColumns: [...localVisibleColumns, ...missingColumns],
+        hiddenColumns: localHiddenColumns,
+        columnOrder: localColumnOrder,
+      };
+
+      console.log("Fixed settings:", fixedSettings);
+      setLocalVisibleColumns(fixedSettings.visibleColumns);
+      saveSettings(fixedSettings);
+    } else {
+      saveSettings(newSettings);
+    }
+
     setHasUnsavedChanges(false);
-    toast.success("Column settings saved successfully!");
-  }, []);
+  }, [saveSettings, localVisibleColumns, localHiddenColumns, localColumnOrder]);
 
   const handleCancel = useCallback(() => {
     if (hasUnsavedChanges) {
@@ -386,17 +463,22 @@ export default function ColumnSettings() {
   }, [hasUnsavedChanges, navigate]);
 
   const confirmDiscard = useCallback(() => {
-    window.location.reload();
-  }, []);
+    // Reset local state to server state
+    setLocalVisibleColumns(visibleColumns);
+    setLocalHiddenColumns(hiddenColumns);
+    setLocalColumnOrder(settings.columnOrder);
+    setHasUnsavedChanges(false);
+    navigate(-1);
+  }, [visibleColumns, hiddenColumns, settings.columnOrder, navigate]);
 
   const closeModal = useCallback(() => {
     setOpenDiscardModal(false);
   }, []);
 
-  // Get ordered visible columns - memoized
+  // Get ordered visible columns - use local state for preview
   const orderedVisibleColumns = useMemo(
-    () => getVisibleColumnsInOrder(),
-    [getVisibleColumnsInOrder]
+    () => localColumnOrder.filter((col) => localVisibleColumns.includes(col)),
+    [localColumnOrder, localVisibleColumns]
   );
 
   // Preview data - only show first 4 users for performance
@@ -405,20 +487,35 @@ export default function ColumnSettings() {
     [usersWithActivities]
   );
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="p-2 md:p-6 space-y-3 bg-gray-50">
+        <div className="flex items-center justify-center py-8">
+          <div className="text-muted-foreground">
+            Loading column settings...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-2 md:p-6 space-y-3 bg-gray-50">
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg md:text-2xl font-semibold">Columns Settings</h2>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2 cursor-pointer"
-          onClick={() => navigate(-1)}
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Back to User List
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 cursor-pointer"
+            onClick={() => navigate(-1)}
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back to User List
+          </Button>
+        </div>
       </div>
 
       {/* TIP BAR */}
@@ -459,7 +556,7 @@ export default function ColumnSettings() {
             onDragOver={handleDragOver}
             onDrop={() => handleDrop("visible")}
           >
-            {visibleColumns.map((col) => (
+            {localVisibleColumns.map((col) => (
               <DraggableColumnItem
                 key={col}
                 col={col}
@@ -493,7 +590,7 @@ export default function ColumnSettings() {
             onDragOver={handleDragOver}
             onDrop={() => handleDrop("hidden")}
           >
-            {hiddenColumns.length === 0 ? (
+            {localHiddenColumns.length === 0 ? (
               <div className="flex items-center justify-center h-full text-gray-400 text-sm">
                 Drop Columns here to hide them
                 <br />
@@ -501,7 +598,7 @@ export default function ColumnSettings() {
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {hiddenColumns.map((col) => (
+                {localHiddenColumns.map((col) => (
                   <DraggableColumnItem
                     key={col}
                     col={col}
@@ -523,7 +620,7 @@ export default function ColumnSettings() {
                 <span
                   key={col}
                   className={`px-3 py-1 rounded-md text-sm border cursor-default ${
-                    visibleColumns.includes(col)
+                    localVisibleColumns.includes(col)
                       ? "bg-white border-[#D9D9D9] text-[#7D7D7D] text-sm font-light"
                       : "bg-green-100 border-green-300 text-green-800 text-sm font-light"
                   }`}
@@ -583,8 +680,12 @@ export default function ColumnSettings() {
 
       {/* ACTION BUTTONS */}
       <div className="flex justify-end gap-3">
-        <Button variant="outline" onClick={handleResetToDefault}>
-          Reset to Default
+        <Button
+          variant="outline"
+          onClick={handleResetToDefault}
+          disabled={isResetting}
+        >
+          {isResetting ? "Resetting..." : "Reset to Default"}
         </Button>
         <Button variant="outline" onClick={handleCancel}>
           Cancel
@@ -592,8 +693,9 @@ export default function ColumnSettings() {
         <Button
           className="bg-green-600 hover:bg-green-700"
           onClick={handleSaveChanges}
+          disabled={isSaving || !hasUnsavedChanges}
         >
-          Save Changes
+          {isSaving ? "Saving..." : "Save Changes"}
         </Button>
       </div>
 

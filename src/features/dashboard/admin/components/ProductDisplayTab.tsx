@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { Pencil, Trash2, MoveUp, MoveDown } from "lucide-react";
 import { useInventoryStore } from "@/stores/useInventoryStore";
-import { updateProduct } from "@/services/productService";
+import { updateProduct, deleteProduct } from "@/services/productService"; // Import deleteProduct
 import { type Product, type NewProduct } from "@/types/types"; // Import Product and Category types
 import {
   // Shadcn UI components
@@ -24,6 +24,8 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import Modal from "@/components/Modal"; // Assuming this Modal component exists
 import { newProductSchema } from "@/schemas/productSchema";
 import { useAuthStore } from "@/stores/useAuthStore"; // Import useAuthStore hook
+import { isAxiosError } from "axios";
+
 interface ProductDisplayProps {
   product: Product; // IMPORTANT: Use the Product type directly from types.ts
 }
@@ -130,27 +132,34 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
       toast.success("Product updated successfully");
       setEditMode(false); // Close modal on success
     } catch (err) {
-      toast.error("Failed to update product" + err);
+      toast.error("Failed to update product: " + err);
     } finally {
       setIsLoading(false); // Ensure loading is off regardless of outcome
     }
   };
 
-  // IMPORTANT: Function to handle product deletion
+  // UPDATED: Function to handle product deletion with proper API call
   const handleDelete = async () => {
     try {
       setIsLoading(true);
 
-      // For example: await deleteProduct(product._id); // You need to implement this service
+      // Call the delete API endpoint
+      await deleteProduct(product._id);
 
       // Remove from Zustand store to update UI immediately
       removeProductFromStore(product._id);
+
       toast.success("Product deleted successfully");
+      setIsDeleteModalOpen(false); // Close modal on success
     } catch (error) {
-      toast.error("Failed to delete product" + error);
+      if (isAxiosError(error) && error.response) {
+        console.error("Delete product error:", error);
+        toast.error(
+          "Failed to delete product: " + (error?.message || "Unknown error")
+        );
+      }
     } finally {
       setIsLoading(false);
-      setIsDeleteModalOpen(false); // Always close delete modal
     }
   };
 
@@ -329,12 +338,12 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
           <div className="flex gap-3">
             <Pencil
               size={16}
-              className="text-orange-500 cursor-pointer"
+              className="text-orange-500 cursor-pointer hover:text-orange-600"
               onClick={() => setEditMode(true)}
             />
             <Trash2
               size={16}
-              className="text-[#7d7d7d] cursor-pointer"
+              className="text-[#7d7d7d] cursor-pointer hover:text-red-500"
               onClick={() => setIsDeleteModalOpen(true)}
             />
           </div>
@@ -403,35 +412,47 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
         )}
       </div>
 
-      {/* Loading overlay for edit form */}
+      {/* Loading overlay for operations */}
       {isLoading && <LoadingSpinner />}
 
-      {/* Delete warning modal */}
+      {/* Delete confirmation modal */}
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         size="sm"
       >
         <div className="flex flex-col justify-center items-center gap-3 py-5">
-          <p className="">
-            Are you sure you want to delete{" "}
-            <span className="font-semibold">{product.name}</span>?
-          </p>
-          <div className="flex gap-3 items-center">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Delete Product
+            </h3>
+            <p className="text-gray-600">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-gray-900">
+                {product.name}
+              </span>
+              ?
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              This action cannot be undone.
+            </p>
+          </div>
+          <div className="flex gap-3 items-center mt-4">
             <Button
               variant="outline"
               onClick={() => setIsDeleteModalOpen(false)}
-              type="button" // Important: Prevents accidental form submission
+              disabled={isLoading}
+              type="button"
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
-              onClick={handleDelete} // Call the handleDelete function
+              onClick={handleDelete}
               disabled={isLoading}
-              type="button" // Important: Prevents accidental form submission
+              type="button"
             >
-              {isLoading ? <LoadingSpinner /> : "Yes, Delete"}
+              {isLoading ? "Deleting" : "Yes, Delete"}
             </Button>
           </div>
         </div>

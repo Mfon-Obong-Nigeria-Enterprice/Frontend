@@ -11,9 +11,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 //  icons
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Package } from "lucide-react";
 
 const MobileSalesActivity = ({
   filteredTransactions,
@@ -21,19 +22,34 @@ const MobileSalesActivity = ({
   filteredTransactions: Transaction[];
 }) => {
   return (
-    <div className="md:hidden">
-      <table className="w-full">
-        <tbody>
-          {filteredTransactions && filteredTransactions?.length > 0 ? (
-            filteredTransactions?.map((transaction, i) => (
-              <tr
-                key={transaction._id + i}
-                className="h-[65px] border-b border-[#D9D9D9]"
-              >
-                <td className="text-[#444444] text-base pl-5 md:pl-10">
+    <div className="md:hidden space-y-2 mt-2">
+      {filteredTransactions && filteredTransactions?.length > 0 ? (
+        filteredTransactions?.map((transaction, i) => (
+          <Card key={transaction._id + i} className="border-[#D9D9D9]">
+            <CardContent className="py-2 px-4">
+              {/* Client Name */}
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <span className="text-[#444444] text-base font-medium">
                   {transaction.clientId?.name || transaction.walkInClientName}
-                </td>
-                <td className="text-[#444444] text-base min-w-30">
+                </span>
+                <div className="flex items-center gap-1 text-[#666] text-sm">
+                  <span className="uppercase">
+                    {new Date(transaction.createdAt).toLocaleTimeString(
+                      "en-NG",
+                      {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                      }
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* Items */}
+              <div className="flex items-start gap-2 mb-3">
+                <Package className="w-4 h-4 text-[#666] mt-0.5" />
+                <div className="text-[#444444] text-base">
                   {transaction.items.length > 0 && (
                     <>
                       <span>
@@ -45,62 +61,63 @@ const MobileSalesActivity = ({
                           <PopoverTrigger asChild>
                             <Button
                               variant="ghost"
-                              size="icon"
-                              className="ml-1"
+                              size="sm"
+                              className="ml-1 h-auto p-1"
                             >
                               <ChevronDown className="w-4 h-4" />
+                              <span className="ml-1 text-sm">
+                                +{transaction.items.length - 1} more
+                              </span>
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="text-sm max-w-60">
-                            {transaction.items
-                              .slice(1)
-                              .map(
-                                (item, index) =>
-                                  `${item.quantity}x ${item.productName}${
-                                    index < transaction.items.length - 2
-                                      ? ", "
-                                      : ""
-                                  }`
-                              )}
+                            <div className="space-y-1">
+                              {transaction.items.slice(1).map((item, index) => (
+                                <div key={index}>
+                                  {item.quantity}x {item.productName}
+                                </div>
+                              ))}
+                            </div>
                           </PopoverContent>
                         </Popover>
                       )}
                     </>
                   )}
-                </td>
-                <td className={balanceTextClass(transaction.total)}>
-                  {formatCurrency(transaction.total)}
-                </td>
-                <td className="uppercase text-[#444444] text-base text-right pr-5 md:pr-10">
-                  {new Date(transaction.createdAt).toLocaleTimeString("en-NG", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: true,
-                  })}
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={4}>
-                <div className="flex flex-col items-center justify-center py-10 text-center text-[#666]">
-                  {/* Icon */}
-                  <div className="w-12 h-12 rounded-full bg-[#F5F5F5] flex items-center justify-center mb-3">
-                    <ChevronDown className="w-6 h-6 text-[#A1A1A1] rotate-90" />
-                  </div>
-                  {/* Title */}
-                  <p className="text-sm font-medium">No transactions yet</p>
-                  {/* Subtitle */}
-                  <p className="text-xs text-[#999] mt-1">
-                    Your sales activity will appear here once transactions are
-                    recorded.
-                  </p>
                 </div>
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+              </div>
+
+              {/* Total and Time */}
+              <div className="flex items-center justify-between">
+                <div
+                  className={`text-lg font-semibold ${balanceTextClass(
+                    transaction.total
+                  )}`}
+                >
+                  {formatCurrency(transaction.total)}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))
+      ) : (
+        <Card className="border-[#D9D9D9]">
+          <CardContent className="py-16">
+            <div className="flex flex-col items-center justify-center text-center text-[#666]">
+              {/* Icon */}
+              <div className="w-16 h-16 rounded-full bg-[#F5F5F5] flex items-center justify-center mb-4">
+                <Package className="w-8 h-8 text-[#A1A1A1]" />
+              </div>
+              {/* Title */}
+              <p className="text-lg font-medium mb-2">No transactions yet</p>
+              {/* Subtitle */}
+              <p className="text-sm text-[#999] max-w-xs">
+                Your sales activity will appear here once transactions are
+                recorded.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
