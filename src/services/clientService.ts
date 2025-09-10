@@ -4,12 +4,9 @@ import type { Client } from "@/types/types";
 
 type CreateClientPayload = Pick<Client, "name" | "phone" | "email" | "address">;
 
-// Simple version for all usage
-export const getAllClients = async (search?: string): Promise<Client[]> => {
+export const getAllClients = async (): Promise<Client[]> => {
   try {
-    const response = await api.get("/clients", {
-      params: search ? { search } : {},
-    });
+    const response = await api.get("/clients");
     return response.data;
   } catch (error) {
     const err = error as AxiosError;

@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useClientMutations } from "@/hooks/useClientMutations";
+import { useClientStore } from "@/stores/useClientStore"; // Add this import
 import type { Client } from "@/types/types";
 import { isAxiosError } from "axios";
 import React, { useState } from "react";
@@ -19,6 +20,7 @@ interface DeleteClientDialogProps {
   client: Client;
   onDeleteSuccess: () => void; // Optional callback for success handling
 }
+
 const DeleteClientDialog: React.FC<DeleteClientDialogProps> = ({
   open,
   onOpenChange,
@@ -26,6 +28,7 @@ const DeleteClientDialog: React.FC<DeleteClientDialogProps> = ({
   onDeleteSuccess,
 }) => {
   const { deleteMutate } = useClientMutations();
+  const { fetchClients } = useClientStore(); // Add this to force refetch
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -37,30 +40,36 @@ const DeleteClientDialog: React.FC<DeleteClientDialogProps> = ({
 
     try {
       await deleteMutate.mutateAsync(client._id);
+
+      // Force refetch clients after successful deletion
+      await fetchClients();
+
       onOpenChange(false);
       onDeleteSuccess(); // Call the success callback if provided
     } catch (err) {
+      console.error("Delete error:", err);
       if (isAxiosError(err)) {
-        toast.error("Error deleting client:", err.response?.data);
+        toast.error(
+          `Error deleting client: ${err.response?.data?.message || err.message}`
+        );
+      } else {
+        toast.error("Failed to delete client");
       }
     } finally {
       setIsDeleting(false);
     }
-    // Handle delete logic here
-    // console.log("Client deleted");
-    // Close the dialog after deletion
   };
+
   return (
     <div>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        {/* <DialogOverlay /> */}
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Client</DialogTitle>
           </DialogHeader>
           <div className="p-4">
             <p className="mb-4">
-              Are you sure you want to delete <strong>{client?.name}</strong>{" "}
+              Are you sure you want to delete <strong>{client?.name}</strong>?
               This action cannot be undone and will permanently remove the
               client from your records.
             </p>
@@ -86,7 +95,7 @@ const DeleteClientDialog: React.FC<DeleteClientDialogProps> = ({
               onClick={handleDelete}
               disabled={isDeleting}
             >
-              {isDeleting ? "Deleting..." : "Delete "}
+              {isDeleting ? "Deleting..." : "Delete"}
             </Button>
           </div>
         </DialogContent>

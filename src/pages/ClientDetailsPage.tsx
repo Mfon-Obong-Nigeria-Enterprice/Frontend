@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronUp } from "lucide-react";
+import { ChevronLeft, ChevronUp, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useClientStore } from "@/stores/useClientStore";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 
 import ClientDetailInfo from "@/components/clients/ClientDetailInfo";
@@ -33,6 +32,8 @@ import BlockUnblockClient from "@/features/dashboard/manager/BlockUnblockClient"
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { useClientQuery } from "@/hooks/useClientQueries";
+// import { useClientMutations } from "@/hooks/useClientMutations";
 
 interface ClientDetailsPageProps {
   isManagerView?: boolean;
@@ -44,8 +45,14 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
 
-  // Store hooks
-  const { clients, fetchClients, isLoading: clientsLoading } = useClientStore();
+  // Use React Query instead of Zustand for client data
+  const {
+    data: client,
+    isLoading: clientLoading,
+    error: clientError,
+  } = useClientQuery(clientId || "");
+
+  // Still use Zustand for transactions (you can migrate this to React Query later)
   const {
     transactions,
     fetchTransactions,
@@ -54,6 +61,9 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
   // Get user from auth store
   const { user } = useAuthStore();
+
+  // Use React Query mutations
+  // const { deleteMutate } = useClientMutations();
 
   // Loading state for data fetching
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -77,16 +87,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showBlockUnblockDialog, setShowBlockUnblockDialog] = useState(false);
 
-  // FIXED: Load data on component mount if not already loaded
+  // Load transactions data on component mount (you can migrate this to React Query later)
   useEffect(() => {
     const loadInitialData = async () => {
       try {
         setIsInitialLoading(true);
-
-        // Load clients if not already loaded
-        if (!clients || clients.length === 0) {
-          await fetchClients();
-        }
 
         // Load transactions if not already loaded
         if (!transactions || transactions.length === 0) {
@@ -94,16 +99,18 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         }
       } catch (error) {
         console.error("Error loading initial data:", error);
-        toast.error("Failed to load client data");
+        toast.error("Failed to load transaction data");
       } finally {
         setIsInitialLoading(false);
       }
     };
 
     loadInitialData();
-  }, [clients, transactions, fetchClients, fetchTransactions]);
+  }, [transactions, fetchTransactions]);
 
   const handleExportPDF = () => {
+    if (!client) return;
+
     const doc = new jsPDF({
       orientation: "portrait",
       unit: "mm",
@@ -252,7 +259,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         cellPadding: 3,
         lineColor: [200, 200, 200],
         lineWidth: 0.1,
-        // valign: "middle",
         halign: "left",
         textColor: [0, 0, 0], // Black text for table content
       },
@@ -349,16 +355,10 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   };
 
   const mergedTransactions = useMemo(() => {
-    if (!transactions || !clients) return [];
-    const merged = mergeTransactionsWithClients(transactions, clients);
+    if (!transactions || !client) return [];
+    const merged = mergeTransactionsWithClients(transactions, [client]);
     return merged;
-  }, [transactions, clients]);
-
-  // Get client with better error handling
-  const client = useMemo(() => {
-    if (!clients || !clientId) return null;
-    return clients.find((c) => c._id === clientId) || null;
-  }, [clients, clientId]);
+  }, [transactions, client]);
 
   // Check if client is blocked
   const isClientBlocked = useMemo(() => {
@@ -456,9 +456,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   };
 
   const handleDeleteSuccess = () => {
+    // The React Query mutation will automatically update the cache
     toast.success(`${client?.name} successfully deleted`);
     navigate(-1);
   };
+
   const handleEditSuccess = () => {
     toast.success(`${client?.name} successfully edited`);
   };
@@ -473,26 +475,29 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     });
   };
 
-  // FIXED: Show loading state while data is being fetched
-  if (isInitialLoading || clientsLoading || transactionsLoading) {
+  // Show loading state while data is being fetched
+  if (clientLoading || isInitialLoading || transactionsLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2ECC71] mx-auto mb-4"></div>
+          <Loader2 className="animate-spin rounded-full h-12 w-12 text-green-600 mx-auto mb-4" />
           <p>Loading client data...</p>
         </div>
       </div>
     );
   }
 
-  // FIXED: Check if data is loaded after loading is complete
-  if (!clients || clients.length === 0) {
+  // Handle client error
+  if (clientError) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-4">No clients found</h2>
+          <h2 className="text-xl font-semibold mb-4 text-red-600">
+            Error loading client
+          </h2>
           <p className="text-gray-600 mb-4">
-            Unable to load client data. Please try again.
+            {clientError.message ||
+              "Unable to load client data. Please try again."}
           </p>
           <Button onClick={() => window.location.reload()}>Refresh</Button>
         </div>
