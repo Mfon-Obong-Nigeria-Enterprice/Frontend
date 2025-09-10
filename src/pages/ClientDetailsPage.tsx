@@ -43,11 +43,20 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 }) => {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
-  //store
-  const { clients } = useClientStore();
-  const { transactions } = useTransactionsStore();
+
+  // Store hooks
+  const { clients, fetchClients, isLoading: clientsLoading } = useClientStore();
+  const {
+    transactions,
+    fetchTransactions,
+    isLoading: transactionsLoading,
+  } = useTransactionsStore();
+
   // Get user from auth store
   const { user } = useAuthStore();
+
+  // Loading state for data fetching
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   // Determine if current user is a manager/super_admin
   const isManager = useMemo(() => {
@@ -57,6 +66,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     const normalizedRole = user.role.toString().trim().toUpperCase();
     return normalizedRole === "SUPER_ADMIN";
   }, [user, isManagerView]);
+
   // Filter states
   const [transactionTypeFilter, setTransactionTypeFilter] =
     useState<string>("all");
@@ -66,6 +76,32 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   const [showDialog, setShowDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showBlockUnblockDialog, setShowBlockUnblockDialog] = useState(false);
+
+  // FIXED: Load data on component mount if not already loaded
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        setIsInitialLoading(true);
+
+        // Load clients if not already loaded
+        if (!clients || clients.length === 0) {
+          await fetchClients();
+        }
+
+        // Load transactions if not already loaded
+        if (!transactions || transactions.length === 0) {
+          await fetchTransactions();
+        }
+      } catch (error) {
+        console.error("Error loading initial data:", error);
+        toast.error("Failed to load client data");
+      } finally {
+        setIsInitialLoading(false);
+      }
+    };
+
+    loadInitialData();
+  }, [clients, transactions, fetchClients, fetchTransactions]);
 
   const handleExportPDF = () => {
     const doc = new jsPDF({
@@ -311,21 +347,18 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     // Save the PDF
     doc.save(fileName);
   };
-  //
 
   const mergedTransactions = useMemo(() => {
     if (!transactions || !clients) return [];
     const merged = mergeTransactionsWithClients(transactions, clients);
-
     return merged;
   }, [transactions, clients]);
 
-  //get Clients
+  // Get client with better error handling
   const client = useMemo(() => {
     if (!clients || !clientId) return null;
     return clients.find((c) => c._id === clientId) || null;
   }, [clients, clientId]);
-  //
 
   // Check if client is blocked
   const isClientBlocked = useMemo(() => {
@@ -345,9 +378,9 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     return () => clearTimeout(timeoutId);
   }, [clientId]); //reruns when clientId changes
 
-  //
   const clientTransactions = useMemo(() => {
-    if (!clientId) return [];
+    if (!clientId || !mergedTransactions.length) return [];
+
     let filtered = mergedTransactions.filter((t) => t.client?._id === clientId);
 
     // Apply transaction type filter
@@ -432,21 +465,36 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
   const handleApplyFilters = () => {
     // Filters are applied automatically via useMemo
-    // console.log("Filters applied:", {
-    //   transactionTypeFilter,
-    //   staffFilter,
-    //   dateFrom,
-    //   dateTo,
-    // });
+    console.log("Filters applied:", {
+      transactionTypeFilter,
+      staffFilter,
+      dateFrom,
+      dateTo,
+    });
   };
 
-  // Loading states
-  if (!clients || clients.length === 0) {
+  // FIXED: Show loading state while data is being fetched
+  if (isInitialLoading || clientsLoading || transactionsLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2ECC71] mx-auto mb-4"></div>
-          <p>Loading clients...</p>
+          <p>Loading client data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // FIXED: Check if data is loaded after loading is complete
+  if (!clients || clients.length === 0) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-4">No clients found</h2>
+          <p className="text-gray-600 mb-4">
+            Unable to load client data. Please try again.
+          </p>
+          <Button onClick={() => window.location.reload()}>Refresh</Button>
         </div>
       </div>
     );
@@ -548,7 +596,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z"
                       />
                     </svg>
                   </div>
@@ -575,7 +623,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z"
                       />
                     </svg>
                   </div>

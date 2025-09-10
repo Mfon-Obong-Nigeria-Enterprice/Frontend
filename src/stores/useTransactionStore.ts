@@ -1,14 +1,26 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { toSentenceCaseName } from "@/utils/styles";
 import type { Transaction } from "@/types/transactions";
+import { getAllTransactions } from "@/services/transactionService";
 
 type TransactionState = {
   transactions: Transaction[] | null;
   selectedTransaction: Transaction | null;
   open: boolean;
+  isLoading: boolean;
+  error: string | null;
 
+  // Data fetching methods
+  fetchTransactions: () => Promise<void>;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+
+  // Existing methods
   setTransactions: (transactions: Transaction[]) => void;
   addTransaction: (transactions: Transaction) => void;
+  updateTransaction: (id: string, updates: Partial<Transaction>) => void;
+  removeTransaction: (id: string) => void;
   openModal: (transaction: Transaction) => void;
   closeModal: () => void;
   getTodaysSales: () => number;
@@ -126,520 +138,628 @@ const calculatePercentageChange = (current: number, previous: number) => {
   };
 };
 
-export const useTransactionsStore = create<TransactionState>((set, get) => ({
-  transactions: [],
-  selectedTransaction: null,
-  open: false,
+export const useTransactionsStore = create<TransactionState>()(
+  persist(
+    (set, get) => ({
+      transactions: [],
+      selectedTransaction: null,
+      open: false,
+      isLoading: false,
+      error: null,
 
-  setTransactions: (transactions) =>
-    set({
-      transactions: transactions.map((txn) => {
-        // Ensure all payment transactions have required properties
-        if (txn.type === "DEPOSIT") {
-          return {
-            ...txn,
-            items: txn.items || [], // Ensure items exists
-            subtotal: txn.subtotal || txn.amount || 0,
-            total: txn.total || txn.amount || 0,
-            amountPaid: txn.amountPaid || txn.amount || 0,
-            discount: txn.discount || 0,
-            walkInClientName: txn.walkInClient?.name
-              ? toSentenceCaseName(txn.walkInClient.name)
-              : undefined,
-            clientName: txn.clientId?.name
-              ? toSentenceCaseName(txn.clientId.name)
-              : txn.client?.name
-              ? toSentenceCaseName(txn.client.name)
-              : undefined,
-          };
+      // NEW: Data fetching method
+      fetchTransactions: async () => {
+        try {
+          set({ isLoading: true, error: null });
+          const transactions = await getAllTransactions();
+          set({
+            transactions: transactions.map((txn) => {
+              // Ensure all payment transactions have required properties
+              if (txn.type === "DEPOSIT") {
+                return {
+                  ...txn,
+                  items: txn.items || [], // Ensure items exists
+                  subtotal: txn.subtotal || txn.amount || 0,
+                  total: txn.total || txn.amount || 0,
+                  amountPaid: txn.amountPaid || txn.amount || 0,
+                  discount: txn.discount || 0,
+                  walkInClientName: txn.walkInClient?.name
+                    ? toSentenceCaseName(txn.walkInClient.name)
+                    : undefined,
+                  clientName: txn.clientId?.name
+                    ? toSentenceCaseName(txn.clientId.name)
+                    : txn.client?.name
+                    ? toSentenceCaseName(txn.client.name)
+                    : undefined,
+                };
+              }
+
+              return {
+                ...txn,
+                walkInClientName: txn.walkInClient?.name
+                  ? toSentenceCaseName(txn.walkInClient.name)
+                  : undefined,
+                clientName: txn.clientId?.name
+                  ? toSentenceCaseName(txn.clientId.name)
+                  : undefined,
+              };
+            }),
+            isLoading: false,
+            error: null,
+          });
+        } catch (error) {
+          console.error("Error fetching transactions:", error);
+          set({
+            isLoading: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to fetch transactions",
+          });
         }
+      },
 
-        return {
-          ...txn,
-          walkInClientName: txn.walkInClient?.name
-            ? toSentenceCaseName(txn.walkInClient.name)
-            : undefined,
-          clientName: txn.clientId?.name
-            ? toSentenceCaseName(txn.clientId.name)
-            : undefined,
-        };
-      }),
+      setLoading: (loading) => set({ isLoading: loading }),
+      setError: (error) => set({ error }),
+
+      setTransactions: (transactions) =>
+        set({
+          transactions: transactions.map((txn) => {
+            // Ensure all payment transactions have required properties
+            if (txn.type === "DEPOSIT") {
+              return {
+                ...txn,
+                items: txn.items || [], // Ensure items exists
+                subtotal: txn.subtotal || txn.amount || 0,
+                total: txn.total || txn.amount || 0,
+                amountPaid: txn.amountPaid || txn.amount || 0,
+                discount: txn.discount || 0,
+                walkInClientName: txn.walkInClient?.name
+                  ? toSentenceCaseName(txn.walkInClient.name)
+                  : undefined,
+                clientName: txn.clientId?.name
+                  ? toSentenceCaseName(txn.clientId.name)
+                  : txn.client?.name
+                  ? toSentenceCaseName(txn.client.name)
+                  : undefined,
+              };
+            }
+
+            return {
+              ...txn,
+              walkInClientName: txn.walkInClient?.name
+                ? toSentenceCaseName(txn.walkInClient.name)
+                : undefined,
+              clientName: txn.clientId?.name
+                ? toSentenceCaseName(txn.clientId.name)
+                : undefined,
+            };
+          }),
+        }),
+
+      addTransaction: (transaction) =>
+        set((state) => ({
+          transactions: state.transactions
+            ? [
+                ...state.transactions,
+                {
+                  ...transaction,
+                  walkInClientName: transaction.walkInClient?.name
+                    ? toSentenceCaseName(transaction.walkInClient.name)
+                    : undefined,
+                  clientName: transaction.clientId?.name
+                    ? toSentenceCaseName(transaction.clientId.name)
+                    : transaction.client?.name
+                    ? toSentenceCaseName(transaction.client.name)
+                    : undefined,
+                },
+              ]
+            : [transaction],
+        })),
+
+      updateTransaction: (id, updates) =>
+        set((state) => ({
+          transactions: state.transactions
+            ? state.transactions.map((txn) =>
+                txn._id === id ? { ...txn, ...updates } : txn
+              )
+            : [],
+        })),
+
+      removeTransaction: (id) =>
+        set((state) => ({
+          transactions: state.transactions
+            ? state.transactions.filter((txn) => txn._id !== id)
+            : [],
+        })),
+
+      openModal: (transaction) =>
+        set({ open: true, selectedTransaction: transaction }),
+      closeModal: () => set({ open: false, selectedTransaction: null }),
+
+      getTodaysSales: () => {
+        const { transactions } = get();
+        if (!transactions) return 0;
+
+        const today = new Date().toDateString();
+
+        return transactions
+          .filter((t) => {
+            const transactionDate = new Date(t.createdAt).toDateString();
+
+            return (
+              (t.type === "PURCHASE" || t.type === "PICKUP") &&
+              transactionDate === today
+            );
+          })
+          .reduce((total, t) => {
+            // Handle multiple possible amount fields with fallbacks
+            const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+            return total + amount;
+          }, 0);
+      },
+
+      getYesterdaysSales: () => {
+        const { transactions } = get();
+        if (!transactions) return 0;
+
+        const yesterday = new Date(
+          Date.now() - 24 * 60 * 60 * 1000
+        ).toDateString();
+
+        return transactions
+          .filter((t) => {
+            const transactionDate = new Date(t.createdAt).toDateString();
+            // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+            return (
+              (t.type === "PURCHASE" || t.type === "PICKUP") &&
+              transactionDate === yesterday
+            );
+          })
+          .reduce((total, t) => {
+            // Handle multiple possible amount fields with fallbacks
+            const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+            return total + amount;
+          }, 0);
+      },
+
+      // Calculate percentage change in sales
+      getSalesPercentageChange: () => {
+        const todaysSales = get().getTodaysSales();
+        const yesterdaysSales = get().getYesterdaysSales();
+        return calculatePercentageChange(todaysSales, yesterdaysSales);
+      },
+
+      // Get today's transaction count
+      getTodaysTransactionCount: () => {
+        const { transactions } = get();
+        if (!transactions) return 0;
+
+        const today = new Date().toDateString();
+
+        return transactions.filter((t) => {
+          const transactionDate = new Date(t.createdAt).toDateString();
+          return transactionDate === today;
+        }).length;
+      },
+
+      // Get yesterday's transaction count
+      getYesterdaysTransactionCount: () => {
+        const { transactions } = get();
+        if (!transactions) return 0;
+
+        const yesterday = new Date(
+          Date.now() - 24 * 60 * 60 * 1000
+        ).toDateString();
+
+        return transactions.filter((t) => {
+          const transactionDate = new Date(t.createdAt).toDateString();
+          return transactionDate === yesterday;
+        }).length;
+      },
+
+      // Calculate percentage change in today's transactions vs yesterday
+      getTodaysTransactionCountPercentageChange: () => {
+        const todaysCount = get().getTodaysTransactionCount();
+        const yesterdaysCount = get().getYesterdaysTransactionCount();
+        return calculatePercentageChange(todaysCount, yesterdaysCount);
+      },
+
+      // Weekly sales functions
+      getThisWeekSales: () => {
+        const { transactions } = get();
+        if (!transactions) return 0;
+
+        const now = new Date();
+        const startOfWeek = getStartOfWeek(now);
+        const endOfWeek = getEndOfWeek(now);
+
+        return transactions
+          .filter((t) => {
+            const transactionDate = new Date(t.createdAt);
+            // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+            return (
+              (t.type === "PURCHASE" || t.type === "PICKUP") &&
+              isDateInRange(transactionDate, startOfWeek, endOfWeek)
+            );
+          })
+          .reduce((total, t) => {
+            const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+            return total + amount;
+          }, 0);
+      },
+
+      getLastWeekSales: () => {
+        const { transactions } = get();
+        if (!transactions) return 0;
+
+        const now = new Date();
+        const lastWeekStart = new Date(getStartOfWeek(now));
+        lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+        const lastWeekEnd = new Date(getEndOfWeek(now));
+        lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
+
+        return transactions
+          .filter((t) => {
+            const transactionDate = new Date(t.createdAt);
+            // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+            return (
+              (t.type === "PURCHASE" || t.type === "PICKUP") &&
+              isDateInRange(transactionDate, lastWeekStart, lastWeekEnd)
+            );
+          })
+          .reduce((total, t) => {
+            const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+            return total + amount;
+          }, 0);
+      },
+
+      getWeeklySalesPercentageChange: () => {
+        const thisWeekSales = get().getThisWeekSales();
+        const lastWeekSales = get().getLastWeekSales();
+        return calculatePercentageChange(thisWeekSales, lastWeekSales);
+      },
+
+      // Monthly sales functions
+      getThisMonthSales: () => {
+        const { transactions } = get();
+        if (!transactions) return 0;
+
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+        return transactions
+          .filter((t) => {
+            const transactionDate = new Date(t.createdAt);
+            // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+            return (
+              (t.type === "PURCHASE" || t.type === "PICKUP") &&
+              isDateInRange(transactionDate, startOfMonth, endOfMonth)
+            );
+          })
+          .reduce((total, t) => {
+            const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+            return total + amount;
+          }, 0);
+      },
+
+      getLastMonthSales: () => {
+        const { transactions } = get();
+        if (!transactions) return 0;
+
+        const now = new Date();
+        const startOfLastMonth = new Date(
+          now.getFullYear(),
+          now.getMonth() - 1,
+          1
+        );
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+        return transactions
+          .filter((t) => {
+            const transactionDate = new Date(t.createdAt);
+            // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+            return (
+              (t.type === "PURCHASE" || t.type === "PICKUP") &&
+              isDateInRange(transactionDate, startOfLastMonth, endOfLastMonth)
+            );
+          })
+          .reduce((total, t) => {
+            const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+            return total + amount;
+          }, 0);
+      },
+
+      getMonthlySalesPercentageChange: () => {
+        const thisMonthSales = get().getThisMonthSales();
+        const lastMonthSales = get().getLastMonthSales();
+        return calculatePercentageChange(thisMonthSales, lastMonthSales);
+      },
+
+      // Transaction count functions
+      getTotalTransactionsCount: () => {
+        const { transactions } = get();
+        if (!transactions) return 0;
+
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+        return transactions.filter((t) => {
+          const transactionDate = new Date(t.createdAt);
+          return isDateInRange(transactionDate, startOfMonth, endOfMonth);
+        }).length;
+      },
+
+      getLastMonthTransactionsCount: () => {
+        const { transactions } = get();
+        if (!transactions) return 0;
+
+        const now = new Date();
+        const startOfLastMonth = new Date(
+          now.getFullYear(),
+          now.getMonth() - 1,
+          1
+        );
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+        return transactions.filter((t) => {
+          const transactionDate = new Date(t.createdAt);
+          return isDateInRange(
+            transactionDate,
+            startOfLastMonth,
+            endOfLastMonth
+          );
+        }).length;
+      },
+
+      getTransactionsCountPercentageChange: () => {
+        const thisMonthCount = get().getTotalTransactionsCount();
+        const lastMonthCount = get().getLastMonthTransactionsCount();
+        return calculatePercentageChange(thisMonthCount, lastMonthCount);
+      },
+
+      getTodaysPayments: () => {
+        const { transactions } = get();
+        if (!transactions || transactions.length === 0) return 0;
+
+        const today = new Date().toDateString();
+
+        return transactions
+          .filter((t) => {
+            const transactionDate = new Date(t.createdAt).toDateString();
+            // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+            return (
+              (t.type === "PURCHASE" || t.type === "DEPOSIT") &&
+              transactionDate === today
+            );
+          })
+          .reduce((total, t) => {
+            const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+            return total + amount;
+          }, 0);
+      },
+
+      // Yesterday's payments received
+      getYesterdaysPayments: () => {
+        const { transactions } = get();
+        if (!transactions) return 0;
+
+        const yesterday = new Date(
+          Date.now() - 24 * 60 * 60 * 1000
+        ).toDateString();
+
+        return transactions
+          .filter((t) => {
+            const transactionDate = new Date(t.createdAt).toDateString();
+            // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+            return (
+              (t.type === "PURCHASE" || t.type === "PICKUP") &&
+              transactionDate === yesterday
+            );
+          })
+          .reduce((total, t) => {
+            const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+            return total + amount;
+          }, 0);
+      },
+
+      // Payments percentage change (today vs yesterday)
+      getPaymentsPercentageChange: () => {
+        const todaysPayments = get().getTodaysPayments();
+        const yesterdaysPayments = get().getYesterdaysPayments();
+        return calculatePercentageChange(todaysPayments, yesterdaysPayments);
+      },
+
+      // This week's payments
+      getThisWeekPayments: () => {
+        const { transactions } = get();
+        if (!transactions) return 0;
+
+        const now = new Date();
+        const startOfWeek = getStartOfWeek(now);
+        const endOfWeek = getEndOfWeek(now);
+
+        return transactions
+          .filter((t) => {
+            const transactionDate = new Date(t.createdAt);
+            // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+            return (
+              (t.type === "PURCHASE" || t.type === "PICKUP") &&
+              isDateInRange(transactionDate, startOfWeek, endOfWeek)
+            );
+          })
+          .reduce((total, t) => {
+            const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+            return total + amount;
+          }, 0);
+      },
+
+      // Last week's payments
+      getLastWeekPayments: () => {
+        const { transactions } = get();
+        if (!transactions) return 0;
+
+        const now = new Date();
+        const lastWeekStart = new Date(getStartOfWeek(now));
+        lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+        const lastWeekEnd = new Date(getEndOfWeek(now));
+        lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
+
+        return transactions
+          .filter((t) => {
+            const transactionDate = new Date(t.createdAt);
+            // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+            return (
+              (t.type === "PURCHASE" || t.type === "PICKUP") &&
+              isDateInRange(transactionDate, lastWeekStart, lastWeekEnd)
+            );
+          })
+          .reduce((total, t) => {
+            const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+            return total + amount;
+          }, 0);
+      },
+
+      // Weekly payments percentage change
+      getWeeklyPaymentsPercentageChange: () => {
+        const thisWeekPayments = get().getThisWeekPayments();
+        const lastWeekPayments = get().getLastWeekPayments();
+        return calculatePercentageChange(thisWeekPayments, lastWeekPayments);
+      },
+
+      // This month's payments
+      getThisMonthPayments: () => {
+        const { transactions } = get();
+        if (!transactions) return 0;
+
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+        return transactions
+          .filter((t) => {
+            const transactionDate = new Date(t.createdAt);
+            // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+            return (
+              (t.type === "PURCHASE" || t.type === "PICKUP") &&
+              isDateInRange(transactionDate, startOfMonth, endOfMonth)
+            );
+          })
+          .reduce((total, t) => {
+            const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+            return total + amount;
+          }, 0);
+      },
+
+      // Last month's payments
+      getLastMonthPayments: () => {
+        const { transactions } = get();
+        if (!transactions) return 0;
+
+        const now = new Date();
+        const startOfLastMonth = new Date(
+          now.getFullYear(),
+          now.getMonth() - 1,
+          1
+        );
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+        return transactions
+          .filter((t) => {
+            const transactionDate = new Date(t.createdAt);
+            // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+            return (
+              (t.type === "PURCHASE" || t.type === "PICKUP") &&
+              isDateInRange(transactionDate, startOfLastMonth, endOfLastMonth)
+            );
+          })
+          .reduce((total, t) => {
+            const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+            return total + amount;
+          }, 0);
+      },
+
+      // Monthly payments percentage change
+      getMonthlyPaymentsPercentageChange: () => {
+        const thisMonthPayments = get().getThisMonthPayments();
+        const lastMonthPayments = get().getLastMonthPayments();
+        return calculatePercentageChange(thisMonthPayments, lastMonthPayments);
+      },
+
+      // This week's average transaction value
+      getThisWeekAverageTransaction: () => {
+        const { transactions } = get();
+        if (!transactions) return 0;
+
+        const now = new Date();
+        const startOfWeek = getStartOfWeek(now);
+        const endOfWeek = getEndOfWeek(now);
+
+        const thisWeekTransactions = transactions.filter((t) => {
+          const transactionDate = new Date(t.createdAt);
+          return (
+            (t.type === "PURCHASE" || t.type === "PICKUP") &&
+            isDateInRange(transactionDate, startOfWeek, endOfWeek)
+          );
+        });
+
+        if (thisWeekTransactions.length === 0) return 0;
+
+        const totalAmount = thisWeekTransactions.reduce((total, t) => {
+          const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+          return total + amount;
+        }, 0);
+
+        return (
+          Math.round((totalAmount / thisWeekTransactions.length) * 100) / 100
+        );
+      },
+
+      // Last week's average transaction value
+      getLastWeekAverageTransaction: () => {
+        const { transactions } = get();
+        if (!transactions) return 0;
+
+        const now = new Date();
+        const lastWeekStart = new Date(getStartOfWeek(now));
+        lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+        const lastWeekEnd = new Date(getEndOfWeek(now));
+        lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
+
+        const lastWeekTransactions = transactions.filter((t) => {
+          const transactionDate = new Date(t.createdAt);
+          return (
+            (t.type === "PURCHASE" || t.type === "PICKUP") &&
+            isDateInRange(transactionDate, lastWeekStart, lastWeekEnd)
+          );
+        });
+
+        if (lastWeekTransactions.length === 0) return 0;
+
+        const totalAmount = lastWeekTransactions.reduce((total, t) => {
+          const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+          return total + amount;
+        }, 0);
+
+        return (
+          Math.round((totalAmount / lastWeekTransactions.length) * 100) / 100
+        );
+      },
+
+      // Weekly average transaction percentage change
+      getWeeklyAverageTransactionPercentageChange: () => {
+        const thisWeekAvg = get().getThisWeekAverageTransaction();
+        const lastWeekAvg = get().getLastWeekAverageTransaction();
+        return calculatePercentageChange(thisWeekAvg, lastWeekAvg);
+      },
     }),
-
-  addTransaction: (transaction) =>
-    set((state) => ({
-      transactions: state.transactions
-        ? [
-            ...state.transactions,
-            {
-              ...transaction,
-              walkInClientName: transaction.walkInClient?.name
-                ? toSentenceCaseName(transaction.walkInClient.name)
-                : undefined,
-              clientName: transaction.clientId?.name
-                ? toSentenceCaseName(transaction.clientId.name)
-                : transaction.client?.name
-                ? toSentenceCaseName(transaction.client.name)
-                : undefined,
-            },
-          ]
-        : [transaction],
-    })),
-
-  openModal: (transaction) =>
-    set({ open: true, selectedTransaction: transaction }),
-  closeModal: () => set({ open: false, selectedTransaction: null }),
-
-  getTodaysSales: () => {
-    const { transactions } = get();
-    if (!transactions) return 0;
-
-    const today = new Date().toDateString();
-
-    return transactions
-      .filter((t) => {
-        const transactionDate = new Date(t.createdAt).toDateString();
-
-        return (
-          (t.type === "PURCHASE" || t.type === "PICKUP") &&
-          transactionDate === today
-        );
-      })
-      .reduce((total, t) => {
-        // Handle multiple possible amount fields with fallbacks
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
-        return total + amount;
-      }, 0);
-  },
-
-  getYesterdaysSales: () => {
-    const { transactions } = get();
-    if (!transactions) return 0;
-
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString();
-
-    return transactions
-      .filter((t) => {
-        const transactionDate = new Date(t.createdAt).toDateString();
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
-        return (
-          (t.type === "PURCHASE" || t.type === "PICKUP") &&
-          transactionDate === yesterday
-        );
-      })
-      .reduce((total, t) => {
-        // Handle multiple possible amount fields with fallbacks
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
-        return total + amount;
-      }, 0);
-  },
-
-  // Calculate percentage change in sales
-  getSalesPercentageChange: () => {
-    const todaysSales = get().getTodaysSales();
-    const yesterdaysSales = get().getYesterdaysSales();
-    return calculatePercentageChange(todaysSales, yesterdaysSales);
-  },
-
-  // Get today's transaction count
-  getTodaysTransactionCount: () => {
-    const { transactions } = get();
-    if (!transactions) return 0;
-
-    const today = new Date().toDateString();
-
-    return transactions.filter((t) => {
-      const transactionDate = new Date(t.createdAt).toDateString();
-      return transactionDate === today;
-    }).length;
-  },
-
-  // Get yesterday's transaction count
-  getYesterdaysTransactionCount: () => {
-    const { transactions } = get();
-    if (!transactions) return 0;
-
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString();
-
-    return transactions.filter((t) => {
-      const transactionDate = new Date(t.createdAt).toDateString();
-      return transactionDate === yesterday;
-    }).length;
-  },
-
-  // Calculate percentage change in today's transactions vs yesterday
-  getTodaysTransactionCountPercentageChange: () => {
-    const todaysCount = get().getTodaysTransactionCount();
-    const yesterdaysCount = get().getYesterdaysTransactionCount();
-    return calculatePercentageChange(todaysCount, yesterdaysCount);
-  },
-
-  // Weekly sales functions
-  getThisWeekSales: () => {
-    const { transactions } = get();
-    if (!transactions) return 0;
-
-    const now = new Date();
-    const startOfWeek = getStartOfWeek(now);
-
-    const endOfWeek = getEndOfWeek(now);
-
-    return transactions
-      .filter((t) => {
-        const transactionDate = new Date(t.createdAt);
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
-        return (
-          (t.type === "PURCHASE" || t.type === "PICKUP") &&
-          isDateInRange(transactionDate, startOfWeek, endOfWeek)
-        );
-      })
-      .reduce((total, t) => {
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
-        return total + amount;
-      }, 0);
-  },
-
-  getLastWeekSales: () => {
-    const { transactions } = get();
-    if (!transactions) return 0;
-
-    const now = new Date();
-    const lastWeekStart = new Date(getStartOfWeek(now));
-    lastWeekStart.setDate(lastWeekStart.getDate() - 7);
-    const lastWeekEnd = new Date(getEndOfWeek(now));
-    lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
-
-    return transactions
-      .filter((t) => {
-        const transactionDate = new Date(t.createdAt);
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
-        return (
-          (t.type === "PURCHASE" || t.type === "PICKUP") &&
-          isDateInRange(transactionDate, lastWeekStart, lastWeekEnd)
-        );
-      })
-      .reduce((total, t) => {
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
-        return total + amount;
-      }, 0);
-  },
-
-  getWeeklySalesPercentageChange: () => {
-    const thisWeekSales = get().getThisWeekSales();
-    const lastWeekSales = get().getLastWeekSales();
-    return calculatePercentageChange(thisWeekSales, lastWeekSales);
-  },
-
-  // Monthly sales functions
-  getThisMonthSales: () => {
-    const { transactions } = get();
-    if (!transactions) return 0;
-
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-    return transactions
-      .filter((t) => {
-        const transactionDate = new Date(t.createdAt);
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
-        return (
-          (t.type === "PURCHASE" || t.type === "PICKUP") &&
-          isDateInRange(transactionDate, startOfMonth, endOfMonth)
-        );
-      })
-      .reduce((total, t) => {
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
-        return total + amount;
-      }, 0);
-  },
-
-  getLastMonthSales: () => {
-    const { transactions } = get();
-    if (!transactions) return 0;
-
-    const now = new Date();
-    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-
-    return transactions
-      .filter((t) => {
-        const transactionDate = new Date(t.createdAt);
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
-        return (
-          (t.type === "PURCHASE" || t.type === "PICKUP") &&
-          isDateInRange(transactionDate, startOfLastMonth, endOfLastMonth)
-        );
-      })
-      .reduce((total, t) => {
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
-        return total + amount;
-      }, 0);
-  },
-
-  getMonthlySalesPercentageChange: () => {
-    const thisMonthSales = get().getThisMonthSales();
-    const lastMonthSales = get().getLastMonthSales();
-    return calculatePercentageChange(thisMonthSales, lastMonthSales);
-  },
-
-  // Transaction count functions
-  getTotalTransactionsCount: () => {
-    const { transactions } = get();
-    if (!transactions) return 0;
-
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-    return transactions.filter((t) => {
-      const transactionDate = new Date(t.createdAt);
-      return isDateInRange(transactionDate, startOfMonth, endOfMonth);
-    }).length;
-  },
-
-  getLastMonthTransactionsCount: () => {
-    const { transactions } = get();
-    if (!transactions) return 0;
-
-    const now = new Date();
-    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-
-    return transactions.filter((t) => {
-      const transactionDate = new Date(t.createdAt);
-      return isDateInRange(transactionDate, startOfLastMonth, endOfLastMonth);
-    }).length;
-  },
-
-  getTransactionsCountPercentageChange: () => {
-    const thisMonthCount = get().getTotalTransactionsCount();
-    const lastMonthCount = get().getLastMonthTransactionsCount();
-    return calculatePercentageChange(thisMonthCount, lastMonthCount);
-  },
-
-  getTodaysPayments: () => {
-    const { transactions } = get();
-    if (!transactions || transactions.length === 0) return 0;
-
-    const today = new Date().toDateString();
-
-    return transactions
-      .filter((t) => {
-        const transactionDate = new Date(t.createdAt).toDateString();
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
-        return (
-          (t.type === "PURCHASE" || t.type === "DEPOSIT") &&
-          transactionDate === today
-        );
-      })
-      .reduce((total, t) => {
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
-        return total + amount;
-      }, 0);
-  },
-
-  // Yesterday's payments received
-  getYesterdaysPayments: () => {
-    const { transactions } = get();
-    if (!transactions) return 0;
-
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString();
-
-    return transactions
-      .filter((t) => {
-        const transactionDate = new Date(t.createdAt).toDateString();
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
-        return (
-          (t.type === "PURCHASE" || t.type === "PICKUP") &&
-          transactionDate === yesterday
-        );
-      })
-      .reduce((total, t) => {
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
-        return total + amount;
-      }, 0);
-  },
-
-  // Payments percentage change (today vs yesterday)
-  getPaymentsPercentageChange: () => {
-    const todaysPayments = get().getTodaysPayments();
-    const yesterdaysPayments = get().getYesterdaysPayments();
-    return calculatePercentageChange(todaysPayments, yesterdaysPayments);
-  },
-
-  // This week's payments
-  getThisWeekPayments: () => {
-    const { transactions } = get();
-    if (!transactions) return 0;
-
-    const now = new Date();
-    const startOfWeek = getStartOfWeek(now);
-    const endOfWeek = getEndOfWeek(now);
-
-    return transactions
-      .filter((t) => {
-        const transactionDate = new Date(t.createdAt);
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
-        return (
-          (t.type === "PURCHASE" || t.type === "PICKUP") &&
-          isDateInRange(transactionDate, startOfWeek, endOfWeek)
-        );
-      })
-      .reduce((total, t) => {
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
-        return total + amount;
-      }, 0);
-  },
-
-  // Last week's payments
-  getLastWeekPayments: () => {
-    const { transactions } = get();
-    if (!transactions) return 0;
-
-    const now = new Date();
-    const lastWeekStart = new Date(getStartOfWeek(now));
-    lastWeekStart.setDate(lastWeekStart.getDate() - 7);
-    const lastWeekEnd = new Date(getEndOfWeek(now));
-    lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
-
-    return transactions
-      .filter((t) => {
-        const transactionDate = new Date(t.createdAt);
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
-        return (
-          (t.type === "PURCHASE" || t.type === "PICKUP") &&
-          isDateInRange(transactionDate, lastWeekStart, lastWeekEnd)
-        );
-      })
-      .reduce((total, t) => {
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
-        return total + amount;
-      }, 0);
-  },
-
-  // Weekly payments percentage change
-  getWeeklyPaymentsPercentageChange: () => {
-    const thisWeekPayments = get().getThisWeekPayments();
-    const lastWeekPayments = get().getLastWeekPayments();
-    return calculatePercentageChange(thisWeekPayments, lastWeekPayments);
-  },
-
-  // This month's payments
-  getThisMonthPayments: () => {
-    const { transactions } = get();
-    if (!transactions) return 0;
-
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-    return transactions
-      .filter((t) => {
-        const transactionDate = new Date(t.createdAt);
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
-        return (
-          (t.type === "PURCHASE" || t.type === "PICKUP") &&
-          isDateInRange(transactionDate, startOfMonth, endOfMonth)
-        );
-      })
-      .reduce((total, t) => {
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
-        return total + amount;
-      }, 0);
-  },
-
-  // Last month's payments
-  getLastMonthPayments: () => {
-    const { transactions } = get();
-    if (!transactions) return 0;
-
-    const now = new Date();
-    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-
-    return transactions
-      .filter((t) => {
-        const transactionDate = new Date(t.createdAt);
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
-        return (
-          (t.type === "PURCHASE" || t.type === "PICKUP") &&
-          isDateInRange(transactionDate, startOfLastMonth, endOfLastMonth)
-        );
-      })
-      .reduce((total, t) => {
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
-        return total + amount;
-      }, 0);
-  },
-
-  // Monthly payments percentage change
-  getMonthlyPaymentsPercentageChange: () => {
-    const thisMonthPayments = get().getThisMonthPayments();
-    const lastMonthPayments = get().getLastMonthPayments();
-    return calculatePercentageChange(thisMonthPayments, lastMonthPayments);
-  },
-
-  // This week's average transaction value
-  getThisWeekAverageTransaction: () => {
-    const { transactions } = get();
-    if (!transactions) return 0;
-
-    const now = new Date();
-    const startOfWeek = getStartOfWeek(now);
-    const endOfWeek = getEndOfWeek(now);
-
-    const thisWeekTransactions = transactions.filter((t) => {
-      const transactionDate = new Date(t.createdAt);
-      return (
-        (t.type === "PURCHASE" || t.type === "PICKUP") &&
-        isDateInRange(transactionDate, startOfWeek, endOfWeek)
-      );
-    });
-
-    if (thisWeekTransactions.length === 0) return 0;
-
-    const totalAmount = thisWeekTransactions.reduce((total, t) => {
-      const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
-      return total + amount;
-    }, 0);
-
-    return Math.round((totalAmount / thisWeekTransactions.length) * 100) / 100;
-  },
-
-  // Last week's average transaction value
-  getLastWeekAverageTransaction: () => {
-    const { transactions } = get();
-    if (!transactions) return 0;
-
-    const now = new Date();
-    const lastWeekStart = new Date(getStartOfWeek(now));
-    lastWeekStart.setDate(lastWeekStart.getDate() - 7);
-    const lastWeekEnd = new Date(getEndOfWeek(now));
-    lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
-
-    const lastWeekTransactions = transactions.filter((t) => {
-      const transactionDate = new Date(t.createdAt);
-      return (
-        (t.type === "PURCHASE" || t.type === "PICKUP") &&
-        isDateInRange(transactionDate, lastWeekStart, lastWeekEnd)
-      );
-    });
-
-    if (lastWeekTransactions.length === 0) return 0;
-
-    const totalAmount = lastWeekTransactions.reduce((total, t) => {
-      const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
-      return total + amount;
-    }, 0);
-
-    return Math.round((totalAmount / lastWeekTransactions.length) * 100) / 100;
-  },
-
-  // Weekly average transaction percentage change
-  getWeeklyAverageTransactionPercentageChange: () => {
-    const thisWeekAvg = get().getThisWeekAverageTransaction();
-    const lastWeekAvg = get().getLastWeekAverageTransaction();
-    return calculatePercentageChange(thisWeekAvg, lastWeekAvg);
-  },
-}));
+    {
+      name: "transactions-store",
+      partialize: (state) => ({
+        transactions: state.transactions,
+      }),
+    }
+  )
+);
