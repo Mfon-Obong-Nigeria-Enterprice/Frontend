@@ -51,7 +51,7 @@ export function DashboardSettings() {
   const canModifyPrices = useHasRole(["SUPER_ADMIN", "ADMIN", "MAINTAINER"]);
 
   const { products: storeProducts, updateProduct } = useInventoryStore();
-  const updateProductPriceMutation = useUpdateProductPrice();
+  const updateProductPriceMutation = useUpdateProductPrice(); // Using the new hook
 
   const [editingPrices, setEditingPrices] = React.useState<{
     [key: string]: number;
@@ -99,19 +99,38 @@ export function DashboardSettings() {
     });
   };
 
-  const handleUpdatePrice = async (productId: string, newPrice: number) => {
-    if (!canModifyPrices) return;
+const handleUpdatePrice = async (productId: string, newPrice: number) => {
+    if (!canModifyPrices) {
+      toast.error("You don't have permission to modify prices");
+      return;
+    }
+
+    // Validate price
+    if (newPrice <= 0) {
+      toast.error("Price must be greater than 0");
+      handleResetPrice(productId);
+      return;
+    }
 
     setLoadingProductId(productId);
+    
     try {
       const updatedProduct = await updateProductPriceMutation.mutateAsync({
-        productId,
-        newPrice,
+        id: productId, 
+        price: newPrice,
       });
+      
       updateProduct(updatedProduct);
       handleResetPrice(productId);
+      toast.success("Price updated successfully");
+      
     } catch (error) {
-      // Error handling
+      console.error("Failed to update product price:", error);
+      toast.error("Failed to update price. Please try again.");
+      
+      // Optional: Revert the local editing state on error
+      handleResetPrice(productId);
+      
     } finally {
       setLoadingProductId(null);
     }
