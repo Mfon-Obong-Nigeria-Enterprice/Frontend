@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { type Settings, type AlertAndNotificationSettings } from '@/types/types';
+import { type Settings, type AlertAndNotificationSettings } from '@/schemas/SettingsSchemas';
 
 interface NotificationSettingsSectionProps {
   settings: Settings;
@@ -30,7 +30,7 @@ export const NotificationSettingsSection: React.FC<NotificationSettingsSectionPr
           <Label htmlFor="dashboardNotification" className="text-gray-700">Dashboard Notification</Label>
         </div>
 
-        <div className="flex items-center space-x-3">
+        {/* <div className="flex items-center space-x-3">
           <Checkbox
             id="emailNotification"
             checked={alerts.emailNotification || false}
@@ -39,7 +39,7 @@ export const NotificationSettingsSection: React.FC<NotificationSettingsSectionPr
             className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
           />
           <Label htmlFor="emailNotification" className="text-gray-700">Email Notification</Label>
-        </div>
+        </div> */}
       </div>
     </div>
   );

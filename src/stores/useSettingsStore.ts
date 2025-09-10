@@ -1,48 +1,49 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { 
-  Settings, 
-  SystemPreferences, 
-  ClientAccountSettings, 
+import type {
+  Settings,
+  SystemPreferences,
+  ClientAccountSettings,
   AlertAndNotificationSettings,
   MaintenanceModeSettings,
-  SessionSettings
-} from "@/types/types";
+  SessionSettings,
+  ActiveHoursSettings,
+} from "@/schemas/SettingsSchemas";
+import * as settingsService from "@/services/settingsService";
 
 interface SettingsStore {
-  // Existing state
   currentSettings: Settings;
-  systemPreferences: SystemPreferences;
-  clientAccountSettings: ClientAccountSettings;
-  
-  // New state for maintenance and session
   maintenanceMode: MaintenanceModeSettings;
   sessionSettings: SessionSettings;
+  activeHours: ActiveHoursSettings | null;
   loading: boolean;
   error: string | null;
-  lastUpdated: Date | null;
 
-  // Existing actions
-  initializeSettings: (settings: Settings) => void;
+  // Local actions
   setAlertSetting: (key: keyof AlertAndNotificationSettings, value: boolean) => void;
   setLargeBalanceThreshold: (value: number) => void;
-  saveSettings: () => Promise<void>;
   setSystemPreferences: (prefs: SystemPreferences) => void;
   setClientAccountSettings: (settings: ClientAccountSettings) => void;
 
-  // New actions for maintenance and session
-  fetchSettings: () => Promise<void>;
-  updateMaintenanceMode: (settings: MaintenanceModeSettings) => void;
-  updateSessionSettings: (settings: SessionSettings) => void;
-  saveAllSettings: () => Promise<void>;
+  // API actions
+  toggleMaintenanceMode: () => Promise<void>;
+  fetchActiveHours: () => Promise<void>;
+  saveActiveHoursConfig: (
+    config: Omit<
+      ActiveHoursSettings,
+      "_id" | "setBy" | "setByEmail" | "createdAt" | "updatedAt"
+    >
+  ) => Promise<ActiveHoursSettings>;
+  deactivateActiveHours: () => Promise<void>;
+  updateAlertSettings: (settings: { systemAlerts: boolean; loginAlerts: boolean }) => Promise<void>;
 }
 
-// Default maintenance and session settings
+// ---------- Default states ----------
 const defaultMaintenanceMode: MaintenanceModeSettings = {
-  enabled: false,
+  isActive: false,
   message: "",
-  scheduledStart: undefined,
-  scheduledEnd: undefined,
 };
 
 const defaultSessionSettings: SessionSettings = {
@@ -63,7 +64,7 @@ const defaultSettings: Settings = {
     emailNotification: false,
     inactivityAlerts: false,
     systemHealthAlerts: false,
-    userLoginNotifications: false
+    userLoginNotifications: false,
   },
   system: {
     lowStockAlertThreshold: 15,
@@ -71,34 +72,31 @@ const defaultSettings: Settings = {
     bulkDiscountThreshold: 10000,
     minimumPurchaseForBulkDiscount: 500,
     allowNegativeBalances: false,
-    largeBalanceThreshold: 50000, 
+    largeBalanceThreshold: 50000,
   },
   clientAccount: {
     defaultCreditLimit: 800000,
     inactivePeriodDays: 30,
   },
+  clientsDebtsAlert: false,
+  largeBalanceAlert: false,
+  lowStockAlert: false,
+  inactivityAlerts: false,
+  dashboardNotification: false,
+  emailNotification: false,
 };
 
 export const useSettingsStore = create<SettingsStore>()(
   persist(
-    (set, get) => ({
-      // Existing state
+    (set, _get) => ({
       currentSettings: defaultSettings,
-      systemPreferences: defaultSettings.system,
-      clientAccountSettings: defaultSettings.clientAccount,
-      
-      // New state
       maintenanceMode: defaultMaintenanceMode,
       sessionSettings: defaultSessionSettings,
+      activeHours: null,
       loading: false,
       error: null,
-      lastUpdated: null,
 
-      // Existing actions
-      initializeSettings: (settings) => {
-        set({ currentSettings: settings });
-      },
-      
+      // ---------- Local setters ----------
       setAlertSetting: (key, value) => {
         set((state) => ({
           currentSettings: {
@@ -110,7 +108,7 @@ export const useSettingsStore = create<SettingsStore>()(
           },
         }));
       },
-      
+
       setLargeBalanceThreshold: (value) => {
         set((state) => ({
           currentSettings: {
@@ -122,90 +120,106 @@ export const useSettingsStore = create<SettingsStore>()(
           },
         }));
       },
-      
-      saveSettings: async () => {
-        const { currentSettings } = get();
-        console.log("Saving settings:", currentSettings);
-        return new Promise((resolve) => setTimeout(resolve, 500));
-      },
-      
-      setSystemPreferences: (prefs) => set({ 
-        systemPreferences: prefs,
-        currentSettings: {
-          ...get().currentSettings,
-          system: prefs,
-        }
-      }),
-      
-      setClientAccountSettings: (settings) => set({ 
-        clientAccountSettings: settings,
-        currentSettings: {
-          ...get().currentSettings,
-          clientAccount: settings,
-        }
-      }),
 
-      // New actions for maintenance and session
-      fetchSettings: async () => {
+      setSystemPreferences: (prefs) =>
+        set((state) => ({
+          currentSettings: {
+            ...state.currentSettings,
+            system: prefs,
+          },
+        })),
+
+      setClientAccountSettings: (settings) =>
+        set((state) => ({
+          currentSettings: {
+            ...state.currentSettings,
+            clientAccount: settings,
+          },
+        })),
+
+      // ---------- Maintenance Mode ----------
+      toggleMaintenanceMode: async () => {
         set({ loading: true, error: null });
         try {
-          // Simulate API call - replace with your actual API
-          const response = await fetch('/api/settings/maintenance-session');
-          const data = await response.json();
-          
-          set({ 
-            maintenanceMode: data.maintenanceMode || defaultMaintenanceMode,
-            sessionSettings: data.sessionSettings || defaultSessionSettings,
+          const maintenanceMode = await settingsService.toggleMaintenanceMode();
+          set({ maintenanceMode, loading: false });
+        } catch (err: any) {
+          set({
+            error: err.message || "Failed to toggle maintenance mode",
             loading: false,
-            lastUpdated: new Date(),
           });
-        } catch (err) {
-          set({ 
-            error: err instanceof Error ? err.message : 'Failed to fetch settings',
-            loading: false 
+          throw err;
+        }
+      },
+
+      // ---------- Active Hours ----------
+      fetchActiveHours: async () => {
+        set({ loading: true, error: null });
+        try {
+          const status = await settingsService.getSessionStatus(); // ✅ GET /status
+          set({ activeHours: status.activeHours || null, loading: false });
+        } catch (err: any) {
+          set({
+            error: err.message || "Failed to fetch active hours",
+            loading: false,
           });
         }
       },
 
-      updateMaintenanceMode: (maintenanceSettings) => {
-        set({
-          maintenanceMode: maintenanceSettings,
-        });
-      },
-
-      updateSessionSettings: (sessionSettings) => {
-        set({
-          sessionSettings: sessionSettings,
-        });
-      },
-
-      saveAllSettings: async () => {
-        const { maintenanceMode, sessionSettings } = get();
+      saveActiveHoursConfig: async (config) => {
         set({ loading: true, error: null });
-        
         try {
-          // Simulate API call - replace with your actual API
-          const response = await fetch('/api/settings/maintenance-session', {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
+          const activeHours = await settingsService.saveActiveHoursConfig(config); // ✅ POST /active-hours
+          set({ activeHours, loading: false });
+          return activeHours;
+        } catch (err: any) {
+          set({
+            error: err.message || "Failed to save active hours",
+            loading: false,
+          });
+          throw err;
+        }
+      },
+
+      deactivateActiveHours: async () => {
+        set({ loading: true, error: null });
+        try {
+          await settingsService.deactivateActiveHours(); // ✅ DELETE /active-hours
+          set({ activeHours: null, loading: false });
+        } catch (err: any) {
+          set({
+            error: err.message || "Failed to deactivate active hours",
+            loading: false,
+          });
+          throw err;
+        }
+      },
+
+      // ---------- Alerts ----------
+      updateAlertSettings: async (settings: { systemAlerts: boolean; loginAlerts: boolean }) => {
+        set({ loading: true, error: null });
+        try {
+          const alertSettings = {
+            systemHealthAlerts: settings.systemAlerts,
+            userLoginNotifications: settings.loginAlerts,
+          };
+
+          set((state) => ({
+            currentSettings: {
+              ...state.currentSettings,
+              alerts: {
+                ...state.currentSettings.alerts,
+                ...alertSettings,
+              },
             },
-            body: JSON.stringify({ maintenanceMode, sessionSettings }),
-          });
-          
-          if (!response.ok) {
-            throw new Error('Failed to save maintenance and session settings');
-          }
-
-          set({ 
             loading: false,
-            lastUpdated: new Date(),
+          }));
+        } catch (err: any) {
+          set({
+            error: err.message || "Failed to update alert settings",
+            loading: false,
           });
-        } catch (err) {
-          set({ 
-            error: err instanceof Error ? err.message : 'Failed to save settings',
-            loading: false 
-          });
+          throw err;
         }
       },
     }),
@@ -213,10 +227,9 @@ export const useSettingsStore = create<SettingsStore>()(
       name: "settings-store",
       partialize: (state) => ({
         currentSettings: state.currentSettings,
-        systemPreferences: state.systemPreferences,
-        clientAccountSettings: state.clientAccountSettings,
         maintenanceMode: state.maintenanceMode,
         sessionSettings: state.sessionSettings,
+        activeHours: state.activeHours,
       }),
     }
   )

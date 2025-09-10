@@ -21,6 +21,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import UserSearchList from "../shared/UserSearchList";
 
 // hooks
 import usePagination from "@/hooks/usePagination";
@@ -37,6 +38,7 @@ type ActivityWithUser = ActivityLogs & {
   user?: {
     name: string;
     profilePicture: string;
+    role?: string;
   };
 };
 
@@ -46,6 +48,12 @@ const ActivityLog = () => {
   const [expandedRows, setExpandedRows] = useState<{ [key: number]: boolean }>(
     {}
   );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState({
+    role: "all",
+    dateRange: "all",
+    status: "all"
+  });
 
   const toggleRow = (i: number) => {
     setExpandedRows((prev) => ({ ...prev, [i]: !prev[i] }));
@@ -63,7 +71,8 @@ const ActivityLog = () => {
           ...activity,
           user: {
             name: "System",
-            profilePicture: "SS", // fallback system icon
+            profilePicture: "SS",
+            role: "SYSTEM"
           },
         };
       }
@@ -73,19 +82,70 @@ const ActivityLog = () => {
       return {
         ...activity,
         user: user
-          ? { name: user.name, profilePicture: user.profilePicture }
+          ? { 
+              name: user.name, 
+              profilePicture: user.profilePicture,
+              role: user.role
+            }
           : {
-              name: activity.performedBy, // fallback: just show the email
+              name: activity.performedBy,
               profilePicture: "/default-avatar.png",
+              role: "UNKNOWN"
             },
       };
     });
   };
 
-  const mergedAllActivities = useMemo(
-    () => mergeActivitiesWithUsers(activities, users),
-    [activities, users]
-  );
+  // Filter activities based on search query and filters
+  const filteredActivities = useMemo(() => {
+    let result = mergeActivitiesWithUsers(activities, users);
+
+    // Apply search query filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(activity => {
+        // Check if any field matches the search query
+        return (
+          activity.user?.name?.toLowerCase().includes(query) ||
+          activity.performedBy.toLowerCase().includes(query) ||
+          activity.action.toLowerCase().includes(query) ||
+          activity.details.toLowerCase().includes(query) ||
+          activity.device?.toLowerCase().includes(query) ||
+          activity.user?.role?.toLowerCase().includes(query)
+        );
+      });
+    }
+
+    // Apply role filter
+    if (filters.role !== "all") {
+      result = result.filter(activity => activity.user?.role === filters.role);
+    }
+
+    // Apply date range filter
+    if (filters.dateRange !== "all") {
+      const now = new Date();
+      result = result.filter(activity => {
+        const activityDate = new Date(activity.timestamp);
+        
+        switch (filters.dateRange) {
+          case "today":
+            return activityDate.toDateString() === now.toDateString();
+          case "week":
+            { const weekAgo = new Date(now);
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            return activityDate >= weekAgo; }
+          case "month":
+            { const monthAgo = new Date(now);
+            monthAgo.setMonth(monthAgo.getMonth() - 1);
+            return activityDate >= monthAgo; }
+          default:
+            return true;
+        }
+      });
+    }
+
+    return result;
+  }, [activities, users, searchQuery, filters]);
 
   const {
     currentPage,
@@ -94,13 +154,28 @@ const ActivityLog = () => {
     goToNextPage,
     canGoPrevious,
     canGoNext,
-  } = usePagination(mergedAllActivities.length, 6);
+  } = usePagination(filteredActivities.length, 6);
 
-  const mergedActivities = useMemo(() => {
+  const paginatedActivities = useMemo(() => {
     const startIndex = (currentPage - 1) * 6;
     const endIndex = startIndex + 6;
-    return mergedAllActivities.slice(startIndex, endIndex);
-  }, [mergedAllActivities, currentPage]);
+    return filteredActivities.slice(startIndex, endIndex);
+  }, [filteredActivities, currentPage]);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleFilterChange = (filterName: string, value: string) => {
+    setFilters(prev => ({ ...prev, [filterName]: value }));
+  };
+
+  // Extract unique roles for filter dropdown
+  const roles = useMemo(() => {
+    const uniqueRoles = new Set<string>();
+    users.forEach(user => uniqueRoles.add(user.role));
+    return Array.from(uniqueRoles);
+  }, [users]);
 
   return (
     <main>
@@ -108,6 +183,14 @@ const ActivityLog = () => {
         <DashboardTitle heading="System Activity Log" description="" />
         <Button>Export User Report</Button>
       </div>
+<div className="bg-white mt-8 ">
+      <h2 className="p-3 font-medium"> Filter & Controls </h2>
+      <UserSearchList 
+        onSearch={handleSearch}
+        onFilterChange={handleFilterChange}
+        roles={roles}
+      />
+</div>
 
       {/* activity log table */}
       <div className="bg-white border border-[#d9d9d9] rounded-[10px] mt-[40px] overflow-hidden shadow-lg">
@@ -127,7 +210,6 @@ const ActivityLog = () => {
               <TableHead className="font-semibold text-[#333]">
                 DETAILS
               </TableHead>
-
               <TableHead className="font-semibold text-[#333]">
                 DEVICE
               </TableHead>
@@ -135,72 +217,87 @@ const ActivityLog = () => {
           </TableHeader>
 
           <TableBody className="">
-            {mergedActivities.map((a, i) => (
-              <TableRow key={i} className="pl-5">
-                <TableCell className="">
-                  <span className="block text-xs text-[#444444]">
-                    {new Date(a.timestamp).toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </span>
-                  <span className="block text-[0.625rem] text-[#7D7D7D]">
-                    {new Date(a.timestamp).toLocaleTimeString()}
-                  </span>
+            {paginatedActivities.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  {searchQuery || Object.values(filters).some(f => f !== "all") 
+                    ? "No activities match your search criteria" 
+                    : "No activities found"}
                 </TableCell>
-                <TableCell className="flex gap-1.5 items-center">
-                  <Avatar
+              </TableRow>
+            ) : (
+              paginatedActivities.map((a, i) => (
+                <TableRow key={`${a._id}-${i}`} className="pl-5">
+                  <TableCell className="">
+                    <span className="block text-xs text-[#444444]">
+                      {new Date(a.timestamp).toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                    <span className="block text-[0.625rem] text-[#7D7D7D]">
+                      {new Date(a.timestamp).toLocaleTimeString()}
+                    </span>
+                  </TableCell>
+                  <TableCell className="flex gap-1.5 items-center">
+                    <Avatar
                     name={a.user?.name}
                     profilePicture={a.user?.profilePicture}
                     role={a.role}
                   />
-                  <p>
-                    <span className="block text-xs font-medium text-[#444444]">
-                      {a.user?.name}
+
+                    <p>
+                      <span className="block text-xs font-medium text-[#444444]">
+                        {a.user?.name}
+                      </span>
+                      <span className="block text-[9px] text-[#7D7D7D]">
+                        {a.performedBy}
+                      </span>
+                    </p>
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={`min-w-16 mx-auto text-center py-2 px-2.5 rounded ${
+                        a.user?.role === "STAFF"
+                          ? "bg-[#2ECC7133] text-[#05431F]"
+                          : a.user?.role === "ADMIN"
+                          ? "bg-[#FFF2CE] text-[#F39C12]"
+                          : a.user?.role === "SYSTEM"
+                          ? "bg-gray-200 text-gray-700"
+                          : "bg-[#E2F3EB] text-[#1A3C7E]"
+                      }`}
+                    >
+                      {a.user?.role === "MAINTAINER"
+                        ? "MAINT"
+                        : a.user?.role === "SUPER_ADMIN"
+                        ? "MANAGER"
+                        : a.user?.role === "SYSTEM"
+                        ? "SYSTEM"
+                        : a.user?.role || "UNKNOWN"}
                     </span>
-                    <span className="block text-[9px] text-[#7D7D7D]">
-                      {a.performedBy}
-                    </span>
-                  </p>
-                </TableCell>
-                <TableCell>
-                  <span
-                    className={`min-w-16 mx-auto text-center py-2 px-2.5 rounded ${
-                      a.role === "STAFF"
-                        ? "bg-[#2ECC7133] text-[#05431F]"
-                        : a.role === "ADMIN"
-                        ? "bg-[#FFF2CE] text-[#F39C12]"
-                        : "bg-[#E2F3EB] text-[#1A3C7E]"
-                    }`}
+                  </TableCell>
+                  <TableCell className="capitalize">
+                    {a.action.toLowerCase().replace(/-/g, " ")}
+                  </TableCell>
+                  <TableCell
+                    onClick={() => toggleRow(i)}
+                    title={!expandedRows[i] ? a.details : ""}
+                    className={`cursor-pointer ${
+                      expandedRows[i] ? "whitespace-pre-wrap" : "truncate"
+                    } max-w-[170px]`}
                   >
-                    {a.role === "MAINTAINER"
-                      ? "MAINT"
-                      : a.role === "SUPER_ADMIN"
-                      ? "MANAGER"
-                      : a.role}
-                  </span>
-                </TableCell>
-                <TableCell className="capitalize">
-                  {a.action.toLowerCase().replace("-", " ")}
-                </TableCell>
-                <TableCell
-                  onClick={() => toggleRow(i)}
-                  title={!expandedRows[i] ? a.details : ""}
-                  className={`cursor-pointer ${
-                    expandedRows[i] ? "whitespace-pre-wrap" : "truncate"
-                  } max-w-[170px]`}
-                >
-                  {a.details}
-                </TableCell>
-                <TableCell>{a.device}</TableCell>
-              </TableRow>
-            ))}
+                    {a.details}
+                  </TableCell>
+                  <TableCell>{a.device}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
 
         {/* Pagination */}
-        {mergedActivities.length > 0 && (
+        {filteredActivities.length > 0 && (
           <div className="h-14 border-y border-[#D9D9D9] text-sm text-[#7D7D7D] flex justify-center items-center gap-3">
             <Pagination>
               <PaginationContent className="!flex !justify-between w-full px-5">
@@ -209,9 +306,9 @@ const ActivityLog = () => {
                     const start = (currentPage - 1) * 6 + 1;
                     const end = Math.min(
                       currentPage * 6,
-                      mergedActivities.length
+                      filteredActivities.length
                     );
-                    return `Showing ${start}-${end} of ${activities.length} users (Page ${currentPage} of ${totalPages})`;
+                    return `Showing ${start}-${end} of ${filteredActivities.length} activities (Page ${currentPage} of ${totalPages})`;
                   })()}
                 </PaginationItem>
                 <div className="flex justify-center gap-[18px]">
@@ -224,7 +321,7 @@ const ActivityLog = () => {
                           : "cursor-pointer"
                       }`}
                       aria-label="Go to previous page"
-                    ></PaginationPrevious>
+                    />
                   </PaginationItem>
                   <PaginationItem className="flex items-center justify-center bg-[#8C1C1380] w-[34px] h-[34px] rounded px-4 text-lg text-white">
                     {currentPage}
@@ -237,7 +334,7 @@ const ActivityLog = () => {
                         : "cursor-pointer"
                     }`}
                     aria-label="Go to next page"
-                  ></PaginationNext>
+                  />
                 </div>
               </PaginationContent>
             </Pagination>

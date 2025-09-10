@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { type Settings, type AlertAndNotificationSettings } from '@/types/types';
+import { type Settings, type AlertAndNotificationSettings } from '@/schemas/SettingsSchemas';
 
 interface AlertSettingsSectionProps {
   settings: Settings;
