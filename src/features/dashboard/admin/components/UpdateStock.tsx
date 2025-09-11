@@ -5,6 +5,8 @@
  * @format
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, X } from "lucide-react";
-import { type Product, type Category } from "@/types/types";
-import { updateProductStock } from "@/services/productService"; 
+import { type Product, type Category } from "@/types/types"; // Import Category
 
 // Define UpdateStockProduct type locally
 type UpdateStockProduct = Product & {
@@ -26,7 +27,7 @@ type UpdateStockProduct = Product & {
 
 interface UpdateStockProps {
   products: Product[];
-  categories: Category[];
+  categories: Category[]; // UpdateStock now expects categories to derive names
   isOpen: boolean;
   onClose: () => void;
   onSave: (updatedProducts: Product[]) => void;
@@ -61,14 +62,16 @@ export default function UpdateStock({
   };
 
   const [products, setProducts] = useState<UpdateStockProduct[]>(() => {
-    return initialProducts.map((product) => ({
-      ...product,
-      id: product._id,
-      category: getCategoryName(product.categoryId),
-      selected: false,
-      newQuantity: product.stock,
-      shieldStatus: getShieldStatus(product),
-    }));
+    return initialProducts.map((product) => {
+      return {
+        ...product,
+        id: product._id,
+        category: getCategoryName(product.categoryId),
+        selected: false,
+        newQuantity: product.stock,
+        shieldStatus: getShieldStatus(product),
+      } as UpdateStockProduct;
+    });
   });
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -77,14 +80,16 @@ export default function UpdateStock({
   useEffect(() => {
     if (isOpen) {
       setProducts(
-        initialProducts.map((product) => ({
-          ...product,
-          id: product._id,
-          category: getCategoryName(product.categoryId),
-          selected: false,
-          newQuantity: product.stock,
-          shieldStatus: getShieldStatus(product),
-        }))
+        initialProducts.map((product) => {
+          return {
+            ...product,
+            id: product._id,
+            category: getCategoryName(product.categoryId),
+            selected: false,
+            newQuantity: product.stock,
+            shieldStatus: getShieldStatus(product),
+          } as UpdateStockProduct;
+        })
       );
       setSearchTerm("");
       setBulkQuantity("");
@@ -93,6 +98,7 @@ export default function UpdateStock({
 
   const filteredProducts = useMemo(() => {
     if (!searchTerm.trim()) return products;
+
     const term = searchTerm.toLowerCase();
     return products.filter((p) => {
       const nameMatch = p.name?.toLowerCase().includes(term) ?? false;
@@ -152,7 +158,7 @@ export default function UpdateStock({
           ? {
               ...p,
               newQuantity: newNum,
-              shieldStatus: getShieldStatus(p, newNum),
+              shieldStatus: getShieldStatus(p, newNum), // Update status based on new quantity
             }
           : p
       )
@@ -160,57 +166,23 @@ export default function UpdateStock({
     setBulkQuantity("");
   };
 
-  // ✅ FIXED handleSave
-  const handleSave = async () => {
-    const updatedProductsPayload = products.filter(
-      (p) =>
-        p.selected &&
-        p.newQuantity !== undefined &&
-        p.newQuantity !== p.stock
-    );
+  const handleSave = () => {
+    const updatedProductsPayload: Product[] = products
+      .filter(
+        (p) =>
+          p.selected && p.newQuantity !== undefined && p.newQuantity !== p.stock
+      )
+      .map((p) => {
+        const { id, newQuantity, selected, category, shieldStatus, ...rest } =
+          p;
+        return {
+          ...rest,
+          stock: newQuantity, // Ensure stock is the newQuantity
+        } as Product; // Cast back to Product type
+      });
 
-    if (updatedProductsPayload.length === 0) {
-      onClose();
-      return;
-    }
-
-    try {
-      // 1️⃣ Call API for each update
-      await Promise.all(
-        updatedProductsPayload.map(async (p) => {
-          const difference = (p.newQuantity || 0) - (p.stock || 0);
-          const operation = difference >= 0 ? "add" : "subtract";
-          await updateProductStock(
-            p.id,
-            Math.abs(difference),
-            p.unit || "",
-            operation
-          );
-        })
-      );
-
-      // 2️⃣ Update local state for instant UI feedback
-      setProducts((prev) =>
-        prev.map((p) =>
-          updatedProductsPayload.find((u) => u.id === p.id)
-            ? { ...p, stock: p.newQuantity ?? p.stock, selected: false }
-            : p
-        )
-      );
-
-      // 3️⃣ Propagate to parent/Zustand store
-      onSave(
-        updatedProductsPayload.map((p) => ({
-          ...p,
-          stock: p.newQuantity ?? p.stock,
-        }))
-      );
-
-      // 4️⃣ Close modal
-      onClose();
-    } catch (error) {
-      console.error("Error updating stock:", error);
-    }
+    onSave(updatedProductsPayload);
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -253,8 +225,11 @@ export default function UpdateStock({
                   />
                   <Label htmlFor="select-all">Select All</Label>
                 </div>
+                {/* Ensure these elements stack on mobile and are side-by-side on md screens */}
                 <div className="flex flex-col md:flex-row md:items-center md:gap-4 w-full md:w-auto">
                   <div className="flex items-center gap-2 w-full">
+                    {" "}
+                    {/* Added w-full for stacking */}
                     <Label className="whitespace-nowrap">
                       Set all selected to:
                     </Label>
@@ -275,7 +250,7 @@ export default function UpdateStock({
                       bulkQuantity === "" ||
                       isNaN(parseInt(bulkQuantity, 10))
                     }
-                    className="bg-emerald-500 text-white hover:bg-green-500 hover:text-white w-full md:w-auto"
+                    className="bg-emerald-500 text-white hover:bg-green-500 hover:text-white w-full md:w-auto" // Added w-full for mobile button
                   >
                     Apply
                   </Button>
@@ -299,7 +274,9 @@ export default function UpdateStock({
               ) : (
                 filteredProducts.map((product) => (
                   <div key={product.id} className="border rounded-lg p-4">
+                    {/* Ensure flex-col on small screens, flex-row on md */}
                     <div className="flex flex-col md:flex-row justify-between gap-6">
+                      {/* Product details */}
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-3 text-[#333333]">
                           <Checkbox
@@ -316,7 +293,10 @@ export default function UpdateStock({
                         <span className="text-sm text-[#7D7D7D] px-3 py-1 w-26 h-7 text-center border rounded-sm bg-gray-100 ml-9">
                           {product.category}
                         </span>
+                        {/* Flex wrap for the stock/shield status/price info */}
                         <div className="flex gap-4 flex-wrap mt-2">
+                          {" "}
+                          {/* Added mt-2 for spacing */}
                           <div>
                             <span className="text-sm block text-[#7D7D7D] ml-6">
                               Current
@@ -339,9 +319,11 @@ export default function UpdateStock({
                             </div>
                           </div>
                         </div>
+                        {/* Unit Price can also be wrapped if needed, or kept separate for clarity */}
                         <span className="text-sm block text-[#7D7D7D] ml-6 mt-2">
                           Unit Price
-                        </span>
+                        </span>{" "}
+                        {/* Added mt-2 */}
                         <span className="text-sm font-sm text-[#444444] ml-6">
                           ₦
                           {product.unitPrice?.toLocaleString("en-NG") || "0.00"}
@@ -349,6 +331,8 @@ export default function UpdateStock({
                       </div>
 
                       <div className="w-full md:max-w-xs space-y-2 text-[#7D7D7D] pt-4 md:pt-10">
+                        {" "}
+                        {/* Adjusted pt for mobile */}
                         <Label htmlFor={`quantity-${product.id}`}>
                           New Quantity
                         </Label>
