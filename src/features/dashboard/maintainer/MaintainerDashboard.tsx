@@ -4,7 +4,6 @@ import type { StatCard } from "@/types/stats";
 import Stats from "../shared/Stats";
 import { useUserStore } from "@/stores/useUserStore";
 import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
-import RecentActivity from "./components/RecentActivity";
 
 const MaintainerDashboard = () => {
   const users = useUserStore((s) => s.users);
@@ -53,11 +52,37 @@ const MaintainerDashboard = () => {
         />
       </div>
       <Stats data={stats} />
-      <div className="grid grid-cols-1 md:grid-cols-[50fr_50fr] gap-5 mt-5">
-        
+      <div className="grid grid-cols-1 md:grid-cols-[60fr_40fr] gap-5">
         <SystemHealth />
 
-        <RecentActivity/>
+        {/* recent activity */}
+        <div className="bg-white rounded-[10px]">
+          <h5>Recent Activity</h5>
+
+          {/* list */}
+          {/* <ul>
+            {[
+              ...activities
+                .sort(
+                  (a, b) =>
+                    new Date(b.timestamp).getTime() -
+                    new Date(a.timestamp).getTime()
+                )
+                .slice(0, 8)
+                .map((a, i) => (
+                  <li key={i} className="flex justify-between border-b py-1">
+                    <div>
+                      <p>{a.details}</p>
+                      <span className="block">{a.timestamp}</span>
+                    </div>
+
+                    {/* device *
+                    <p>{a.device}</p>
+                  </li>
+                )),
+            ]}
+          </ul> */}
+        </div>
       </div>
     </main>
   );
