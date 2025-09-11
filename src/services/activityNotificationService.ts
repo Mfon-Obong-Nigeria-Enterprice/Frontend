@@ -6,6 +6,7 @@ import {
 } from "@/stores/useNotificationStore";
 import type { Role } from "@/types/types";
 import api from "./baseApi";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 // Activity log types based on your data
 export interface ActivityLog {
@@ -33,7 +34,7 @@ type NotificationConfigEntry = {
 
 // Configuration for which activities should generate notifications
 const NOTIFICATION_CONFIG: Record<string, NotificationConfigEntry> = {
-  // Transaction-related notifications (for all admin roles)
+  // Transaction-related notifications (for all roles)
   TRANSACTION_CREATED: {
     recipients: ["ADMIN", "MAINTAINER", "SUPER_ADMIN"] as Role[],
     type: "success",
@@ -49,7 +50,7 @@ const NOTIFICATION_CONFIG: Record<string, NotificationConfigEntry> = {
     title: "Client Transaction Updated",
   },
 
-  // User management notifications (for admins and maintainers)
+  // User management notifications (for super_admins and maintainers)
   USER_CREATED: {
     recipients: ["MAINTAINER", "SUPER_ADMIN"] as Role[],
     type: "success",
@@ -81,7 +82,7 @@ const NOTIFICATION_CONFIG: Record<string, NotificationConfigEntry> = {
     title: "Stock Level Changed",
   },
 
-  // Security-related notifications (for admins only)
+  // Security-related notifications (for maintainer only)
   LOGIN: {
     recipients: ["MAINTAINER"] as Role[],
     type: "info",
@@ -231,8 +232,10 @@ function generateNotificationMessage(
 }
 
 // Convert activity log to notification
+// Updated activityLogToNotification function to include userId
 export function activityLogToNotification(
-  log: ActivityLog
+  log: ActivityLog,
+  userId?: string
 ): Notification | null {
   const config =
     NOTIFICATION_CONFIG[log.action as keyof typeof NOTIFICATION_CONFIG];
@@ -255,6 +258,7 @@ export function activityLogToNotification(
     action: config.actionType,
     createdAt: new Date(log.timestamp),
     recipients: config.recipients,
+    userId: userId, // Associate with current user
     meta: {
       adminName: log.performedBy,
       branch: parsedInfo.branch,
@@ -265,7 +269,7 @@ export function activityLogToNotification(
   };
 }
 
-// Service class to handle activity log notifications
+// Updated ActivityNotificationService class
 export class ActivityNotificationService {
   private static instance: ActivityNotificationService;
   private lastProcessedId: string | null = null;
@@ -278,11 +282,47 @@ export class ActivityNotificationService {
     return ActivityNotificationService.instance;
   }
 
-  // Fetch and process new activity logs
+  // Load last processed ID from storage on initialization
+  private loadLastProcessedId(): string | null {
+    const currentUser = useAuthStore.getState().user;
+    if (!currentUser?.id) return null;
+
+    const key = `notification-last-processed-${currentUser.id}`;
+    return localStorage.getItem(key);
+  }
+
+  // Save last processed ID to storage
+  private saveLastProcessedId(id: string) {
+    const currentUser = useAuthStore.getState().user;
+    if (!currentUser?.id) return;
+
+    const key = `notification-last-processed-${currentUser.id}`;
+    localStorage.setItem(key, id);
+    this.lastProcessedId = id;
+  }
+
+  // Initialize the service for a specific user
+  initializeForUser() {
+    const currentUser = useAuthStore.getState().user;
+    if (!currentUser?.id) return;
+
+    this.lastProcessedId = this.loadLastProcessedId();
+  }
+
   async processNewActivities() {
     try {
+      const currentUser = useAuthStore.getState().user;
+      if (!currentUser?.id) {
+        return 0;
+      }
       const response = await api.get("/system-activity-logs");
       const logs: ActivityLog[] = response.data;
+
+      // Initialize lastProcessedId if not set
+      if (!this.lastProcessedId) {
+        this.lastProcessedId = this.loadLastProcessedId();
+      }
+
       // Sort by timestamp to process in chronological order
       const sortedLogs = logs.sort(
         (a, b) =>
@@ -290,36 +330,59 @@ export class ActivityNotificationService {
       );
 
       // Find new logs since last processed
-      const newLogs = this.lastProcessedId
-        ? sortedLogs.slice(
-            sortedLogs.findIndex((log) => log._id === this.lastProcessedId) + 1
-          )
-        : sortedLogs.slice(-10); // Get last 10 if first time
+      let newLogs: ActivityLog[] = [];
+
+      if (this.lastProcessedId) {
+        const lastIndex = sortedLogs.findIndex(
+          (log) => log._id === this.lastProcessedId
+        );
+        console.log(`🔍 Found last processed at index: ${lastIndex}`);
+
+        if (lastIndex !== -1) {
+          newLogs = sortedLogs.slice(lastIndex + 1);
+        } else {
+          // Last processed ID not found, get recent logs (first login scenario)
+          newLogs = sortedLogs.slice(-5);
+        }
+      } else {
+        // First time for this user, get last 10 logs
+        newLogs = sortedLogs.slice(-10);
+      }
 
       // Process each new log
       const { addNotification } = useNotificationStore.getState();
+      let processedCount = 0;
 
       for (const log of newLogs) {
-        const notification = activityLogToNotification(log);
+        const notification = activityLogToNotification(log, currentUser.id);
         if (notification) {
           addNotification(notification);
+          processedCount++;
         }
       }
 
       // Update last processed ID
       if (sortedLogs.length > 0) {
-        this.lastProcessedId = sortedLogs[sortedLogs.length - 1]._id;
+        this.saveLastProcessedId(sortedLogs[sortedLogs.length - 1]._id);
       }
 
+      console.log(`✨ Successfully processed ${processedCount} notifications`);
       return newLogs.length;
     } catch (error) {
-      console.error("Error processing activity logs:", error);
+      console.error("❌ Error processing activity logs:", error);
       return 0;
     }
   }
 
-  // Start automatic polling for new activities// Start automatic polling for new activities
   startPolling(intervalMs: number = 30000) {
+    const currentUser = useAuthStore.getState().user;
+    if (!currentUser?.id) {
+      return;
+    }
+
+    // Initialize for current user
+    this.initializeForUser();
+
     if (this.intervalId) {
       clearInterval(this.intervalId);
     }
@@ -332,7 +395,6 @@ export class ActivityNotificationService {
     this.processNewActivities();
   }
 
-  // Stop polling
   stopPolling() {
     if (this.intervalId) {
       clearInterval(this.intervalId);
@@ -340,9 +402,28 @@ export class ActivityNotificationService {
     }
   }
 
-  // Manually process a single activity log
+  // Clear notifications and tracking for user logout
+  clearUserData() {
+    const currentUser = useAuthStore.getState().user;
+    if (currentUser?.id) {
+      // Clear user-specific notifications from store
+      const { clearUserNotifications } = useNotificationStore.getState();
+      clearUserNotifications(currentUser.id);
+
+      // Clear user-specific tracking data
+      const key = `notification-last-processed-${currentUser.id}`;
+      localStorage.removeItem(key);
+    }
+
+    this.lastProcessedId = null;
+    this.stopPolling();
+  }
+
   processSingleActivity(log: ActivityLog) {
-    const notification = activityLogToNotification(log);
+    const currentUser = useAuthStore.getState().user;
+    if (!currentUser?.id) return;
+
+    const notification = activityLogToNotification(log, currentUser.id);
     if (notification) {
       const { addNotification } = useNotificationStore.getState();
       addNotification(notification);
@@ -350,22 +431,25 @@ export class ActivityNotificationService {
   }
 }
 
-// Hook for easy integration in React components
+// Updated React hook
 export function useActivityNotifications(
   autoStart: boolean = true,
   pollInterval: number = 30000
 ) {
   const service = ActivityNotificationService.getInstance();
+  const user = useAuthStore((state) => state.user);
 
   React.useEffect(() => {
-    if (autoStart) {
+    if (autoStart && user?.id) {
       service.startPolling(pollInterval);
 
       return () => {
         service.stopPolling();
       };
+    } else if (!user?.id) {
+      service.stopPolling();
     }
-  }, [autoStart, pollInterval]);
+  }, [autoStart, pollInterval, user?.id]);
 
   return {
     processNewActivities: () => service.processNewActivities(),
@@ -373,5 +457,6 @@ export function useActivityNotifications(
     stopPolling: () => service.stopPolling(),
     processSingleActivity: (log: ActivityLog) =>
       service.processSingleActivity(log),
+    clearUserData: () => service.clearUserData(),
   };
 }
