@@ -46,6 +46,16 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
 
   addNotification: (notification) =>
     set((state) => {
+      // Check if notification already exists
+      const existingIndex = state.notifications.findIndex(
+        (n) => n.id === notification.id
+      );
+
+      if (existingIndex !== -1) {
+        // Notification already exists, don't add duplicate
+        return state;
+      }
+
       const newNotifications = [notification, ...state.notifications];
       return {
         notifications: newNotifications,

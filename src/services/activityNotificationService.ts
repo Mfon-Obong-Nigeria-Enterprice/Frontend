@@ -365,7 +365,7 @@ export function useActivityNotifications(
         service.stopPolling();
       };
     }
-  }, [autoStart, pollInterval, service]);
+  }, [autoStart, pollInterval]);
 
   return {
     processNewActivities: () => service.processNewActivities(),
