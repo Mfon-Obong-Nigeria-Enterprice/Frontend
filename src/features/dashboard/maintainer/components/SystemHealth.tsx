@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// SystemHealth.tsx
 import React, { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertTriangle } from "lucide-react";
@@ -13,48 +11,14 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { create } from "zustand";
 import {
-  HealthService,
-  type BasicHealthResponse,
-  type DetailedHealthResponse,
-} from "@/services/healthService";
-
-type HealthState = {
-  basic: BasicHealthResponse | null;
-  detailed: DetailedHealthResponse | null;
-  loading: boolean;
-  error: Error | null;
-  lastUpdated: Date | null;
-  fetchHealth: () => Promise<void>;
-};
-
-const useHealthStore = create<HealthState>((set) => ({
-  basic: null,
-  detailed: null,
-  loading: false,
-  error: null,
-  lastUpdated: null,
-
-  fetchHealth: async () => {
-    set({ loading: true, error: null });
-    try {
-      const { basic, detailed } = await HealthService.getAllHealthData();
-      set({
-        basic,
-        detailed,
-        loading: false,
-        lastUpdated: new Date(),
-      });
-    } catch (err) {
-      set({
-        error:
-          err instanceof Error ? err : new Error("Failed to fetch health data"),
-        loading: false,
-      });
-    }
-  },
-}));
+  useBasicHealth,
+  useDetailedHealth,
+  useHealthLoading,
+  useHealthError,
+  useFetchHealth,
+  useHealthLastUpdated,
+} from "@/stores/useHealthStore";
 
 const BAR_COLORS = {
   normal: "#2ECC71",
@@ -62,11 +26,24 @@ const BAR_COLORS = {
   critical: "#F95353",
 };
 
-const CustomTooltip = ({ active, payload }: any) => {
+interface TooltipPayload {
+  payload: {
+    name: string;
+    value: number;
+    status: string;
+  };
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+}
+
+const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white p-3 border border-gray-200 rounded-md shadow-sm">
+      <div className="bg-white p-3 border border-gray-200 rounded-md shadow-sm h-full">
         <p className="font-medium text-gray-900">{data.name}</p>
         <p className="text-gray-700">
           {data.name === "Database" ? `${data.value}ms` : `${data.value}%`}
@@ -90,20 +67,28 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 export const SystemHealth: React.FC = () => {
-  const { basic, detailed, loading, error, lastUpdated, fetchHealth } =
-    useHealthStore();
+  const basic = useBasicHealth();
+  const detailed = useDetailedHealth();
+  const loading = useHealthLoading();
+  const error = useHealthError();
+  const lastUpdated = useHealthLastUpdated();
+  const fetchHealth = useFetchHealth();
 
+  // ⏳ Initial + interval fetching
   useEffect(() => {
     fetchHealth();
     const interval = setInterval(fetchHealth, 30000);
     return () => clearInterval(interval);
   }, [fetchHealth]);
 
-  const getBarColor = (value: number) => {
-    if (value >= 90) return BAR_COLORS.critical;
-    if (value >= 80) return BAR_COLORS.high;
-    return BAR_COLORS.normal;
-  };
+  const getBarColor = (value: number, status?: string) => {
+  if (status === "degraded") return "#FFA500"; // orange
+  if (value >= 90) return BAR_COLORS.critical; // critical
+  if (value >= 80)return BAR_COLORS.high;
+
+return BAR_COLORS.normal; 
+};
+
 
   const barChartData = useMemo(() => {
     if (!detailed) return [];
@@ -213,103 +198,13 @@ export const SystemHealth: React.FC = () => {
           <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-3 rounded-md mt-4 md:mt-6 flex items-center text-sm">
             <AlertTriangle className="mr-2 h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
             <span className="font-semibold">
-              High Usage: Memory at {detailed.checks.memory.percentage}% -
-              Monitor closely
+              High Usage: Memory at {detailed.checks.memory.percentage}% - Monitor closely
             </span>
           </div>
         )}
-
-        {/* <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div className="bg-gray-50 p-3 rounded-md">
-            <h3 className="font-medium text-gray-700 mb-1">Node Version</h3>
-            <p>{detailed.checks.environment.nodeVersion}</p>
-          </div>
-          <div className="bg-gray-50 p-3 rounded-md">
-            <h3 className="font-medium text-gray-700 mb-1">Platform</h3>
-            <p>{detailed.checks.environment.platform}</p>
-          </div>
-          <div className="bg-gray-50 p-3 rounded-md">
-            <h3 className="font-medium text-gray-700 mb-1">Environment</h3>
-            <p>{detailed.checks.environment.environment}</p>
-          </div>
-        </div> */}
-
-        {/* <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div className="bg-blue-50 p-3 rounded-md border border-blue-100">
-            <h3 className="font-medium text-blue-700 mb-1">Database Status</h3>
-            <p className="flex items-center">
-              <span
-                className={`h-3 w-3 rounded-full mr-2 ${
-                  detailed.checks.database.status === "up"
-                    ? "bg-green-500"
-                    : "bg-red-500"
-                }`}
-              ></span>
-              {detailed.checks.database.status.toUpperCase()} -{" "}
-              {detailed.checks.database.responseTime}ms
-            </p>
-          </div>
-          <div className="bg-blue-50 p-3 rounded-md border border-blue-100">
-            <h3 className="font-medium text-blue-700 mb-1">Memory Status</h3>
-            <p className="flex items-center">
-              <span
-                className={`h-3 w-3 rounded-full mr-2 ${
-                  detailed.checks.memory.status === "healthy" ||
-                  detailed.checks.memory.status === "up"
-                    ? "bg-green-500"
-                    : "bg-red-500"
-                }`}
-              ></span>
-              {detailed.checks.memory.status.toUpperCase()} -{" "}
-              {detailed.checks.memory.percentage}%
-            </p>
-          </div>
-        </div> */}
-
-        {/* Overall System Status */}
-        {/* <div
-          className={`mt-6 p-4 rounded-md flex items-center ${
-            basic.status === "healthy" || basic.status === "up"
-              ? "bg-green-100 border border-green-200"
-              : "bg-red-100 border border-red-200"
-          }`}
-        >
-          <div
-            className={`h-4 w-4 rounded-full mr-3 ${
-              basic.status === "healthy" || basic.status === "up"
-                ? "bg-green-500"
-                : "bg-red-500"
-            }`}
-          ></div>
-          <div>
-            <h3 className="font-medium text-lg">
-              System Status:{" "}
-              <span
-                className={
-                  basic.status === "healthy" || basic.status === "up"
-                    ? "text-green-700"
-                    : "text-red-700"
-                }
-              >
-                {basic.status.toUpperCase()}
-              </span>
-            </h3>
-            <p className="text-sm text-gray-600 mt-1">
-              Last checked at {new Date(basic.timestamp).toLocaleTimeString()}
-            </p>
-          </div>
-        </div> */}
       </div>
     );
-  }, [
-    basic,
-    detailed,
-    error,
-    loading,
-    fetchHealth,
-    barChartData,
-    showMemoryAlert,
-  ]);
+  }, [basic, detailed, error, loading, fetchHealth, barChartData, showMemoryAlert]);
 
   return (
     <div className="container mx-auto p-4 bg-gray-100 min-h-screen">
@@ -317,11 +212,16 @@ export const SystemHealth: React.FC = () => {
         <div className="flex items-center gap-2">
           {lastUpdated && (
             <span className="text-xs sm:text-sm text-gray-500">
-              Last updated:{" "}
-              {lastUpdated.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              {lastUpdated && (
+  <span className="text-xs sm:text-sm text-gray-500">
+    Last updated:{" "}
+    {new Date(lastUpdated).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}
+  </span>
+)}
+
             </span>
           )}
         </div>
