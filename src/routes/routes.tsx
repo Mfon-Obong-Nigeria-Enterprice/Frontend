@@ -1,5 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import TestLocationPage from "@/pages/TestLocationPage";
+import TestFormPage from "@/pages/TestFormPage";
+
 
 // Auth
 import Login from "@/features/auth/Login";
@@ -16,8 +18,11 @@ import UserManagement from "@/features/dashboard/manager/UserManagement";
 import ManagerSettings from "@/features/dashboard/manager/ManagerSettings";
 import ManagerNotifications from "@/features/dashboard/manager/ManagerNotifications";
 
-// Modal Page
-// import AddBusinessLocationPage from "@/pages/AddBusinessLocationPage";
+// Modal Page - removed unused import
+
+
+
+
 
 // Maintainer
 import MaintainerLayout from "@/layout/MaintainerLayout";
@@ -60,7 +65,7 @@ const router = createBrowserRouter([
     path: "/manager/dashboard",
     element: <ManagerDashboardLayout />,
     children: [
-      { index: true, element: <Navigate to="m-overview" replace /> },
+      { index: true, element: <Navigate to="overview" replace /> },
       { path: "m-overview", element: <ManagerDashboardOverview /> },
       { path: "business-report", element: <BusinessReport /> },
       { path: "manage-clients", element: <ManagerClients /> },
@@ -78,16 +83,23 @@ const router = createBrowserRouter([
       { path: "log", element: <ActivityLog /> },
     ],
   },
-
-  // Test Route
-  { path: "/test-location", element: <TestLocationPage /> },
+// Test Location Route
+{
+  path: "/test-location",
+  element: <TestLocationPage />,
+},
+// Test Form Route
+{
+  path: "/test-form",
+  element: <TestFormPage />,
+},
 
   // Maintainer Routes
   {
     path: "/maintainer/dashboard",
     element: <MaintainerLayout />,
     children: [
-      { index: true, element: <Navigate to="/maintainer/dashboard/overview" replace /> },
+      { index: true, element: <Navigate to="overview" replace /> },
       { path: "overview", element: <MaintainerDashboard /> },
       { path: "maintainer-notifications", element: <MaintainerNotification /> },
       { path: "maintainer-settings", element: <MaintainerSettings /> },
@@ -104,7 +116,7 @@ const router = createBrowserRouter([
     path: "/admin/dashboard",
     element: <AdminDashboardLayout />,
     children: [
-      { index: true, element: <Navigate to="/overview" replace /> },
+      { index: true, element: <Navigate to="overview" replace /> },
       { path: "overview", element: <DashboardOverview /> },
       { path: "inventory", element: <AdminInventory /> },
       { path: "clients", element: <Clients /> },
@@ -120,7 +132,7 @@ const router = createBrowserRouter([
     path: "/staff/dashboard",
     element: <StaffDashboardLayout />,
     children: [
-      { index: true, element: <Navigate to="/s-overview" replace /> },
+      { index: true, element: <Navigate to="s-overview" replace /> },
       { path: "s-stock", element: <Stock /> },
       { path: "s-clients", element: <StaffClients /> },
       { path: "s-overview", element: <StaffDashboardOverview /> },

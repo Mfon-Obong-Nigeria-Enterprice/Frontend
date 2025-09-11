@@ -5,6 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { createLocation } from "@/services/locationService";
+import { useBranchStore } from "@/stores/useBranchStore";
+import { useQueryClient } from "@tanstack/react-query";
 
 type AddBusinessLocationModalProps = {
   isOpen: boolean;
@@ -15,6 +17,9 @@ const AddBusinessLocationModal = ({
   isOpen,
   onClose,
 }: AddBusinessLocationModalProps) => {
+  const branches = useBranchStore((s) => s.branches);
+  const setBranches = useBranchStore((s) => s.setBranches);
+  const queryClient = useQueryClient();
   const [form, setForm] = useState({
     locationType: "",
     address: "",
@@ -22,6 +27,7 @@ const AddBusinessLocationModal = ({
     phone: "",
   });
   const [errors, setErrors] = useState<{ [k: string]: string }>({});
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -31,23 +37,78 @@ const AddBusinessLocationModal = ({
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    if (!import.meta.env.PROD) console.log("🔥 Form submit triggered!");
     e.preventDefault();
+    e.stopPropagation();
+    if (!import.meta.env.PROD) console.log("🔥 Form prevented default and stopped propagation");
+    
     const newErrors: { [k: string]: string } = {};
+    const email = form.email.trim();
+    const phone = form.phone.trim();
+
+    // Basic requireds
     if (!form.locationType.trim()) newErrors.locationType = "Location type is required";
     if (!form.address.trim()) newErrors.address = "Address is required";
-    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = "Invalid email";
-    if (form.phone && !/^[0-9+\-()\s]{7,20}$/.test(form.phone)) newErrors.phone = "Invalid phone number";
+
+    // Stricter email validation: basic RFC-like + TLD letters 2-24
+    if (email && !/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,24}$/.test(email)) {
+      newErrors.email = "Enter a valid email (e.g., name@example.com)";
+    }
+
+    // Phone: keep digits and + only, length 7-15 after stripping spaces/dashes/() 
+    if (phone) {
+      const normalizedPhone = phone.replace(/[\s\-()]/g, "");
+      if (!/^\+?[0-9]{7,15}$/.test(normalizedPhone)) {
+        newErrors.phone = "Enter a valid phone (7-15 digits, optional +)";
+      }
+    }
+    // Prevent duplicates by name (case-insensitive)
+    const normalizedName = form.locationType.trim().toLowerCase();
+    const duplicate = branches.some((b) => (b.name || "").trim().toLowerCase() === normalizedName);
+    if (duplicate) {
+      newErrors.locationType = "A location with this name already exists";
+    }
+
     setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
+    if (Object.keys(newErrors).length > 0) {
+      const firstError = Object.values(newErrors)[0];
+      toast.error(firstError);
+      return;
+    }
 
     try {
-      await createLocation(form);
-      toast.success("Business location created successfully");
-      onClose();
+      setSubmitting(true);
+      toast.loading("Creating location...", { id: "create-location" });
+      if (!import.meta.env.PROD) console.log("🚀 Sending location data to backend:", form);
+      const res = await createLocation(form);
+      if (!import.meta.env.PROD) console.log("✅ Location created successfully:", res);
+      // Optimistically update branch store
+      setBranches([...branches, res as any]);
+      // Best-effort refetch to ensure eventual consistency
+      queryClient.invalidateQueries({ queryKey: ["branches"] }).catch(() => {});
+      toast.success("Branch created successfully ✅", { id: "create-location" });
       setForm({ locationType: "", address: "", email: "", phone: "" });
-    } catch (err) {
-      console.error("Create location failed", err);
-      toast.error("Failed to create business location");
+      onClose();
+    } catch (err: any) {
+      if (!import.meta.env.PROD) {
+        console.error("❌ Failed to create location:", err);
+        console.error("❌ Error details:", {
+          message: err.message,
+          status: err.response?.status,
+          data: err.response?.data,
+          url: err.config?.url,
+        });
+      }
+      
+      // Show specific error message (handle 409 duplicate nicely)
+      const isConflict = err.response?.status === 409;
+      const errorMessage = isConflict
+        ? (err.response?.data?.message || "A location with this name already exists")
+        : (err.response?.data?.message || err.message || "Failed to create business location");
+      toast.error(errorMessage, { id: "create-location" });
+    }
+    finally {
+      setSubmitting(false);
     }
   };
 
@@ -132,7 +193,7 @@ const AddBusinessLocationModal = ({
             >
               Cancel
             </Button>
-            <Button type="submit">Create Location</Button>
+            <Button type="submit" disabled={submitting}>{submitting ? "Creating..." : "Create Location"}</Button>
           </div>
         </form>
       </div>

@@ -27,6 +27,7 @@ export default function BusinessLocationModal({ isOpen, onClose, onSubmit }: Pro
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     // Validate
     const newErrors: { [k: string]: string } = {};
     if (!locationType.trim()) newErrors.locationType = "Location type is required";
@@ -40,18 +41,28 @@ export default function BusinessLocationModal({ isOpen, onClose, onSubmit }: Pro
 
     try {
       setLoading(true);
+      console.log("🚀 Sending location data to backend:", payload);
       const res = await createLocation(payload); // ✅ call backend
-      console.log("✅ Location created:", res);
+      console.log("✅ Location created successfully:", res);
       toast.success("Business location created successfully");
       // Notify parent with the created location
       if (onSubmit) {
         onSubmit(res);
       }
-      onClose();
       reset();
-    } catch (err) {
+      onClose();
+    } catch (err: any) {
       console.error("❌ Failed to create location:", err);
-      toast.error("Failed to create business location");
+      console.error("❌ Error details:", {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+        url: err.config?.url
+      });
+      
+      // Show specific error message
+      const errorMessage = err.response?.data?.message || err.message || "Failed to create business location";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
