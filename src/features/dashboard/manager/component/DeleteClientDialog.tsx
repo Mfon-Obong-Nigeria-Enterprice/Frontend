@@ -8,17 +8,21 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useClientMutations } from "@/hooks/useClientMutations";
+import { useClientStore } from "@/stores/useClientStore";
 import type { Client } from "@/types/types";
 import { isAxiosError } from "axios";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
+import { useQueryClient } from "@tanstack/react-query";
+import { clientKeys } from "@/hooks/useClientQueries";
 
 interface DeleteClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   client: Client;
-  onDeleteSuccess: () => void; // Optional callback for success handling
+  onDeleteSuccess: () => void;
 }
+
 const DeleteClientDialog: React.FC<DeleteClientDialogProps> = ({
   open,
   onOpenChange,
@@ -26,6 +30,8 @@ const DeleteClientDialog: React.FC<DeleteClientDialogProps> = ({
   onDeleteSuccess,
 }) => {
   const { deleteMutate } = useClientMutations();
+  const { fetchClients, deleteClientLocally } = useClientStore();
+  const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -36,31 +42,50 @@ const DeleteClientDialog: React.FC<DeleteClientDialogProps> = ({
     setIsDeleting(true);
 
     try {
+      // Delete the client from backend
       await deleteMutate.mutateAsync(client._id);
+
+      // Immediately update Zustand store by removing client locally
+      deleteClientLocally(client._id);
+
+      // Also refresh the store from the backend (for consistency)
+      await fetchClients();
+
+      // Invalidate all React Query client caches
+      await queryClient.invalidateQueries({ queryKey: clientKeys.all });
+      await queryClient.refetchQueries({ queryKey: clientKeys.all });
+
+      // Remove specific client from React Query cache
+      queryClient.removeQueries({ queryKey: clientKeys.detail(client._id) });
+
       onOpenChange(false);
-      onDeleteSuccess(); // Call the success callback if provided
+      onDeleteSuccess();
+
+      console.log("Client deleted successfully:", client.name);
     } catch (err) {
+      console.error("Delete error:", err);
       if (isAxiosError(err)) {
-        toast.error("Error deleting client:", err.response?.data);
+        toast.error(
+          `Error deleting client: ${err.response?.data?.message || err.message}`
+        );
+      } else {
+        toast.error("Failed to delete client");
       }
     } finally {
       setIsDeleting(false);
     }
-    // Handle delete logic here
-    // console.log("Client deleted");
-    // Close the dialog after deletion
   };
+
   return (
     <div>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        {/* <DialogOverlay /> */}
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Client</DialogTitle>
           </DialogHeader>
           <div className="p-4">
             <p className="mb-4">
-              Are you sure you want to delete <strong>{client?.name}</strong>{" "}
+              Are you sure you want to delete <strong>{client?.name}</strong>?
               This action cannot be undone and will permanently remove the
               client from your records.
             </p>
@@ -86,7 +111,7 @@ const DeleteClientDialog: React.FC<DeleteClientDialogProps> = ({
               onClick={handleDelete}
               disabled={isDeleting}
             >
-              {isDeleting ? "Deleting..." : "Delete "}
+              {isDeleting ? "Deleting..." : "Delete"}
             </Button>
           </div>
         </DialogContent>

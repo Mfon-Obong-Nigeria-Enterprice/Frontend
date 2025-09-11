@@ -31,17 +31,15 @@ const BlockUnblockClient: React.FC<BlockUnblockClientProps> = ({
   //
   const handleAction = async () => {
     if (!client._id) {
-      toast.error("CLient ID id missing, cannot perform action");
+      toast.error("Client ID id missing, cannot perform action");
       return;
     }
     setIsProcessing(true);
     try {
       if (isBlocked) {
         await unblockMutate.mutateAsync(client._id);
-        toast.success("Client unblocked Succesfully");
       } else {
         await blockMutate.mutateAsync(client._id);
-        toast.success("Client blocked Succesfully");
       }
       onOpenchange(false);
       onSuccess?.();

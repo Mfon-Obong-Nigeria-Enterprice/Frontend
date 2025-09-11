@@ -1,3 +1,4 @@
+// Updated ClientDirectory.tsx - Remove Zustand dependency
 /** @format */
 
 import React, { useMemo } from "react";
@@ -10,7 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useClientStore } from "@/stores/useClientStore";
 import type { Client } from "@/types/types";
 import { Badge } from "@/components/ui/badge";
 import usePagination from "@/hooks/usePagination";
@@ -42,11 +42,10 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
   actionLabel = "view",
   isStaffView = false,
 }) => {
-  const { clients } = useClientStore();
   const navigate = useNavigate();
-  const filteredClients = (
-    filteredClientsData.length > 0 ? filteredClientsData : clients ?? []
-  ).filter(
+
+  // Use the provided filtered data directly, then apply search filter
+  const filteredClients = filteredClientsData.filter(
     (client) =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client._id.toLowerCase().includes(searchTerm.toLowerCase())

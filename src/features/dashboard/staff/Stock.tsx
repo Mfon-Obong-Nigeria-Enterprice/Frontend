@@ -84,7 +84,7 @@ const Stock = () => {
         description="View current inventory and availability"
       />
       {products.length > 0 ? (
-        <section className="bg-white xl:rounded-xl mt-5 w-full max-w-[74vw] 2xl:max-w-full">
+        <section className="bg-white xl:rounded-xl mt-5  lg:max-w-4xl xl:max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center py-5 px-4 sm:px-5 bg-[#f0f0f3] border-b border-[#d9d9d9] md:border-0">
             <h3 className="text-xl font-medium text-text-dark">
               Product & Categories
