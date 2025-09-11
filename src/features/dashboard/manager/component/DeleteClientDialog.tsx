@@ -8,17 +8,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useClientMutations } from "@/hooks/useClientMutations";
-import { useClientStore } from "@/stores/useClientStore"; // Add this import
+import { useClientStore } from "@/stores/useClientStore";
 import type { Client } from "@/types/types";
 import { isAxiosError } from "axios";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
+import { useQueryClient } from "@tanstack/react-query";
+import { clientKeys } from "@/hooks/useClientQueries";
 
 interface DeleteClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   client: Client;
-  onDeleteSuccess: () => void; // Optional callback for success handling
+  onDeleteSuccess: () => void;
 }
 
 const DeleteClientDialog: React.FC<DeleteClientDialogProps> = ({
@@ -28,7 +30,8 @@ const DeleteClientDialog: React.FC<DeleteClientDialogProps> = ({
   onDeleteSuccess,
 }) => {
   const { deleteMutate } = useClientMutations();
-  const { fetchClients } = useClientStore(); // Add this to force refetch
+  const { fetchClients, deleteClientLocally } = useClientStore();
+  const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -39,13 +42,26 @@ const DeleteClientDialog: React.FC<DeleteClientDialogProps> = ({
     setIsDeleting(true);
 
     try {
+      // Delete the client from backend
       await deleteMutate.mutateAsync(client._id);
 
-      // Force refetch clients after successful deletion
+      // Immediately update Zustand store by removing client locally
+      deleteClientLocally(client._id);
+
+      // Also refresh the store from the backend (for consistency)
       await fetchClients();
 
+      // Invalidate all React Query client caches
+      await queryClient.invalidateQueries({ queryKey: clientKeys.all });
+      await queryClient.refetchQueries({ queryKey: clientKeys.all });
+
+      // Remove specific client from React Query cache
+      queryClient.removeQueries({ queryKey: clientKeys.detail(client._id) });
+
       onOpenChange(false);
-      onDeleteSuccess(); // Call the success callback if provided
+      onDeleteSuccess();
+
+      console.log("Client deleted successfully:", client.name);
     } catch (err) {
       console.error("Delete error:", err);
       if (isAxiosError(err)) {

@@ -67,9 +67,9 @@ export const updateClient = async (
   }
 };
 
-export const deleteClient = async (id: string): Promise<void> => {
+export const deleteClient = async (clientId: string): Promise<void> => {
   try {
-    const response = await api.delete(`/clients/${id}`);
+    const response = await api.delete(`/clients/${clientId}`);
     return response.data;
   } catch (error) {
     const err = error as AxiosError;

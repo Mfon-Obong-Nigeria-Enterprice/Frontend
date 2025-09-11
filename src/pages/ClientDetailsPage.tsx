@@ -61,10 +61,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
   // Get user from auth store
   const { user } = useAuthStore();
-
-  // Use React Query mutations
-  // const { deleteMutate } = useClientMutations();
-
   // Loading state for data fetching
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
@@ -242,7 +238,9 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         invoice: txn.invoiceNumber || "N/A",
         itemCount:
           txn.items?.length > 0
-            ? txn.items.map((item) => item.productName).join(", ")
+            ? txn.items
+                .map((item) => `${item.productName} x${item.quantity}`)
+                .join(", ")
             : "N/A",
       };
     });
@@ -452,13 +450,14 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
   const handleBlockUnblockSuccess = () => {
     const action = isClientBlocked ? "unblocked" : "blocked";
-    toast.success(`Client ${action} successfully`);
+    toast.success(`${client?.name} ${action} successfully`);
   };
 
   const handleDeleteSuccess = () => {
-    // The React Query mutation will automatically update the cache
     toast.success(`${client?.name} successfully deleted`);
-    navigate(-1);
+    setTimeout(() => {
+      navigate(-1);
+    }, 100);
   };
 
   const handleEditSuccess = () => {

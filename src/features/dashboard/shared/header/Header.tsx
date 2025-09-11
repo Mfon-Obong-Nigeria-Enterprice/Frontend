@@ -4,7 +4,7 @@ import Logo from "@/components/Logo";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import AdminUserModal from "@/features/dashboard/admin/AdminUserModal";
 import { ManagerUsersModal } from "@/features/dashboard/manager/component/ManagerUsersModal";
-import { useNotificationStore } from "@/stores/useNotificationStore";
+import { useFilteredNotifications } from "@/stores/useNotificationStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import NotificationModal from "@/features/dashboard/shared/NotificationModal";
 import {
@@ -14,7 +14,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import type { Role } from "@/types/types";
+// import type { Role } from "@/types/types";
 
 type HeaderProps = {
   userRole?: "admin" | "staff" | "maintainer" | "superadmin" | "manager";
@@ -112,7 +112,12 @@ const getRoleBasedCapabilities = (role: string) => {
 const Header = ({ userRole }: HeaderProps) => {
   const { userProfile, user, updateUser } = useAuthStore();
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const [isNotificationDrawerOpen, setIsNotificationDrawerOpen] =
+    useState(false);
+
+  // Get filtered notifications and unread count
+  const filteredNotifications = useFilteredNotifications();
+  const unreadCount = filteredNotifications.filter((n) => !n.read).length;
 
   // Enhanced profile picture management
   const profileImageUrl = useProfilePicture(userRole);
@@ -142,28 +147,12 @@ const Header = ({ userRole }: HeaderProps) => {
     return generateUserColor(identifier);
   };
 
-  // const getRoleBadgeColor = () => {
-  //   const role = (userProfile?.role || user?.role || "").toLowerCase();
-  //   switch (role) {
-  //     case "admin":
-  //       return "bg-blue-100 text-blue-800";
-  //     case "maintainer":
-  //       return "bg-purple-100 text-purple-800";
-  //     case "manager":
-  //       return "bg-green-100 text-green-800";
-  //     case "super_admin":
-  //     case "superadmin":
-  //       return "bg-red-100 text-red-800";
-  //     case "staff":
-  //       return "bg-orange-100 text-orange-800";
-  //     default:
-  //       return "bg-gray-100 text-gray-800";
-  //   }
-  // };
+  // Handle closing the notification drawer
+  const handleCloseNotificationDrawer = () => {
+    setIsNotificationDrawerOpen(false);
+  };
 
   const handleProfileUpdate = async (updatedData: UpdatedUserData) => {
-    // try {
-    // Update the user store with new data immediately for optimistic updates
     if (updateUser) {
       const updates = {
         name:
@@ -188,12 +177,7 @@ const Header = ({ userRole }: HeaderProps) => {
           updatedData.profilePicture
         );
       }
-
-      // console.log("Profile updates applied:", updates);
     }
-    // } catch (error) {
-    //   console.error("Error updating profile in header:", error);
-    // }
   };
 
   // Enhanced error handling for profile images - fallback to initials
@@ -218,32 +202,58 @@ const Header = ({ userRole }: HeaderProps) => {
         <div className="flex gap-4 items-center">
           {/* Notifications - Role-based access */}
           {capabilities.canAccessNotifications && (
-            <Drawer direction="right">
+            <Drawer
+              direction="right"
+              open={isNotificationDrawerOpen}
+              onOpenChange={setIsNotificationDrawerOpen}
+            >
               <DrawerTrigger asChild>
                 <button
                   className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  aria-label="Notifications"
+                  aria-label={`Notifications. ${unreadCount} unread notifications`}
                 >
                   {unreadCount > 0 ? (
-                    <BellDot className="h-5 w-5 text-gray-700" />
+                    <BellDot
+                      className="h-5 w-5 text-gray-700"
+                      aria-hidden="true"
+                    />
                   ) : (
-                    <Bell className="h-5 w-5 text-gray-500" />
+                    <Bell
+                      className="h-5 w-5 text-gray-500"
+                      aria-hidden="true"
+                    />
                   )}
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span
+                      className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+                      aria-label={`${unreadCount} unread notifications`}
+                    >
                       {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                   )}
                 </button>
               </DrawerTrigger>
 
-              <DrawerContent>
-                <DrawerHeader>
-                  <DrawerTitle>Notifications</DrawerTitle>
+              <DrawerContent
+                className="h-[100vh] "
+                aria-label="Notifications panel"
+              >
+                <DrawerHeader className="pb-2">
+                  <DrawerTitle className="flex items-center justify-between">
+                    <span>Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="text-sm font-normal text-gray-500">
+                        {unreadCount} unread
+                      </span>
+                    )}
+                  </DrawerTitle>
                 </DrawerHeader>
-                <div className="px-4 pb-4">
+
+                <div className="flex-1 overflow-hidden">
                   {user?.role && (
-                    <NotificationModal role={user.role.toLowerCase() as Role} />
+                    <NotificationModal
+                      onClose={handleCloseNotificationDrawer}
+                    />
                   )}
                 </div>
               </DrawerContent>
@@ -255,30 +265,26 @@ const Header = ({ userRole }: HeaderProps) => {
             <span className="capitalize font-medium text-gray-700">
               {getDisplayName()}
             </span>
-            {/* <span
-              className={`capitalize text-xs px-2 py-1 rounded-full ${getRoleBadgeColor()}`}
-            >
-              {(user?.role || "user").toLowerCase()}
-            </span> */}
           </div>
 
           {/* User avatar button */}
           <button
             onClick={() => setIsUserModalOpen(true)}
             className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full"
-            aria-label="User settings"
+            aria-label={`User settings for ${getDisplayName()}`}
           >
             <Avatar key={`${profileImageUrl}-${Date.now()}`}>
               {profileImageUrl && (
                 <AvatarImage
                   src={profileImageUrl}
-                  alt={`${getDisplayName()} avatar`}
+                  alt={`${getDisplayName()} profile picture`}
                   onError={handleImageError}
                   className="object-cover"
                 />
               )}
               <AvatarFallback
                 className={`${getUserBackgroundColor()} text-white font-medium`}
+                aria-label={`${getDisplayName()} initials`}
               >
                 {getUserInitials()}
               </AvatarFallback>

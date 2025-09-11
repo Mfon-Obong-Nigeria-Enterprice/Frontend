@@ -1,14 +1,9 @@
-import DashboardTitle from "../shared/DashboardTitle";
+import Notifications from "../shared/notifications/notifications";
 
 const AdminNotification = () => {
   return (
     <div>
-      <DashboardTitle
-        heading="Notifications"
-        description="Stay updated with your business activities
-
-"
-      />
+      <Notifications />
     </div>
   );
 };
