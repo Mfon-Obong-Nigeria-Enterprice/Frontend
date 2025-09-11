@@ -1,12 +1,14 @@
 import { RouterProvider } from "react-router-dom";
 import router from "./routes/routes";
 import { QueryProvider } from "./providers/QueryProvider";
+import { NotificationProvider } from "./providers/NotificationsProvider";
 
 function App() {
   return (
     <QueryProvider>
-      {/* Your existing app content */}
-      <RouterProvider router={router} />
+      <NotificationProvider>
+        <RouterProvider router={router} />
+      </NotificationProvider>
     </QueryProvider>
   );
 }

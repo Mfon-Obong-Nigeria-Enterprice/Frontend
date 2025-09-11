@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronUp } from "lucide-react";
+import { ChevronLeft, ChevronUp, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useClientStore } from "@/stores/useClientStore";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 
 import ClientDetailInfo from "@/components/clients/ClientDetailInfo";
@@ -33,6 +32,8 @@ import BlockUnblockClient from "@/features/dashboard/manager/BlockUnblockClient"
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { useClientQuery } from "@/hooks/useClientQueries";
+// import { useClientMutations } from "@/hooks/useClientMutations";
 
 interface ClientDetailsPageProps {
   isManagerView?: boolean;
@@ -43,11 +44,25 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 }) => {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
-  //store
-  const { clients } = useClientStore();
-  const { transactions } = useTransactionsStore();
+
+  // Use React Query instead of Zustand for client data
+  const {
+    data: client,
+    isLoading: clientLoading,
+    error: clientError,
+  } = useClientQuery(clientId || "");
+
+  // Still use Zustand for transactions (you can migrate this to React Query later)
+  const {
+    transactions,
+    fetchTransactions,
+    isLoading: transactionsLoading,
+  } = useTransactionsStore();
+
   // Get user from auth store
   const { user } = useAuthStore();
+  // Loading state for data fetching
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   // Determine if current user is a manager/super_admin
   const isManager = useMemo(() => {
@@ -57,6 +72,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     const normalizedRole = user.role.toString().trim().toUpperCase();
     return normalizedRole === "SUPER_ADMIN";
   }, [user, isManagerView]);
+
   // Filter states
   const [transactionTypeFilter, setTransactionTypeFilter] =
     useState<string>("all");
@@ -67,7 +83,30 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showBlockUnblockDialog, setShowBlockUnblockDialog] = useState(false);
 
+  // Load transactions data on component mount (you can migrate this to React Query later)
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        setIsInitialLoading(true);
+
+        // Load transactions if not already loaded
+        if (!transactions || transactions.length === 0) {
+          await fetchTransactions();
+        }
+      } catch (error) {
+        console.error("Error loading initial data:", error);
+        toast.error("Failed to load transaction data");
+      } finally {
+        setIsInitialLoading(false);
+      }
+    };
+
+    loadInitialData();
+  }, [transactions, fetchTransactions]);
+
   const handleExportPDF = () => {
+    if (!client) return;
+
     const doc = new jsPDF({
       orientation: "portrait",
       unit: "mm",
@@ -199,7 +238,9 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         invoice: txn.invoiceNumber || "N/A",
         itemCount:
           txn.items?.length > 0
-            ? txn.items.map((item) => item.productName).join(", ")
+            ? txn.items
+                .map((item) => `${item.productName} x${item.quantity}`)
+                .join(", ")
             : "N/A",
       };
     });
@@ -216,7 +257,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         cellPadding: 3,
         lineColor: [200, 200, 200],
         lineWidth: 0.1,
-        // valign: "middle",
         halign: "left",
         textColor: [0, 0, 0], // Black text for table content
       },
@@ -311,21 +351,12 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     // Save the PDF
     doc.save(fileName);
   };
-  //
 
   const mergedTransactions = useMemo(() => {
-    if (!transactions || !clients) return [];
-    const merged = mergeTransactionsWithClients(transactions, clients);
-
+    if (!transactions || !client) return [];
+    const merged = mergeTransactionsWithClients(transactions, [client]);
     return merged;
-  }, [transactions, clients]);
-
-  //get Clients
-  const client = useMemo(() => {
-    if (!clients || !clientId) return null;
-    return clients.find((c) => c._id === clientId) || null;
-  }, [clients, clientId]);
-  //
+  }, [transactions, client]);
 
   // Check if client is blocked
   const isClientBlocked = useMemo(() => {
@@ -345,9 +376,9 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     return () => clearTimeout(timeoutId);
   }, [clientId]); //reruns when clientId changes
 
-  //
   const clientTransactions = useMemo(() => {
-    if (!clientId) return [];
+    if (!clientId || !mergedTransactions.length) return [];
+
     let filtered = mergedTransactions.filter((t) => t.client?._id === clientId);
 
     // Apply transaction type filter
@@ -419,34 +450,55 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
   const handleBlockUnblockSuccess = () => {
     const action = isClientBlocked ? "unblocked" : "blocked";
-    toast.success(`Client ${action} successfully`);
+    toast.success(`${client?.name} ${action} successfully`);
   };
 
   const handleDeleteSuccess = () => {
     toast.success(`${client?.name} successfully deleted`);
-    navigate(-1);
+    setTimeout(() => {
+      navigate(-1);
+    }, 100);
   };
+
   const handleEditSuccess = () => {
     toast.success(`${client?.name} successfully edited`);
   };
 
   const handleApplyFilters = () => {
     // Filters are applied automatically via useMemo
-    // console.log("Filters applied:", {
-    //   transactionTypeFilter,
-    //   staffFilter,
-    //   dateFrom,
-    //   dateTo,
-    // });
+    console.log("Filters applied:", {
+      transactionTypeFilter,
+      staffFilter,
+      dateFrom,
+      dateTo,
+    });
   };
 
-  // Loading states
-  if (!clients || clients.length === 0) {
+  // Show loading state while data is being fetched
+  if (clientLoading || isInitialLoading || transactionsLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2ECC71] mx-auto mb-4"></div>
-          <p>Loading clients...</p>
+          <Loader2 className="animate-spin rounded-full h-12 w-12 text-green-600 mx-auto mb-4" />
+          <p>Loading client data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle client error
+  if (clientError) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-4 text-red-600">
+            Error loading client
+          </h2>
+          <p className="text-gray-600 mb-4">
+            {clientError.message ||
+              "Unable to load client data. Please try again."}
+          </p>
+          <Button onClick={() => window.location.reload()}>Refresh</Button>
         </div>
       </div>
     );
@@ -548,7 +600,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z"
                       />
                     </svg>
                   </div>
@@ -575,7 +627,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z"
                       />
                     </svg>
                   </div>

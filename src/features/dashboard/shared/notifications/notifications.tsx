@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Bell, Check, Trash2, Search } from "lucide-react";
 import {
+  useFilteredNotifications,
   useNotificationStore,
   type Notification,
 } from "@/stores/useNotificationStore";
@@ -13,23 +14,22 @@ import { useAuthStore } from "@/stores/useAuthStore";
 
 const Notifications = () => {
   const user = useAuthStore((s) => s.user);
-  const {
-    notifications,
-    unreadCount,
-    markAsRead,
-    markAllAsRead,
-    deleteNotification,
-  } = useNotificationStore();
+  const { markAsRead, markAllAsRead, deleteNotification } =
+    useNotificationStore();
+
+  // Use filtered notifications instead of all notifications
+  const allNotifications = useFilteredNotifications();
+  const unreadCount = allNotifications.filter((n) => !n.read).length;
 
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const displayedNotifications: Notification[] = searchQuery
-    ? notifications.filter(
+    ? allNotifications.filter(
         (n) =>
           n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           n.message.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : notifications;
+    : allNotifications;
 
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);

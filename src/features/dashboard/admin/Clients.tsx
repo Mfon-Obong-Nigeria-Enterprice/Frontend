@@ -1,7 +1,6 @@
 /** @format */
 
 import DashboardTitle from "../shared/DashboardTitle";
-// import ClientStats from "./components/ClientStats";
 import { Button } from "@/components/ui/button";
 import { MoreVertical, Plus, Search } from "lucide-react";
 import ClientDirectory from "../shared/ClientDirectory";
@@ -9,7 +8,6 @@ import { useState } from "react";
 import { AddClientDialog } from "./components/AddClientDialog";
 import * as XLSX from "xlsx";
 import type { Client, TransactionItem } from "@/types/types";
-import { useClientStore } from "@/stores/useClientStore";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import useClientFiltering, {
@@ -24,6 +22,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useClientsQuery } from "@/hooks/useClientQueries";
+import { Loader2 } from "lucide-react";
 
 interface ClientProps {
   showExportButtons?: boolean;
@@ -34,7 +34,8 @@ export const Clients: React.FC<ClientProps> = ({
   showExportButtons,
   onClientAction,
 }) => {
-  const { clients } = useClientStore();
+  // Use React Query instead of Zustand for data fetching
+  const { data: clients = [], isLoading, error } = useClientsQuery();
 
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,7 +47,7 @@ export const Clients: React.FC<ClientProps> = ({
     setClientBalance,
     setClientStatus,
   } = useClientFiltering(clients);
-  //
+
   const handleStatusChange = (value: string) => {
     setClientStatus(value as clientStat);
   };
@@ -56,7 +57,6 @@ export const Clients: React.FC<ClientProps> = ({
   };
 
   // pdf function downloader
-
   const handleExportPDF = () => {
     const doc = new jsPDF();
 
@@ -186,6 +186,42 @@ export const Clients: React.FC<ClientProps> = ({
     XLSX.utils.book_append_sheet(workbook, worksheet, "Clients");
     XLSX.writeFile(workbook, "clients_export.xlsx");
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <main>
+        <DashboardTitle
+          heading="Client Management"
+          description="Manage client accounts & relationships"
+        />
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+            <span className="text-sm text-gray-600">Loading clients...</span>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <main>
+        <DashboardTitle
+          heading="Client Management"
+          description="Manage client accounts & relationships"
+        />
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Error loading clients</p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main>

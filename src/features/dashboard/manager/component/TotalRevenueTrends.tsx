@@ -127,9 +127,7 @@ function TotalRevenueTrends() {
     </div>
   );
 
-  // Debug: Log the data to see what's being passed to the chart
   const chartData = getData();
-  console.log(`${selectedTab} chart data:`, chartData);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md border w-full max-w-7xl mx-auto">

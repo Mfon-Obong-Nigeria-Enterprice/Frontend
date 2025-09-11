@@ -2,17 +2,27 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Client } from "@/types/types";
 import { toSentenceCaseName } from "@/utils/styles";
+// You'll need to create these API functions or import from your existing API service
+import { getAllClients } from "@/services/clientService"; // Adjust import path as needed
 
 interface clientStore {
   clients: Client[];
+  isLoading: boolean;
+  error: string | null;
 
+  // Existing methods
   setClients: (clients: Client[]) => void;
   getClientById: (id: string) => Client | null;
   updateClient: (id: string, updates: Partial<Client>) => void;
   deleteClientLocally: (id: string) => void;
   addPayment: (clientId: string, amount: number) => void;
 
-  // Derivative stats
+  // NEW: Data fetching methods
+  fetchClients: () => Promise<void>;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+
+  // Derivative stats (existing)
   getClientsWithDebt: () => Client[];
   getNewClients: () => number;
   getActiveClients: () => number;
@@ -23,7 +33,7 @@ interface clientStore {
     totalDebt: number;
   };
 
-  // New functions
+  // New functions (existing)
   getNewClientsThisMonth: () => number;
   getNewClientsLastMonth: () => number;
   getNewClientsPercentageChange: () => {
@@ -65,6 +75,36 @@ export const useClientStore = create<clientStore>()(
   persist(
     (set, get) => ({
       clients: [],
+      isLoading: false,
+      error: null,
+
+      // NEW: Data fetching method
+      fetchClients: async () => {
+        try {
+          set({ isLoading: true, error: null });
+          const clients = await getAllClients();
+          set({
+            clients: clients.map((client) => ({
+              ...client,
+              name: toSentenceCaseName(client.name),
+            })),
+            isLoading: false,
+            error: null,
+          });
+        } catch (error) {
+          console.error("Error fetching clients:", error);
+          set({
+            isLoading: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to fetch clients",
+          });
+        }
+      },
+
+      setLoading: (loading) => set({ isLoading: loading }),
+      setError: (error) => set({ error }),
 
       setClients: (clients) =>
         set({
