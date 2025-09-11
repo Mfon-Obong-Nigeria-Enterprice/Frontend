@@ -8,7 +8,7 @@ import { ChevronUp } from "lucide-react";
 const WalkinTransactionModal = () => {
   const { open, selectedTransaction, closeModal } = useTransactionsStore();
   return (
-    <Modal isOpen={open} onClose={closeModal} size="xxl">
+    <Modal isOpen={open} onClose={closeModal} size="2xl">
       <h4 className="text-lg text-text-dark font-medium py-3 px-6 mb-2 border-b border-[#d9d9d9]">
         Walk-in Client
       </h4>

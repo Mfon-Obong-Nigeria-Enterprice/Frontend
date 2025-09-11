@@ -3,17 +3,17 @@ import { X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
-type ModalSize = "md" | "lg" | "xl" | "xxl" | string;
+type PresetModalSize = "sm" | "md" | "lg" | "xl" | "xxl";
 
 type ModalProps = {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
   className?: string;
-  size?: ModalSize;
+  size?: PresetModalSize | string; // can be preset or custom class
 };
 
-const sizeClasses: Record<ModalSize, string> = {
+const sizeClasses: Record<PresetModalSize, string> = {
   sm: "max-w-sm",
   md: "max-w-md",
   lg: "max-w-lg",
@@ -53,7 +53,7 @@ const Modal = ({
   return createPortal(
     <div
       className={cn(
-        "fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 md:px-0",
+        "fixed inset-0 z-50 flex items-center justify-center bg-black/50",
         className
       )}
       onClick={onClose}
@@ -61,10 +61,10 @@ const Modal = ({
       <div
         className={cn(
           "relative bg-white rounded-lg shadow-xl",
-          sizeClasses[size as ModalSize] ?? size,
+          sizeClasses[size as PresetModalSize] ?? size, // fallback to raw string if not preset
           "w-full max-h-[98vh] overflow-y-auto hide-scrollbar"
         )}
-        onClick={(e) => e.stopPropagation()} //prevent closing on content click
+        onClick={(e) => e.stopPropagation()} // prevent closing on content click
       >
         {/* Close button */}
         <button
@@ -79,4 +79,5 @@ const Modal = ({
     document.body
   );
 };
+
 export default Modal;
