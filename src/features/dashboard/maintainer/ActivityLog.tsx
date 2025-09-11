@@ -183,10 +183,10 @@ const ActivityLog = () => {
   // export functionality
   const exportToPDF = () => {
     console.log("Export button clicked!");
-    console.log("Activities data:", mergedAllActivities);
+    console.log("Activities data:", filteredActivities);
 
     try {
-      if (!mergedAllActivities || mergedAllActivities.length === 0) {
+      if (!filteredActivities || filteredActivities.length === 0) {
         toast.error("No activity data to export");
         return;
       }
@@ -209,7 +209,7 @@ const ActivityLog = () => {
       doc.text("Mfon-Obong Nigeria Enterprise", 20, 55);
 
       // prepare a table data
-      const tableData = mergedAllActivities.map((activity) => [
+      const tableData = filteredActivities.map((activity) => [
         new Date(activity.timestamp).toLocaleDateString(),
         new Date(activity.timestamp).toLocaleTimeString(),
         activity.user?.name || "System",

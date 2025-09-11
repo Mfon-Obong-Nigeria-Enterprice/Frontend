@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Bell, BellDot } from "lucide-react";
-import Logo from "../Logo";
-import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
+import Logo from "@/components/Logo";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import AdminUserModal from "@/features/dashboard/admin/AdminUserModal";
 import { ManagerUsersModal } from "@/features/dashboard/manager/component/ManagerUsersModal";
 import { useNotificationStore } from "@/stores/useNotificationStore";
