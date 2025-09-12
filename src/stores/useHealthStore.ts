@@ -5,7 +5,7 @@ import { HealthService } from "@/services/healthService";
 import type {
   BasicHealthResponse,
   DetailedHealthResponse,
-} from "@/schemas/systemHealthSchemas";
+} from "@/schemas/systemHealthSchema";
 
 type HealthState = {
   basic: BasicHealthResponse | null;

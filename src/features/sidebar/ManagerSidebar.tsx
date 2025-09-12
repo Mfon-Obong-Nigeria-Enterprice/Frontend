@@ -147,7 +147,7 @@ const ManagerSidebarWithModal = () => {
       logoutMutation.mutate(); // trigger logout
       setIsLoading(false);
       setShowModal(false);
-    }, 500);
+    }, 100);
   };
 
   return (
