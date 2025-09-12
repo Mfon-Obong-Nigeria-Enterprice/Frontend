@@ -8,7 +8,7 @@ import { ChevronUp } from "lucide-react";
 const WalkinTransactionModal = () => {
   const { open, selectedTransaction, closeModal } = useTransactionsStore();
   return (
-    <Modal isOpen={open} onClose={closeModal} size="2xl">
+    <Modal isOpen={open} onClose={closeModal} size="xxl">
       <h4 className="text-lg text-text-dark font-medium py-3 px-6 mb-2 border-b border-[#d9d9d9]">
         Walk-in Client
       </h4>
@@ -83,7 +83,7 @@ const WalkinTransactionModal = () => {
               </p>
               <p className="flex justify-between items-center text-xs text-[#7D7D7D]  border-b border-[#d9d9d9] py-1 px-3">
                 <span className="font-medium">Date & Time:</span>
-                <span className=" font-light text-[#444444]">
+                <p className=" font-light text-[#444444]">
                   <span>
                     {new Date(
                       selectedTransaction.createdAt
@@ -99,7 +99,7 @@ const WalkinTransactionModal = () => {
                       }
                     )}
                   </span>
-                </span>
+                </p>
               </p>
               {/* type */}
               <p className="flex justify-between items-center text-xs text-[#7D7D7D]  border-b border-[#d9d9d9] py-1 px-3">
@@ -119,8 +119,8 @@ const WalkinTransactionModal = () => {
               {/* amount */}
               <p className="flex justify-between items-center text-xs text-[#7D7D7D]  border-b border-[#d9d9d9] py-1 px-3">
                 <span className="font-medium">Amount:</span>
-                <span className=" font-light text-[#14ed84]">
-                  ₦{selectedTransaction.total.toLocaleString()}
+                <span className=" font-light text-[#F95353]">
+                  -₦{selectedTransaction.total.toLocaleString()}
                 </span>
               </p>
               {/* process by */}
@@ -152,9 +152,9 @@ const WalkinTransactionModal = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {selectedTransaction.items.map((item, index) => (
+                  {selectedTransaction.items.map((item) => (
                     <tr
-                      key={`${item.productId}-${index}`}
+                      key={item.productId}
                       className="text-[#444444] text-center text-xs border-b border-[#d9d9d9]"
                     >
                       <td className="py-2">{item.productName}</td>
@@ -187,8 +187,8 @@ ${selectedTransaction.discount.toLocaleString()}`
                 {/* total */}
                 <p className="font-medium text-sm">
                   <span className="text-[#333333]">Total Amount:</span>
-                  <span className="text-[#14ed84] ml-3">
-                    ₦{selectedTransaction.total.toLocaleString()}
+                  <span className="text-[#F95353] ml-3">
+                    -₦{selectedTransaction.total.toLocaleString()}
                   </span>
                 </p>
               </div>

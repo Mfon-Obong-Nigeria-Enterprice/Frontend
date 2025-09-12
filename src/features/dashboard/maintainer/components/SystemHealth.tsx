@@ -17,7 +17,7 @@ import {
   useHealthLoading,
   useHealthError,
   useFetchHealth,
-  useHealthLastUpdated,
+  // useHealthLastUpdated,
 } from "@/stores/useHealthStore";
 
 const BAR_COLORS = {
@@ -71,7 +71,7 @@ export const SystemHealth: React.FC = () => {
   const detailed = useDetailedHealth();
   const loading = useHealthLoading();
   const error = useHealthError();
-  const lastUpdated = useHealthLastUpdated();
+  // const lastUpdated = useHealthLastUpdated();
   const fetchHealth = useFetchHealth();
 
   useEffect(() => {
@@ -209,7 +209,7 @@ export const SystemHealth: React.FC = () => {
   return (
     <div className="bg-white rounded-[10px] shadow-sm border p-4 h-[67vh] flex flex-col">
       {/* Header with refresh button */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2 flex-shrink-0">
+      {/* <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2 flex-shrink-0">
         <div className="flex items-center gap-2">
           {lastUpdated && (
             <span className="text-xs sm:text-sm text-gray-500">
@@ -233,7 +233,7 @@ export const SystemHealth: React.FC = () => {
           />
           Refresh
         </Button>
-      </div>
+      </div> */}
 
       {/* Content area that fills remaining space */}
       <div className="flex flex-col flex-1 min-h-0">{renderContent()}</div>

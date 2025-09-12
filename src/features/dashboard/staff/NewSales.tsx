@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { io, type Socket } from "socket.io-client";
+import { io } from "socket.io-client";
 
 // components
 import ClientSearch from "./components/ClientSearch";
@@ -49,10 +49,8 @@ import { AlertCircle } from "lucide-react";
 // data
 import { bankNames, posNames } from "@/data/banklist";
 
-// Optional websocket connection. Enable by setting VITE_ENABLE_SOCKET=true
-const SOCKET_BASE_URL = "https://mfon-obong-enterprise.onrender.com";
-const ENABLE_SOCKET = import.meta.env.VITE_ENABLE_SOCKET === "true";
-let socket: Socket | null = null;
+// connect to socket
+const socket = io("https://mfon-obong-enterprise.onrender.com");
 
 export type Row = {
   productId: string;
@@ -67,30 +65,13 @@ export type Row = {
 
 // Define a simple type for the receipt data based on backend structure
 type ReceiptData = Transaction;
-// type ReceiptData = {
-//   invoiceNumber: string;
-//   clientName?: string;
-//   walkInClient?: { name: string; phone?: string };
-//   amountPaid: number;
-//   total: number;
-//   paymentMethod: string;
-//   items: {
-//     productId: string;
-//     productName: string;
-//     quantity: number;
-//     unit: string;
-//     unitPrice: number;
-//     discount: number;
-//   }[];
-//   date: string;
-// };
 
 const emptyRow: Row = {
   productId: "",
   unitPrice: 0,
   quantity: 1,
   discount: 0,
-  discountType: "percent",
+  discountType: "amount",
   total: 0,
   unit: "",
   productName: "",
@@ -122,35 +103,15 @@ const NewSales: React.FC = () => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
 
-  // ✅ listen for socket event (only if enabled)
+  // listen for socket event
   useEffect(() => {
-    if (!ENABLE_SOCKET) return;
-
-    socket = io(SOCKET_BASE_URL, {
-      transports: ["websocket"],
-      reconnection: true,
-      reconnectionAttempts: 3,
-      timeout: 5000,
-      autoConnect: true,
-    });
-
-    const onCreated = (data: ReceiptData) => {
+    socket.on("transaction_created", (data: ReceiptData) => {
       setReceiptData(data);
       setShowReceipt(true);
-    };
-
-    const onConnectError = () => {
-      // Swallow connection errors in UI; receipt can still render after form submit
-    };
-
-    socket.on("transaction_created", onCreated);
-    socket.on("connect_error", onConnectError);
+    });
 
     return () => {
-      socket?.off("transaction_created", onCreated);
-      socket?.off("connect_error", onConnectError);
-      socket?.close();
-      socket = null;
+      socket.off("transaction_created");
     };
   }, []);
 
@@ -406,12 +367,12 @@ const NewSales: React.FC = () => {
         notes,
       };
 
-      // ✅ get the actual transaction returned from backend
+      // get the actual transaction returned from backend
       const transaction = await AddTransaction(payload);
 
       toast.success("Transaction created successfully");
 
-      // ✅ pass the backend transaction to the receipt
+      // pass the backend transaction to the receipt
       setReceiptData(transaction);
       setShowReceipt(true);
 
@@ -630,14 +591,7 @@ const NewSales: React.FC = () => {
                   <span className="text-[#7D7D7D]">
                     New balance (After purchase):
                   </span>
-                  <span
-                    // className={
-                    //   newBalance >= 0
-                    //     ? "text-green-600 font-semibold"
-                    //     : "text-red-600 font-semibold"
-                    // }
-                    className={balanceTextClass(newBalance)}
-                  >
+                  <span className={balanceTextClass(newBalance)}>
                     {/* {newBalance >= 0
                       ? `₦${newBalance.toLocaleString(undefined, {
                           minimumFractionDigits: 2,
@@ -690,7 +644,7 @@ const NewSales: React.FC = () => {
 
       {showReceipt && receiptData && (
         <Modal
-          size="2xl"
+          size="xxl"
           isOpen={showReceipt}
           onClose={() => setShowReceipt(false)}
         >

@@ -10,7 +10,6 @@ interface clientStore {
   isLoading: boolean;
   error: string | null;
 
-  // Existing methods
   setClients: (clients: Client[]) => void;
   setDebtors: (debtors: Client[]) => void;
   getClientById: (id: string) => Client | null;

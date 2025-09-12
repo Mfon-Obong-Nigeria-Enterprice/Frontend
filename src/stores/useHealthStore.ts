@@ -5,7 +5,7 @@ import { HealthService } from "@/services/healthService";
 import type {
   BasicHealthResponse,
   DetailedHealthResponse,
-} from "@/schemas/SystemHealthSchemas";
+} from "@/schemas/systemHealthSchema";
 
 type HealthState = {
   basic: BasicHealthResponse | null;
@@ -34,7 +34,7 @@ export const useHealthStore = create<HealthState>()(
             basic,
             detailed,
             loading: false,
-           lastUpdated: new Date().toISOString(),
+            lastUpdated: new Date().toISOString(),
           });
         } catch (err) {
           set({
@@ -64,7 +64,8 @@ export const useHealthStore = create<HealthState>()(
 
 // ✅ Stable selectors (avoid object recreation)
 export const useBasicHealth = () => useHealthStore((state) => state.basic);
-export const useDetailedHealth = () => useHealthStore((state) => state.detailed);
+export const useDetailedHealth = () =>
+  useHealthStore((state) => state.detailed);
 export const useHealthLoading = () => useHealthStore((state) => state.loading);
 export const useHealthError = () => useHealthStore((state) => state.error);
 export const useHealthLastUpdated = () =>
