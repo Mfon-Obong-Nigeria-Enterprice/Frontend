@@ -21,7 +21,7 @@ const ClientTransactionModal = () => {
   };
 
   return (
-    <Modal isOpen={open} onClose={closeModal} size="2xl">
+    <Modal isOpen={open} onClose={closeModal} size="xxl">
       <h4 className="text-lg text-text-dark font-medium pt-3 px-6 mb-2 border-b border-[#d9d9d9]">
         Transaction Details
       </h4>
