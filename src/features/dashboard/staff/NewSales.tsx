@@ -606,7 +606,7 @@ const NewSales: React.FC = () => {
               </div>
             )}
             {/* only show warning if the client will owe */}
-            {newBalance < 0 && (
+            {selectedClient && newBalance < 0 && (
               <div className="flex items-center bg-[#FFF2CE] border border-[#ffa500] rounded-[8px] min-h-[63px] px-14 mt-5">
                 <p className="font-Inter text-amber-800">
                   <span className="font-medium text-[15px]">Warning:</span>
