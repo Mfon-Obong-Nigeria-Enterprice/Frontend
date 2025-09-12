@@ -94,11 +94,14 @@ const router = createBrowserRouter([
     path: "/maintainer/dashboard",
     element: <MaintainerLayout />,
     children: [
-      { index: true, element: <Navigate to="overview" replace /> },
+      {
+        index: true,
+        element: <Navigate to="/maintainer/dashboard/overview" replace />,
+      },
       { path: "overview", element: <MaintainerDashboard /> },
       { path: "maintainer-notifications", element: <MaintainerNotification /> },
       { path: "maintainer-settings", element: <MaintainerSettings /> },
-      { path: "user", element: <ManageUser /> },
+      { path: "user-management", element: <ManageUser /> },
       { path: "user-management/:id", element: <UserDetailsPage /> },
       { path: "user-management/col-settings", element: <ColumnSettings /> },
       { path: "log", element: <ActivityLog /> },
