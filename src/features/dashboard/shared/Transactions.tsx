@@ -216,14 +216,15 @@ const Transactions = () => {
     goToNextPage,
     canGoPrevious,
     canGoNext,
-  } = usePagination((filteredTransactions ?? []).length, 5);
+  } = usePagination((filteredTransactions ?? []).length, 20);
 
   const currentTransaction = useMemo(() => {
-    const startIndex = (currentPage - 1) * 5;
-    const endIndex = startIndex + 5;
+    const startIndex = (currentPage - 1) * 20;
+    const endIndex = startIndex + 20;
     return filteredTransactions?.slice(startIndex, endIndex);
   }, [filteredTransactions, currentPage]);
 
+  //
   const handleExportExcel = () => {
     const data =
       filteredTransactions &&
@@ -307,7 +308,7 @@ const Transactions = () => {
 
       if (index === -1) return;
 
-      const pageSize = 5;
+      const pageSize = 20;
       const targetPage = Math.floor(index / pageSize) + 1;
 
       if (targetPage !== currentPage) {

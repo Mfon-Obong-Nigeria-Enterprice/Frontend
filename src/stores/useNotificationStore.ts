@@ -1,5 +1,7 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { Role } from "@/types/types";
+import { useAuthStore } from "./useAuthStore";
 
 export type ActionType =
   | "category_added"
@@ -18,6 +20,7 @@ export type Notification = {
   action: ActionType;
   createdAt: Date;
   recipients: Role[];
+  userId?: string; // Add userId to associate notifications with specific users
   meta?: {
     adminName?: string;
     staffName?: string;
@@ -30,6 +33,7 @@ export type Notification = {
 type NotificationStore = {
   notifications: Notification[];
   unreadCount: number;
+  lastSyncTime: number; // Track when we last synced with server
 
   addNotification: (notification: Notification) => void;
   markAsRead: (id: string) => void;
@@ -37,210 +41,216 @@ type NotificationStore = {
   markAllAsRead: () => void;
   deleteNotification: (id: string) => void;
   clearNotifications: () => void;
+  clearUserNotifications: (userId: string) => void; // Clear notifications for specific user
+  setLastSyncTime: (time: number) => void;
 };
 
-export const useNotificationStore = create<NotificationStore>((set) => ({
-  notifications: [],
-  unreadCount: 0,
+// Custom storage object to handle Date serialization and match PersistStorage interface
+import type { PersistStorage, StorageValue } from "zustand/middleware";
 
-  addNotification: (notification) =>
-    set((state) => {
-      const newNotifications = [notification, ...state.notifications];
-      return {
-        notifications: newNotifications,
-        unreadCount: newNotifications.filter((n) => !n.read).length,
-      };
+const customStorage: PersistStorage<NotificationStore> = {
+  getItem: (name: string): StorageValue<NotificationStore> | null => {
+    const item = localStorage.getItem(name);
+    if (!item) return null;
+    try {
+      return JSON.parse(item);
+    } catch {
+      return null;
+    }
+  },
+  setItem: (name: string, value: StorageValue<NotificationStore>): void => {
+    localStorage.setItem(name, JSON.stringify(value));
+  },
+  removeItem: (name: string): void => {
+    localStorage.removeItem(name);
+  },
+};
+
+export const useNotificationStore = create<NotificationStore>()(
+  persist(
+    (set) => ({
+      notifications: [],
+      unreadCount: 0,
+      lastSyncTime: 0,
+
+      addNotification: (notification) =>
+        set((state) => {
+          console.log(
+            "📨 Adding notification:",
+            notification.title,
+            notification.id
+          );
+
+          // Check if notification already exists
+          const existingIndex = state.notifications.findIndex(
+            (n) => n.id === notification.id
+          );
+
+          if (existingIndex !== -1) {
+            console.log(
+              "🔄 Notification already exists, skipping:",
+              notification.id
+            );
+            return state;
+          }
+
+          // Add current user ID to notification if not present
+          const currentUser = useAuthStore.getState().user;
+          const notificationWithUser = {
+            ...notification,
+            userId: notification.userId || currentUser?.id || "unknown",
+            // Ensure createdAt is a Date object
+            createdAt:
+              notification.createdAt instanceof Date
+                ? notification.createdAt
+                : new Date(notification.createdAt),
+          };
+
+          const newNotifications = [
+            notificationWithUser,
+            ...state.notifications,
+          ];
+          console.log(`📈 Total notifications now: ${newNotifications.length}`);
+
+          const unreadCount = newNotifications.filter((n) => !n.read).length;
+
+          return {
+            notifications: newNotifications,
+            unreadCount,
+          };
+        }),
+
+      markAsRead: (id) =>
+        set((state) => {
+          const updated = state.notifications.map((n) =>
+            n.id === id ? { ...n, read: true } : n
+          );
+          return {
+            notifications: updated,
+            unreadCount: updated.filter((n) => !n.read).length,
+          };
+        }),
+
+      markAsUnread: (id) =>
+        set((state) => {
+          const updated = state.notifications.map((n) =>
+            n.id === id ? { ...n, read: false } : n
+          );
+          return {
+            notifications: updated,
+            unreadCount: updated.filter((n) => !n.read).length,
+          };
+        }),
+
+      markAllAsRead: () =>
+        set((state) => {
+          const currentUser = useAuthStore.getState().user;
+          const updated = state.notifications.map((n) =>
+            n.userId === currentUser?.id ? { ...n, read: true } : n
+          );
+          return {
+            notifications: updated,
+            unreadCount: updated.filter((n) => !n.read).length,
+          };
+        }),
+
+      deleteNotification: (id) =>
+        set((state) => {
+          const updated = state.notifications.filter((n) => n.id !== id);
+          return {
+            notifications: updated,
+            unreadCount: updated.filter((n) => !n.read).length,
+          };
+        }),
+
+      clearNotifications: () =>
+        set((state) => {
+          const currentUser = useAuthStore.getState().user;
+          const updated = state.notifications.filter(
+            (n) => n.userId !== currentUser?.id
+          );
+          return {
+            notifications: updated,
+            unreadCount: updated.filter((n) => !n.read).length,
+          };
+        }),
+
+      clearUserNotifications: (userId) =>
+        set((state) => {
+          const updated = state.notifications.filter(
+            (n) => n.userId !== userId
+          );
+          return {
+            notifications: updated,
+            unreadCount: updated.filter((n) => !n.read).length,
+          };
+        }),
+
+      setLastSyncTime: (time) =>
+        set(() => ({
+          lastSyncTime: time,
+        })),
     }),
+    {
+      name: "notification-storage", // Storage key
+      storage: customStorage,
+      // Only persist certain fields
+      // partialize removed; customStorage handles serialization
+      // Rehydrate dates when loading from storage
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Convert date strings back to Date objects
+          state.notifications = state.notifications.map((n) => ({
+            ...n,
+            createdAt: new Date(n.createdAt),
+          }));
+          // Recalculate unread count
+          state.unreadCount = state.notifications.filter((n) => !n.read).length;
+        }
+      },
+    }
+  )
+);
 
-  markAsRead: (id) =>
-    set((state) => {
-      const updated = state.notifications.map((n) =>
-        n.id === id ? { ...n, read: true } : n
-      );
-      return {
-        notifications: updated,
-        unreadCount: updated.filter((n) => !n.read).length,
-      };
-    }),
+// Enhanced filtered notifications hook that considers user context
+export const useFilteredNotifications = () => {
+  const user = useAuthStore((state) => state.user);
+  const notifications = useNotificationStore((state) => state.notifications);
 
-  markAsUnread: (id) =>
-    set((state) => {
-      const updated = state.notifications.map((n) =>
-        n.id === id ? { ...n, read: false } : n
-      );
-      return {
-        notifications: updated,
-        unreadCount: updated.filter((n) => !n.read).length,
-      };
-    }),
+  if (!user?.role || !user?.id) return [];
 
-  markAllAsRead: () =>
-    set((state) => {
-      const updated = state.notifications.map((n) => ({ ...n, read: true }));
-      return { notifications: updated, unreadCount: 0 };
-    }),
+  const userRole = user.role.toUpperCase();
 
-  deleteNotification: (id) =>
-    set((state) => {
-      const updated = state.notifications.filter((n) => n.id !== id);
-      return {
-        notifications: updated,
-        unreadCount: updated.filter((n) => !n.read).length,
-      };
-    }),
+  // Filter by role and user (only show current user's notifications)
+  return notifications.filter((notification) => {
+    // Check if notification is for current user
+    const isForCurrentUser =
+      !notification.userId || notification.userId === user.id;
 
-  clearNotifications: () => set({ notifications: [], unreadCount: 0 }),
-}));
+    // Check if notification is for current user role
+    const isForCurrentRole = notification.recipients.some(
+      (role) => role.toUpperCase() === userRole
+    );
 
-// import { create } from "zustand";
+    return isForCurrentUser && isForCurrentRole;
+  });
+};
 
-// import type { Role } from "@/types/types";
+// Hook to get unread count for current user
+export const useUnreadNotificationCount = () => {
+  const user = useAuthStore((state) => state.user);
+  const notifications = useNotificationStore((state) => state.notifications);
 
-// type ActionType =
-//   | "category_added"
-//   | "product_added"
-//   | "client_added"
-//   | "transaction_completed";
+  if (!user?.id) return 0;
 
-// export type Notification = {
-//   id: string;
-//   title: string;
-//   description: string;
-//   read: boolean;
-//   type: "success" | "error" | "info";
-//   action: ActionType;
-//   message: string;
-//   createdAt: Date;
+  return notifications.filter((notification) => {
+    const isForCurrentUser =
+      !notification.userId || notification.userId === user.id;
+    const userRole = user.role?.toUpperCase();
+    const isForCurrentRole = notification.recipients.some(
+      (role) => role.toUpperCase() === userRole
+    );
 
-//   // Who should see it
-//   recipients: Role[];
-
-//   // Extra metadata (for conditional rendering)
-//   meta?: {
-//     adminName?: string;
-//     staffName?: string;
-//     branch?: string;
-//     transactionId?: string;
-//     timestamp?: string;
-//   };
-// };
-
-// type NotificationStore = {
-//   notifications: Notification[];
-//   addNotification: (n: Notification) => void;
-//   markAsRead: (id: string) => void;
-//   markAsUnread: (id: string) => void;
-//   markAllAsRead: () => void;
-//   clearNotifications: () => void;
-// };
-
-// export const useNotificationStore = create<NotificationStore>((set) => ({
-//   notifications: [],
-//   addNotification: (n) =>
-//     set((state) => ({ notifications: [n, ...state.notifications] })),
-//   markAsRead: (id) =>
-//     set((state) => ({
-//       notifications: state.notifications.map((n) =>
-//         n.id === id ? { ...n, read: true } : n
-//       ),
-//     })),
-//   markAsUnread: (id) =>
-//     set((state) => ({
-//       notifications: state.notifications.map((n) =>
-//         n.id === id ? { ...n, read: false } : n
-//       ),
-//     })),
-//   markAllAsRead: () =>
-//     set((state) => ({
-//       notifications: state.notifications.map((n) => ({ ...n, read: true })),
-//     })),
-//   clearNotifications: () => set({ notifications: [] }),
-// }));
-
-// // import type { Notification } from "@/types/types";
-
-// // interface NotificationStore {
-// //   notifications: Notification[];
-// //   unreadCount: number;
-// //   isLoading: boolean;
-// //   error: string | null;
-// //   fetchNotifications: () => void;
-// //   markAsRead: (id: string) => void;
-// //   markAllAsRead: () => void;
-// //   deleteNotification: (id: string) => void;
-// // }
-
-// // export const useNotificationStore = create<NotificationStore>((set) => ({
-// //   notifications: [
-// //     {
-// //       id: "1",
-// //       title: "Welcome to the app!",
-// //       message: "Thank you for signing up. Enjoy your experience.",
-// //       read: false,
-// //       date: new Date(),
-// //       type: "info",
-// //     },
-// //     {
-// //       id: "2",
-// //       title: "New message received",
-// //       message: "You have 3 unread messages in your inbox",
-// //       read: false,
-// //       date: new Date(Date.now() - 3600000), // 1 hour ago
-// //       type: "message",
-// //     },
-// //     {
-// //       id: "3",
-// //       title: "System maintenance",
-// //       message: "Scheduled maintenance tomorrow at 2:00 AM",
-// //       read: true,
-// //       date: new Date(Date.now() - 86400000), // 1 day ago
-// //       type: "alert",
-// //     },
-// //   ],
-// //   unreadCount: 2,
-// //   isLoading: false,
-// //   error: null,
-
-// //   fetchNotifications: async () => {
-// //     set({ isLoading: true, error: null });
-// //     try {
-// //       // Simulated API call
-// //       await new Promise((resolve) => setTimeout(resolve, 1000));
-// //       set({ isLoading: false });
-// //     } catch (err) {
-// //       set({
-// //         error: "Failed to fetch notifications",
-// //         isLoading: false,
-// //       });
-// //     }
-// //   },
-
-// //   markAsRead: (id) =>
-// //     set((state) => {
-// //       const updatedNotifications = state.notifications.map((n) =>
-// //         n.id === id ? { ...n, read: true } : n
-// //       );
-
-// //       return {
-// //         notifications: updatedNotifications,
-// //         unreadCount: updatedNotifications.filter((n) => !n.read).length,
-// //       };
-// //     }),
-
-// //   markAllAsRead: () =>
-// //     set((state) => ({
-// //       notifications: state.notifications.map((n) => ({ ...n, read: true })),
-// //       unreadCount: 0,
-// //     })),
-
-// //   deleteNotification: (id) =>
-// //     set((state) => {
-// //       const updatedNotifications = state.notifications.filter(
-// //         (n) => n.id !== id
-// //       );
-// //       return {
-// //         notifications: updatedNotifications,
-// //         unreadCount: updatedNotifications.filter((n) => !n.read).length,
-// //       };
-// //     }),
-// // }));
+    return isForCurrentUser && isForCurrentRole && !notification.read;
+  }).length;
+};

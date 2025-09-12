@@ -14,7 +14,6 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import type { Role } from "@/types/types";
 
 type HeaderProps = {
   userRole?: "admin" | "staff" | "maintainer" | "superadmin" | "manager";
@@ -30,39 +29,6 @@ type UpdatedUserData = {
   [key: string]: unknown;
 };
 
-// Generate consistent color based on user ID or name
-const generateUserColor = (identifier: string): string => {
-  const colors = [
-    "bg-blue-500",
-    "bg-green-500",
-    "bg-purple-500",
-    "bg-pink-500",
-    "bg-indigo-500",
-    "bg-yellow-500",
-    "bg-red-500",
-    "bg-teal-500",
-    "bg-orange-500",
-    "bg-cyan-500",
-    "bg-emerald-500",
-    "bg-violet-500",
-    "bg-rose-500",
-    "bg-amber-500",
-    "bg-lime-500",
-    "bg-sky-500",
-  ];
-
-  // Simple hash function to get consistent color for same identifier
-  let hash = 0;
-  for (let i = 0; i < identifier.length; i++) {
-    const char = identifier.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-
-  const index = Math.abs(hash) % colors.length;
-  return colors[index];
-};
-
 // Enhanced profile picture management
 const useProfilePicture = (userRole?: string) => {
   const { userProfile, user } = useAuthStore();
@@ -73,19 +39,20 @@ const useProfilePicture = (userRole?: string) => {
       // Priority order for profile picture sources
       const sources = [
         userProfile?.profilePicture,
+
         // Fallback to localStorage for persistence
         localStorage.getItem(`user-profile-picture-${user?.id}`),
       ];
 
-      // Return first valid source, otherwise return empty string to use initials
+      // Return first valid source
       for (const source of sources) {
         if (source && source.trim() !== "") {
           return source;
         }
       }
 
-      // Return empty string to trigger fallback to initials
-      return "";
+      // Final fallback to default avatar
+      return `/images/${userRole}-avatar.png`;
     };
 
     setProfileImageUrl(getProfileImageUrl());
@@ -120,28 +87,6 @@ const Header = ({ userRole }: HeaderProps) => {
   // Role-based capabilities
   const capabilities = getRoleBasedCapabilities(user?.role || "");
 
-  // Get the current display name with proper priority
-  const getDisplayName = () => {
-    return userProfile?.name || user?.name || "User";
-  };
-
-  // Get user initials for fallback
-  const getUserInitials = (): string => {
-    const name = getDisplayName();
-    return name
-      .split(" ")
-      .map((word) => word.charAt(0))
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  // Get consistent background color for user
-  const getUserBackgroundColor = (): string => {
-    const identifier = user?.id || user?.email || getDisplayName();
-    return generateUserColor(identifier);
-  };
-
   // const getRoleBadgeColor = () => {
   //   const role = (userProfile?.role || user?.role || "").toLowerCase();
   //   switch (role) {
@@ -162,48 +107,68 @@ const Header = ({ userRole }: HeaderProps) => {
   // };
 
   const handleProfileUpdate = async (updatedData: UpdatedUserData) => {
-    // try {
-    // Update the user store with new data immediately for optimistic updates
-    if (updateUser) {
-      const updates = {
-        name:
-          updatedData.fullName ||
-          updatedData.adminName ||
-          updatedData.name ||
-          userProfile?.name ||
-          user?.name,
-        profilePicture:
-          updatedData.profilePicture || userProfile?.profilePicture,
-        branch: updatedData.location || userProfile?.branch || user?.branch,
-        ...updatedData,
-      };
+    console.log("=== Header Profile Update ===");
+    console.log("Updated data received:", updatedData);
 
-      // Apply updates to both user and userProfile
-      updateUser(updates);
+    try {
+      // Update the user store with new data immediately for optimistic updates
+      if (updateUser) {
+        const updates = {
+          name:
+            updatedData.fullName ||
+            updatedData.adminName ||
+            updatedData.name ||
+            userProfile?.name ||
+            user?.name,
+          profilePicture:
+            updatedData.profilePicture || userProfile?.profilePicture,
+          branch: updatedData.location || userProfile?.branch || user?.branch,
+          ...updatedData,
+        };
 
-      // Persist profile picture if updated
-      if (updatedData.profilePicture && user?.id) {
-        localStorage.setItem(
-          `user-profile-picture-${user.id}`,
-          updatedData.profilePicture
-        );
+        // Apply updates
+        updateUser(updates);
+
+        // Persist profile picture if updated
+        if (updatedData.profilePicture && user?.id) {
+          localStorage.setItem(
+            `user-profile-picture-${user.id}`,
+            updatedData.profilePicture
+          );
+        }
+
+        console.log("Profile updates applied:", updates);
       }
-
-      // console.log("Profile updates applied:", updates);
+    } catch (error) {
+      console.error("Error updating profile in header:", error);
     }
-    // } catch (error) {
-    //   console.error("Error updating profile in header:", error);
-    // }
   };
 
-  // Enhanced error handling for profile images - fallback to initials
+  // Enhanced error handling for profile images
   const handleImageError = (
     e: React.SyntheticEvent<HTMLImageElement, Event>
   ) => {
     console.warn("Failed to load profile image:", profileImageUrl);
     const img = e.target as HTMLImageElement;
-    // Hide the image to show initials fallback
-    img.style.display = "none";
+
+    // Try fallback image
+    if (img.src !== `/images/${userRole}-avatar.png`) {
+      img.src = `/images/${userRole}-avatar.png`;
+    } else {
+      // Hide broken image
+      img.style.display = "none";
+    }
+  };
+
+  // Get user initials for fallback
+  const getUserInitials = (): string => {
+    const name = user?.name || userProfile?.name || "User";
+    return name
+      .split(" ")
+      .map((word) => word.charAt(0))
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   return (
@@ -223,6 +188,11 @@ const Header = ({ userRole }: HeaderProps) => {
                 <button
                   className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
                   aria-label="Notifications"
+                  onClick={(e) => {
+                    // Ensure the trigger does not retain focus when drawer opens
+                    // to avoid focused descendants inside aria-hidden ancestors.
+                    (e.currentTarget as HTMLButtonElement).blur();
+                  }}
                 >
                   {unreadCount > 0 ? (
                     <BellDot className="h-5 w-5 text-gray-700" />
@@ -230,7 +200,7 @@ const Header = ({ userRole }: HeaderProps) => {
                     <Bell className="h-5 w-5 text-gray-500" />
                   )}
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] leading-4 rounded-full h-5 min-w-[1.25rem] px-1 flex items-center justify-center">
                       {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                   )}
@@ -238,13 +208,16 @@ const Header = ({ userRole }: HeaderProps) => {
               </DrawerTrigger>
 
               <DrawerContent>
-                <DrawerHeader>
+                <DrawerHeader className="flex items-center justify-between pr-2">
                   <DrawerTitle>Notifications</DrawerTitle>
+                  {unreadCount > 0 && (
+                    <span className="text-xs text-gray-500">
+                      {unreadCount} unread
+                    </span>
+                  )}
                 </DrawerHeader>
                 <div className="px-4 pb-4">
-                  {user?.role && (
-                    <NotificationModal role={user.role.toLowerCase() as Role} />
-                  )}
+                  {user?.role && <NotificationModal />}
                 </div>
               </DrawerContent>
             </Drawer>
@@ -253,7 +226,7 @@ const Header = ({ userRole }: HeaderProps) => {
           {/* User info display */}
           <div className="hidden sm:flex items-center gap-2">
             <span className="capitalize font-medium text-gray-700">
-              {getDisplayName()}
+              {user?.name || "User"}
             </span>
             {/* <span
               className={`capitalize text-xs px-2 py-1 rounded-full ${getRoleBadgeColor()}`}
@@ -269,17 +242,13 @@ const Header = ({ userRole }: HeaderProps) => {
             aria-label="User settings"
           >
             <Avatar key={`${profileImageUrl}-${Date.now()}`}>
-              {profileImageUrl && (
-                <AvatarImage
-                  src={profileImageUrl}
-                  alt={`${getDisplayName()} avatar`}
-                  onError={handleImageError}
-                  className="object-cover"
-                />
-              )}
-              <AvatarFallback
-                className={`${getUserBackgroundColor()} text-white font-medium`}
-              >
+              <AvatarImage
+                src={profileImageUrl}
+                alt={`${user?.name || userRole} avatar`}
+                onError={handleImageError}
+                className="object-cover"
+              />
+              <AvatarFallback className="bg-gray-200 text-gray-700 font-medium">
                 {getUserInitials()}
               </AvatarFallback>
             </Avatar>
@@ -297,7 +266,7 @@ const Header = ({ userRole }: HeaderProps) => {
             email: user?.email ?? "",
             lastLogin: new Date().toISOString(),
             userRole: user?.role ?? "user",
-            adminName: getDisplayName(),
+            adminName: user?.name ?? "",
             profilePicture: profileImageUrl,
           }}
           onProfileUpdate={handleProfileUpdate}
@@ -311,7 +280,7 @@ const Header = ({ userRole }: HeaderProps) => {
             email: user?.email ?? "",
             lastLogin: new Date().toISOString(),
             userRole: user?.role ?? "",
-            name: getDisplayName(),
+            name: user?.name ?? "",
             location: user?.branch ?? "",
             profilePicture: profileImageUrl,
           }}
