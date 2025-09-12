@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface NotificationModalProps {
-  onClose?: () => void; // Optional callback to close the drawer/modal
+  onClose?: () => void;
 }
 
 const NotificationModal = ({ onClose }: NotificationModalProps) => {
@@ -96,7 +96,7 @@ const NotificationModal = ({ onClose }: NotificationModalProps) => {
 
   if (filteredNotifications.length === 0) {
     return (
-      <div className="">
+      <div className="w-80 max-w-sm">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
@@ -130,7 +130,7 @@ const NotificationModal = ({ onClose }: NotificationModalProps) => {
   }
 
   return (
-    <div className=" bg-white rounded-lg shadow-lg border">
+    <div className="w-80 max-w-sm bg-white rounded-lg shadow-lg border">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">

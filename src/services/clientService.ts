@@ -10,6 +10,10 @@ export const getAllClients = async (): Promise<Client[]> => {
     return response.data;
   } catch (error) {
     const err = error as AxiosError;
+    // Ignore cancellations triggered by React Query abort signals to avoid noisy logs
+    if (err.code === "ERR_CANCELED" || err.message === "canceled" || err.name === "CanceledError") {
+      throw error;
+    }
     console.error("Error fetching clients:", err.response?.data || err.message);
     throw error;
   }
