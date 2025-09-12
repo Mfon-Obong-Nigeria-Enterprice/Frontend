@@ -2,20 +2,6 @@ import React from "react";
 import type { Transaction } from "@/types/transactions";
 import { Button } from "@/components/ui/button";
 
-// interface SalesReceiptProps {
-//   data: {
-//     client?: Client | null;
-//     walkInClient?: { name: string; phone: string } | null;
-//     items: Row[];
-//     totals: { subtotal: number; discountTotal: number; total: number };
-//     paymentMethod: string;
-//     bankName?: string;
-//     amountPaid: number;
-//     date: Date;
-//     invoiceNumber: string;
-//   };
-//   onClose: () => void;
-// }
 interface SalesReceiptProps {
   transaction: Transaction;
 }

@@ -50,17 +50,6 @@ const discountReasons = [
   "Damage/Defective Goods",
 ];
 
-// const emptyRow: Row = {
-//   productId: "",
-//   unitPrice: 0,
-//   quantity: 1,
-//   discount: 0,
-//   discountType: "percent",
-//   total: 0,
-//   unit: "",
-//   productName: "",
-// };
-
 const AddSaleProduct: React.FC<AddSaleProductProps> = ({
   rows,
   setRows,
@@ -78,23 +67,6 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
     rowIndex: null,
   });
 
-  // Function to update row for a specific row
-  // const updateRow = (index: number, updates: Partial<Row>) => {
-  //   setRows((prev) =>
-  //     prev.map((row, i) =>
-  //       i === index
-  //         ? {
-  //             ...row,
-  //             ...updates,
-  //             total:
-  //               (updates.quantity ?? row.quantity) *
-  //                 (updates.unitPrice ?? row.unitPrice) *
-  //                 (1 - (updates.discount ?? row.discount) / 100) || 0,
-  //           }
-  //         : row
-  //     )
-  //   );
-  // };
   const updateRow = (index: number, updates: Partial<Row>) => {
     setRows((prev) =>
       prev.map((row, i) => {
@@ -281,20 +253,20 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                     }}
                     className="text-center !bg-white"
                   />
-                  {selectedProduct && (
+                  {/* {selectedProduct && (
                     <p className="text-xs text-gray-500 text-center mt-1">
                       Max: {maxQuantity} {row.unit}
                     </p>
-                  )}
+                  )} */}
                 </TableCell>
 
                 {/* Unit Price */}
                 <TableCell className="text-center">
                   <div>
                     {formatCurrency(row.unitPrice)}
-                    {row.unit && (
+                    {/* {row.unit && (
                       <p className="text-xs text-gray-500">per {row.unit}</p>
-                    )}
+                    )} */}
                   </div>
                 </TableCell>
 
@@ -335,16 +307,16 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                       value={row.discountType}
                       onValueChange={(val) =>
                         updateRow(index, {
-                          discountType: val as "percent" | "amount",
+                          discountType: val as "amount" | "percent",
                         })
                       }
                     >
                       <SelectTrigger className="w-auto border-0 !bg-transparent shadow-none -ml-2">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="w-5">
-                        <SelectItem value="percent">%</SelectItem>
+                      <SelectContent className="w-2">
                         <SelectItem value="amount">₦</SelectItem>
+                        <SelectItem value="percent">%</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

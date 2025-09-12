@@ -65,30 +65,13 @@ export type Row = {
 
 // Define a simple type for the receipt data based on backend structure
 type ReceiptData = Transaction;
-// type ReceiptData = {
-//   invoiceNumber: string;
-//   clientName?: string;
-//   walkInClient?: { name: string; phone?: string };
-//   amountPaid: number;
-//   total: number;
-//   paymentMethod: string;
-//   items: {
-//     productId: string;
-//     productName: string;
-//     quantity: number;
-//     unit: string;
-//     unitPrice: number;
-//     discount: number;
-//   }[];
-//   date: string;
-// };
 
 const emptyRow: Row = {
   productId: "",
   unitPrice: 0,
   quantity: 1,
   discount: 0,
-  discountType: "percent",
+  discountType: "amount",
   total: 0,
   unit: "",
   productName: "",
@@ -120,7 +103,7 @@ const NewSales: React.FC = () => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
 
-  // ✅ listen for socket event
+  // listen for socket event
   useEffect(() => {
     socket.on("transaction_created", (data: ReceiptData) => {
       setReceiptData(data);
@@ -384,12 +367,12 @@ const NewSales: React.FC = () => {
         notes,
       };
 
-      // ✅ get the actual transaction returned from backend
+      // get the actual transaction returned from backend
       const transaction = await AddTransaction(payload);
 
       toast.success("Transaction created successfully");
 
-      // ✅ pass the backend transaction to the receipt
+      // pass the backend transaction to the receipt
       setReceiptData(transaction);
       setShowReceipt(true);
 
@@ -608,14 +591,7 @@ const NewSales: React.FC = () => {
                   <span className="text-[#7D7D7D]">
                     New balance (After purchase):
                   </span>
-                  <span
-                    // className={
-                    //   newBalance >= 0
-                    //     ? "text-green-600 font-semibold"
-                    //     : "text-red-600 font-semibold"
-                    // }
-                    className={balanceTextClass(newBalance)}
-                  >
+                  <span className={balanceTextClass(newBalance)}>
                     {/* {newBalance >= 0
                       ? `₦${newBalance.toLocaleString(undefined, {
                           minimumFractionDigits: 2,
