@@ -2,7 +2,6 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import TestLocationPage from "@/pages/TestLocationPage";
 import TestFormPage from "@/pages/TestFormPage";
 
-
 // Auth
 import Login from "@/features/auth/Login";
 import Notfound from "@/components/Notfound";
@@ -19,10 +18,6 @@ import ManagerSettings from "@/features/dashboard/manager/ManagerSettings";
 import ManagerNotifications from "@/features/dashboard/manager/ManagerNotifications";
 
 // Modal Page - removed unused import
-
-
-
-
 
 // Maintainer
 import MaintainerLayout from "@/layout/MaintainerLayout";
@@ -65,7 +60,7 @@ const router = createBrowserRouter([
     path: "/manager/dashboard",
     element: <ManagerDashboardLayout />,
     children: [
-      { index: true, element: <Navigate to="overview" replace /> },
+      { index: true, element: <Navigate to="m-overview" replace /> },
       { path: "m-overview", element: <ManagerDashboardOverview /> },
       { path: "business-report", element: <BusinessReport /> },
       { path: "manage-clients", element: <ManagerClients /> },
@@ -83,27 +78,30 @@ const router = createBrowserRouter([
       { path: "log", element: <ActivityLog /> },
     ],
   },
-// Test Location Route
-{
-  path: "/test-location",
-  element: <TestLocationPage />,
-},
-// Test Form Route
-{
-  path: "/test-form",
-  element: <TestFormPage />,
-},
+  // Test Location Route
+  {
+    path: "/test-location",
+    element: <TestLocationPage />,
+  },
+  // Test Form Route
+  {
+    path: "/test-form",
+    element: <TestFormPage />,
+  },
 
   // Maintainer Routes
   {
     path: "/maintainer/dashboard",
     element: <MaintainerLayout />,
     children: [
-      { index: true, element: <Navigate to="overview" replace /> },
+      {
+        index: true,
+        element: <Navigate to="/maintainer/dashboard/overview" replace />,
+      },
       { path: "overview", element: <MaintainerDashboard /> },
       { path: "maintainer-notifications", element: <MaintainerNotification /> },
       { path: "maintainer-settings", element: <MaintainerSettings /> },
-      { path: "user", element: <ManageUser /> },
+      { path: "user-management", element: <ManageUser /> },
       { path: "user-management/:id", element: <UserDetailsPage /> },
       { path: "user-management/col-settings", element: <ColumnSettings /> },
       { path: "log", element: <ActivityLog /> },

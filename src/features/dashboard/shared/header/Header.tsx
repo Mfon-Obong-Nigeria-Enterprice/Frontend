@@ -14,7 +14,6 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import type { Role } from "@/types/types";
 
 type HeaderProps = {
   userRole?: "admin" | "staff" | "maintainer" | "superadmin" | "manager";
@@ -194,7 +193,7 @@ const Header = ({ userRole }: HeaderProps) => {
                     // to avoid focused descendants inside aria-hidden ancestors.
                     (e.currentTarget as HTMLButtonElement).blur();
                   }}
-               >
+                >
                   {unreadCount > 0 ? (
                     <BellDot className="h-5 w-5 text-gray-700" />
                   ) : (
@@ -212,13 +211,13 @@ const Header = ({ userRole }: HeaderProps) => {
                 <DrawerHeader className="flex items-center justify-between pr-2">
                   <DrawerTitle>Notifications</DrawerTitle>
                   {unreadCount > 0 && (
-                    <span className="text-xs text-gray-500">{unreadCount} unread</span>
+                    <span className="text-xs text-gray-500">
+                      {unreadCount} unread
+                    </span>
                   )}
                 </DrawerHeader>
                 <div className="px-4 pb-4">
-                  {user?.role && (
-                    <NotificationModal role={user.role.toLowerCase() as Role} />
-                  )}
+                  {user?.role && <NotificationModal />}
                 </div>
               </DrawerContent>
             </Drawer>

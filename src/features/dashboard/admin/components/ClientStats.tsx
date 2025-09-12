@@ -35,88 +35,116 @@ const ClientStats = () => {
   const totalDebt = Number(outstandingBalance.totalDebt) || 0;
   const clientsWithDebt = Number(outstandingBalance.clientsWithDebt) || 0;
 
-  const ClientsCard = ({
-    title,
-    value,
-    description,
-    percentage,
-    showTrend = false,
-  }: {
-    title: string;
-    value: number | string;
-    description: string;
-    percentage?: number;
-    showTrend?: boolean;
-  }) => {
-    const isPositive = percentage !== undefined ? percentage >= 0 : true;
-
-    return (
-      <section>
-        <div className="bg-white rounded-lg border border-[#D9D9D9] py-5 px-7 flex flex-col gap-2.5 mx-3 md:mx-1">
-          <p className="font-Inter text-sm text-[#7D7D7D]">{title}</p>
-          <p className="font-Arial font-bold text-xl text-text-dark">{value}</p>
-
-          <p
-            className={`flex items-center text-xs ${
-              showTrend && percentage !== undefined
-                ? isPositive
-                  ? "text-[#1AD410]"
-                  : "text-[#F30C12]"
-                : "text-[#7D7D7D]"
-            }`}
-          >
-            {showTrend && percentage !== undefined && (
-              <>
-                {isPositive ? (
-                  <BsArrowUp className="mr-1 w-3 h-3" />
-                ) : (
-                  <BsArrowDown className="mr-1 h-3 w-3" />
-                )}
-                {Math.abs(percentage)}%{" "}
-              </>
-            )}
-            {description}
-          </p>
-        </div>
-      </section>
-    );
+  const getColor = (color?: string) => {
+    switch (color) {
+      case "green":
+        return "#1AD410";
+      case "orange":
+        return "#F39C12";
+      case "red":
+        return "#F95353";
+      case "blue":
+        return "#3D80FF";
+      default:
+        return "#7d7d7d";
+    }
   };
 
+  const cardData = [
+    {
+      title: "Total Clients",
+      value: totalClients,
+      description: "more than last month",
+      percentage: totalClientsChange.percentage,
+      showTrend: true,
+      color:
+        totalClientsChange.direction === "increase"
+          ? "green"
+          : totalClientsChange.direction === "decrease"
+          ? "red"
+          : "blue",
+    },
+    {
+      title: "Active Clients",
+      value: activeClients,
+      description: `${Math.round(
+        (activeClients / totalClients) * 100 || 0
+      )}% of total clients`,
+      showTrend: false,
+      color: "blue",
+    },
+    {
+      title: "Outstanding balances",
+      value: `₦${totalDebt.toLocaleString()}`,
+      description: `${clientsWithDebt} Clients with overdue balances`,
+      showTrend: false,
+      color: "orange",
+    },
+    {
+      title: "Low stock items",
+      value: `${lowStockCount} Products`,
+      description:
+        lowStockCount > 0 ? "Needs attention" : "All items well stocked",
+      showTrend: false,
+      color: lowStockCount > 0 ? "red" : "green",
+    },
+  ];
+
   return (
-    <div className="mt-5 grid md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
-      <ClientsCard
-        title="Total Clients"
-        value={totalClients}
-        description="more than last month"
-        percentage={totalClientsChange.percentage}
-        showTrend={true}
-      />
+    <section
+      className="gap-4 mt-5 px-2 sm:px-0"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+        maxWidth: "100%",
+      }}
+    >
+      {cardData.map((stat, index) => {
+        const isPositive =
+          stat.percentage !== undefined ? stat.percentage >= 0 : true;
 
-      <ClientsCard
-        title="Active Clients"
-        value={activeClients}
-        description={`${Math.round(
-          (activeClients / totalClients) * 100 || 0
-        )}% of total clients`}
-        showTrend={false}
-      />
+        return (
+          <div
+            key={index}
+            className="bg-white rounded-lg border border-[#D9D9D9] p-4 sm:p-6 flex flex-col justify-evenly items-start gap-3 sm:gap-4 hover:shadow-md transition-shadow duration-200 relative"
+          >
+            <div className="font-Inter text-xs sm:text-sm text-[#7D7D7D]">
+              {stat.title}
+            </div>
 
-      <ClientsCard
-        title="Outstanding balances"
-        value={`₦${totalDebt.toLocaleString()}`}
-        description={`${clientsWithDebt} Clients with overdue balances`}
-        showTrend={false}
-      />
+            <div className="font-Arial font-bold text-base sm:text-xl text-text-dark">
+              {stat.value}
+            </div>
 
-      <ClientsCard
-        title="Low stock items"
-        value={`${lowStockCount} Products`}
-        description={
-          lowStockCount > 0 ? "Needs attention" : "All items well stocked"
-        }
-        showTrend={false}
-      />
-    </div>
+            <div
+              className="flex items-center text-[0.625rem] sm:text-xs gap-1"
+              style={{
+                color:
+                  stat.showTrend && stat.percentage !== undefined
+                    ? isPositive
+                      ? getColor("green")
+                      : getColor("red")
+                    : getColor(stat.color),
+              }}
+            >
+              {stat.showTrend && stat.percentage !== undefined && (
+                <>
+                  {isPositive ? (
+                    <BsArrowUp className="mr-1 w-3 h-3" />
+                  ) : (
+                    <BsArrowDown className="mr-1 h-3 w-3" />
+                  )}
+                  {Math.abs(stat.percentage)}%{" "}
+                </>
+              )}
+              <span className="font-Arial leading-tight">
+                {stat.description}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </section>
   );
 };
 
