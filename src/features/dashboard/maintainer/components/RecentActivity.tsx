@@ -27,7 +27,7 @@ const RecentActivity = () => {
       (a, b) =>
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     )
-    .slice(0, 8);
+    .slice(0, 4);
 
   return (
     <div className="bg-white rounded-[10px] shadow-sm border p-4 h-[67vh] flex flex-col">
