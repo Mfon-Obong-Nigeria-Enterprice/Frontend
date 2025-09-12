@@ -10,9 +10,6 @@ export interface PriceHistoryItem {
   _id: string;
 }
 
-// ==================== SETTINGS TYPES ====================
-
-
 // ==================== PRODUCT TYPES ====================
 export interface Product {
   _id: string;
