@@ -17,7 +17,7 @@ import {
   useHealthLoading,
   useHealthError,
   useFetchHealth,
-  useHealthLastUpdated,
+  // useHealthLastUpdated,
 } from "@/stores/useHealthStore";
 
 const BAR_COLORS = {
