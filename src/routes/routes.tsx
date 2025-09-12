@@ -72,22 +72,9 @@ const router = createBrowserRouter([
       { path: "user-management/:id", element: <UserDetailsPage /> },
       { path: "user-management/col-settings", element: <ColumnSettings /> },
 
-      // Modal Route
-      // { path: "user-management/add-business-location", element: <AddBusinessLocationPage /> },
-
       { path: "log", element: <ActivityLog /> },
     ],
   },
-  // Test Location Route
-  // {
-  //   path: "/test-location",
-  //   element: <TestLocationPage />,
-  // },
-  // // Test Form Route
-  // {
-  //   path: "/test-form",
-  //   element: <TestFormPage />,
-  // },
 
   // Maintainer Routes
   {
@@ -119,6 +106,7 @@ const router = createBrowserRouter([
       { path: "inventory", element: <AdminInventory /> },
       { path: "clients", element: <Clients /> },
       { path: "sales", element: <DashboardSales /> },
+      { path: "sale", element: <NewSales /> },
       { path: "transactions", element: <DashboardTransactions /> },
       { path: "settings", element: <DashboardSettings /> },
       { path: "admin-notifications", element: <AdminNotification /> },
