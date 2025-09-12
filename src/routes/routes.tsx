@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import TestLocationPage from "@/pages/TestLocationPage";
-import TestFormPage from "@/pages/TestFormPage";
+// import TestLocationPage from "@/pages/TestLocationPage";
+// import TestFormPage from "@/pages/TestFormPage";
 
 // Auth
 import Login from "@/features/auth/Login";
@@ -79,15 +79,15 @@ const router = createBrowserRouter([
     ],
   },
   // Test Location Route
-  {
-    path: "/test-location",
-    element: <TestLocationPage />,
-  },
-  // Test Form Route
-  {
-    path: "/test-form",
-    element: <TestFormPage />,
-  },
+  // {
+  //   path: "/test-location",
+  //   element: <TestLocationPage />,
+  // },
+  // // Test Form Route
+  // {
+  //   path: "/test-form",
+  //   element: <TestFormPage />,
+  // },
 
   // Maintainer Routes
   {

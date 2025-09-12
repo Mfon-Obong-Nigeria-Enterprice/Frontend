@@ -1,4 +1,5 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { z } from "zod";
 
 // ==================== CORE TYPES ====================
 export type Role = "SUPER_ADMIN" | "MAINTAINER" | "ADMIN" | "STAFF";
@@ -9,6 +10,7 @@ export interface PriceHistoryItem {
   _id: string;
 }
 
+// ==================== SETTINGS TYPES ====================
 
 
 // ==================== PRODUCT TYPES ====================
@@ -184,7 +186,56 @@ export type MonthlySales = {
   sales: number;
 };
 
+export const healthCheckSchema = z.object({
+  status: z.enum(["up", "down", "critical"]),
+  responseTime: z.number().optional(),
+  usage: z
+    .object({
+      heapUsed: z.number().optional(),
+      heapTotal: z.number().optional(),
+      external: z.number().optional(),
+      rss: z.number().optional(),
+    })
+    .optional(),
+  percentage: z.number().optional(),
+});
 
+export const detailedHealthResponseSchema = z.object({
+  status: z.string(),
+  timestamp: z.string(),
+  uptime: z.number(),
+  checks: z.object({
+    database: healthCheckSchema,
+    memory: healthCheckSchema,
+    environment: z.object({
+      nodeVersion: z.string(),
+      platform: z.string(),
+      environment: z.string(),
+    }),
+  }),
+});
+
+export type DetailedHealthResponse = z.infer<
+  typeof detailedHealthResponseSchema
+>;
+
+export interface HealthState {
+  fetchHealthData: any;
+  overallStatus: string;
+  metrics: {
+    database: number;
+    memory: number;
+  };
+  loading: boolean;
+  error: string | null;
+  timestamp: string;
+  uptime: number;
+  environment: {
+    nodeVersion: string;
+    platform: string;
+    environment: string;
+  };
+}
 
 // NOTIFICATION TYPES
 export type NotificationType =

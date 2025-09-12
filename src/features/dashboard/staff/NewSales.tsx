@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { io, type Socket } from "socket.io-client";
+import { io } from "socket.io-client";
 
 // components
 import ClientSearch from "./components/ClientSearch";
@@ -49,10 +49,8 @@ import { AlertCircle } from "lucide-react";
 // data
 import { bankNames, posNames } from "@/data/banklist";
 
-// Optional websocket connection. Enable by setting VITE_ENABLE_SOCKET=true
-const SOCKET_BASE_URL = "https://mfon-obong-enterprise.onrender.com";
-const ENABLE_SOCKET = import.meta.env.VITE_ENABLE_SOCKET === "true";
-let socket: Socket | null = null;
+// connect to socket
+const socket = io("https://mfon-obong-enterprise.onrender.com");
 
 export type Row = {
   productId: string;
@@ -122,35 +120,15 @@ const NewSales: React.FC = () => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
 
-  // ✅ listen for socket event (only if enabled)
+  // ✅ listen for socket event
   useEffect(() => {
-    if (!ENABLE_SOCKET) return;
-
-    socket = io(SOCKET_BASE_URL, {
-      transports: ["websocket"],
-      reconnection: true,
-      reconnectionAttempts: 3,
-      timeout: 5000,
-      autoConnect: true,
-    });
-
-    const onCreated = (data: ReceiptData) => {
+    socket.on("transaction_created", (data: ReceiptData) => {
       setReceiptData(data);
       setShowReceipt(true);
-    };
-
-    const onConnectError = () => {
-      // Swallow connection errors in UI; receipt can still render after form submit
-    };
-
-    socket.on("transaction_created", onCreated);
-    socket.on("connect_error", onConnectError);
+    });
 
     return () => {
-      socket?.off("transaction_created", onCreated);
-      socket?.off("connect_error", onConnectError);
-      socket?.close();
-      socket = null;
+      socket.off("transaction_created");
     };
   }, []);
 
@@ -690,7 +668,7 @@ const NewSales: React.FC = () => {
 
       {showReceipt && receiptData && (
         <Modal
-          size="2xl"
+          size="xxl"
           isOpen={showReceipt}
           onClose={() => setShowReceipt(false)}
         >

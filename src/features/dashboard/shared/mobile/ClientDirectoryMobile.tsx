@@ -1,14 +1,14 @@
-// Similarly update ClientDirectoryMobile.tsx - Remove Zustand dependency
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import usePagination from "@/hooks/usePagination";
+import { useClientStore } from "@/stores/useClientStore";
 import type { Client } from "@/types/types";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getTypeDisplay } from "@/utils/helpersfunction";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
-interface ClientDirectoryMobileProps {
+interface ClientDirectoryProps {
   searchTerm: string;
   filteredClientsData: Client[];
   onClientAction?: (client: Client) => void;
@@ -16,17 +16,20 @@ interface ClientDirectoryMobileProps {
   isStaffView?: boolean;
 }
 
-const ClientDirectoryMobile: React.FC<ClientDirectoryMobileProps> = ({
+const ClientDirectoryMobile: React.FC<ClientDirectoryProps> = ({
   searchTerm,
   filteredClientsData,
   onClientAction,
   actionLabel = "view",
   isStaffView = false,
 }) => {
-  const navigate = useNavigate();
+  //
 
-  // Use the provided filtered data directly, then apply search filter
-  const filteredClients = filteredClientsData.filter(
+  const { clients } = useClientStore();
+  const navigate = useNavigate();
+  const filteredClients = (
+    filteredClientsData.length > 0 ? filteredClientsData : clients ?? []
+  ).filter(
     (client) =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client._id.toLowerCase().includes(searchTerm.toLowerCase())
@@ -72,7 +75,6 @@ const ClientDirectoryMobile: React.FC<ClientDirectoryMobileProps> = ({
       navigate(`/clients/${client._id}`);
     }
   };
-
   return (
     <section className=" lg:hidden px-4 mt-2 mb-4 block">
       <ul className="space-y-3">

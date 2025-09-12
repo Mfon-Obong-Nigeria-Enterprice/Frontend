@@ -32,18 +32,8 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Attach Authorization token and staff branchId
+// Attach staff branchId
 api.interceptors.request.use((config) => {
-  // Attach Bearer token if available (supports multiple storage keys)
-  const token =
-    localStorage.getItem("authToken") ||
-    localStorage.getItem("access_token") ||
-    localStorage.getItem("token");
-  if (token) {
-    if (!config.headers) config.headers = {} as any;
-    (config.headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
-  }
-
   const { user } = useAuthStore.getState();
 
   if ((user?.role === "STAFF" || user?.role === "ADMIN") && user.branchId) {
