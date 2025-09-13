@@ -275,8 +275,8 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                   <div className="w-16 md:w-20 mx-auto h-[35.5px] flex items-center border px-2 !rounded-[7.5px]">
                     <input
                       type="number"
-                      min="0"
-                      value={row.discount}
+                      step="0.01"
+                      value={row.discount === 0 ? "" : row.discount}
                       onChange={(e) => {
                         let newDiscount = Number(e.target.value) || 0;
                         const baseAmount = row.quantity * row.unitPrice;
