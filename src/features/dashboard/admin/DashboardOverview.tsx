@@ -14,10 +14,8 @@ import { useClientStore } from "@/stores/useClientStore";
 import { type StatCard } from "@/types/stats";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { getChangeText } from "@/utils/helpersfunction";
-import { useAuthStore } from "@/stores/useAuthStore";
 
 const DashboardOverview: React.FC = () => {
-  const { user } = useAuthStore();
   const products = useInventoryStore((state) => state.products);
   const {
     getActiveClients,
@@ -25,8 +23,7 @@ const DashboardOverview: React.FC = () => {
     getOutStandingBalanceData,
     getOutStandingBalancePercentageChange, // New method
   } = useClientStore();
-  const { getTodaysSales, getSalesPercentageChange, transactions } =
-    useTransactionsStore();
+  const { getTodaysSales, getSalesPercentageChange } = useTransactionsStore();
 
   const lowStockCount = products?.filter(
     (prod) => prod.stock <= prod.minStockLevel
@@ -36,18 +33,7 @@ const DashboardOverview: React.FC = () => {
   const activeClients = getActiveClients();
   const outstandingBalance = getOutStandingBalanceData();
   const activeClientsPercentage = getActiveClientsPercentage();
-  const outstandingBalanceChange = getOutStandingBalancePercentageChange(); // New calculation
-
-  // Debug logging
-  console.log("Dashboard - User role:", user?.role);
-  console.log("Dashboard - User branch:", user?.branchId);
-  console.log("Dashboard - Products count:", products?.length || 0);
-  console.log("Dashboard - Transactions count:", transactions?.length || 0);
-  console.log("Dashboard - Today's sales:", todaysSales);
-  console.log(
-    "Dashboard - Outstanding balance change:",
-    outstandingBalanceChange
-  );
+  const outstandingBalanceChange = getOutStandingBalancePercentageChange();
 
   const stats: StatCard[] = [
     {

@@ -10,6 +10,7 @@ interface clientStore {
   isLoading: boolean;
   error: string | null;
 
+  // Existing methods
   setClients: (clients: Client[]) => void;
   setDebtors: (debtors: Client[]) => void;
   getClientById: (id: string) => Client | null;
@@ -25,7 +26,6 @@ interface clientStore {
 
   // Derivative stats
   getClientsWithDebt: () => Client[];
-  getUniqueDebtors: () => Client[];
   getNewClients: () => number;
   getActiveClients: () => number;
   getClientGrowthPercentage: () => number;
@@ -174,13 +174,46 @@ export const useClientStore = create<clientStore>()(
         get().clients.find((client) => client._id === id) || null,
 
       updateClient: (id, updates) => {
-        set((state) => ({
-          clients: state.clients.map((cl) =>
+        set((state) => {
+          const currentTime = new Date().toISOString();
+
+          const updatedClients = state.clients.map((cl) =>
             cl._id === id
-              ? { ...cl, ...updates, updatedAt: new Date().toISOString() }
+              ? {
+                  ...cl,
+                  ...updates,
+                  updatedAt: currentTime,
+                  // If balance is being updated, also update lastTransactionDate
+                  lastTransactionDate:
+                    updates.balance !== undefined
+                      ? currentTime
+                      : cl.lastTransactionDate,
+                }
               : cl
-          ),
-        }));
+          );
+
+          // Also update debtors if applicable
+          const updatedDebtors = state.debtors
+            .map((debtor) =>
+              debtor._id === id
+                ? {
+                    ...debtor,
+                    ...updates,
+                    updatedAt: currentTime,
+                    lastTransactionDate:
+                      updates.balance !== undefined
+                        ? currentTime
+                        : debtor.lastTransactionDate,
+                  }
+                : debtor
+            )
+            .filter((debtor) => debtor._id !== id || (debtor.balance || 0) < 0); // Remove from debtors if balance is no longer negative
+
+          return {
+            clients: updatedClients,
+            debtors: updatedDebtors,
+          };
+        });
       },
 
       deleteClientLocally: (id) =>
@@ -190,28 +223,69 @@ export const useClientStore = create<clientStore>()(
         })),
 
       addPayment: (clientId: string, newBalance: number) => {
-        set((state) => ({
-          clients: state.clients.map((client) =>
-            client._id === clientId
-              ? {
-                  ...client,
+        set((state) => {
+          const updatedClients = state.clients.map((client) => {
+            if (client._id === clientId) {
+              const paymentAmount = Math.abs(newBalance - client.balance);
+              const currentTime = new Date().toISOString();
+
+              return {
+                ...client,
+                balance: newBalance,
+                lastTransactionDate: currentTime,
+                transactions: [
+                  ...(client.transactions || []),
+                  {
+                    _id: Date.now().toString(),
+                    type: "DEPOSIT" as const,
+                    amount: paymentAmount,
+                    date: currentTime,
+                    description: `Payment received - Balance updated from ${client.balance.toFixed(
+                      2
+                    )} to ${newBalance.toFixed(2)}`,
+                    reference: `TXN${Date.now()}`,
+                  },
+                ],
+              };
+            }
+            return client;
+          });
+
+          // Also update debtors list if the client was/is a debtor
+          const updatedDebtors = state.debtors
+            .map((debtor) => {
+              if (debtor._id === clientId) {
+                const paymentAmount = Math.abs(newBalance - debtor.balance);
+                const currentTime = new Date().toISOString();
+
+                return {
+                  ...debtor,
                   balance: newBalance,
-                  lastTransactionDate: new Date().toISOString(),
+                  lastTransactionDate: currentTime,
                   transactions: [
-                    ...(client.transactions || []),
+                    ...(debtor.transactions || []),
                     {
                       _id: Date.now().toString(),
-                      type: "DEPOSIT",
-                      amount: Math.abs(client.balance - newBalance),
-                      date: new Date().toISOString(),
-                      description: "Payment received",
+                      type: "DEPOSIT" as const,
+                      amount: paymentAmount,
+                      date: currentTime,
+                      description: `Payment received - Balance updated from ${debtor.balance.toFixed(
+                        2
+                      )} to ${newBalance.toFixed(2)}`,
                       reference: `TXN${Date.now()}`,
                     },
                   ],
-                }
-              : client
-          ),
-        }));
+                };
+              }
+              return debtor;
+            })
+            .filter((debtor) => debtor._id !== clientId || debtor.balance < 0); // Remove from debtors if balance is no longer negative
+
+          return {
+            clients: updatedClients,
+            debtors: updatedDebtors,
+          };
+        });
       },
 
       // Active clients (clients with transactions in last 30 days)
@@ -262,48 +336,26 @@ export const useClientStore = create<clientStore>()(
 
       getClientsWithDebt: () => {
         const { clients, debtors } = get();
-
-        // Always prioritize debtors from the API if available
-        if (debtors && debtors.length > 0) {
-          // Make sure debtors are actually in debt (balance < 0)
-          return debtors.filter((debtor) => debtor.balance < 0);
+        // Use debtors if available and has data, otherwise filter clients
+        if (debtors.length > 0) {
+          return debtors.filter((d) => d.balance < 0);
         }
-
-        // Fallback to filtering clients if debtors array is empty
-        return clients.filter((client) => client.balance < 0);
-      },
-
-      // Also add a method to get unique debtors (in case you need it elsewhere)
-      getUniqueDebtors: () => {
-        const clientsWithDebt = get().getClientsWithDebt();
-
-        // Remove duplicates based on client ID
-        const uniqueDebtors = clientsWithDebt.reduce((acc, client) => {
-          const existingClient = acc.find((c) => c._id === client._id);
-          if (!existingClient) {
-            acc.push(client);
-          } else {
-            // If duplicate found, keep the one with the most recent update
-            const existingIndex = acc.findIndex((c) => c._id === client._id);
-            if (
-              new Date(client.updatedAt || client.createdAt) >
-              new Date(existingClient.updatedAt || existingClient.createdAt)
-            ) {
-              acc[existingIndex] = client;
-            }
-          }
-          return acc;
-        }, [] as Client[]);
-
-        return uniqueDebtors;
+        return clients.filter((c) => c.balance < 0);
       },
 
       getOutStandingBalanceData: () => {
-        const clientsWithDebt = get().getClientsWithDebt();
+        const { clients, debtors } = get();
+        // Prioritize debtors array if it exists and has data, otherwise filter clients
+        const clientsWithDebt =
+          debtors.length > 0
+            ? debtors.filter((d) => d.balance < 0)
+            : clients.filter((c) => c.balance < 0);
+
         const totalDebt = clientsWithDebt.reduce(
           (sum, client) => sum + Math.abs(client.balance),
           0
         );
+
         return {
           clientsWithDebt: clientsWithDebt.length,
           totalDebt,
@@ -368,8 +420,6 @@ export const useClientStore = create<clientStore>()(
       getOutStandingBalanceLastWeek: () => {
         const { clients, debtors } = get();
         const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
-        // Use debtors if available, otherwise filter clients
         const clientsToCheck =
           debtors.length > 0 ? debtors : clients.filter((c) => c.balance < 0);
 
