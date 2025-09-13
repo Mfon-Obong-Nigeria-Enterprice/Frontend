@@ -3,7 +3,7 @@ import type { Client } from "@/types/types";
 import { balanceTextClass } from "@/utils/format";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getTypeDisplay, getTypeStyles } from "@/utils/helpersfunction";
-import { ArrowRight, X, User } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 import { useMemo } from "react";
 
 interface clientTrasactionDetailsProps {
@@ -61,7 +61,7 @@ export const ClientTransactionDetails: React.FC<
         <ul className="space-y-10">
           {transactionWithBalance.map((txn, i) => (
             <li
-              key={txn._id || `txn-${i}`}
+              key={`${txn._id}-${txn.createdAt}-${i}`} // More unique key
               className="border rounded-lg px-5 py-3 shadow"
             >
               {/* type, date and time, balance */}
@@ -195,16 +195,10 @@ export const ClientTransactionDetails: React.FC<
                       </h6>
                       <ul className="space-y-2 sm:space-y-3">
                         <li className="flex items-center gap-2">
-                          <User size={14} className="text-[#666]" />
                           <div className="flex flex-col">
                             <span className="font-medium text-[#444444] text-sm">
                               {txn.userId?.name || "Unknown Staff"}
                             </span>
-                            {txn.userId?._id && (
-                              <span className="text-xs text-[#7D7D7D]">
-                                ID: {txn.userId._id.slice(-6)}
-                              </span>
-                            )}
                           </div>
                         </li>
 
@@ -213,14 +207,14 @@ export const ClientTransactionDetails: React.FC<
                           {txn.invoiceNumber && (
                             <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center w-fit">
                               <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
-                                Invoice: {txn.invoiceNumber}
+                                {txn.invoiceNumber}
                               </span>
                             </div>
                           )}
                           {txn.waybillNumber && (
                             <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center w-fit">
                               <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
-                                Waybill: {txn.waybillNumber}
+                                {txn.waybillNumber}
                               </span>
                             </div>
                           )}
@@ -264,12 +258,6 @@ export const ClientTransactionDetails: React.FC<
                       Product{" "}
                       {txn.type === "PICKUP" ? "Picked Up" : "Purchased"}:
                     </h6>
-                    <div className="text-right">
-                      <p className="text-sm text-[#7D7D7D]">Processed by:</p>
-                      <p className="text-sm font-medium text-[#333333]">
-                        {txn.userId?.name || "Unknown"}
-                      </p>
-                    </div>
                   </div>
                   <ul className="flex flex-wrap gap-4 items-start ">
                     {txn.items.map((item, itemIndex) => (
