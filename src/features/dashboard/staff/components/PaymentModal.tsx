@@ -7,16 +7,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { createTransaction } from "@/services/transactionService";
+import { AddClientPayment } from "@/services/transactionService";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useClientStore } from "@/stores/useClientStore";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import type { Transaction } from "@/types/transactions";
-import type { Client, CreateTransactionPayload } from "@/types/types";
+import type { Client } from "@/types/types";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type FormEvent } from "react";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 
 type PaymentModalProps = {
   client: Client;
@@ -43,37 +43,45 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     const currentBalance = client?.balance ?? 0;
     const paymentAmount = Number(amount) || 0;
 
-    return currentBalance + paymentAmount; // Fixed: Add payment to reduce debt
+    return currentBalance + paymentAmount; // Add payment to reduce debt
   }, [client?.balance, amount]);
 
-  //Mutation to create transaction via API
+  // Mutation to create transaction via API
   const createTransactionMutation = useMutation({
-    mutationFn: ({
-      clientId,
-      transaction,
-    }: {
+    mutationFn: (transactionData: {
+      type: "DEPOSIT";
+      amount: number;
+      total: number;
+      paymentMethod: string;
+      reference: string;
+      description: string;
       clientId: string;
-      transaction: CreateTransactionPayload;
-    }) => createTransaction(clientId, transaction),
+      amountPaid: number;
+    }) => AddClientPayment(transactionData),
     onSuccess: (response) => {
+      console.log("Payment response:", response);
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["client", client._id] });
+      queryClient.invalidateQueries({
+        queryKey: ["clientTransactions", client._id],
+      });
 
-      //
       if (response) {
+        // Add transaction to local store with all relevant fields
         const newTransaction: Transaction = {
           userId: {
             _id: user?.id || "",
             name: user?.name || "",
           },
-          _id: response.id,
+          _id: response._id,
           type: "DEPOSIT" as const,
           status: "completed",
           items: [],
           amount: Number(amount),
           total: Number(amount),
           amountPaid: Number(amount),
-          paymentMethod,
+          paymentMethod: paymentMethod,
           clientId: {
             _id: client._id,
             phone: client.phone || "",
@@ -81,14 +89,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             balance: "",
           },
           client: client,
-          createdAt: new Date().toISOString(),
-          reference: `TXN${Date.now()}`,
+          createdAt: response.createdAt || new Date().toISOString(),
+          reference: reference || response.reference || `TXN${Date.now()}`,
+          description:
+            description || response.description || `Payment for ${client.name}`,
         };
+
         addTransaction(newTransaction);
+
+        // Update client balance in local store
         if (addPayment) {
           addPayment(client._id, newBalance);
         }
       }
+
       toast.success(
         `Payment of ₦${formatCurrency(amount)} processed successfully!`
       );
@@ -96,7 +110,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       onClose();
     },
     onError: (error) => {
-      toast.error("Failed to process payment. Please try again." + error);
+      console.error("Payment processing error:", error);
+      toast.error("Failed to process payment. Please try again.");
     },
   });
 
@@ -104,7 +119,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     e.preventDefault();
 
     if (!amount || amount <= 0) {
-      toast.error("Please enter a valid payment amount");
+      toast.warn("Please enter a valid payment amount");
       return;
     }
 
@@ -120,23 +135,21 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       if (!proceed) return;
     }
 
-    setIsProcessing(true); // Set processing state immediately after validation
+    setIsProcessing(true);
 
     try {
-      const transactionData: CreateTransactionPayload = {
-        type: "DEPOSIT",
+      const transactionData = {
+        type: "DEPOSIT" as const,
         amount: Number(amount),
         total: Number(amount),
-        amountPaid: Number(amount), // Added amountPaid field
+        amountPaid: Number(amount),
         paymentMethod,
         reference: reference || `TXN${Date.now()}`,
-        description: description || `Payment for ${client.name}`, // Added description field
+        description: description || `Payment for ${client.name}`,
+        clientId: client._id,
       };
 
-      await createTransactionMutation.mutateAsync({
-        clientId: client._id,
-        transaction: transactionData,
-      });
+      await createTransactionMutation.mutateAsync(transactionData);
 
       // Reset form
       setAmount(0);
@@ -144,7 +157,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       setDescription("");
       setPaymentMethod("Cash");
     } catch (error) {
-      toast.error("Failed to process payment. Please try again." + error);
+      console.error("Payment processing error:", error);
+      toast.error("Failed to process payment. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -243,7 +257,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               </select>
             </div>
 
-            {/* Added Description Field */}
             <div>
               <label className="block text-sm font-medium mb-1 text-[#1E1E1E] font-Inter">
                 Description

@@ -264,7 +264,7 @@ const AdminInventory = () => {
   }, [dragging, rel]);
 
   return (
-    <main className="px-3 lg:px-4 lg:max-w-4xl xl:max-w-6xl 2xl:max-w-full mx-auto">
+    <main className="px-2 sm:px-1 lg:px-4 lg:max-w-4xl xl:max-w-6xl mx-auto">
       <div className="">
         <DashboardTitle
           heading="Inventory Management"

@@ -9,13 +9,6 @@ export const NotificationProvider = ({
 }) => {
   const user = useAuthStore((state) => state.user);
 
-  console.log(
-    "🏠 NotificationProvider rendered, user:",
-    user?.email,
-    "role:",
-    user?.role
-  );
-
   useActivityNotifications(
     !!user, // Only start when user is logged in
     30000 // Poll every 30 seconds
