@@ -53,11 +53,10 @@ const MaintainerDashboard = () => {
         />
       </div>
       <Stats data={stats} />
-      <div className="grid grid-cols-1 md:grid-cols-[50fr_50fr] gap-5 mt-5">
-        
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
         <SystemHealth />
 
-        <RecentActivity/>
+        <RecentActivity />
       </div>
     </main>
   );

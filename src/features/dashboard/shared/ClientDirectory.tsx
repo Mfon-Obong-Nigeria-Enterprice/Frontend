@@ -75,12 +75,12 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
     goToNextPage,
     canGoPrevious,
     canGoNext,
-  } = usePagination(filteredClients.length, 4);
+  } = usePagination(filteredClients.length, 20);
 
   // Memoized current page using useMemo since the value is an object
   const currentClient = useMemo(() => {
-    const startIndex = (currentPage - 1) * 4;
-    const endIndex = startIndex + 4;
+    const startIndex = (currentPage - 1) * 20;
+    const endIndex = startIndex + 20;
     return filteredClients.slice(startIndex, endIndex);
   }, [filteredClients, currentPage]);
 

@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-const usePagination = (totalItems: number, itemsPerPage: number = 4) => {
+const usePagination = (totalItems: number, itemsPerPage: number = 20) => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const totalPages = Math.ceil(totalItems / itemsPerPage);

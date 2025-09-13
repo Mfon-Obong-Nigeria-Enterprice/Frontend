@@ -3,7 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Bell, Check, Trash2, Search } from "lucide-react";
 import {
+  useFilteredNotifications,
   useNotificationStore,
+  useUnreadNotificationCount,
   type Notification,
 } from "@/stores/useNotificationStore";
 import { cn } from "@/lib/utils";
@@ -13,23 +15,22 @@ import { useAuthStore } from "@/stores/useAuthStore";
 
 const Notifications = () => {
   const user = useAuthStore((s) => s.user);
-  const {
-    notifications,
-    unreadCount,
-    markAsRead,
-    markAllAsRead,
-    deleteNotification,
-  } = useNotificationStore();
+  const { markAsRead, markAllAsRead, deleteNotification } =
+    useNotificationStore();
+
+  // Use filtered notifications for current user
+  const allNotifications = useFilteredNotifications();
+  const unreadCount = useUnreadNotificationCount();
 
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const displayedNotifications: Notification[] = searchQuery
-    ? notifications.filter(
+    ? allNotifications.filter(
         (n) =>
           n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           n.message.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : notifications;
+    : allNotifications;
 
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -48,20 +49,50 @@ const Notifications = () => {
     }
   };
 
+  const formatDate = (date: Date) => {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days === 0) {
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } else if (days === 1) {
+      return "Yesterday";
+    } else if (days < 7) {
+      return `${days} days ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
+
   return (
     <div>
       <DashboardTitle
         heading={
           user?.role === "MAINTAINER"
-            ? "Maintainer Notification"
-            : "Notification"
+            ? "Maintainer Notifications"
+            : "Notifications"
         }
         description="Stay updated with your business activities"
       />
 
       <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
+        {/* Header */}
         <div className="p-6 border-b">
           <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg font-semibold text-gray-900">
+                All Notifications
+              </h2>
+              {unreadCount > 0 && (
+                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                  {unreadCount} unread
+                </span>
+              )}
+            </div>
             {unreadCount > 0 && (
               <Button
                 variant="ghost"
@@ -73,6 +104,7 @@ const Notifications = () => {
               </Button>
             )}
           </div>
+
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
@@ -84,60 +116,106 @@ const Notifications = () => {
           </div>
         </div>
 
-        <div className="divide-y divide-gray-200 max-h-screen overflow-y-auto">
+        {/* Notification List */}
+        <div className="divide-y divide-gray-200 max-h-[600px] overflow-y-auto">
           {displayedNotifications.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              {searchQuery ? "No matching notifications" : "No notifications"}
+            <div className="p-8 text-center">
+              <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {searchQuery
+                  ? "No matching notifications"
+                  : "No notifications yet"}
+              </h3>
+              <p className="text-sm text-gray-500">
+                {searchQuery
+                  ? "Try adjusting your search terms"
+                  : "Your notifications will appear here when activities occur in the system"}
+              </p>
             </div>
           ) : (
             displayedNotifications.map((notification) => (
               <div
                 key={notification.id}
                 className={cn(
-                  "p-4 hover:bg-gray-50",
-                  !notification.read && "bg-blue-50"
+                  "p-4 hover:bg-gray-50 transition-colors",
+                  !notification.read &&
+                    "bg-blue-50 border-l-4 border-l-blue-500"
                 )}
               >
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 pt-0.5">
-                    <div className="h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center">
+                <div className="flex items-start gap-4">
+                  {/* Icon */}
+                  <div className="flex-shrink-0 pt-1">
+                    <div className="h-8 w-8 rounded-full bg-white shadow-sm border flex items-center justify-center">
                       {getNotificationIcon(notification.type)}
                     </div>
                   </div>
-                  <div className="ml-3 flex-1">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-medium">
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-1">
+                      <h3
+                        className={cn(
+                          "text-sm font-medium leading-5",
+                          !notification.read ? "text-gray-900" : "text-gray-700"
+                        )}
+                      >
                         {notification.title}
                       </h3>
-                      <span className="text-xs text-gray-500">
-                        {notification.createdAt.toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
+
+                      <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+                        <span className="text-xs text-gray-500">
+                          {formatDate(notification.createdAt)}
+                        </span>
+                        {!notification.read && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                        )}
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">
+
+                    <p
+                      className={cn(
+                        "text-sm leading-5 mb-3",
+                        !notification.read ? "text-gray-800" : "text-gray-600"
+                      )}
+                    >
                       {notification.message}
                     </p>
-                    <div className="mt-2 flex justify-end gap-2">
-                      {!notification.read && (
+
+                    {/* Meta information */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        {notification.meta?.adminName && (
+                          <span>by {notification.meta.adminName}</span>
+                        )}
+                        {notification.meta?.transactionId && (
+                          <span>ID: {notification.meta.transactionId}</span>
+                        )}
+                        <span className="capitalize">{notification.type}</span>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-2">
+                        {!notification.read && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => markAsRead(notification.id)}
+                            className="h-7 px-3 text-xs"
+                          >
+                            <Check className="h-3 w-3 mr-1" />
+                            Mark read
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => markAsRead(notification.id)}
-                          className="h-8 gap-1 text-xs"
+                          onClick={() => deleteNotification(notification.id)}
+                          className="h-7 px-3 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
-                          <Check className="h-3 w-3" /> Mark read
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          Delete
                         </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => deleteNotification(notification.id)}
-                        className="h-8 gap-1 text-xs text-red-500"
-                      >
-                        <Trash2 className="h-3 w-3" /> Delete
-                      </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -145,6 +223,16 @@ const Notifications = () => {
             ))
           )}
         </div>
+
+        {/* Footer */}
+        {displayedNotifications.length > 0 && (
+          <div className="px-6 py-3 bg-gray-50 border-t text-center">
+            <p className="text-xs text-gray-500">
+              Showing {displayedNotifications.length} of{" "}
+              {allNotifications.length} notifications
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

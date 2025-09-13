@@ -132,7 +132,7 @@ const MaintainerSidebarWithModal = () => {
       logoutMutation.mutate();
       setIsLoading(false);
       setShowModal(false);
-    }, 500);
+    }, 100);
   };
 
   return (
