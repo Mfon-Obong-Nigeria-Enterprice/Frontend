@@ -96,7 +96,7 @@ const InventoryTab = React.memo(
       <div className="px-5 min-h-30">
         <Tabs defaultValue="allProducts">
           <div>
-            <div className="">
+            <div>
               {/* Added scroll for mobile */}
               <TabsList className=" bg-[#F5F5F5] gap-3 overflow-x-auto whitespace-nowrap h-16 hide-scrollbar w-max max-w-full">
                 <TabsTrigger

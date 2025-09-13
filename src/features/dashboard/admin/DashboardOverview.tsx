@@ -21,6 +21,7 @@ const DashboardOverview: React.FC = () => {
     getActiveClients,
     getActiveClientsPercentage,
     getOutStandingBalanceData,
+    getOutStandingBalancePercentageChange, // New method
   } = useClientStore();
   const { getTodaysSales, getSalesPercentageChange } = useTransactionsStore();
 
@@ -32,6 +33,7 @@ const DashboardOverview: React.FC = () => {
   const activeClients = getActiveClients();
   const outstandingBalance = getOutStandingBalanceData();
   const activeClientsPercentage = getActiveClientsPercentage();
+  const outstandingBalanceChange = getOutStandingBalancePercentageChange();
 
   const stats: StatCard[] = [
     {
@@ -50,20 +52,30 @@ const DashboardOverview: React.FC = () => {
           : "orange",
     },
     {
-      heading: "Outstanding balances",
+      heading: "Outstanding Balances",
       salesValue: `${outstandingBalance.totalDebt.toLocaleString()}`,
       format: "currency",
-      statValue: "5% from last week",
-      statColor: "orange",
+      statValue: getChangeText(
+        outstandingBalanceChange.percentage,
+        outstandingBalanceChange.direction,
+        "last week"
+      ),
+      color:
+        outstandingBalanceChange.direction === "increase"
+          ? "red" // Increase in debt is bad
+          : outstandingBalanceChange.direction === "decrease"
+          ? "green" // Decrease in debt is good
+          : "orange",
     },
     {
       heading: "Low Stock Items",
-      salesValue: `${lowStockCount} Products`,
+      salesValue: `${lowStockCount || 0} Products`,
       statValue: `${
-        lowStockCount > 0 ? "Needs attention" : "All items well stocked"
+        lowStockCount && lowStockCount > 0
+          ? "Needs attention"
+          : "All items well stocked"
       }`,
-      // format: "text",
-      statColor: `${lowStockCount > 0 ? "red" : "gray"}`,
+      statColor: `${lowStockCount && lowStockCount > 0 ? "red" : "gray"}`,
       hideArrow: true,
     },
     {

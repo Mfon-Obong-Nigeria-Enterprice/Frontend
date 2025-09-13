@@ -87,8 +87,6 @@ const NotificationModal = ({ onClose }: NotificationModalProps) => {
       case "MANAGER":
       case "SUPER_ADMIN":
         return "/manager/dashboard/manager-notifications";
-      case "STAFF":
-        return "/staff/dashboard/staff-notifications";
       default:
         return "/notifications";
     }
@@ -96,7 +94,7 @@ const NotificationModal = ({ onClose }: NotificationModalProps) => {
 
   if (filteredNotifications.length === 0) {
     return (
-      <div className="w-80 max-w-sm">
+      <div>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
@@ -130,7 +128,7 @@ const NotificationModal = ({ onClose }: NotificationModalProps) => {
   }
 
   return (
-    <div className="w-80 max-w-sm bg-white rounded-lg shadow-lg border">
+    <div className=" bg-white rounded-lg shadow-lg border">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">
@@ -166,7 +164,7 @@ const NotificationModal = ({ onClose }: NotificationModalProps) => {
       </div>
 
       {/* Notification List */}
-      <ScrollArea className="max-h-96">
+      <ScrollArea className="max-h-46">
         <div className="divide-y divide-gray-100">
           {previewNotifications.map((notification) => (
             <div

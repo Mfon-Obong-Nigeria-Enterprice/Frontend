@@ -3,6 +3,7 @@ import BarChartDaily from "./BarChartDaily";
 import BarChartWeekly from "./BarChartWeekly";
 import BarChartMonthly from "./BarChartMonthly";
 import { BarChart3, TrendingUp } from "lucide-react";
+import { useTransactionsStore } from "@/stores/useTransactionStore";
 
 // Empty State Component
 function EmptyOverviewState({ period }: { period: string }) {
@@ -27,8 +28,15 @@ function EmptyOverviewState({ period }: { period: string }) {
   );
 }
 
-// This is the sales overview on the dashboard screen
-const SalesOverview = ({ hasData = false }: { hasData?: boolean }) => {
+const SalesOverview = () => {
+  const transactions = useTransactionsStore((state) => state.transactions);
+
+  // Check if there are any sales transactions
+  const hasSalesData =
+    transactions &&
+    transactions.length > 0 &&
+    transactions.some((t) => t.type === "PURCHASE" || t.type === "PICKUP");
+
   return (
     <div className="bg-white rounded-xl px-4 sm:px-8 py-6 mx-2 font-Inter">
       <Tabs defaultValue="daily">
@@ -68,21 +76,22 @@ const SalesOverview = ({ hasData = false }: { hasData?: boolean }) => {
           </TabsList>
         </div>
 
-        <TabsContent value="">
-          {hasData ? <BarChartDaily /> : <EmptyOverviewState period="Daily" />}
-        </TabsContent>
         <TabsContent value="daily">
-          {hasData ? <BarChartDaily /> : <EmptyOverviewState period="Daily" />}
+          {hasSalesData ? (
+            <BarChartDaily />
+          ) : (
+            <EmptyOverviewState period="Daily" />
+          )}
         </TabsContent>
         <TabsContent value="weekly">
-          {hasData ? (
+          {hasSalesData ? (
             <BarChartWeekly />
           ) : (
             <EmptyOverviewState period="Weekly" />
           )}
         </TabsContent>
         <TabsContent value="monthly">
-          {hasData ? (
+          {hasSalesData ? (
             <BarChartMonthly />
           ) : (
             <EmptyOverviewState period="Monthly" />
