@@ -1,6 +1,6 @@
 import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
 
-// Helper: convert timestamp to "x days ago"
+
 function timeAgo(date: string | Date): string {
   const now = new Date();
   const past = new Date(date);
@@ -11,12 +11,16 @@ function timeAgo(date: string | Date): string {
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
 
-  if (seconds < 60) return `${seconds} ${seconds === 1 ? "second" : "seconds"} ago`;
-  if (minutes < 60) return `${minutes} ${minutes === 1 ? "minute" : "minutes"} ago`;
-  if (hours < 24) return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
-  if (days < 7) return `${days} ${days === 1 ? "day" : "days"} ago`;
-
-  return past.toLocaleDateString();
+  if (days > 0) {
+    return `${days} ${days === 1 ? "day" : "days"} ago`;
+  }
+  if (hours > 0) {
+    return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
+  }
+  if (minutes > 0) {
+    return `${minutes} ${minutes === 1 ? "minute" : "minutes"} ago`;
+  }
+  return `${seconds} ${seconds === 1 ? "second" : "seconds"} ago`;
 }
 
 const RecentActivity = () => {
@@ -29,6 +33,11 @@ const RecentActivity = () => {
         new Date(a.timestamp).getTime()
     )
     .slice(0, 8);
+    const { getTotalActivityToday } = useActivityLogsStore();
+
+  const totalActivities = getTotalActivityToday();
+  console.log(`Total activities today: ${totalActivities}`);
+
 
   return (
     <div className="bg-white rounded-[10px] shadow-sm border p-4 lg:p-6 h-full">

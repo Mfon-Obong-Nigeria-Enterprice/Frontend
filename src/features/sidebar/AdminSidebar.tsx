@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-// icons
-import { MdOutlineDashboard, MdOutlineShoppingBag } from "react-icons/md";
-import { BsBoxSeam } from "react-icons/bs";
-import { IoPerson, IoSettingsOutline } from "react-icons/io5";
-import { RiLogoutCircleRLine } from "react-icons/ri";
-import { Bell } from "lucide-react";
-import { IoIosLogOut } from "react-icons/io";
+
+// import { MdOutlineShoppingBag } from "react-icons/md";
+// import Vector from "public/icons/Vector (1).svg"
+// import notification from 'public/icons/notification.svg'
+// import  Transaction from 'public/icons/Transaction.svg'
+// import  Settings from 'public/icons/Settings.svg' 
+// import { IoPerson } from "react-icons/io5";
+// import { HomeIcon } from "lucide-react";
+// import { IoIosLogOut } from "react-icons/io";
 
 // hooks
 import { useLogout } from "@/hooks/uselogout";
@@ -21,7 +23,6 @@ import {
   Sidebar,
   SidebarContent,
   SidebarGroupContent,
-  // SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -30,29 +31,30 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 
+// Updated items array with string names from Material Symbols
 const items = [
   {
     title: "Dashboard",
     url: "/admin/dashboard/overview",
-    icon: MdOutlineDashboard,
+    icon:  "dashboard",
   },
-  { title: "Inventory", url: "/admin/dashboard/inventory", icon: BsBoxSeam },
-  { title: "Clients", url: "/admin/dashboard/clients", icon: IoPerson },
-  { title: "Sales", url: "/admin/dashboard/sales", icon: MdOutlineShoppingBag },
+  { title: "Inventory", url: "/admin/dashboard/inventory", icon: "inventory_2" },
+  { title: "Clients", url: "/admin/dashboard/clients", icon: "groups" },
+  { title: "Sales", url: "/admin/dashboard/sales", icon: "shopping_bag" },
   {
     title: "Transactions",
     url: "/admin/dashboard/transactions",
-    icon: RiLogoutCircleRLine,
+    icon: "send_money"
   },
   {
     title: "Notifications",
     url: "/admin/dashboard/admin-notifications",
-    icon: Bell,
+    icon: "notifications",
   },
   {
     title: "Settings",
     url: "/admin/dashboard/settings",
-    icon: IoSettingsOutline,
+    icon: "settings",
   },
 ];
 
@@ -73,7 +75,7 @@ function AdminSidebar({ onLogoutClick }: AdminSidebarProps) {
               {items.map((item) => {
                 const isActive = pathname.startsWith(item.url);
                 return (
-                  <SidebarMenuItem key={item.title}>
+                  <SidebarMenuItem key={item.title} className="font-bold">
                     <SidebarMenuButton
                       asChild
                       className={`hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all
@@ -84,7 +86,10 @@ function AdminSidebar({ onLogoutClick }: AdminSidebarProps) {
                         }`}
                     >
                       <Link to={item.url}>
-                        <item.icon />
+                       
+                        <span className="material-symbols-outlined">
+                          {item.icon}
+                        </span>
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -97,7 +102,8 @@ function AdminSidebar({ onLogoutClick }: AdminSidebarProps) {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenuButton className="cursor-pointer" onClick={onLogoutClick}>
-          <IoIosLogOut />
+          {/* Use a <span> with the Material Symbols class */}
+          <span className="material-symbols-outlined">logout</span>
           <span>Logout</span>
         </SidebarMenuButton>
       </SidebarFooter>
@@ -117,9 +123,8 @@ export const AdminSidebarWithModal = () => {
   const handleConfirm = async () => {
     setIsLoading(true);
 
-    // wait for 1 second before logout
     setTimeout(() => {
-      logoutMutation.mutate(); // trigger logout
+      logoutMutation.mutate();
       setIsLoading(false);
       setShowModal(false);
     }, 500);
@@ -128,7 +133,6 @@ export const AdminSidebarWithModal = () => {
   return (
     <>
       <AdminSidebar onLogoutClick={handleLogoutClick} />
-      {/* the logout modal */}
       <LogoutConfirmModal
         isOpen={showModal}
         onClose={() => !isLoading && setShowModal(false)}

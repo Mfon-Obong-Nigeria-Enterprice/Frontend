@@ -90,14 +90,14 @@ const RecentSales: React.FC = () => {
       )}
 
       {/* Footer always visible */}
-      <div className="flex justify-between items-center bg-[#f0f0f3] mt-10 sm:mt-[35dvh]">
-        <div>
-          <Button
+      <div className="flex justify-between items-center bg-[#f0f0f3] mt-10 sm:mt-[35dvh] text-blue-300">
+        <div className="pl-3 py-2 text-sm font-medium">
+          <span
             onClick={() => navigate("/admin/dashboard/sales")}
-            variant="outline"
+             className="text-[#3D80FF] hover:text-[#3D80FF]"
           >
             View all Sales
-          </Button>
+          </span>
         </div>
         <MdKeyboardArrowRight size={24} className="text-[#3D80FF] mr-5" />
       </div>

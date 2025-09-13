@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-// icons
-import {
-  LayoutDashboard,
-  Book,
-  UserRound,
-  UserRoundCog,
-  Settings,
-  LogOut,
-} from "lucide-react";
-import { MdOutlineNotifications } from "react-icons/md";
-import { HiMiniChartBar } from "react-icons/hi2";
+
+// import {
+//   LayoutDashboard,
+//   Book,
+//   UserRound,
+//   UserRoundCog,
+//   Settings,
+//   LogOut,
+// } from "lucide-react";
+// import { MdOutlineNotifications } from "react-icons/md";
+// import { HiMiniChartBar } from "react-icons/hi2";
 
 // hooks
 import { useLogout } from "@/hooks/uselogout";
@@ -33,46 +33,47 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 
+// Updated items array with string names from Material Symbols
 const items = [
   {
     title: "Dashboard",
     url: "/manager/dashboard/m-overview",
-    icon: LayoutDashboard,
+    icon: "dashboard",
   },
   {
     title: "Business Report",
     url: "/manager/dashboard/business-report",
-    icon: Book,
+    icon: "business_center",
   },
   {
     title: "Clients",
     url: "/manager/dashboard/manage-clients",
-    icon: UserRound,
+    icon: "groups",
   },
   {
     title: "Transaction",
     url: "/manager/dashboard/manage-transactions",
-    icon: UserRound,
+    icon: "send_money",
   },
   {
     title: "Revenue Analytics",
     url: "/manager/dashboard/revenue-analytics",
-    icon: HiMiniChartBar,
+    icon: "analytics",
   },
   {
     title: "User Management",
     url: "/manager/dashboard/manage-user",
-    icon: UserRoundCog,
+    icon: "manage_accounts",
   },
   {
     title: "Notifications",
     url: "/manager/dashboard/manager-notifications",
-    icon: MdOutlineNotifications,
+    icon: "notifications",
   },
   {
     title: "Settings",
     url: "/manager/dashboard/manager-settings",
-    icon: Settings,
+    icon: "settings",
   },
 ];
 
@@ -95,7 +96,7 @@ const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
                 const isActive = pathname.startsWith(item.url);
 
                 return (
-                  <SidebarMenuItem key={item.title} className="">
+                  <SidebarMenuItem key={item.title} className="font-bold">
                     <SidebarMenuButton
                       asChild
                       className={`hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all
@@ -106,7 +107,10 @@ const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
                         }`}
                     >
                       <Link to={item.url}>
-                        <item.icon />
+                       
+                        <span className="material-symbols-outlined">
+                          {item.icon}
+                        </span>
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -122,7 +126,8 @@ const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
           className="cursor-pointer"
           onClick={() => onLogoutClick()}
         >
-          <LogOut />
+          {/* Use a <span> with the Material Symbols class */}
+          <span className="material-symbols-outlined">logout</span>
           <span>Logout</span>
         </SidebarMenuButton>
       </SidebarFooter>
@@ -142,9 +147,8 @@ const ManagerSidebarWithModal = () => {
 
   const handleConfirm = async () => {
     setIsLoading(true);
-    // simulate a delay for better UX
     setTimeout(() => {
-      logoutMutation.mutate(); // trigger logout
+      logoutMutation.mutate();
       setIsLoading(false);
       setShowModal(false);
     }, 500);
@@ -153,8 +157,6 @@ const ManagerSidebarWithModal = () => {
   return (
     <>
       <ManagerSidebar onLogoutClick={handleLogoutClick} />
-
-      {/* Modal rendered outside of sidebar - won't disappear when sidebar closes */}
       <LogoutConfirmModal
         isOpen={showModal}
         onClose={() => !isLoading && setShowModal(false)}

@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-// icons
-import {
-  LayoutDashboard,
-  UserRoundCog,
-  Settings,
-  CreditCard,
-  Bell,
-  LogOut,
-} from "lucide-react";
+
+// import {
+//   LayoutDashboard,
+//   UserRoundCog,
+//   Settings,
+//   CreditCard,
+//   Bell,
+//   LogOut,
+// } from "lucide-react";
 
 // hooks
 import { useLogout } from "@/hooks/uselogout";
@@ -31,35 +31,35 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 
+// Updated items array with string names for Material Symbols
 const items = [
   {
-    title: "Dashboard",
+    title: "Overview",
     url: "/maintainer/dashboard/overview",
-    icon: LayoutDashboard,
+    icon: "overview_key",
   },
-
   {
     title: "User Management",
     url: "/maintainer/dashboard/user-management",
-    icon: UserRoundCog,
+    icon: "manage_accounts",
   },
   {
     title: "Activity log",
     url: "/maintainer/dashboard/log",
-    icon: CreditCard,
+    icon: "search_activity",
   },
   {
     title: "Notification",
     url: "/maintainer/dashboard/maintainer-notifications",
-    icon: Bell,
+    icon: "notifications",
   },
-
   {
     title: "Settings",
     url: "/maintainer/dashboard/settings",
-    icon: Settings,
+    icon: "settings",
   },
 ];
+
 type MaintainerSidebarProps = {
   onLogoutClick: () => void;
 };
@@ -79,7 +79,7 @@ const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
                 const isActive = pathname.startsWith(item.url);
 
                 return (
-                  <SidebarMenuItem key={item.title} className="">
+                  <SidebarMenuItem key={item.title} className="font-bold">
                     <SidebarMenuButton
                       asChild
                       className={`hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all
@@ -90,7 +90,9 @@ const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
                         }`}
                     >
                       <Link to={item.url}>
-                        <item.icon />
+                        <span className="material-symbols-outlined">
+                          {item.icon}
+                        </span>
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -106,7 +108,8 @@ const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
           className="cursor-pointer"
           onClick={() => onLogoutClick()}
         >
-          <LogOut />
+          {/* Use a <span> with the Material Symbols class */}
+          <span className="material-symbols-outlined">logout</span>
           <span>Logout</span>
         </SidebarMenuButton>
       </SidebarFooter>
@@ -125,10 +128,8 @@ const MaintainerSidebarWithModal = () => {
 
   const handleConfirm = async () => {
     setIsLoading(true);
-
-    // wait for 1 second before logout
     setTimeout(() => {
-      logoutMutation.mutate(); // trigger logout
+      logoutMutation.mutate();
       setIsLoading(false);
       setShowModal(false);
     }, 500);
@@ -137,7 +138,6 @@ const MaintainerSidebarWithModal = () => {
   return (
     <>
       <MaintainerSidebar onLogoutClick={handleLogoutClick} />
-      {/* the logout modal */}
       <LogoutConfirmModal
         isOpen={showModal}
         onClose={() => !isLoading && setShowModal(false)}
