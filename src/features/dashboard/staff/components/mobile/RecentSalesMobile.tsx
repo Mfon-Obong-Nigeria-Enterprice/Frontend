@@ -25,7 +25,7 @@ const RecentSalesMobile = () => {
           <div key={i} className="bg-white p-4 rounded-[10px] shadow-md mt-4">
             {/* name and time */}
             <div className="flex justify-between">
-              <p className="text-[#333333] mb-2">
+              <p className="text-[#333333] mb-2 capitalize">
                 {sale.clientName || sale.walkInClientName}
               </p>
               <span className="text-xs text-[var(--cl-secondary)]">

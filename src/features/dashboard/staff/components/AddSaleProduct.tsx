@@ -33,7 +33,6 @@ import { formatCurrency } from "@/utils/styles";
 
 // type
 import type { Row } from "../NewSales";
-// import type { Product } from "@/types/types";
 
 interface AddSaleProductProps {
   rows: Row[];
@@ -41,6 +40,8 @@ interface AddSaleProductProps {
   emptyRow: Row;
   onDiscountReasonChange?: (reason: string) => void;
   discountReason?: string;
+  globalDiscount: number;
+  setGlobalDiscount: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const discountReasons = [
@@ -57,6 +58,8 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
   emptyRow,
   onDiscountReasonChange,
   discountReason = "",
+  globalDiscount,
+  setGlobalDiscount,
 }) => {
   const { products } = useInventoryStore();
 
@@ -180,8 +183,11 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
 
   const rowTotal = subtotal - discountTotal;
 
+  const finalTotal = globalDiscount > 0 ? subtotal - globalDiscount : rowTotal;
+
   // Check if any row has discount
-  const hasDiscount = rows.some((row) => row.discount > 0);
+  const hasDiscount =
+    rows.some((row) => row.discount > 0) || globalDiscount !== 0;
 
   const handleDiscountReasonChange = (reason: string) => {
     if (onDiscountReasonChange) {
@@ -261,7 +267,6 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                 <TableCell className="w-[75px] md:w-[100px]">
                   <Input
                     type="number"
-                    placeholder="1"
                     max={maxQuantity}
                     value={row.quantity === 0 ? "" : row.quantity} // allow clearing zero
                     onChange={(e) => {
@@ -288,22 +293,11 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                     }}
                     className="text-center !bg-white"
                   />
-
-                  {/* {selectedProduct && (
-                    <p className="text-xs text-gray-500 text-center mt-1">
-                      Max: {maxQuantity} {row.unit}
-                    </p>
-                  )} */}
                 </TableCell>
 
                 {/* Unit Price */}
                 <TableCell className="text-center">
-                  <div>
-                    {formatCurrency(row.unitPrice)}
-                    {/* {row.unit && (
-                      <p className="text-xs text-gray-500">per {row.unit}</p>
-                    )} */}
-                  </div>
+                  <div>{formatCurrency(row.unitPrice)}</div>
                 </TableCell>
 
                 {/* Discount */}
@@ -427,16 +421,14 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
       )}
 
       {/* add button */}
-      <div className="flex justify-center py-4 px-2.5 border-2 border-dashed border-[#D9D9D9] my-7 rounded-md">
-        <Button
-          variant="ghost"
-          onClick={addRow}
-          className="flex justify-center items-center gap-1"
-        >
-          <Plus className="text-[#2ECC71] w-4" />
-          <span className="text-[#2ECC71]">Add Another Product</span>
-        </Button>
-      </div>
+      <Button
+        variant="ghost"
+        onClick={addRow}
+        className="flex justify-center items-center gap-1 py-8 px-2.5 border-2 border-dashed border-[#D9D9D9] my-7 rounded-md w-full"
+      >
+        <Plus className="text-[#2ECC71] w-4" />
+        <span className="text-[#2ECC71]">Add Another Product</span>
+      </Button>
 
       {/* total */}
       <div className="bg-[#F5F5F5] rounded-md overflow-hidden">
@@ -448,14 +440,26 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
         {/* discount */}
         <div className="flex justify-between items-center py-3 px-7">
           <p>Discount</p>
-          <p className="border bg-white py-1 px-2 rounded">
-            {formatCurrency(discountTotal)}
-          </p>
+          {/* If no discount is selected, show an input for large discount */}
+          {discountTotal ? (
+            <p className="border bg-white py-1 px-2 rounded">
+              {formatCurrency(discountTotal)}
+            </p>
+          ) : (
+            <div className="relative">
+              <span className="absolute left-2 top-2 text-sm">₦</span>
+              <Input
+                className="w-24 border !bg-white py-1 pl-6 pr-2"
+                value={globalDiscount === 0 ? "" : globalDiscount}
+                onChange={(e) => setGlobalDiscount(Number(e.target.value) || 0)}
+              />
+            </div>
+          )}
         </div>
         {/* total */}
         <div className="bg-[#F0F0F3] text-[#333333] flex justify-between items-center py-3 px-7">
           <p>Total</p>
-          <p className="mr-2">{formatCurrency(rowTotal)}</p>
+          <p className="mr-2">{formatCurrency(finalTotal)}</p>
         </div>
       </div>
     </div>
