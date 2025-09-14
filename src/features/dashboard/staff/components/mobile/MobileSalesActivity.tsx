@@ -29,7 +29,7 @@ const MobileSalesActivity = ({
             <CardContent className="py-2 px-4">
               {/* Client Name */}
               <div className="flex items-center justify-between gap-2 mb-3">
-                <span className="text-[#444444] text-base font-medium">
+                <span className="text-[#444444] text-base font-medium capitalize">
                   {transaction.clientId?.name || transaction.walkInClientName}
                 </span>
                 <div className="flex items-center gap-1 text-[#666] text-sm">
