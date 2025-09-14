@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { io } from "socket.io-client";
 
@@ -78,6 +79,7 @@ const emptyRow: Row = {
 };
 
 const NewSales: React.FC = () => {
+  const queryClient = useQueryClient();
   // Store data
   const { products } = useInventoryStore();
   const clients = useClientStore((state) => state.clients);
@@ -319,8 +321,10 @@ const NewSales: React.FC = () => {
       // setReceiptData(transaction);
       // setShowReceipt(true);
 
+      // Invalidate so transactions refetch immediately
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+
       handleResetClient();
-      setGlobalDiscount(0);
     } catch (error) {
       handleApiError(error, "Transaction error");
     } finally {
