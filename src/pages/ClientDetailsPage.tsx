@@ -356,6 +356,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         purchase: "PURCHASE",
         "pick-up": "PICKUP",
         pickup: "PICKUP",
+        deposit: "DEPOSIT",
       };
 
       const filterType = typeMap[transactionTypeFilter];
@@ -596,6 +597,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                       <SelectItem value="all">All transactions</SelectItem>
                       <SelectItem value="purchase">Purchase</SelectItem>
                       <SelectItem value="pick-up">Pick-up</SelectItem>
+                      <SelectItem value="deposit">Deposit</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

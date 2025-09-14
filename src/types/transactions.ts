@@ -59,6 +59,7 @@ export type MergedTransaction = Transaction & {
   client: Client | null;
 };
 
+// Your existing TransactionCreate for sales/purchases
 export type TransactionCreate = {
   bankName?: string;
   type: "PURCHASE" | "PICKUP";
@@ -75,3 +76,17 @@ export type TransactionCreate = {
   branchId?: string;
   clientId?: string;
 };
+
+// New type specifically for client debt payments
+export type ClientPaymentCreate = {
+  type: "DEPOSIT";
+  amount: number;
+  description?: string;
+  paymentMethod?: string;
+  reference?: string;
+  clientId: string;
+  branchId?: string;
+};
+
+// Union type for all transaction creation scenarios
+export type TransactionCreateUnion = TransactionCreate | ClientPaymentCreate;

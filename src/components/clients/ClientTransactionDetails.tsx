@@ -14,6 +14,13 @@ interface clientTrasactionDetailsProps {
 export const ClientTransactionDetails: React.FC<
   clientTrasactionDetailsProps
 > = ({ clientTransactions, client }) => {
+  // Add debugging to see what transactions we're getting
+  console.log("Client transactions received:", clientTransactions);
+  console.log(
+    "Transaction types:",
+    clientTransactions?.map((t) => ({ id: t._id, type: t.type }))
+  );
+
   const transactionWithBalance = useMemo(() => {
     if (!clientTransactions?.length) {
       return [];
@@ -54,7 +61,7 @@ export const ClientTransactionDetails: React.FC<
         <ul className="space-y-10">
           {transactionWithBalance.map((txn, i) => (
             <li
-              key={txn._id || `txn-${i}`}
+              key={`${txn._id}-${txn.createdAt}-${i}`} // More unique key
               className="border rounded-lg px-5 py-3 shadow"
             >
               {/* type, date and time, balance */}
@@ -160,6 +167,14 @@ export const ClientTransactionDetails: React.FC<
                             {txn.paymentMethod || "N/A"}
                           </span>
                         </li>
+                        {txn.reference && (
+                          <li className="font-medium text-[#444444] text-sm ">
+                            Reference:{" "}
+                            <span className="font-normal text-xs bg-gray-100 px-2 py-1 rounded">
+                              {txn.reference}
+                            </span>
+                          </li>
+                        )}
 
                         {/* Show item count for PICKUP/PURCHASE transactions */}
                         {(txn.type === "PICKUP" || txn.type === "PURCHASE") && (
@@ -173,33 +188,36 @@ export const ClientTransactionDetails: React.FC<
                       </ul>
                     </div>
 
-                    {/* Process By Section */}
+                    {/* Process By Section - Enhanced to show staff details */}
                     <div className="space-y-3 sm:space-y-4">
                       <h6 className="text-[#333333] font-medium text-base">
-                        Process By
+                        Processed By
                       </h6>
-                      <ul className="space-y-2 sm:space-y-3 flex sm:flex-col gap-1 justify-between">
-                        <li className="font-medium text-[#444444] text-sm ">
-                          Staff:{" "}
-                          <span className="font-normal">
-                            {txn.userId?.name || "Unknown"}
-                          </span>
+                      <ul className="space-y-2 sm:space-y-3">
+                        <li className="flex items-center gap-2">
+                          <div className="flex flex-col">
+                            <span className="font-medium text-[#444444] text-sm">
+                              {txn.userId?.name || "Unknown Staff"}
+                            </span>
+                          </div>
                         </li>
-                        <div className="">
-                          <li className="mb-2">
-                            <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center">
+
+                        {/* Invoice and Waybill numbers */}
+                        <div className="flex flex-col gap-2">
+                          {txn.invoiceNumber && (
+                            <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center w-fit">
                               <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
-                                {txn.invoiceNumber || "N/A"}
+                                {txn.invoiceNumber}
                               </span>
                             </div>
-                          </li>
-                          <li>
-                            <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center">
+                          )}
+                          {txn.waybillNumber && (
+                            <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center w-fit">
                               <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
-                                {txn.waybillNumber || "N/A"}
+                                {txn.waybillNumber}
                               </span>
                             </div>
-                          </li>
+                          )}
                         </div>
                       </ul>
                     </div>
@@ -210,21 +228,37 @@ export const ClientTransactionDetails: React.FC<
               {/* Footer section - conditional rendering based on transaction type */}
               {txn.type === "DEPOSIT" ? (
                 <footer className="bg-[#F5F5F5] py-4 px-6 rounded-[8px] ">
-                  <h6 className="text-base text-[#333333] font-normal">
-                    {txn.description || "Partial Payment Received"}
-                  </h6>
-                  {txn.reference && (
-                    <p className="text-[0.625rem] text-[#333333]">
-                      {txn.reference}
-                    </p>
-                  )}
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h6 className="text-base text-[#333333] font-medium mb-2">
+                        Payment Details
+                      </h6>
+                      <p className="text-sm text-[#666666]">
+                        {txn.description || "Debt Payment Received"}
+                      </p>
+                      {txn.reference && (
+                        <p className="text-xs text-[#7D7D7D] mt-1">
+                          Reference: {txn.reference}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-[#7D7D7D]">Processed by:</p>
+                      <p className="text-sm font-medium text-[#333333]">
+                        {txn.userId?.name || "Unknown"}
+                      </p>
+                    </div>
+                  </div>
                 </footer>
               ) : (txn.type === "PICKUP" || txn.type === "PURCHASE") &&
                 txn.items?.length > 0 ? (
                 <footer className="space-y-3 border-t-[1px] border-[#d7d7d7] ">
-                  <h6 className="text-base text-[#333333] font-normal px-3 pt-8">
-                    Product {txn.type === "PICKUP" ? "Picked Up" : "Purchased"}:
-                  </h6>
+                  <div className="flex justify-between items-center px-3 pt-8">
+                    <h6 className="text-base text-[#333333] font-normal">
+                      Product{" "}
+                      {txn.type === "PICKUP" ? "Picked Up" : "Purchased"}:
+                    </h6>
+                  </div>
                   <ul className="flex flex-wrap gap-4 items-start ">
                     {txn.items.map((item, itemIndex) => (
                       <li

@@ -130,7 +130,6 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
   transactions: [],
   selectedTransaction: null,
   open: false,
-
   setTransactions: (transactions) =>
     set({
       transactions: transactions.map((txn) => {
@@ -167,24 +166,40 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     }),
 
   addTransaction: (transaction) =>
-    set((state) => ({
-      transactions: state.transactions
-        ? [
-            ...state.transactions,
-            {
-              ...transaction,
-              walkInClientName: transaction.walkInClient?.name
-                ? toSentenceCaseName(transaction.walkInClient.name)
-                : undefined,
-              clientName: transaction.clientId?.name
-                ? toSentenceCaseName(transaction.clientId.name)
-                : transaction.client?.name
-                ? toSentenceCaseName(transaction.client.name)
-                : undefined,
-            },
-          ]
-        : [transaction],
-    })),
+    set((state) => {
+      const processedTransaction = {
+        ...transaction,
+        walkInClientName: transaction.walkInClient?.name
+          ? toSentenceCaseName(transaction.walkInClient.name)
+          : undefined,
+        clientName: transaction.clientId?.name
+          ? toSentenceCaseName(transaction.clientId.name)
+          : transaction.client?.name
+          ? toSentenceCaseName(transaction.client.name)
+          : undefined,
+      };
+
+      // For DEPOSIT transactions, ensure required fields are set
+      if (transaction.type === "DEPOSIT") {
+        processedTransaction.items = transaction.items || [];
+        processedTransaction.subtotal =
+          transaction.subtotal || transaction.amount || transaction.total || 0;
+        processedTransaction.total =
+          transaction.total || transaction.amount || 0;
+        processedTransaction.amountPaid =
+          transaction.amountPaid ||
+          transaction.amount ||
+          transaction.total ||
+          0;
+        processedTransaction.discount = transaction.discount || 0;
+      }
+
+      return {
+        transactions: state.transactions
+          ? [processedTransaction, ...state.transactions] // Add to beginning for chronological order
+          : [processedTransaction],
+      };
+    }),
 
   openModal: (transaction) =>
     set({ open: true, selectedTransaction: transaction }),
@@ -427,14 +442,16 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt).toDateString();
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+        // Include both sales and debt payments
         return (
-          (t.type === "PURCHASE" || t.type === "DEPOSIT") &&
+          (t.type === "PURCHASE" ||
+            t.type === "PICKUP" ||
+            t.type === "DEPOSIT") &&
           transactionDate === today
         );
       })
       .reduce((total, t) => {
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+        const amount = t.amountPaid ?? t.total ?? t.amount ?? 0;
         return total + amount;
       }, 0);
   },
@@ -449,14 +466,16 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt).toDateString();
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+        // Include both sales and debt payments
         return (
-          (t.type === "PURCHASE" || t.type === "PICKUP") &&
+          (t.type === "PURCHASE" ||
+            t.type === "PICKUP" ||
+            t.type === "DEPOSIT") &&
           transactionDate === yesterday
         );
       })
       .reduce((total, t) => {
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+        const amount = t.amountPaid ?? t.total ?? t.amount ?? 0;
         return total + amount;
       }, 0);
   },
@@ -480,14 +499,15 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt);
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
         return (
-          (t.type === "PURCHASE" || t.type === "PICKUP") &&
+          (t.type === "PURCHASE" ||
+            t.type === "PICKUP" ||
+            t.type === "DEPOSIT") &&
           isDateInRange(transactionDate, startOfWeek, endOfWeek)
         );
       })
       .reduce((total, t) => {
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+        const amount = t.amountPaid ?? t.total ?? t.amount ?? 0;
         return total + amount;
       }, 0);
   },
@@ -506,14 +526,16 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt);
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+        // Include both sales and debt payments
         return (
-          (t.type === "PURCHASE" || t.type === "PICKUP") &&
+          (t.type === "PURCHASE" ||
+            t.type === "PICKUP" ||
+            t.type === "DEPOSIT") &&
           isDateInRange(transactionDate, lastWeekStart, lastWeekEnd)
         );
       })
       .reduce((total, t) => {
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+        const amount = t.amountPaid ?? t.total ?? t.amount ?? 0;
         return total + amount;
       }, 0);
   },
@@ -537,19 +559,20 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt);
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+        // Include both sales and debt payments
         return (
-          (t.type === "PURCHASE" || t.type === "PICKUP") &&
+          (t.type === "PURCHASE" ||
+            t.type === "PICKUP" ||
+            t.type === "DEPOSIT") &&
           isDateInRange(transactionDate, startOfMonth, endOfMonth)
         );
       })
       .reduce((total, t) => {
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+        const amount = t.amountPaid ?? t.total ?? t.amount ?? 0;
         return total + amount;
       }, 0);
   },
 
-  // Last month's payments
   getLastMonthPayments: () => {
     const { transactions } = get();
     if (!transactions) return 0;
@@ -561,14 +584,16 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     return transactions
       .filter((t) => {
         const transactionDate = new Date(t.createdAt);
-        // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
+        // Include both sales and debt payments
         return (
-          (t.type === "PURCHASE" || t.type === "PICKUP") &&
+          (t.type === "PURCHASE" ||
+            t.type === "PICKUP" ||
+            t.type === "DEPOSIT") &&
           isDateInRange(transactionDate, startOfLastMonth, endOfLastMonth)
         );
       })
       .reduce((total, t) => {
-        const amount = t.amount ?? t.total ?? t.amountPaid ?? 0;
+        const amount = t.amountPaid ?? t.total ?? t.amount ?? 0;
         return total + amount;
       }, 0);
   },
