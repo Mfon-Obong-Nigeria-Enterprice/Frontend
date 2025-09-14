@@ -79,6 +79,8 @@ const ResetPassword = ({ user, onClose }: ResetPasswordProps) => {
         branchAdminId: selectedBranchAdmin,
         message: notificationMessage,
         temporaryPassword,
+        branchAdminEmail: user.email,
+        branchId: user.branchId?._id || user.branch || "",
       }),
     onSuccess: () => {
       toast.success("Password sent to branch admin successfully");
