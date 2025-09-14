@@ -235,11 +235,12 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                   <Input
                     type="number"
                     placeholder="1"
-                    min="1"
+                    // step="0.01"
+                    // min="1"
                     max={maxQuantity}
                     value={row.quantity}
                     onChange={(e) => {
-                      const newQuantity = Number(e.target.value) || 1;
+                      const newQuantity = Number(e.target.value);
                       if (newQuantity > maxQuantity && maxQuantity > 0) {
                         toast.warn(
                           `Only ${maxQuantity} ${
@@ -311,7 +312,7 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                         })
                       }
                     >
-                      <SelectTrigger className="w-auto border-0 !bg-transparent shadow-none -ml-2">
+                      <SelectTrigger className="w-auto !border-0 !bg-transparent !outline-0 shadow-none -ml-2">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="w-2">
