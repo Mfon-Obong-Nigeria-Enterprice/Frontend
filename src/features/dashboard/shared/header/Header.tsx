@@ -4,7 +4,7 @@ import Logo from "@/components/Logo";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import AdminUserModal from "@/features/dashboard/admin/AdminUserModal";
 import { ManagerUsersModal } from "@/features/dashboard/manager/component/ManagerUsersModal";
-import { useNotificationStore } from "@/stores/useNotificationStore";
+import { useUnreadNotificationCount } from "@/stores/useNotificationStore"; // Import the correct hook
 import { useAuthStore } from "@/stores/useAuthStore";
 import NotificationModal from "@/features/dashboard/shared/NotificationModal";
 import {
@@ -79,32 +79,14 @@ const getRoleBasedCapabilities = (role: string) => {
 const Header = ({ userRole }: HeaderProps) => {
   const { userProfile, user, updateUser } = useAuthStore();
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const unreadCount = useNotificationStore((state) => state.unreadCount);
+
+  const unreadCount = useUnreadNotificationCount();
 
   // Enhanced profile picture management
   const profileImageUrl = useProfilePicture(userRole);
 
   // Role-based capabilities
   const capabilities = getRoleBasedCapabilities(user?.role || "");
-
-  // const getRoleBadgeColor = () => {
-  //   const role = (userProfile?.role || user?.role || "").toLowerCase();
-  //   switch (role) {
-  //     case "admin":
-  //       return "bg-blue-100 text-blue-800";
-  //     case "maintainer":
-  //       return "bg-purple-100 text-purple-800";
-  //     case "manager":
-  //       return "bg-green-100 text-green-800";
-  //     case "super_admin":
-  //     case "superadmin":
-  //       return "bg-red-100 text-red-800";
-  //     case "staff":
-  //       return "bg-orange-100 text-orange-800";
-  //     default:
-  //       return "bg-gray-100 text-gray-800";
-  //   }
-  // };
 
   const handleProfileUpdate = async (updatedData: UpdatedUserData) => {
     console.log("=== Header Profile Update ===");
@@ -216,7 +198,7 @@ const Header = ({ userRole }: HeaderProps) => {
                     </span>
                   )}
                 </DrawerHeader>
-                <div className="px-4 pb-4">
+                <div className=" pb-4">
                   {user?.role && <NotificationModal />}
                 </div>
               </DrawerContent>
