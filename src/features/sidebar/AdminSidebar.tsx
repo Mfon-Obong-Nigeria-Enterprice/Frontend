@@ -107,34 +107,66 @@ function AdminSidebar({ onLogoutClick }: AdminSidebarProps) {
 
 export const AdminSidebarWithModal = () => {
   const [showModal, setShowModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const logoutMutation = useLogout();
 
   const handleLogoutClick = () => {
     setShowModal(true);
   };
 
-  const handleConfirm = async () => {
-    setIsLoading(true);
-
-    // wait for 1 second before logout
-    setTimeout(() => {
-      logoutMutation.mutate(); // trigger logout
-      setIsLoading(false);
-      setShowModal(false);
-    }, 100);
+  const handleConfirm = () => {
+    logoutMutation.mutate(undefined, {
+      onSettled: () => {
+        setShowModal(false); // close modal no matter what
+      },
+    });
   };
 
   return (
     <>
       <AdminSidebar onLogoutClick={handleLogoutClick} />
-      {/* the logout modal */}
       <LogoutConfirmModal
         isOpen={showModal}
-        onClose={() => !isLoading && setShowModal(false)}
+        onClose={() => !logoutMutation.isPending && setShowModal(false)}
         onConfirm={handleConfirm}
-        isLoading={isLoading}
+        isLoading={logoutMutation.isPending}
       />
     </>
   );
 };
+
+// export const AdminSidebarWithModal = () => {
+//   const [showModal, setShowModal] = useState(false);
+//   const [isLoading, setIsLoading] = useState(false);
+//   const logoutMutation = useLogout();
+
+//   const handleLogoutClick = () => {
+//     setShowModal(true);
+//   };
+
+//   const handleConfirm = async () => {
+//     setIsLoading(true);
+
+//     // wait for 1 second before logout
+//     // setTimeout(() => {
+//     logoutMutation.mutate(); // trigger logout
+
+//     setIsLoading(false);
+//     setShowModal(false);
+//     // }, 100);
+//   };
+
+//   return (
+//     <>
+//       <AdminSidebar onLogoutClick={handleLogoutClick} />
+//       {/* the logout modal */}
+//       <LogoutConfirmModal
+//         isOpen={showModal}
+//         onClose={() =>
+//           !isLoading && setShowModal(false) && !logoutMutation.isPending
+//         }
+//         onConfirm={handleConfirm}
+//         isLoading={isLoading}
+//       />
+//     </>
+//   );
+// };
