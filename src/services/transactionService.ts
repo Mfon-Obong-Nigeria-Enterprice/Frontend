@@ -1,11 +1,6 @@
 import api from "./baseApi";
 import type { ClientPaymentCreate, Transaction } from "@/types/transactions";
 import type { Period } from "@/types/revenue";
-// import { handleApiError } from "./errorhandler";
-// import type {
-//   CreateTransactionPayload,
-//   // ClientWithTransactions,
-// } from "@/types/types";
 import type { TransactionCreate } from "@/types/transactions";
 import { useAuthStore } from "@/stores/useAuthStore";
 
@@ -35,7 +30,6 @@ export const getTransactionByUserId = async (
 export const AddTransaction = async (
   data: TransactionCreate
 ): Promise<Transaction> => {
-  // try {
   const { user } = useAuthStore.getState();
   if (!user?.branchId) throw new Error("Branch ID missing");
 

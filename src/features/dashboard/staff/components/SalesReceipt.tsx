@@ -22,7 +22,7 @@ const SalesReceipt: React.FC<SalesReceiptProps> = ({ transaction }) => {
         </div>
         {/* heading */}
         <div className="bg-[#8C1C1380] w-fit mx-auto mt-5 p-2 rounded">
-          <p className="text-sm text-gray-100 ">SALES INVOICE</p>
+          <p className="text-sm text-gray-100">SALES INVOICE</p>
         </div>
       </div>
 
@@ -34,14 +34,15 @@ const SalesReceipt: React.FC<SalesReceiptProps> = ({ transaction }) => {
             <p className="text-xs text-gray-600 font-bold">Name:</p>
             <p className="text-[0.625rem] ml-5 min-w-30">
               {/* {data.client?.name || data.walkInClient?.name} */}
-              {transaction.clientName || transaction.walkInClientName}
+              {transaction?.clientName || transaction?.walkInClientName}
+              {/* {transaction.clientId?.name || transaction.walkInClient?.name} */}
             </p>
           </div>
           {/* address */}
-          <div className="flex gap-0.5">
+          {/* <div className="flex gap-0.5">
             <p className="text-sm text-gray-600 font-bold">Address:</p>
-            <p className=" ml-1 min-w-30"></p>
-          </div>
+            <p className=" ml-1 min-w-30">{transaction. }</p>
+          </div> */}
           {/* number */}
           <div className="flex gap-0.5">
             <p className="text-sm text-gray-600 font-bold">Phone number:</p>
@@ -117,20 +118,20 @@ const SalesReceipt: React.FC<SalesReceiptProps> = ({ transaction }) => {
 
       <div className="my-10 bg-[#f5f5f5] mx-5 p-5">
         {/* Balance Due: */}
-        <p className="text-sm text-gray-600 font-bold">
+        {/* <p className="text-sm text-gray-600 font-bold">
           Balance Due: <span className="ml-1.5 font-normal">"NIL"</span>
-        </p>
+        </p> */}
         {/* payment method */}
         <p className="text-sm text-gray-600 font-bold">
           Payment Method:
           <span className="ml-1.5 font-normal">
-            {transaction.paymentMethod}
+            {transaction?.paymentMethod}
           </span>
         </p>
         {/*staff that processed transaction */}
         <p className="text-sm text-gray-600 font-bold">
           Processed by:
-          <span className="ml-1.5 font-normal">{transaction.userName}</span>
+          <span className="ml-1.5 font-normal">{transaction?.userName}</span>
         </p>
         {/* if the user pays with bank */}
         {/* {transaction.bankName && (
