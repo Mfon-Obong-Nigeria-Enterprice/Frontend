@@ -14,6 +14,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { getFirstAndLastName } from "@/utils/getfirstandlastname";
 
 type HeaderProps = {
   userRole?: "admin" | "staff" | "maintainer" | "superadmin" | "manager";
@@ -87,25 +88,6 @@ const Header = ({ userRole }: HeaderProps) => {
   // Role-based capabilities
   const capabilities = getRoleBasedCapabilities(user?.role || "");
 
-  // const getRoleBadgeColor = () => {
-  //   const role = (userProfile?.role || user?.role || "").toLowerCase();
-  //   switch (role) {
-  //     case "admin":
-  //       return "bg-blue-100 text-blue-800";
-  //     case "maintainer":
-  //       return "bg-purple-100 text-purple-800";
-  //     case "manager":
-  //       return "bg-green-100 text-green-800";
-  //     case "super_admin":
-  //     case "superadmin":
-  //       return "bg-red-100 text-red-800";
-  //     case "staff":
-  //       return "bg-orange-100 text-orange-800";
-  //     default:
-  //       return "bg-gray-100 text-gray-800";
-  //   }
-  // };
-
   const handleProfileUpdate = async (updatedData: UpdatedUserData) => {
     console.log("=== Header Profile Update ===");
     console.log("Updated data received:", updatedData);
@@ -137,7 +119,7 @@ const Header = ({ userRole }: HeaderProps) => {
           );
         }
 
-        console.log("Profile updates applied:", updates);
+        // console.log("Profile updates applied:", updates);
       }
     } catch (error) {
       console.error("Error updating profile in header:", error);
@@ -226,7 +208,7 @@ const Header = ({ userRole }: HeaderProps) => {
           {/* User info display */}
           <div className="hidden sm:flex items-center gap-2">
             <span className="capitalize font-medium text-gray-700">
-              {user?.name || "User"}
+              {(user && getFirstAndLastName(user.name)) || "User"}
             </span>
             {/* <span
               className={`capitalize text-xs px-2 py-1 rounded-full ${getRoleBadgeColor()}`}
