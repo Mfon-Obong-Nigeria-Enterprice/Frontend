@@ -7,7 +7,11 @@ export type ActionType =
   | "category_added"
   | "product_added"
   | "client_added"
-  | "transaction_completed";
+  | "transaction_completed"
+  | "password_reset_sent"
+  | "support_request_sent"
+  | "support_request_received"
+  | "password_reset_received";
 
 export type NotificationType = "success" | "error" | "info";
 
@@ -27,6 +31,13 @@ export type Notification = {
     branch?: string;
     transactionId?: string;
     timestamp?: string;
+    userEmail?: string;
+    temporaryPassword?: string;
+    branchId?: string;
+    branchAdminEmail?: string;
+    createdBy?: string;
+    description?: string;
+    issueType?: string;
   };
 };
 
@@ -94,11 +105,14 @@ export const useNotificationStore = create<NotificationStore>()(
             return state;
           }
 
-          // Add current user ID to notification if not present
+          // Add current user ID to notification if not present and userId is undefined
           const currentUser = useAuthStore.getState().user;
           const notificationWithUser = {
             ...notification,
-            userId: notification.userId || currentUser?.id || "unknown",
+            userId:
+              notification.userId !== undefined
+                ? notification.userId
+                : currentUser?.id || "unknown",
             // Ensure createdAt is a Date object
             createdAt:
               notification.createdAt instanceof Date
@@ -145,9 +159,14 @@ export const useNotificationStore = create<NotificationStore>()(
       markAllAsRead: () =>
         set((state) => {
           const currentUser = useAuthStore.getState().user;
-          const updated = state.notifications.map((n) =>
-            n.userId === currentUser?.id ? { ...n, read: true } : n
-          );
+          const updated = state.notifications.map((n) => {
+            // Mark as read if it's for current user OR if it's a global notification for current user's role
+            const isForCurrentUser =
+              n.userId === currentUser?.id ||
+              (n.userId === undefined &&
+                n.recipients.includes(currentUser?.role as Role));
+            return isForCurrentUser ? { ...n, read: true } : n;
+          });
           return {
             notifications: updated,
             unreadCount: updated.filter((n) => !n.read).length,
@@ -194,8 +213,6 @@ export const useNotificationStore = create<NotificationStore>()(
     {
       name: "notification-storage", // Storage key
       storage: customStorage,
-      // Only persist certain fields
-      // partialize removed; customStorage handles serialization
       // Rehydrate dates when loading from storage
       onRehydrateStorage: () => (state) => {
         if (state) {
@@ -221,19 +238,35 @@ export const useFilteredNotifications = () => {
 
   const userRole = user.role.toUpperCase();
 
-  // Filter by role and user (only show current user's notifications)
-  return notifications.filter((notification) => {
-    // Check if notification is for current user
-    const isForCurrentUser =
-      !notification.userId || notification.userId === user.id;
-
+  // Filter by role and user - include both user-specific and global notifications
+  const filtered = notifications.filter((notification) => {
     // Check if notification is for current user role
     const isForCurrentRole = notification.recipients.some(
       (role) => role.toUpperCase() === userRole
     );
 
-    return isForCurrentUser && isForCurrentRole;
+    if (!isForCurrentRole) {
+      return false;
+    }
+
+    // Include notifications that are:
+    // 1. Specifically for this user (userId matches)
+    // 2. Global notifications for this role (userId is undefined)
+    const isForCurrentUser =
+      notification.userId === user.id || // Specifically for this user
+      notification.userId === undefined; // Global notification for all users of the role
+
+    return isForCurrentUser;
   });
+
+  console.log(`🔍 Filtering notifications for user ${user.id} (${userRole}):`, {
+    total: notifications.length,
+    filtered: filtered.length,
+    userRole,
+    userId: user.id,
+  });
+
+  return filtered;
 };
 
 // Hook to get unread count for current user
@@ -243,14 +276,23 @@ export const useUnreadNotificationCount = () => {
 
   if (!user?.id) return 0;
 
-  return notifications.filter((notification) => {
-    const isForCurrentUser =
-      !notification.userId || notification.userId === user.id;
-    const userRole = user.role?.toUpperCase();
+  const userRole = user.role?.toUpperCase();
+
+  const unreadCount = notifications.filter((notification) => {
     const isForCurrentRole = notification.recipients.some(
       (role) => role.toUpperCase() === userRole
     );
 
-    return isForCurrentUser && isForCurrentRole && !notification.read;
+    const isForCurrentUser =
+      notification.userId === user.id || // Specifically for this user
+      notification.userId === undefined; // Global notification for all users of the role
+
+    return isForCurrentRole && isForCurrentUser && !notification.read;
   }).length;
+
+  console.log(
+    `🔔 Unread count for user ${user.id} (${userRole}): ${unreadCount}`
+  );
+
+  return unreadCount;
 };
