@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Bell, ChevronRight, Clock, X } from "lucide-react";
 import {
   useFilteredNotifications,
@@ -19,6 +19,7 @@ const NotificationModal = ({ onClose }: NotificationModalProps) => {
   const user = useAuthStore((s) => s.user);
   const filteredNotifications = useFilteredNotifications();
   const unreadCount = useUnreadNotificationCount();
+  const navigate = useNavigate();
 
   // Show only first 5 notifications in preview
   const previewCount = 5;
@@ -92,9 +93,24 @@ const NotificationModal = ({ onClose }: NotificationModalProps) => {
     }
   };
 
+  // Handle view all notifications with proper modal closing
+  const handleViewAllNotifications = (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    // Close modal first
+    if (onClose) {
+      onClose();
+    }
+
+    // Navigate after a small delay to ensure modal closes
+    setTimeout(() => {
+      navigate(getNotificationRoute());
+    }, 100);
+  };
+
   if (filteredNotifications.length === 0) {
     return (
-      <div>
+      <div className="bg-white rounded-lg shadow-lg border ">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
@@ -128,9 +144,9 @@ const NotificationModal = ({ onClose }: NotificationModalProps) => {
   }
 
   return (
-    <div className=" bg-white rounded-lg shadow-lg border">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
+    <div className="bg-white shadow-lg border max-h-150 flex flex-col">
+      {/* Header - Fixed */}
+      <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
           {unreadCount > 0 && (
@@ -163,115 +179,112 @@ const NotificationModal = ({ onClose }: NotificationModalProps) => {
         </div>
       </div>
 
-      {/* Notification List */}
-      <ScrollArea className="max-h-46">
-        <div className="divide-y divide-gray-100">
-          {previewNotifications.map((notification) => (
-            <div
-              key={notification.id}
-              className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors ${
-                !notification.read
-                  ? "bg-blue-50 border-l-4 border-l-blue-500"
-                  : ""
-              }`}
-              onClick={() =>
-                handleNotificationClick(notification.id, notification.read)
-              }
-              role="button"
-              tabIndex={0}
-              aria-label={`Notification: ${notification.title}. ${
-                notification.message
-              }. ${notification.read ? "Read" : "Unread"}. ${formatTimeAgo(
-                notification.createdAt
-              )}`}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  handleNotificationClick(notification.id, notification.read);
+      {/* Notification List - Scrollable */}
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="divide-y divide-gray-100">
+            {previewNotifications.map((notification) => (
+              <div
+                key={notification.id}
+                className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors ${
+                  !notification.read
+                    ? "bg-blue-50 border-l-4 border-l-blue-500"
+                    : ""
+                }`}
+                onClick={() =>
+                  handleNotificationClick(notification.id, notification.read)
                 }
-              }}
-            >
-              <div className="flex items-start gap-3">
-                {/* Icon */}
-                <div className="flex-shrink-0 mt-0.5">
-                  <div className="h-6 w-6 rounded-full bg-white shadow-sm border flex items-center justify-center">
-                    {getNotificationIcon(notification.type)}
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between mb-1">
-                    <h4
-                      className={`text-sm font-medium leading-tight line-clamp-2 ${
-                        !notification.read ? "text-gray-900" : "text-gray-700"
-                      }`}
-                    >
-                      {notification.title}
-                    </h4>
-
-                    {/* Time and unread indicator */}
-                    <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                      <div className="flex items-center text-xs text-gray-500">
-                        <Clock className="h-3 w-3 mr-1" aria-hidden="true" />
-                        <time dateTime={notification.createdAt.toISOString()}>
-                          {formatTimeAgo(notification.createdAt)}
-                        </time>
-                      </div>
-                      {!notification.read && (
-                        <div
-                          className="w-2 h-2 bg-blue-500 rounded-full"
-                          aria-label="Unread notification indicator"
-                        />
-                      )}
+                role="button"
+                tabIndex={0}
+                aria-label={`Notification: ${notification.title}. ${
+                  notification.message
+                }. ${notification.read ? "Read" : "Unread"}. ${formatTimeAgo(
+                  notification.createdAt
+                )}`}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleNotificationClick(notification.id, notification.read);
+                  }
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  {/* Icon */}
+                  <div className="flex-shrink-0 mt-0.5">
+                    <div className="h-6 w-6 rounded-full bg-white shadow-sm border flex items-center justify-center">
+                      {getNotificationIcon(notification.type)}
                     </div>
                   </div>
 
-                  {/* Message */}
-                  <p
-                    className={`text-xs leading-relaxed line-clamp-2 mb-1 ${
-                      !notification.read ? "text-gray-800" : "text-gray-600"
-                    }`}
-                  >
-                    {notification.message}
-                  </p>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-1">
+                      <h4
+                        className={`text-sm font-medium leading-tight line-clamp-2 ${
+                          !notification.read ? "text-gray-900" : "text-gray-700"
+                        }`}
+                      >
+                        {notification.title}
+                      </h4>
 
-                  {/* Meta information */}
-                  {notification.meta?.adminName && (
-                    <p className="text-xs text-gray-500">
-                      by {notification.meta.adminName}
+                      {/* Time and unread indicator */}
+                      <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                        <div className="flex items-center text-xs text-gray-500">
+                          <Clock className="h-3 w-3 mr-1" aria-hidden="true" />
+                          <time dateTime={notification.createdAt.toISOString()}>
+                            {formatTimeAgo(notification.createdAt)}
+                          </time>
+                        </div>
+                        {!notification.read && (
+                          <div
+                            className="w-2 h-2 bg-blue-500 rounded-full"
+                            aria-label="Unread notification indicator"
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Message */}
+                    <p
+                      className={`text-xs leading-relaxed line-clamp-2 mb-1 ${
+                        !notification.read ? "text-gray-800" : "text-gray-600"
+                      }`}
+                    >
+                      {notification.message}
                     </p>
-                  )}
+
+                    {/* Meta information */}
+                    {notification.meta?.adminName && (
+                      <p className="text-xs text-gray-500">
+                        by {notification.meta.adminName}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </ScrollArea>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
 
-      {/* Footer */}
-      <div className="p-3 border-t bg-gray-50">
-        <Link
-          to={getNotificationRoute()}
-          onClick={onClose} // Close drawer/modal when navigating
-          className="block w-full"
+      {/* Footer - Fixed */}
+      <div className="p-3 border-t bg-gray-50 flex-shrink-0">
+        <Button
+          variant="ghost"
+          className="w-full justify-between text-sm hover:bg-gray-100"
+          onClick={handleViewAllNotifications}
           aria-label={`View all ${filteredNotifications.length} notifications`}
         >
-          <Button
-            variant="ghost"
-            className="w-full justify-between text-sm hover:bg-gray-100"
-          >
-            <span>
-              View all notifications
-              {filteredNotifications.length > 0 && (
-                <span className="text-gray-500 ml-1">
-                  ({filteredNotifications.length})
-                </span>
-              )}
-            </span>
-            <ChevronRight className="h-4 w-4" aria-hidden="true" />
-          </Button>
-        </Link>
+          <span>
+            View all notifications
+            {filteredNotifications.length > 0 && (
+              <span className="text-gray-500 ml-1">
+                ({filteredNotifications.length})
+              </span>
+            )}
+          </span>
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
+        </Button>
 
         {hasMore && (
           <p className="text-xs text-gray-500 text-center mt-2">

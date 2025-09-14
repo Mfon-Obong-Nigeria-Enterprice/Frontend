@@ -4,7 +4,7 @@ import Logo from "@/components/Logo";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import AdminUserModal from "@/features/dashboard/admin/AdminUserModal";
 import { ManagerUsersModal } from "@/features/dashboard/manager/component/ManagerUsersModal";
-import { useNotificationStore } from "@/stores/useNotificationStore";
+import { useUnreadNotificationCount } from "@/stores/useNotificationStore"; // Import the correct hook
 import { useAuthStore } from "@/stores/useAuthStore";
 import NotificationModal from "@/features/dashboard/shared/NotificationModal";
 import {
@@ -80,7 +80,8 @@ const getRoleBasedCapabilities = (role: string) => {
 const Header = ({ userRole }: HeaderProps) => {
   const { userProfile, user, updateUser } = useAuthStore();
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const unreadCount = useNotificationStore((state) => state.unreadCount);
+
+  const unreadCount = useUnreadNotificationCount();
 
   // Enhanced profile picture management
   const profileImageUrl = useProfilePicture(userRole);
@@ -198,7 +199,7 @@ const Header = ({ userRole }: HeaderProps) => {
                     </span>
                   )}
                 </DrawerHeader>
-                <div className="px-4 pb-4">
+                <div className=" pb-4">
                   {user?.role && <NotificationModal />}
                 </div>
               </DrawerContent>
