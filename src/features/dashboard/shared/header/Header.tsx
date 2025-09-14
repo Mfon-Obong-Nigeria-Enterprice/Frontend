@@ -14,6 +14,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { getFirstAndLastName } from "@/utils/getfirstandlastname";
 
 type HeaderProps = {
   userRole?: "admin" | "staff" | "maintainer" | "superadmin" | "manager";
@@ -119,7 +120,7 @@ const Header = ({ userRole }: HeaderProps) => {
           );
         }
 
-        console.log("Profile updates applied:", updates);
+        // console.log("Profile updates applied:", updates);
       }
     } catch (error) {
       console.error("Error updating profile in header:", error);
@@ -208,7 +209,7 @@ const Header = ({ userRole }: HeaderProps) => {
           {/* User info display */}
           <div className="hidden sm:flex items-center gap-2">
             <span className="capitalize font-medium text-gray-700">
-              {user?.name || "User"}
+              {(user && getFirstAndLastName(user.name)) || "User"}
             </span>
             {/* <span
               className={`capitalize text-xs px-2 py-1 rounded-full ${getRoleBadgeColor()}`}

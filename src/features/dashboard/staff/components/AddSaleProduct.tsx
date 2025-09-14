@@ -33,6 +33,7 @@ import { formatCurrency } from "@/utils/styles";
 
 // type
 import type { Row } from "../NewSales";
+// import type { Product } from "@/types/types";
 
 interface AddSaleProductProps {
   rows: Row[];
@@ -90,6 +91,11 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
     );
   };
 
+  // Filter out products that are inactive or out of stock, or already selected
+  const availableProducts = products.filter(
+    (product) => product.isActive && product.stock > 0
+  );
+
   const handleProductChange = (index: number, productId: string) => {
     const product = products.find((p) => p._id === productId);
     if (product) {
@@ -110,22 +116,35 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
   };
 
   // Add new row
-  const addRow = () => setRows((prev) => [...prev, { ...emptyRow }]);
+  const addRow = () => {
+    // the user cannot add a row if there's only one product
+    if (availableProducts.length === 1) {
+      toast.warn("You have only one product in store");
+      return;
+    }
+
+    if (rows.length >= availableProducts.length) {
+      toast.warn("No more products available to add");
+      return;
+    }
+
+    setRows((prev) => [...prev, { ...emptyRow }]);
+  };
 
   // open delete modal with checks
   const openDeleteModal = (index: number) => {
-    const row = rows[index];
-    const isRowEmpty =
-      !row.productId &&
-      row.unitPrice === 0 &&
-      row.quantity === 1 &&
-      row.discount === 0 &&
-      row.total === 0;
+    // const row = rows[index];
+    // const isRowEmpty =
+    //   !row.productId &&
+    //   row.unitPrice === 0 &&
+    //   row.quantity === 1 &&
+    //   row.discount === 0 &&
+    //   row.total === 0;
 
-    if (isRowEmpty) {
-      toast.warn("Add a product first");
-      return;
-    }
+    // if (isRowEmpty ) {
+    //   toast.warn("Add a product first");
+    //   return;
+    // }
 
     setModal({ isOpen: true, rowIndex: index });
   };
@@ -169,11 +188,6 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
       onDiscountReasonChange(reason);
     }
   };
-
-  // Filter out products that are inactive or out of stock
-  const availableProducts = products.filter(
-    (product) => product.isActive && product.stock > 0
-  );
 
   return (
     <div className="bg-white border px-2 py-5">
@@ -221,11 +235,24 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                       <SelectValue placeholder="Select product" />
                     </SelectTrigger>
                     <SelectContent position="popper">
-                      {availableProducts.map((p) => (
-                        <SelectItem key={p._id} value={p._id}>
-                          {p.name} - Stock: {p.stock} {p.unit}
-                        </SelectItem>
-                      ))}
+                      {products
+                        .filter(
+                          (p) =>
+                            p.isActive &&
+                            p.stock > 0 &&
+                            // include if its the current row's selected product
+                            (p._id === row.productId ||
+                              // or if its not already seleceted in another row
+                              !rows.some(
+                                (r, i) => r.productId === p._id && i !== index
+                              ))
+                        )
+                        .map((p) => (
+                          <SelectItem key={p._id} value={p._id}>
+                            {p.name} - {p.unit}
+                            {/* - Stock: {p.stock}  */}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </TableCell>
@@ -235,11 +262,19 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                   <Input
                     type="number"
                     placeholder="1"
-                    min="1"
                     max={maxQuantity}
-                    value={row.quantity}
+                    value={row.quantity === 0 ? "" : row.quantity} // allow clearing zero
                     onChange={(e) => {
-                      const newQuantity = Number(e.target.value) || 1;
+                      const value = e.target.value;
+
+                      if (value === "") {
+                        // user cleared input
+                        updateRow(index, { quantity: 0 }); // keep store consistent but UI shows empty
+                        return;
+                      }
+
+                      const newQuantity = Number(value);
+
                       if (newQuantity > maxQuantity && maxQuantity > 0) {
                         toast.warn(
                           `Only ${maxQuantity} ${
@@ -253,6 +288,7 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                     }}
                     className="text-center !bg-white"
                   />
+
                   {/* {selectedProduct && (
                     <p className="text-xs text-gray-500 text-center mt-1">
                       Max: {maxQuantity} {row.unit}
@@ -311,7 +347,7 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                         })
                       }
                     >
-                      <SelectTrigger className="w-auto border-0 !bg-transparent shadow-none -ml-2">
+                      <SelectTrigger className="w-auto !border-0 !bg-transparent !outline-0 shadow-none -ml-2">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="w-2">

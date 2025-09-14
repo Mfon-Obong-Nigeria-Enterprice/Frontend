@@ -11,17 +11,40 @@ export const useLogout = () => {
   const logout = useAuthStore((s) => s.logout);
 
   return useMutation({
-    mutationFn: logout,
+    mutationFn: async () => {
+      // perform any async logout (e.g. API call) if needed
+      return Promise.resolve();
+    },
     onSuccess: () => {
-      logout();
-      navigate("/");
-
-      queryClient.clear();
+      logout(); // clear store
+      queryClient.clear(); // clear cache
+      navigate("/"); // redirect
     },
     onError: (error) => {
-      toast.error("Logout failed:" + error);
-      logout();
+      toast.error("Logout failed: " + error);
+      logout(); // still clear store on error
       queryClient.clear();
     },
   });
 };
+
+// export const useLogout = () => {
+//   const queryClient = useQueryClient();
+//   const navigate = useNavigate();
+//   const logout = useAuthStore((s) => s.logout);
+
+//   return useMutation({
+//     mutationFn: logout,
+//     onSuccess: () => {
+//       logout();
+//       navigate("/");
+
+//       queryClient.clear();
+//     },
+//     onError: (error) => {
+//       toast.error("Logout failed:" + error);
+//       logout();
+//       queryClient.clear();
+//     },
+//   });
+// };
