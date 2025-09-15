@@ -74,7 +74,7 @@ export const sendPasswordToBranchAdmin = async (
       addNotification({
         id: `password-sent-${Date.now()}`,
         title: "Password Reset Notification Sent",
-        message: `Temporary password has been sent to the branch admin successfully`,
+        message: `Temporary password has been sent to the branch admin ${currentUser.name} successfully`,
         type: "success",
         read: false,
         createdAt: new Date(),
@@ -116,7 +116,7 @@ export const sendSupportRequest = async (
       addNotification({
         id: `support-request-${Date.now()}`,
         title: "Support Request Sent",
-        message: `Your support request has been sent to our maintainers`,
+        message: `Your support request has been sent to the maintainer`,
         type: "info",
         read: false,
         createdAt: new Date(),
@@ -208,8 +208,6 @@ export const syncBranchNotifications = async (): Promise<void> => {
         });
       }
     });
-
-    console.log(`Synced ${branchNotifications.length} branch notifications`);
   } catch (error) {
     console.error("Error syncing branch notifications:", error);
   }
