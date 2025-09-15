@@ -9,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { toSentenceCaseName } from "@/utils/styles";
@@ -34,14 +33,8 @@ const RecentSales: React.FC = () => {
 
       {recentTxns.length === 0 ? (
         // 🔹 Empty state
-        <div className="flex flex-col items-center justify-center py-10 text-center text-gray-500">
+        <div className="flex items-center justify-center text-center text-gray-500">
           <p className="text-sm sm:text-base">No recent sales yet</p>
-          <Button
-            onClick={() => navigate("/admin/dashboard/sale")}
-            className="mt-4"
-          >
-            Record a Sale
-          </Button>
         </div>
       ) : (
         // 🔹 Normal table

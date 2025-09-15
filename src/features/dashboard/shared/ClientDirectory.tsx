@@ -130,7 +130,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                     {/* registered clients */}
                     <TableCell className=" md:w-[95px]  lg:w-[125px] lg:pr-5 pr-10">
                       <div>
-                        <p className="font-[400] text-[#444444] text-sm ">
+                        <p className="font-[400] text-[#444444] text-sm capitalize">
                           {client.name}
                         </p>
                       </div>

@@ -1,40 +1,41 @@
 import api from "./baseApi";
 import { type AxiosError } from "axios";
-
-// type
-import type { QueryFunctionContext } from "@tanstack/react-query";
 import type { Client } from "@/types/types";
 
 type CreateClientPayload = Pick<Client, "name" | "phone" | "email" | "address">;
 
-export const getAllClients = async ({
-  queryKey,
-  signal,
-}: QueryFunctionContext<[string, string?]>): Promise<Client[]> => {
+export const getAllClients = async (): Promise<Client[]> => {
   try {
-    // extract search from queryKey
-    const search = queryKey[1]; // second element of queryKey
-    const response = await api.get("/clients", {
-      params: search ? { search } : {},
-      signal,
-    });
-
+    const response = await api.get("/clients");
     return response.data;
   } catch (error) {
     const err = error as AxiosError;
+    // Ignore cancellations triggered by React Query abort signals to avoid noisy logs
+    if (
+      err.code === "ERR_CANCELED" ||
+      err.message === "canceled" ||
+      err.name === "CanceledError"
+    ) {
+      throw error;
+    }
     console.error("Error fetching clients:", err.response?.data || err.message);
     throw error;
   }
 };
 
 export const getClientById = async (id: string): Promise<Client> => {
-  const response = await api.get(`/clients/${id}`);
-  return response.data;
+  try {
+    const response = await api.get(`/clients/${id}`);
+    return response.data;
+  } catch (error) {
+    const err = error as AxiosError;
+    console.error("Error fetching client:", err.response?.data || err.message);
+    throw error;
+  }
 };
 
-export const getClientDebt = async (): Promise<Client[]> => {
+export const getClientDebtors = async (): Promise<Client[]> => {
   const response = await api.get("/clients/debtors");
-
   return response.data;
 };
 
@@ -43,7 +44,6 @@ export const createClient = async (
 ): Promise<Client> => {
   try {
     const response = await api.post("/clients", client);
-
     return response.data;
   } catch (error) {
     const err = error as AxiosError;
@@ -66,10 +66,9 @@ export const updateClient = async (
   }
 };
 
-export const deleteClient = async (id: string): Promise<void> => {
+export const deleteClient = async (clientId: string): Promise<void> => {
   try {
-    const response = await api.delete(`/clients/${id}`);
-
+    const response = await api.delete(`/clients/${clientId}`);
     return response.data;
   } catch (error) {
     const err = error as AxiosError;
@@ -79,11 +78,26 @@ export const deleteClient = async (id: string): Promise<void> => {
 };
 
 export const blockClient = async (clientId: string): Promise<void> => {
-  const response = await api.patch(`/clients/${clientId}/block`);
-  return response.data;
+  try {
+    const response = await api.patch(`/clients/${clientId}/block`);
+    return response.data;
+  } catch (error) {
+    const err = error as AxiosError;
+    console.error("Error blocking client:", err.response?.data || err.message);
+    throw error;
+  }
 };
 
 export const unblockClient = async (clientId: string): Promise<void> => {
-  const response = await api.patch(`/clients/${clientId}/unblock`);
-  return response.data;
+  try {
+    const response = await api.patch(`/clients/${clientId}/unblock`);
+    return response.data;
+  } catch (error) {
+    const err = error as AxiosError;
+    console.error(
+      "Error unblocking client:",
+      err.response?.data || err.message
+    );
+    throw error;
+  }
 };

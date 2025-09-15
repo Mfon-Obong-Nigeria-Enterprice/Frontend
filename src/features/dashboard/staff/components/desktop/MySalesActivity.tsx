@@ -68,7 +68,7 @@ const MySalesActivity = ({
                 key={transaction._id + i}
                 className="h-[65px] border-b border-[#D9D9D9]"
               >
-                <td className="text-[#444444] text-base pl-5 md:pl-10">
+                <td className="text-[#444444] text-base pl-5 md:pl-10 capitalize">
                   {transaction.clientId?.name || transaction.walkInClientName}
                 </td>
                 <td className="text-[#444444] text-base min-w-30">

@@ -4,7 +4,7 @@ import Logo from "@/components/Logo";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import AdminUserModal from "@/features/dashboard/admin/AdminUserModal";
 import { ManagerUsersModal } from "@/features/dashboard/manager/component/ManagerUsersModal";
-import { useNotificationStore } from "@/stores/useNotificationStore";
+import { useUnreadNotificationCount } from "@/stores/useNotificationStore"; // Import the correct hook
 import { useAuthStore } from "@/stores/useAuthStore";
 import NotificationModal from "@/features/dashboard/shared/NotificationModal";
 import {
@@ -14,6 +14,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { getFirstAndLastName } from "@/utils/getfirstandlastname";
 
 type HeaderProps = {
   userRole?: "admin" | "staff" | "maintainer" | "superadmin" | "manager";
@@ -79,32 +80,14 @@ const getRoleBasedCapabilities = (role: string) => {
 const Header = ({ userRole }: HeaderProps) => {
   const { userProfile, user, updateUser } = useAuthStore();
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const unreadCount = useNotificationStore((state) => state.unreadCount);
+
+  const unreadCount = useUnreadNotificationCount();
 
   // Enhanced profile picture management
   const profileImageUrl = useProfilePicture(userRole);
 
   // Role-based capabilities
   const capabilities = getRoleBasedCapabilities(user?.role || "");
-
-  // const getRoleBadgeColor = () => {
-  //   const role = (userProfile?.role || user?.role || "").toLowerCase();
-  //   switch (role) {
-  //     case "admin":
-  //       return "bg-blue-100 text-blue-800";
-  //     case "maintainer":
-  //       return "bg-purple-100 text-purple-800";
-  //     case "manager":
-  //       return "bg-green-100 text-green-800";
-  //     case "super_admin":
-  //     case "superadmin":
-  //       return "bg-red-100 text-red-800";
-  //     case "staff":
-  //       return "bg-orange-100 text-orange-800";
-  //     default:
-  //       return "bg-gray-100 text-gray-800";
-  //   }
-  // };
 
   const handleProfileUpdate = async (updatedData: UpdatedUserData) => {
     console.log("=== Header Profile Update ===");
@@ -137,7 +120,7 @@ const Header = ({ userRole }: HeaderProps) => {
           );
         }
 
-        console.log("Profile updates applied:", updates);
+        // console.log("Profile updates applied:", updates);
       }
     } catch (error) {
       console.error("Error updating profile in header:", error);
@@ -216,7 +199,7 @@ const Header = ({ userRole }: HeaderProps) => {
                     </span>
                   )}
                 </DrawerHeader>
-                <div className="px-4 pb-4">
+                <div className=" pb-4">
                   {user?.role && <NotificationModal />}
                 </div>
               </DrawerContent>
@@ -226,7 +209,7 @@ const Header = ({ userRole }: HeaderProps) => {
           {/* User info display */}
           <div className="hidden sm:flex items-center gap-2">
             <span className="capitalize font-medium text-gray-700">
-              {user?.name || "User"}
+              {(user && getFirstAndLastName(user.name)) || "User"}
             </span>
             {/* <span
               className={`capitalize text-xs px-2 py-1 rounded-full ${getRoleBadgeColor()}`}

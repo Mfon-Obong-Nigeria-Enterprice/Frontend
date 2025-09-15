@@ -1,6 +1,6 @@
 import type { Transaction } from "@/types/transactions";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 interface ClientDiscountDetailsProps {
   clientTransactions: Transaction[];
@@ -11,16 +11,40 @@ const ClientDiscountDetails: React.FC<ClientDiscountDetailsProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredDiscountTransactions = clientTransactions.filter((txn) => {
-    return (
-      txn.type === "PURCHASE" ||
-      (txn.type === "PICKUP" &&
-        (txn._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          txn.items.some((item) =>
-            item.productName.toLowerCase().includes(searchTerm.toLowerCase())
-          )))
-    );
-  });
+  // Remove duplicates and filter discount transactions
+  const filteredDiscountTransactions = useMemo(() => {
+    // First remove duplicates
+    const uniqueTransactions = clientTransactions.reduce((acc, current) => {
+      const existingIndex = acc.findIndex((item) => item._id === current._id);
+      if (existingIndex === -1) {
+        acc.push(current);
+      }
+      return acc;
+    }, [] as Transaction[]);
+
+    // Then filter for discount transactions and search term
+    return uniqueTransactions.filter((txn) => {
+      const hasDiscount =
+        (txn.type === "PURCHASE" || txn.type === "PICKUP") &&
+        txn.discount &&
+        txn.discount > 0;
+
+      if (!hasDiscount) return false;
+
+      if (!searchTerm) return true;
+
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        txn._id.toLowerCase().includes(searchLower) ||
+        txn.items?.some((item) =>
+          item.productName.toLowerCase().includes(searchLower)
+        ) ||
+        (txn.invoiceNumber &&
+          txn.invoiceNumber.toLowerCase().includes(searchLower))
+      );
+    });
+  }, [clientTransactions, searchTerm]);
+
   return (
     <div>
       <div className="mb-4 flex items-center gap-2 justify-between flex-wrap bg-[#ffffff] px-6 py-10 rounded-md shadow-lg border">
@@ -40,13 +64,13 @@ const ClientDiscountDetails: React.FC<ClientDiscountDetailsProps> = ({
       </div>
       {filteredDiscountTransactions.length > 0 ? (
         <ul className="space-y-6 mt-6 ">
-          {filteredDiscountTransactions.map((txn) => (
+          {filteredDiscountTransactions.map((txn, index) => (
             <li
-              key={txn._id}
+              key={`${txn._id}-${txn.createdAt}-discount-${index}`} // More unique key
               className="px-4 py-6 border rounded-md  bg-white shadow-lg flex flex-col gap-2"
             >
               <div className="flex items-center justify-between ">
-                <p>{txn.invoiceNumber}</p>
+                <p>{txn.invoiceNumber || `TXN-${txn._id.slice(-6)}`}</p>
                 <p className="text-[#2ECC71] font-normal font-Inter text-lg">
                   ₦{txn.discount?.toLocaleString()} saved
                 </p>
@@ -72,8 +96,8 @@ const ClientDiscountDetails: React.FC<ClientDiscountDetailsProps> = ({
               <div>
                 <p>Discount Breakdown: </p>
                 <ul className="text-sm text-[#7D7D7D]">
-                  {txn.items.map((item) => (
-                    <li key={item.productId}>
+                  {txn.items?.map((item, itemIndex) => (
+                    <li key={`${item.productId}-${itemIndex}`}>
                       <div className="flex items-center sm:justify-between justify-start py-2 gap-4">
                         <p>
                           {item.productName}({item.quantity}X): ₦
@@ -125,7 +149,15 @@ const ClientDiscountDetails: React.FC<ClientDiscountDetailsProps> = ({
           ))}
         </ul>
       ) : (
-        <p className="text-gray-500">No discount transactions found.</p>
+        <div className="text-center py-10">
+          <p className="text-gray-500 mb-2">No discount transactions found.</p>
+          {searchTerm && (
+            <p className="text-sm text-gray-400">
+              Try adjusting your search term or clearing the search to see all
+              discount transactions.
+            </p>
+          )}
+        </div>
       )}
     </div>
   );

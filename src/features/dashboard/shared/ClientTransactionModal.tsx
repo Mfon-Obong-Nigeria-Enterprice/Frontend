@@ -37,7 +37,7 @@ const ClientTransactionModal = () => {
   mt-7 mb-5 p-3 rounded-[0.875rem]`}
           >
             <div className="space-y-2">
-              <p className="text-[#444444] font-medium">
+              <p className="text-[#444444] font-medium capitalize">
                 {selectedTransaction?.clientName}
               </p>
 

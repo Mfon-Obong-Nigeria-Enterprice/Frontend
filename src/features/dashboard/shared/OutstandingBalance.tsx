@@ -11,13 +11,11 @@ import {
 
 import { MdKeyboardArrowRight } from "react-icons/md";
 import { formatCurrency } from "@/utils/formatCurrency";
-import ClientTransactionModal from "./ClientTransactionModal";
-import { useTransactionsStore } from "@/stores/useTransactionStore";
+import { useClientStore } from "@/stores/useClientStore";
 import { getDaysSince } from "@/utils/helpersfunction";
 
 import { useAuthStore } from "@/stores/useAuthStore";
 
-import { useMergedTransactions } from "@/hooks/useMergedTransactions";
 import usePagination from "@/hooks/usePagination";
 import {
   Pagination,
@@ -32,28 +30,24 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 const OutstandingBalance = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { transactions, selectedTransaction, open, openModal } =
-    useTransactionsStore();
-  const mergedTransactions = useMergedTransactions(transactions ?? []);
 
-  const debtors = mergedTransactions.filter(
-    (tx) => tx.client && tx.client?.balance < 0
-  );
+  // Use debtors directly from client store instead of merged transactions
+  const { getClientsWithDebt } = useClientStore();
+  const debtors = getClientsWithDebt();
 
   const {
     currentPage,
-    // setCurrentPage,
     totalPages,
     goToPreviousPage,
     goToNextPage,
     canGoPrevious,
     canGoNext,
-  } = usePagination((debtors ?? []).length, 5);
+  } = usePagination(debtors.length, 5);
 
   const currentDebtors = useMemo(() => {
     const startIndex = (currentPage - 1) * 5;
     const endIndex = startIndex + 5;
-    return debtors?.slice(startIndex, endIndex);
+    return debtors.slice(startIndex, endIndex);
   }, [debtors, currentPage]);
 
   // get user role
@@ -67,6 +61,20 @@ const OutstandingBalance = () => {
       navigate("/admin/dashboard/clients");
     }
   };
+
+  // Create a mock transaction for the modal (since we're working with client data)
+  // const handleViewClient = (client: Client) => {
+  //   // Create a minimal Transaction object from the client
+  //   const debtTransaction = {
+  //     type: "PICKUP", // or another appropriate type
+  //     clientId: client._id,
+  //     items: [],
+  //     amount: Math.abs(client.balance),
+  //     createdAt: client.createdAt,
+  //     updatedAt: client.updatedAt,
+  //   };
+  //   openModal(debtTransaction);
+  // };
 
   return (
     <div className="bg-white border border-[#D9D9D9] p-4 sm:p-8 mt-5 mx-2 rounded-[8px] font-Inter">
@@ -112,32 +120,39 @@ const OutstandingBalance = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              currentDebtors.map((entry, index) => (
+              currentDebtors.map((client, index) => (
                 <TableRow
-                  key={entry._id}
+                  key={client._id}
                   className={`border-b border-gray-300 ${
                     index % 2 !== 0 ? "bg-[#F0F0F3]" : ""
                   }`}
                 >
-                  <TableCell className="font-medium pl-4 text-[#444444] text-xs sm:text-base">
-                    {entry.client?.name}
+                  <TableCell className="font-medium pl-4 text-[#444444] text-xs sm:text-base capitalize">
+                    {client.name}
                   </TableCell>
-                  <TableCell className="text-center text-[#F95353] text-xs sm:text-base">
-                    {formatCurrency(Number(entry.client?.balance))}
+                  <TableCell className="text-center text-[#F95353] text-xs sm:text-base ">
+                    -{formatCurrency(Math.abs(client.balance))}
                   </TableCell>
                   <TableCell className="text-center text-[#444444] text-xs sm:text-base">
-                    {getDaysSince(entry.createdAt)}
+                    {getDaysSince(
+                      client.lastTransactionDate ||
+                        client.updatedAt ||
+                        client.createdAt
+                    )}
                   </TableCell>
                   <TableCell className="text-center text-blue-400 underline cursor-pointer text-xs sm:text-base">
-                    <button onClick={() => openModal(entry)}>View</button>
+                    <button onClick={() => navigate(`/clients/${client._id}`)}>
+                      View
+                    </button>
                   </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
+
         {/* pagination */}
-        {debtors && currentDebtors?.length > 0 && totalPages > 1 && (
+        {debtors.length > 0 && totalPages > 1 && (
           <div className="h-14 bg-[#f5f5f5] text-sm text-[#7D7D7D] flex justify-center items-center gap-3">
             <Pagination>
               <PaginationContent>
@@ -181,7 +196,7 @@ const OutstandingBalance = () => {
         )}
       </div>
 
-      <div className="mt-[7dvh] ">
+      <div className="mt-[7dvh]">
         <button
           className="bg-[#f0f0f3] w-full flex justify-between px-5 cursor-pointer text-start text-[#3D80FF] hover:text-[#3D80FF]/80 py-4"
           onClick={handleButtonNavigate}
@@ -191,7 +206,7 @@ const OutstandingBalance = () => {
         </button>
       </div>
 
-      {open && selectedTransaction && <ClientTransactionModal />}
+      {/* {open && selectedTransaction && <ClientTransactionModal />} */}
     </div>
   );
 };

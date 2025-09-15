@@ -258,8 +258,8 @@ const AdminInventory = () => {
   }, [dragging, rel]);
 
   return (
-    <main className="px-3 lg:px-4 lg:max-w-4xl xl:max-w-6xl mx-auto">
-      <div>
+    <main className="px-2 sm:px-1 lg:px-4 lg:max-w-4xl xl:max-w-6xl mx-auto">
+      <div className="">
         <DashboardTitle
           heading="Inventory Management"
           description="Manage your products and categories"
@@ -317,6 +317,13 @@ const AdminInventory = () => {
                       <CiImport size={20} />
                       Import Stock
                     </Button>
+                    <Button
+                      onClick={() => navigate("/admin/dashboard/sale")}
+                      className="gap-2"
+                    >
+                      <Plus size={16} />
+                      Add Sales
+                    </Button>
                   </div>
 
                   {/* Mobile Actions Button */}
@@ -367,6 +374,14 @@ const AdminInventory = () => {
                         >
                           <CiImport size={16} />
                           Import Stock
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={() => navigate("/admin/dashboard/sale")}
+                          className="justify-start gap-2"
+                        >
+                          <Plus size={16} />
+                          Add Sales
                         </Button>
                       </div>
                     </CardContent>

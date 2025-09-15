@@ -5,7 +5,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 
 export const getAllProducts = async (): Promise<Product[]> => {
   const response = await api.get("/products");
-  return response.data ?? [];
+  return response.data;
 };
 
 export const getAllProductsByBranch = async (
@@ -13,7 +13,7 @@ export const getAllProductsByBranch = async (
 ): Promise<Product[]> => {
   const url = branchId ? `/products/branch/${branchId}` : `/products/branch/`; // Let interceptor handle this
   const response = await api.get(url);
-  return response.data ?? [];
+  return response.data;
 };
 
 export const createProduct = async (product: NewProduct) => {

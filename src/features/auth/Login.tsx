@@ -222,11 +222,7 @@ const Login = () => {
               </span>
             )}
             <span
-              className="text-[var(--cl-blue)] hover:text-blue-700 text-sm"
-              // onClick={() => {
-              //   openModal("support");
-              //   reset();
-              // }}
+              className="text-[var(--cl-blue)] hover:text-blue-700 text-sm cursor-pointer"
               onClick={openSupportModal}
             >
               {isSupportLoading && <LoadingSpinner />}

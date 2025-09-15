@@ -79,17 +79,25 @@ const Notifications = () => {
         description="Stay updated with your business activities"
       />
 
+      <div className="relative my-5 sm:my-7">
+        <Search className="absolute left-5 top-6 h-4 w-4 text-gray-400" />
+        <Input
+          placeholder="Search notifications..."
+          className="pl-10 py-8"
+          value={searchQuery}
+          onChange={handleSearch}
+        />
+      </div>
+
       <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
         {/* Header */}
-        <div className="p-6 border-b">
+        <div className="p-6 border-b bg-[#F0F0F3]">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <h2 className="text-lg font-semibold text-gray-900">
-                All Notifications
-              </h2>
               {unreadCount > 0 && (
-                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                  {unreadCount} unread
+                <span className=" text-[#7D7D7D] text-sm font-medium px-2.5 py-0.5 ">
+                  {unreadCount} unread{" "}
+                  {unreadCount > 1 ? "notifications" : "notification"}
                 </span>
               )}
             </div>
@@ -98,21 +106,11 @@ const Notifications = () => {
                 variant="ghost"
                 size="sm"
                 onClick={markAllAsRead}
-                className="text-sm"
+                className="text-sm text-[#3D80FF] font-medium"
               >
-                <Check className="h-4 w-4 mr-1" /> Mark all as read
+                Mark all as read
               </Button>
             )}
-          </div>
-
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search notifications..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={handleSearch}
-            />
           </div>
         </div>
 

@@ -2,8 +2,7 @@
 import { useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { queryClient } from "@/lib/queryClient"; // Import the queryClient we created
+import { queryClient } from "@/lib/queryClient";
 
 import {
   getAllProducts,
@@ -28,7 +27,6 @@ import { useUserStore } from "@/stores/useUserStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
 
-// Data Provider Component (your existing logic)
 const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const { user, loading: isAuthLoading } = useAuthStore();
 
@@ -43,77 +41,115 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const setBranches = useBranchStore((state) => state.setBranches);
   const setActivities = useActivityLogsStore((state) => state.setActivities);
 
-  // Helper function to check if user should have access to admin features
-  const isAdminOrSuperAdmin =
+  // Helper functions for role checking
+  const isSuperAdminOrHigher =
     user?.role && !["STAFF", "ADMIN"].includes(user.role);
+  const isBranchUser = user?.role === "STAFF" || user?.role === "ADMIN";
+
+  // Debug logging
+  console.log("AppProvider - Current user:", {
+    role: user?.role,
+    branchId: user?.branchId,
+    userId: user?.id,
+    isBranchUser,
+    isSuperAdminOrHigher,
+  });
 
   // Categories query - always enabled
   const categoriesQuery = useQuery({
     queryKey: ["categories"],
     queryFn: getAllCategories,
+    enabled: !isAuthLoading,
   });
 
-  // Products query - wait for auth to load, then determine endpoint
+  // Products query - branch-aware
   const productsQuery = useQuery({
     queryKey: ["products", user?.role, user?.branchId],
     queryFn: () => {
-      if (user?.role === "ADMIN" || user?.role === "STAFF") {
-        // Use branch endpoint - interceptors will add branchId automatically
-        return getAllProductsByBranch();
+      console.log("Fetching products for:", {
+        role: user?.role,
+        branchId: user?.branchId,
+      });
+
+      if (isBranchUser && user?.branchId) {
+        // Branch users see only their branch products
+        console.log(
+          "Calling getAllProductsByBranch for branch:",
+          user.branchId
+        );
+        return getAllProductsByBranch(user.branchId);
       }
-      // Use all products endpoint for super admin
+      // Super admin sees all products
+      console.log("Calling getAllProducts for super admin");
       return getAllProducts();
     },
-    enabled: !isAuthLoading && !!user?.role, // Wait for auth to load
+    enabled: !isAuthLoading && !!user?.role,
   });
 
-  // Transactions query - wait for auth to load, then determine endpoint
+  // Transactions query - role and branch aware with explicit branch ID passing
   const transactionsQuery = useQuery({
     queryKey: ["transactions", user?.role, user?.branchId, user?.id],
     queryFn: () => {
-      if (user?.role === "STAFF") {
-        return getTransactionByUserId();
+      console.log("Fetching transactions for:", {
+        role: user?.role,
+        branchId: user?.branchId,
+        userId: user?.id,
+      });
+
+      if (user?.role === "STAFF" && user?.id) {
+        // Staff sees only their own transactions
+        console.log("Calling getTransactionByUserId for user:", user.id);
+        return getTransactionByUserId(user.id);
       }
 
-      if (user?.role === "ADMIN") {
-        return getTransactionsByBranch();
+      if (user?.role === "ADMIN" && user?.branchId) {
+        // Admin sees all transactions in their branch
+        console.log(
+          "Calling getTransactionsByBranch for branch:",
+          user.branchId
+        );
+        return getTransactionsByBranch(user.branchId);
       }
+
+      // Super admin sees all transactions
+      console.log("Calling getAllTransactions for super admin");
       return getAllTransactions();
     },
-    enabled: !isAuthLoading && !!user?.role, // Wait for auth to load
+    enabled: !isAuthLoading && !!user?.role,
   });
 
   // Clients query - always enabled once auth loads
   const clientsQuery = useQuery({
-    queryKey: ["clients"],
+    queryKey: ["clients", user?.role, user?.branchId],
     queryFn: getAllClients,
-    enabled: !isAuthLoading, // Wait for auth to load
+    enabled: !isAuthLoading,
   });
 
-  // Branches query - only for non-staff/admin users
+  // Branches query - only for super admin and higher roles
   const branchesQuery = useQuery({
     queryKey: ["branches"],
     queryFn: getAllBranches,
-    enabled: !isAuthLoading && !!user && isAdminOrSuperAdmin,
+    enabled: !isAuthLoading && !!user && isSuperAdminOrHigher,
   });
 
-  // Users query - only for non-staff/admin users
+  // Users query - only for super admin and higher roles
   const usersQuery = useQuery({
     queryKey: ["users"],
     queryFn: getAllUsers,
-    enabled: !isAuthLoading && !!user && isAdminOrSuperAdmin,
+    enabled: !isAuthLoading && !!user && isSuperAdminOrHigher,
   });
 
-  // Debug logging
+  // Activities query - adjust based on role
   const activitiesQuery = useQuery({
-    queryKey: ["activities"],
+    queryKey: ["activities", user?.role],
     queryFn: getSystemActivityLogs,
-    // enabled: user?.role !== "STAFF" && user?.role === "ADMIN",
+    enabled: !isAuthLoading && !!user && user.role !== "STAFF",
   });
 
   // Sync data to stores when available
   useEffect(() => {
     if (categoriesQuery.data && categoriesQuery.isSuccess) {
+      console.log("Setting categories:", categoriesQuery.data.length, "items");
       setCategories(categoriesQuery.data);
     }
   }, [
@@ -125,23 +161,56 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (productsQuery.data && productsQuery.isSuccess) {
+      console.log(
+        "Setting products:",
+        productsQuery.data.length,
+        "items for user:",
+        user?.role
+      );
       setProducts(productsQuery.data);
     }
-  }, [productsQuery.data, productsQuery.isSuccess, setProducts]);
+  }, [
+    productsQuery.data,
+    productsQuery.dataUpdatedAt,
+    productsQuery.isSuccess,
+    setProducts,
+    user?.role,
+  ]);
 
   useEffect(() => {
     if (transactionsQuery.data && transactionsQuery.isSuccess) {
+      console.log(
+        "Setting transactions:",
+        transactionsQuery.data.length,
+        "items for user:",
+        {
+          role: user?.role,
+          branchId: user?.branchId,
+        }
+      );
+      console.log(
+        "Sample transactions:",
+        transactionsQuery.data.slice(0, 3).map((t) => ({
+          id: t._id,
+          branchId: t.branchId,
+          type: t.type,
+          amount: t.amount,
+        }))
+      );
       setTransactions(transactionsQuery.data);
     }
   }, [
-    transactionsQuery.dataUpdatedAt,
-    setTransactions,
-    transactionsQuery.isSuccess,
     transactionsQuery.data,
+    transactionsQuery.dataUpdatedAt,
+    transactionsQuery.isSuccess,
+    setTransactions,
+    user?.role,
+    user?.branchId,
   ]);
 
   useEffect(() => {
     if (clientsQuery.data && clientsQuery.isSuccess) {
+      console.log("Setting clients:", clientsQuery.data.length, "items");
       setClients(clientsQuery.data);
     }
   }, [
@@ -152,51 +221,41 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
   ]);
 
   useEffect(() => {
-    if (branchesQuery.data && branchesQuery.isSuccess && isAdminOrSuperAdmin) {
+    if (branchesQuery.data && branchesQuery.isSuccess && isSuperAdminOrHigher) {
+      console.log("Setting branches:", branchesQuery.data.length, "items");
       setBranches(branchesQuery.data);
     }
   }, [
     branchesQuery.data,
     branchesQuery.dataUpdatedAt,
     branchesQuery.isSuccess,
-    isAdminOrSuperAdmin,
+    isSuperAdminOrHigher,
     setBranches,
-    user?.role,
   ]);
 
   useEffect(() => {
-    if (usersQuery.data && usersQuery.isSuccess && isAdminOrSuperAdmin) {
-      if (
-        usersQuery.data &&
-        usersQuery.data.length > 0 &&
-        user?.role !== "STAFF" &&
-        user?.role !== "ADMIN"
-      ) {
-        setUsers(usersQuery.data);
-      }
+    if (usersQuery.data && usersQuery.isSuccess && isSuperAdminOrHigher) {
+      console.log("Setting users:", usersQuery.data.length, "items");
+      setUsers(usersQuery.data);
     }
   }, [
     usersQuery.data,
+    usersQuery.dataUpdatedAt,
     usersQuery.isSuccess,
     setUsers,
-    isAdminOrSuperAdmin,
-    user?.role,
+    isSuperAdminOrHigher,
   ]);
 
   useEffect(() => {
-    if (
-      activitiesQuery.data
-      // &&
-      // user?.role !== "STAFF" &&
-      // user?.role !== "ADMIN"
-    ) {
+    if (activitiesQuery.data && activitiesQuery.isSuccess) {
+      console.log("Setting activities:", activitiesQuery.data.length, "items");
       setActivities(activitiesQuery.data);
     }
   }, [
-    activitiesQuery,
+    activitiesQuery.data,
     activitiesQuery.dataUpdatedAt,
+    activitiesQuery.isSuccess,
     setActivities,
-    user?.role,
   ]);
 
   return <>{children}</>;
@@ -207,10 +266,6 @@ export const AppProviderOptimized = ({ children }: { children: ReactNode }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <AppDataProvider>{children}</AppDataProvider>
-      {/* Only show devtools in development */}
-      {process.env.NODE_ENV === "development" && (
-        <ReactQueryDevtools initialIsOpen={false} />
-      )}
     </QueryClientProvider>
   );
 };
