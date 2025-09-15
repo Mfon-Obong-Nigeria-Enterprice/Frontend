@@ -17,7 +17,7 @@ import {
   useHealthLoading,
   useHealthError,
   useFetchHealth,
-  // useHealthLastUpdated,
+  useHealthLastUpdated,
 } from "@/stores/useHealthStore";
 
 const BAR_COLORS = {
@@ -43,7 +43,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white p-3 border border-gray-200 rounded-md shadow-sm">
+      <div className="bg-white p-3 border border-gray-200 rounded-md shadow-sm h-full">
         <p className="font-medium text-gray-900">{data.name}</p>
         <p className="text-gray-700">
           {data.name === "Database" ? `${data.value}ms` : `${data.value}%`}
@@ -71,9 +71,10 @@ export const SystemHealth: React.FC = () => {
   const detailed = useDetailedHealth();
   const loading = useHealthLoading();
   const error = useHealthError();
-  // const lastUpdated = useHealthLastUpdated();
+  const lastUpdated = useHealthLastUpdated();
   const fetchHealth = useFetchHealth();
 
+  // ⏳ Initial + interval fetching
   useEffect(() => {
     fetchHealth();
     const interval = setInterval(fetchHealth, 30000);
@@ -81,11 +82,13 @@ export const SystemHealth: React.FC = () => {
   }, [fetchHealth]);
 
   const getBarColor = (value: number, status?: string) => {
-    if (status === "degraded") return "#FFA500";
-    if (value >= 90) return BAR_COLORS.critical;
-    if (value >= 80) return BAR_COLORS.high;
-    return BAR_COLORS.normal;
-  };
+  if (status === "degraded") return "#FFA500"; // orange
+  if (value >= 90) return BAR_COLORS.critical; // critical
+  if (value >= 80)return BAR_COLORS.high;
+
+return BAR_COLORS.normal; 
+};
+
 
   const barChartData = useMemo(() => {
     if (!detailed) return [];
@@ -111,10 +114,10 @@ export const SystemHealth: React.FC = () => {
     return typeof memoryPercentage === "number" && memoryPercentage >= 80;
   }, [detailed]);
 
-  const renderContent = () => {
+  const renderContent = useMemo(() => {
     if (loading && !basic) {
       return (
-        <div className="flex justify-center items-center flex-1">
+        <div className="flex justify-center items-center h-48 md:h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       );
@@ -122,12 +125,10 @@ export const SystemHealth: React.FC = () => {
 
     if (error) {
       return (
-        <div className="flex flex-col items-center justify-center flex-1 p-4">
-          <div className="text-red-500 mb-4 text-center">
-            Error: {error.message}
-          </div>
+        <div className="p-4">
+          <div className="text-red-500 mb-4">Error: {error.message}</div>
           <Button onClick={fetchHealth}>
-            <RefreshCw className="mr-2 h-4 w-4" /> Retry
+            <RefreshCw className="mr-2" /> Retry
           </Button>
         </div>
       );
@@ -135,17 +136,17 @@ export const SystemHealth: React.FC = () => {
 
     if (!basic || !detailed) {
       return (
-        <div className="flex items-center justify-center flex-1 text-center py-8 text-gray-600">
+        <div className="text-center py-8 text-gray-600">
           No health data available. Please refresh.
         </div>
       );
     }
 
     return (
-      <>
-        <div className="mb-4 flex-shrink-0">
-          <h2 className="text-lg font-semibold pb-2 border-b">System Health</h2>
-          <div className="flex flex-wrap gap-2 md:gap-4 text-xs md:text-sm mt-2">
+      <div className="bg-white p-4  rounded-lg shadow-md">
+        <div className="mb-4">
+          <h2 className="text-lg font-normal pb-2 md:pb-4">System Health</h2>
+          <div className="flex flex-wrap gap-2 md:gap-4 text-xs md:text-sm">
             <div className="flex items-center">
               <span className="h-3 w-3 rounded-full bg-[#2ECC71] mr-1 md:mr-2"></span>
               <span>Normal (0-79%)</span>
@@ -161,7 +162,7 @@ export const SystemHealth: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex-1 min-h-0">
+        <div className="h-48 sm:h-64 md:h-80">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={barChartData}
@@ -194,30 +195,33 @@ export const SystemHealth: React.FC = () => {
         </div>
 
         {showMemoryAlert && (
-          <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-3 rounded-md flex items-center text-sm flex-shrink-0">
+          <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-3 rounded-md mt-4 md:mt-6 flex items-center text-sm">
             <AlertTriangle className="mr-2 h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
             <span className="font-semibold">
-              High Usage: Memory at {detailed.checks.memory.percentage}% -
-              Monitor closely
+              High Usage: Memory at {detailed.checks.memory.percentage}% - Monitor closely
             </span>
           </div>
         )}
-      </>
+      </div>
     );
-  };
+  }, [basic, detailed, error, loading, fetchHealth, barChartData, showMemoryAlert]);
 
   return (
-    <div className="bg-white rounded-[10px] shadow-sm border p-4 h-[67vh] flex flex-col">
-      {/* Header with refresh button */}
-      {/* <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2 flex-shrink-0">
+    <div className="container mx-auto p-4 bg-gray-100 min-h-screen">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-2">
         <div className="flex items-center gap-2">
           {lastUpdated && (
             <span className="text-xs sm:text-sm text-gray-500">
-              Last updated:{" "}
-              {new Date(lastUpdated).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              {lastUpdated && (
+  <span className="text-xs sm:text-sm text-gray-500">
+    Last updated:{" "}
+    {new Date(lastUpdated).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}
+  </span>
+)}
+
             </span>
           )}
         </div>
@@ -233,10 +237,8 @@ export const SystemHealth: React.FC = () => {
           />
           Refresh
         </Button>
-      </div> */}
-
-      {/* Content area that fills remaining space */}
-      <div className="flex flex-col flex-1 min-h-0">{renderContent()}</div>
+      </div>
+      {renderContent}
     </div>
   );
 };

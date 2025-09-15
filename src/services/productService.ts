@@ -33,7 +33,22 @@ export const updateProduct = async (
   return response.data;
 };
 
-// New delete product function
+// ✅ New function for updating stock levels
+export const updateProductStock = async (
+  productId: string,
+  quantity: number,
+  unit: string,
+  operation: "add" | "subtract"
+): Promise<Product> => {
+  const response = await api.patch(`/products/${productId}/stock`, {
+    quantity,
+    unit,
+    operation,
+  });
+  return response.data;
+};
+
+// ✅ Delete product function
 export const deleteProduct = async (id: string): Promise<void> => {
   const response = await api.delete(`/products/${id}/delete`);
   return response.data;

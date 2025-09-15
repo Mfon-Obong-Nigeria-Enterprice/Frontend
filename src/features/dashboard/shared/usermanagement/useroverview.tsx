@@ -27,6 +27,8 @@ import {
 } from "lucide-react";
 import { MdOutlineHome } from "react-icons/md";
 
+
+
 type UserDataProps = {
   _id: string;
   name: string;
@@ -206,8 +208,9 @@ const UserOverview = () => {
                     <>
                       <button
                         className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] font-medium"
-                        onClick={() => navigate("/manager/dashboard/user-log")}
-                      >
+                        onClick={() => navigate(
+                        "/manager/dashboard/user-log"
+                      )} >
                         <span className="flex-1 text-left">User Audit Log</span>
                         <ExternalLink className="size-4 text-muted-foreground" />
                       </button>

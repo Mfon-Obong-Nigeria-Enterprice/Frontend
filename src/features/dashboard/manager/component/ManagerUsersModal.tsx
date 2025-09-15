@@ -201,12 +201,12 @@ export function ManagerUsersModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] font-inter rounded-lg shadow-lg max-h-[90vh] overflow-y-auto">
-        <div className="p-4 space-y-6">
+      <DialogContent className="sm:max-w-[600px] font-inter rounded-lg  shadow-lg max-h-[90vh] overflow-y-auto">
+        <div className="p-4  space-y-6">
           <form className="space-y-4" onSubmit={handleFormSubmit}>
             <h2 className="text-lg font-semibold">Edit Profile</h2>
 
-            <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg shadow-sm">
+            <div className="flex items-center space-x-4 p-4 bg-[#D9D9D9] rounded-lg shadow-sm">
               <div
                 className={`relative w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center border-2 ${
                   isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"

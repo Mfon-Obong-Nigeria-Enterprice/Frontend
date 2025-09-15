@@ -34,15 +34,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 import UpdateStock from "./components/UpdateStock";
-// import {
-//   DropdownMenu,
-//   DropdownMenuContent,
-//   DropdownMenuItem,
-//   DropdownMenuTrigger,
-// } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-// import { Badge } from "@/components/ui/badge";
 import EmptyInventory from "../shared/EmptyInventory";
 
 const AdminInventory = () => {
@@ -55,10 +48,9 @@ const AdminInventory = () => {
   const [addCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
   const [stockStatus, setStockStatus] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
-  // const [showFilters, setShowFilters] = useState(false);
   const [showMobileActions, setShowMobileActions] = useState(false);
 
-  // set the search query from zustand store
+  // Zustand store
   const {
     products,
     categories,
@@ -89,9 +81,17 @@ const AdminInventory = () => {
     return products;
   }, [products]);
 
-  const handleSave = (updatedProducts: Product[]) => {
-    updateProductsBulk(updatedProducts);
-    setIsModalOpen(false);
+  // ✅ FIXED: Save handler now updates Zustand & allows API call
+  const handleSave = async (updatedProducts: Product[]) => {
+    try {
+      // Optional: send to backend (uncomment if API exists)
+      // await api.post("/inventory/bulk-update", updatedProducts);
+
+      updateProductsBulk(updatedProducts); // update Zustand state
+      setIsModalOpen(false); // close modal after saving
+    } catch (error) {
+      console.error("Failed to update stock:", error);
+    }
   };
 
   const suggestions = useMemo(() => {
@@ -120,7 +120,6 @@ const AdminInventory = () => {
     }
   };
 
-  // Filtering logic for stock status
   function filterByStockStatus(product: Product) {
     if (stockStatus === "all") return true;
     if (stockStatus === "high") return product.stock >= product.minStockLevel;
@@ -130,7 +129,6 @@ const AdminInventory = () => {
     return true;
   }
 
-  // Filtering logic for price range
   function filterByPriceRange(product: Product) {
     if (priceRange === "all") return true;
     const price = product.unitPrice;
@@ -159,9 +157,6 @@ const AdminInventory = () => {
       }),
     [products, searchQuery, stockStatus, priceRange]
   );
-
-  // Check if any filters are active
-  // const hasActiveFilters = stockStatus !== "all" || priceRange !== "all";
 
   const closeBothModals = () => {
     setIsAddModalOpen(false);
@@ -230,7 +225,6 @@ const AdminInventory = () => {
     doc.save("inventory_export.pdf");
   };
 
-  // sets initial position of the button
   useEffect(() => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
@@ -264,8 +258,8 @@ const AdminInventory = () => {
   }, [dragging, rel]);
 
   return (
-    <main className="px-3 lg:px-4 lg:max-w-4xl xl:max-w-6xl 2xl:max-w-full mx-auto">
-      <div className="">
+    <main className="px-3 lg:px-4 lg:max-w-4xl xl:max-w-6xl mx-auto">
+      <div>
         <DashboardTitle
           heading="Inventory Management"
           description="Manage your products and categories"
@@ -338,7 +332,6 @@ const AdminInventory = () => {
                   </div>
                 </div>
 
-                {/* Mobile Actions Dropdown */}
                 {showMobileActions && (
                   <Card className="mt-4 lg:hidden">
                     <CardContent className="p-3">
@@ -382,9 +375,8 @@ const AdminInventory = () => {
               </div>
             </div>
 
-            {/* Search and Filters Section */}
+            {/* Search & Filters */}
             <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-5">
-              {/* Search Bar */}
               <div className="relative md:flex-1 w-full md:w-auto">
                 <div className="relative">
                   <IoIosSearch
@@ -399,7 +391,6 @@ const AdminInventory = () => {
                   />
                 </div>
 
-                {/* Search Suggestions */}
                 {searchQuery.trim() && suggestions.length > 0 && (
                   <div className="absolute top-full left-0 right-0 bg-white shadow-lg z-10 border border-gray-200 rounded-b-lg max-h-50 overflow-y-auto">
                     {suggestions.map((suggestion, i) => (
@@ -419,7 +410,6 @@ const AdminInventory = () => {
                   </div>
                 )}
 
-                {/* No Results */}
                 {searchQuery.trim() && suggestions.length === 0 && (
                   <div className="absolute top-full left-0 right-0 bg-white shadow-lg z-10 p-4 text-center text-gray-500 border border-gray-200 rounded-b-lg">
                     No matching products found for{" "}
@@ -428,10 +418,7 @@ const AdminInventory = () => {
                 )}
               </div>
 
-              {/* Filters Row */}
-
-              {/* Desktop Filters */}
-              <div className=" items-center gap-4 flex ">
+              <div className="items-center gap-4 flex">
                 <Select value={stockStatus} onValueChange={setStockStatus}>
                   <SelectTrigger className="w-full sm:w-38">
                     <SelectValue placeholder="Stock status" />
@@ -460,7 +447,7 @@ const AdminInventory = () => {
               </div>
             </div>
 
-            {/* Content Section */}
+            {/* Content */}
             <div className="p-4 sm:p-6" ref={containerRef}>
               <InventoryTab
                 products={filteredProducts}
@@ -469,7 +456,7 @@ const AdminInventory = () => {
                 priceRange={priceRange}
               />
 
-              {/* Floating Add Button - Responsive */}
+              {/* Floating Add Button */}
               <button
                 onClick={() => setIsAddModalOpen(true)}
                 onMouseDown={handleMouseDown}
@@ -484,7 +471,6 @@ const AdminInventory = () => {
               </button>
             </div>
 
-            {/* Modals */}
             <UpdateStock
               products={productsForUpdateStock}
               categories={categories}

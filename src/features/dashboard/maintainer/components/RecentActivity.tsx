@@ -39,7 +39,7 @@ const RecentActivity = () => {
 
 
   return (
-    <div className="bg-white rounded-[10px] shadow-sm border p-4 h-[67vh] flex flex-col">
+    <div className="bg-white rounded-[10px] shadow-sm border p-4  flex flex-col">
       {/* Header */}
       <h5 className="text-lg font-semibold mb-4 border-b pb-2 flex-shrink-0">
         Recent Activity
