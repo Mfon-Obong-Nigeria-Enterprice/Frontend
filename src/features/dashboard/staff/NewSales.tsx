@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { io } from "socket.io-client";
 
@@ -78,6 +79,7 @@ const emptyRow: Row = {
 };
 
 const NewSales: React.FC = () => {
+  const queryClient = useQueryClient();
   // Store data
   const { products } = useInventoryStore();
   const clients = useClientStore((state) => state.clients);
@@ -97,7 +99,10 @@ const NewSales: React.FC = () => {
 
   // Product state
   const [rows, setRows] = useState<Row[]>([emptyRow]);
+
+  // discount state
   const [discountReason, setDiscountReason] = useState("");
+  const [globalDiscount, setGlobalDiscount] = useState(0);
 
   // receipt state
   const [showReceipt, setShowReceipt] = useState(false);
@@ -144,7 +149,11 @@ const NewSales: React.FC = () => {
     if (!selectedClient && !isWalkIn) return false;
     if (isWalkIn && !walkInData.name.trim()) return false;
     if (!rows.some((row) => row.productId)) return false;
-    if (rows.some((row) => row.discount > 0) && !discountReason.trim())
+    // if (rows.some((row) => row.discount > 0) && !discountReason.trim())
+    if (
+      (rows.some((row) => row.discount > 0) || globalDiscount > 0) &&
+      !discountReason.trim()
+    )
       return false;
     if (!paymentMethod) return false;
     const paid = getAmountPaid();
@@ -183,7 +192,7 @@ const NewSales: React.FC = () => {
       0
     );
 
-    const discountTotal = rows.reduce((acc, row) => {
+    const rowDiscountTotal = rows.reduce((acc, row) => {
       const lineAmount = Number(row.quantity) * Number(row.unitPrice);
       if (!row.discount) return acc;
 
@@ -196,6 +205,10 @@ const NewSales: React.FC = () => {
 
       return acc + discountAmount;
     }, 0);
+
+    // only apply global discount if no discount exists
+    const discountTotal =
+      rowDiscountTotal > 0 ? rowDiscountTotal : globalDiscount;
 
     const total = subtotal - discountTotal;
     return { subtotal, discountTotal, total };
@@ -238,11 +251,12 @@ const NewSales: React.FC = () => {
     setIsWalkIn(false);
     setWalkInData({ name: "", phone: "" });
     setRows([{ ...emptyRow }]);
-    setPaymentMethod("");
+    setPaymentMethod("cash");
     setAmountPaid("");
     setDiscountReason("");
     setNotes("");
     setIsSubmitting(false);
+    setGlobalDiscount(0);
   };
 
   const handleSubmit = async () => {
@@ -261,7 +275,8 @@ const NewSales: React.FC = () => {
             productId: row.productId,
             quantity: row.quantity,
             unit: product?.unit || "pcs",
-            discount: row.discount || 0,
+            discount: discountTotal,
+            // discount: row.discount || 0,
           };
         });
 
@@ -291,19 +306,23 @@ const NewSales: React.FC = () => {
         amountPaid: effectiveAmountPaid,
         discount: discountTotal,
         paymentMethod:
-          saleType === "PICKUP" ? "PICKUP" : paymentMethodForBackend,
-        // saleType === "PICKUP" ? "Credit" : paymentMethodForBackend,
+          // saleType === "PICKUP" ? "PICKUP" : paymentMethodForBackend,
+          saleType === "PICKUP" ? "Credit" : paymentMethodForBackend,
         notes,
       };
 
       // get the actual transaction returned from backend
-      const transaction = await AddTransaction(payload);
+      await AddTransaction(payload);
+      // const transaction = await AddTransaction(payload);
 
       toast.success("Transaction created successfully");
 
       // pass the backend transaction to the receipt
-      setReceiptData(transaction);
-      setShowReceipt(true);
+      // setReceiptData(transaction);
+      // setShowReceipt(true);
+
+      // Invalidate so transactions refetch immediately
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
 
       handleResetClient();
     } catch (error) {
@@ -401,6 +420,8 @@ const NewSales: React.FC = () => {
                 emptyRow={emptyRow}
                 onDiscountReasonChange={setDiscountReason}
                 discountReason={discountReason}
+                setGlobalDiscount={setGlobalDiscount}
+                globalDiscount={globalDiscount}
               />
             </div>
           )}
@@ -511,19 +532,11 @@ const NewSales: React.FC = () => {
                 </p>
 
                 {/* new balance */}
-
                 <p className="flex justify-between items-center text-sm font-Inter border-t border-[#7D7D7D] pt-2 font-medium">
                   <span className="text-[#7D7D7D]">
                     New balance (After purchase):
                   </span>
                   <span className={balanceTextClass(newBalance)}>
-                    {/* {newBalance >= 0
-                      ? `₦${newBalance.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                        })} (Credit)`
-                      : `₦${Math.abs(newBalance).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                        })} (Debt)`} */}
                     {formatCurrency(newBalance)}{" "}
                     {newBalance > 0 ? "(Credit)" : "(Debt)"}
                   </span>

@@ -127,7 +127,7 @@ const OutstandingBalance = () => {
                     index % 2 !== 0 ? "bg-[#F0F0F3]" : ""
                   }`}
                 >
-                  <TableCell className="font-medium pl-4 text-[#444444] text-xs sm:text-base">
+                  <TableCell className="font-medium pl-4 text-[#444444] text-xs sm:text-base capitalize">
                     {client.name}
                   </TableCell>
                   <TableCell className="text-center text-[#F95353] text-xs sm:text-base ">

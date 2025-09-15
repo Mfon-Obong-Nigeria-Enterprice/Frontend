@@ -323,6 +323,13 @@ const AdminInventory = () => {
                       <CiImport size={20} />
                       Import Stock
                     </Button>
+                    <Button
+                      onClick={() => navigate("/admin/dashboard/sale")}
+                      className="gap-2"
+                    >
+                      <Plus size={16} />
+                      Add Sales
+                    </Button>
                   </div>
 
                   {/* Mobile Actions Button */}
@@ -374,6 +381,14 @@ const AdminInventory = () => {
                         >
                           <CiImport size={16} />
                           Import Stock
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={() => navigate("/admin/dashboard/sale")}
+                          className="justify-start gap-2"
+                        >
+                          <Plus size={16} />
+                          Add Sales
                         </Button>
                       </div>
                     </CardContent>
