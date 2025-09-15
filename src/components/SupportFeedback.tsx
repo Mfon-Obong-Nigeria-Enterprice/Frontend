@@ -113,7 +113,10 @@ const SupportFeedback: React.FC<SupportFeedbackProps> = ({ onClose }) => {
             </>
           ) : (
             // Form state
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-4 pt-4 w-[505px] max-w-[300px] sm:max-w-[400px]"
+            >
               {/* Issue Type Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -171,20 +174,20 @@ const SupportFeedback: React.FC<SupportFeedbackProps> = ({ onClose }) => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-2 justify-end">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleClose}
                   disabled={supportMutation.isPending}
-                  className="flex-1"
+                  className=""
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={supportMutation.isPending}
-                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  className=" bg-green-600 hover:bg-green-700"
                 >
                   {supportMutation.isPending ? (
                     <>
@@ -192,7 +195,7 @@ const SupportFeedback: React.FC<SupportFeedbackProps> = ({ onClose }) => {
                       Sending...
                     </>
                   ) : (
-                    "Send Request"
+                    "Send Support"
                   )}
                 </Button>
               </div>
