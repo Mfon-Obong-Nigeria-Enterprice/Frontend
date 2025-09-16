@@ -1,15 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-
-// import {
-//   LayoutDashboard,
-//   UserRoundCog,
-//   Settings,
-//   CreditCard,
-//   Bell,
-//   LogOut,
-// } from "lucide-react";
+// icons imported from react-icons
+import { MdOutlineDashboard } from "react-icons/md";
+import { IoIosPeople, IoIosStats, IoIosNotifications } from "react-icons/io";
+import { RiSettings3Line } from "react-icons/ri";
+import { IoIosLogOut } from "react-icons/io";
 
 // hooks
 import { useLogout } from "@/hooks/uselogout";
@@ -31,32 +27,32 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 
-// Updated items array with string names for Material Symbols
+// Updated items array to use imported icon components
 const items = [
   {
     title: "Overview",
     url: "/maintainer/dashboard/overview",
-    icon: "overview_key",
+    icon: MdOutlineDashboard,
   },
   {
     title: "User Management",
     url: "/maintainer/dashboard/user-management",
-    icon: "manage_accounts",
+    icon: IoIosPeople,
   },
   {
     title: "Activity log",
     url: "/maintainer/dashboard/log",
-    icon: "search_activity",
+    icon: IoIosStats,
   },
   {
     title: "Notification",
     url: "/maintainer/dashboard/maintainer-notifications",
-    icon: "notifications",
+    icon: IoIosNotifications,
   },
   {
     title: "Settings",
     url: "/maintainer/dashboard/settings",
-    icon: "settings",
+    icon: RiSettings3Line,
   },
 ];
 
@@ -90,9 +86,8 @@ const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
                         }`}
                     >
                       <Link to={item.url}>
-                        <span className="material-symbols-outlined">
-                          {item.icon}
-                        </span>
+                        {/* Render the icon component directly */}
+                        <item.icon />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -108,8 +103,8 @@ const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
           className="cursor-pointer"
           onClick={() => onLogoutClick()}
         >
-          {/* Use a <span> with the Material Symbols class */}
-          <span className="material-symbols-outlined">logout</span>
+          {/* Use the imported React icon component for logout */}
+          <IoIosLogOut />
           <span>Logout</span>
         </SidebarMenuButton>
       </SidebarFooter>
@@ -147,4 +142,5 @@ const MaintainerSidebarWithModal = () => {
     </>
   );
 };
+
 export default MaintainerSidebarWithModal;

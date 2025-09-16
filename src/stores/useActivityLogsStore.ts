@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// stores/useActivityLogsStore.ts
 import { create } from "zustand";
 import type { Role } from "@/types/types";
+import { getSystemActivityLogs } from "@/services/activityLogService";// Import your API function
 
 export type ActivityLogs = {
   _id: string;
@@ -16,8 +19,10 @@ export type ActivityLogs = {
 
 type ActivityLogsState = {
   activities: ActivityLogs[];
+  loading: boolean;
+  error: string | null;
   setActivities: (activities: ActivityLogs[]) => void;
-  
+  fetchActivities: () => Promise<void>; // Add this function
   getTotalActivityToday: () => number;
   getFailedLoginAttempts: () => number;
   getDataModifications: () => number;
@@ -25,9 +30,24 @@ type ActivityLogsState = {
 
 export const useActivityLogsStore = create<ActivityLogsState>((set, get) => ({
   activities: [],
+  loading: false,
+  error: null,
 
   setActivities: (activities) => set({ activities }),
 
+  // Add this function to fetch activities from API
+  fetchActivities: async () => {
+    set({ loading: true, error: null });
+    try {
+      const activities = await getSystemActivityLogs();
+      set({ activities, loading: false });
+    } catch (error: any) {
+      set({ 
+        error: error.message || "Failed to fetch activities", 
+        loading: false 
+      });
+    }
+  },
 
   getTotalActivityToday: () => {
     const activities = get().activities;
@@ -52,7 +72,6 @@ export const useActivityLogsStore = create<ActivityLogsState>((set, get) => ({
     ).length;
   },
 
-  
   getDataModifications: () => {
     const activities = get().activities;
     const modificationActions = [

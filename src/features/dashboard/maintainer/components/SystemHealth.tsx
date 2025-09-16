@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import { RefreshCw, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -17,7 +16,6 @@ import {
   useHealthLoading,
   useHealthError,
   useFetchHealth,
-  useHealthLastUpdated,
 } from "@/stores/useHealthStore";
 
 const BAR_COLORS = {
@@ -71,7 +69,6 @@ export const SystemHealth: React.FC = () => {
   const detailed = useDetailedHealth();
   const loading = useHealthLoading();
   const error = useHealthError();
-  const lastUpdated = useHealthLastUpdated();
   const fetchHealth = useFetchHealth();
 
   // ⏳ Initial + interval fetching
@@ -82,13 +79,11 @@ export const SystemHealth: React.FC = () => {
   }, [fetchHealth]);
 
   const getBarColor = (value: number, status?: string) => {
-  if (status === "degraded") return "#FFA500"; // orange
-  if (value >= 90) return BAR_COLORS.critical; // critical
-  if (value >= 80)return BAR_COLORS.high;
-
-return BAR_COLORS.normal; 
-};
-
+    if (status === "degraded") return "#FFA500";
+    if (value >= 90) return BAR_COLORS.critical;
+    if (value >= 80) return BAR_COLORS.high;
+    return BAR_COLORS.normal;
+  };
 
   const barChartData = useMemo(() => {
     if (!detailed) return [];
@@ -125,11 +120,8 @@ return BAR_COLORS.normal;
 
     if (error) {
       return (
-        <div className="p-4">
-          <div className="text-red-500 mb-4">Error: {error.message}</div>
-          <Button onClick={fetchHealth}>
-            <RefreshCw className="mr-2" /> Retry
-          </Button>
+        <div className="p-4 text-red-500">
+          Error: {error.message}
         </div>
       );
     }
@@ -137,13 +129,13 @@ return BAR_COLORS.normal;
     if (!basic || !detailed) {
       return (
         <div className="text-center py-8 text-gray-600">
-          No health data available. Please refresh.
+          No health data available.
         </div>
       );
     }
 
     return (
-      <div className="bg-white p-4  rounded-lg shadow-md">
+      <div className="bg-white p-4 rounded-lg shadow-md">
         <div className="mb-4">
           <h2 className="text-lg font-normal pb-2 md:pb-4">System Health</h2>
           <div className="flex flex-wrap gap-2 md:gap-4 text-xs md:text-sm">
@@ -204,40 +196,10 @@ return BAR_COLORS.normal;
         )}
       </div>
     );
-  }, [basic, detailed, error, loading, fetchHealth, barChartData, showMemoryAlert]);
+  }, [basic, detailed, error, loading, barChartData, showMemoryAlert]);
 
   return (
     <div className="container mx-auto p-4 bg-gray-100 min-h-screen">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-2">
-        <div className="flex items-center gap-2">
-          {lastUpdated && (
-            <span className="text-xs sm:text-sm text-gray-500">
-              {lastUpdated && (
-  <span className="text-xs sm:text-sm text-gray-500">
-    Last updated:{" "}
-    {new Date(lastUpdated).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}
-  </span>
-)}
-
-            </span>
-          )}
-        </div>
-        <Button
-          onClick={fetchHealth}
-          variant="outline"
-          size="sm"
-          disabled={loading}
-          className="text-gray-700 border-gray-300 hover:bg-gray-100 w-full sm:w-auto"
-        >
-          <RefreshCw
-            className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
-          />
-          Refresh
-        </Button>
-      </div>
       {renderContent}
     </div>
   );

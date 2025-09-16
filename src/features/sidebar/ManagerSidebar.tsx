@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-
-// import {
-//   LayoutDashboard,
-//   Book,
-//   UserRound,
-//   UserRoundCog,
-//   Settings,
-//   LogOut,
-// } from "lucide-react";
-// import { MdOutlineNotifications } from "react-icons/md";
-// import { HiMiniChartBar } from "react-icons/hi2";
+// icons
+import {
+  LayoutDashboard,
+  Book,
+  UserRound,
+  UserRoundCog,
+  Settings,
+  LogOut,
+} from "lucide-react";
+import { MdOutlineNotifications } from "react-icons/md";
+import { HiMiniChartBar } from "react-icons/hi2";
 
 // hooks
 import { useLogout } from "@/hooks/uselogout";
@@ -33,47 +33,46 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 
-// Updated items array with string names from Material Symbols
 const items = [
   {
     title: "Dashboard",
     url: "/manager/dashboard/m-overview",
-    icon: "dashboard",
+    icon: LayoutDashboard,
   },
   {
     title: "Business Report",
     url: "/manager/dashboard/business-report",
-    icon: "business_center",
+    icon: Book,
   },
   {
     title: "Clients",
     url: "/manager/dashboard/manage-clients",
-    icon: "groups",
+    icon: UserRound,
   },
   {
     title: "Transaction",
     url: "/manager/dashboard/manage-transactions",
-    icon: "send_money",
+    icon: UserRound,
   },
   {
     title: "Revenue Analytics",
     url: "/manager/dashboard/revenue-analytics",
-    icon: "analytics",
+    icon: HiMiniChartBar,
   },
   {
     title: "User Management",
     url: "/manager/dashboard/manage-user",
-    icon: "manage_accounts",
+    icon: UserRoundCog,
   },
   {
     title: "Notifications",
     url: "/manager/dashboard/manager-notifications",
-    icon: "notifications",
+    icon: MdOutlineNotifications,
   },
   {
     title: "Settings",
     url: "/manager/dashboard/manager-settings",
-    icon: "settings",
+    icon: Settings,
   },
 ];
 
@@ -94,9 +93,8 @@ const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
             <SidebarMenu>
               {items.map((item) => {
                 const isActive = pathname.startsWith(item.url);
-
                 return (
-                  <SidebarMenuItem key={item.title} className="font-bold">
+                  <SidebarMenuItem key={item.title} className="">
                     <SidebarMenuButton
                       asChild
                       className={`hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all
@@ -107,10 +105,7 @@ const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
                         }`}
                     >
                       <Link to={item.url}>
-                       
-                        <span className="material-symbols-outlined">
-                          {item.icon}
-                        </span>
+                        <item.icon />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -126,8 +121,7 @@ const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
           className="cursor-pointer"
           onClick={() => onLogoutClick()}
         >
-          {/* Use a <span> with the Material Symbols class */}
-          <span className="material-symbols-outlined">logout</span>
+          <LogOut />
           <span>Logout</span>
         </SidebarMenuButton>
       </SidebarFooter>
@@ -151,7 +145,7 @@ const ManagerSidebarWithModal = () => {
       logoutMutation.mutate();
       setIsLoading(false);
       setShowModal(false);
-    }, 100);
+    }, 500);
   };
 
   return (

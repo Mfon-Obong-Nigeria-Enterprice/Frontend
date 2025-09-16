@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-
-// import { MdOutlineDashboard, MdOutlineShoppingBag } from "react-icons/md";
-// import { BsBoxSeam } from "react-icons/bs";
-// import { IoPerson } from "react-icons/io5";
-// import { RiLogoutCircleRLine } from "react-icons/ri";
-// import { IoIosLogOut } from "react-icons/io";
+// icons
+import { MdOutlineDashboard, MdOutlineShoppingBag } from "react-icons/md";
+import { BsBoxSeam } from "react-icons/bs";
+import { IoPerson } from "react-icons/io5";
+import { RiFileListLine } from "react-icons/ri"; // Changed from RiLogoutCircleRLine
+import { IoIosLogOut } from "react-icons/io";
 
 // hook
 import { useLogout } from "@/hooks/uselogout";
@@ -28,31 +28,25 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 
-
 const items = [
   {
     title: "Dashboard",
     url: "/staff/dashboard/s-overview",
-    icon: "dashboard",
+    icon: MdOutlineDashboard,
   },
-  {
-    title: "Stock Levels",
-    url: "/staff/dashboard/s-stock",
-    icon: "inventory_2",
-  },
-  { title: "Clients", url: "/staff/dashboard/s-clients", icon: "groups" },
+  { title: "Stock Levels", url: "/staff/dashboard/s-stock", icon: BsBoxSeam },
+  { title: "Clients", url: "/staff/dashboard/s-clients", icon: IoPerson },
   {
     title: "New Sales",
     url: "/staff/dashboard/new-sales",
-    icon: "shopping_cart",
+    icon: MdOutlineShoppingBag,
   },
   {
     title: "My Sales",
     url: "/staff/dashboard/s-sales",
-    icon: "shopping_bag ",
+    icon: RiFileListLine,
   },
 ];
-
 type StaffSidebarProps = {
   onLogoutClick: () => void;
 };
@@ -71,7 +65,7 @@ function StaffSidebar({ onLogoutClick }: StaffSidebarProps) {
               {items.map((item) => {
                 const isActive = pathname.startsWith(item.url);
                 return (
-                  <SidebarMenuItem key={item.title} className=" font-bold">
+                  <SidebarMenuItem key={item.title} className="">
                     <SidebarMenuButton
                       asChild
                       className={`hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all
@@ -82,10 +76,7 @@ function StaffSidebar({ onLogoutClick }: StaffSidebarProps) {
                         }`}
                     >
                       <Link to={item.url}>
-                     
-                        <span className="material-symbols-outlined ">
-                          {item.icon}
-                        </span>
+                        <item.icon />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -98,8 +89,7 @@ function StaffSidebar({ onLogoutClick }: StaffSidebarProps) {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenuButton className="cursor-pointer" onClick={onLogoutClick}>
-          {/* Use a <span> with the Material Symbols class */}
-          <span className="material-symbols-outlined">logout</span>
+          <IoIosLogOut />
           <span>Logout</span>
         </SidebarMenuButton>
       </SidebarFooter>
@@ -118,11 +108,12 @@ export const StaffSidebarWithModal = () => {
 
   const handleConfirm = async () => {
     setIsLoading(true);
+
     setTimeout(() => {
       logoutMutation.mutate();
       setIsLoading(false);
       setShowModal(false);
-    }, 100);
+    }, 500);
   };
 
   return (
