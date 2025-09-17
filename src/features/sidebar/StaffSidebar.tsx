@@ -5,8 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 import { MdOutlineDashboard, MdOutlineShoppingBag } from "react-icons/md";
 import { BsBoxSeam } from "react-icons/bs";
 import { IoPerson } from "react-icons/io5";
-// import {  IoSettingsOutline } from "react-icons/io5";
-import { RiLogoutCircleRLine } from "react-icons/ri";
+import { RiFileListLine } from "react-icons/ri"; // Changed from RiLogoutCircleRLine
 import { IoIosLogOut } from "react-icons/io";
 
 // hook
@@ -45,7 +44,7 @@ const items = [
   {
     title: "My Sales",
     url: "/staff/dashboard/s-sales",
-    icon: RiLogoutCircleRLine,
+    icon: RiFileListLine,
   },
 ];
 type StaffSidebarProps = {
@@ -110,18 +109,16 @@ export const StaffSidebarWithModal = () => {
   const handleConfirm = async () => {
     setIsLoading(true);
 
-    // wait for 1 second before logout
     setTimeout(() => {
-      logoutMutation.mutate(); // trigger logout
+      logoutMutation.mutate();
       setIsLoading(false);
       setShowModal(false);
-    }, 100);
+    }, 500);
   };
 
   return (
     <>
       <StaffSidebar onLogoutClick={handleLogoutClick} />
-      {/* the logout modal */}
       <LogoutConfirmModal
         isOpen={showModal}
         onClose={() => !isLoading && setShowModal(false)}

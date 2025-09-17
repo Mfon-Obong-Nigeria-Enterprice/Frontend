@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Debug version of ColumnSettings component with better error handling
 
 import { useMemo, useState, useCallback, useEffect } from "react";

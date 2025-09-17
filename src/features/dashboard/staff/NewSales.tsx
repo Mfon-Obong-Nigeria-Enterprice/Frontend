@@ -10,6 +10,7 @@ import ClientDisplayBox from "./components/ClientDisplayBox";
 import WalkinClientDetailBox from "./components/WalkinClientDetailBox";
 import SalesReceipt from "./components/SalesReceipt";
 
+
 // store
 import { useInventoryStore } from "@/stores/useInventoryStore";
 import { useClientStore } from "@/stores/useClientStore";
@@ -107,6 +108,8 @@ const NewSales: React.FC = () => {
   // receipt state
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
+
+   const [bankSearch, setBankSearch] = useState("");
 
   // listen for socket event
   useEffect(() => {
@@ -439,6 +442,7 @@ const NewSales: React.FC = () => {
                   onValueChange={(val) => {
                     setPaymentMethod(val);
                     setSubMethod("");
+                    setBankSearch("");
                   }}
                 >
                   <SelectTrigger className="w-[180px] bg-[#D9D9D9]">
@@ -464,17 +468,48 @@ const NewSales: React.FC = () => {
                   <Label className="mb-1">
                     Choose {paymentMethod === "pos" ? "POS" : "Bank"}
                   </Label>
+                 
+
                   <Select value={subMethod} onValueChange={setSubMethod}>
                     <SelectTrigger className="w-[180px] bg-[#D9D9D9]">
                       <SelectValue placeholder="Select option" />
                     </SelectTrigger>
-                    <SelectContent>
-                      {getSubList().map((name) => (
-                        <SelectItem key={name} value={name}>
-                          {name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+                     <SelectContent side="top" 
+        className="max-h-[250px] overflow-y-auto">
+      
+        <div
+          className="px-2 py-2 sticky top-0 bg-white z-10"
+          onClick={(e) => e.stopPropagation()} // prevent dropdown from closing
+        >
+          <Input
+            type="text"
+            placeholder={`Search ${paymentMethod === "pos" ? "POS" : "Bank"}`}
+            value={bankSearch}
+            onChange={(e) => setBankSearch(e.target.value)}
+            className="h-8 text-sm"
+          />
+        </div>
+
+        {/* Filtered List */}
+        {getSubList()
+          .filter((name) =>
+            name.toLowerCase().includes(bankSearch.toLowerCase())
+          )
+          .map((name) => (
+            <SelectItem key={name} value={name}>
+              {name}
+            </SelectItem>
+          ))}
+
+        {/* Show message if no results */}
+        {getSubList().filter((name) =>
+          name.toLowerCase().includes(bankSearch.toLowerCase())
+        ).length === 0 && (
+          <div className="px-3 py-2 text-sm text-gray-500">
+            No matches found
+          </div>
+        )}
+      </SelectContent>
                   </Select>
                 </div>
               )}

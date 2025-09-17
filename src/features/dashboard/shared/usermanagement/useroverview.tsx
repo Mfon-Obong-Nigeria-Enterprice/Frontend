@@ -26,6 +26,7 @@ import {
   Plus,
 } from "lucide-react";
 import { MdOutlineHome } from "react-icons/md";
+import BusinessLocationModal from "./modals/BusinessLocationModal";
 
 type UserDataProps = {
   _id: string;
@@ -56,6 +57,8 @@ const UserOverview = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUserData, setSelectedUserData] = useState<UserDataProps | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isBusinessModalOpen, setIsBusinessModalOpen] = useState(false);
+
   const [filters, setFilters] = useState({
     role: "all",
     location: "all",
@@ -218,11 +221,8 @@ const UserOverview = () => {
                     variant="ghost"
                     className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium"
                     onClick={() => {
-                      const url =
-                        user?.role === "SUPER_ADMIN" ? "manager" : "maintainer";
-                      navigate(
-                        `/${url}/dashboard/user-management/col-settings`
-                      );
+                      const url = user?.role === "SUPER_ADMIN" ? "manager" : "maintainer";
+                      navigate(`/${url}/dashboard/user-management/col-settings`);
                     }}
                   >
                     <span className="flex-1 text-left py-5">
@@ -234,13 +234,15 @@ const UserOverview = () => {
                   {user?.role === "MAINTAINER" && (
                     <>
                       <hr className="border-[#F0F0F0]" />
-                      <button className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium">
+                      <button
+                        className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium"
+                        onClick={() => setIsBusinessModalOpen(true)}
+                      >
                         <span className="flex-1 text-left">
-                          Add Bussiness Locations
+                          Add Business Locations
                         </span>
                         <MdOutlineHome className="size-5 text-muted-foreground" />
                       </button>
-                      <hr className="border-[#F0F0F0]" />
                     </>
                   )}
                 </>
@@ -287,6 +289,17 @@ const UserOverview = () => {
             closeModal={handleCloseEditModal}
             userData={selectedUserData}
           />
+        </Modal>
+      )}
+
+      {/* business location modal */}
+      {isBusinessModalOpen && (
+        <Modal
+          size="lg"
+          isOpen={isBusinessModalOpen}
+          onClose={() => setIsBusinessModalOpen(false)}
+        >
+          <BusinessLocationModal closeModal={() => setIsBusinessModalOpen(false)} />
         </Modal>
       )}
     </main>

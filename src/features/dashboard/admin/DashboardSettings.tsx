@@ -2,7 +2,7 @@
 // features/dashboard/super-admin/components/DashboardSettings.tsx
 import * as React from "react";
 import { AlertSettingsSection } from "./components/AlertSettings";
-import { NotificationSettingsSection } from "./components/NotificationSettings";
+// import { NotificationSettingsSection } from "./components/NotificationSettings";
 import { PriceUpdateTableSection } from "./components/PriceUpdate";
 import { useUpdateProductPrice } from "@/hooks/useSetting";
 import { useInventoryStore } from "@/stores/useInventoryStore";
@@ -170,7 +170,7 @@ const handleUpdatePrice = async (productId: string, newPrice: number) => {
             />
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          {/* <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">
               Notification Preferences
             </h2>
@@ -179,7 +179,7 @@ const handleUpdatePrice = async (productId: string, newPrice: number) => {
               onSettingChange={handleSettingChange}
               isReadOnly={!canModifySettings}
             />
-          </div>
+          </div> */}
 
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <PriceUpdateTableSection

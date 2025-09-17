@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const healthStatusSchema = z.enum([
   "healthy",
@@ -7,7 +7,7 @@ export const healthStatusSchema = z.enum([
   "down",
   "critical",
   "degraded",
-  "high",
+  "high", 
 ]);
 
 export type HealthStatus = z.infer<typeof healthStatusSchema>;
@@ -54,9 +54,7 @@ export const detailedHealthResponseSchema = z.object({
 
 // Type exports
 export type BasicHealthResponse = z.infer<typeof basicHealthResponseSchema>;
-export type DetailedHealthResponse = z.infer<
-  typeof detailedHealthResponseSchema
->;
+export type DetailedHealthResponse = z.infer<typeof detailedHealthResponseSchema>;
 export type MemoryUsage = z.infer<typeof memoryUsageSchema>;
 export type DatabaseCheck = z.infer<typeof databaseCheckSchema>;
 export type MemoryCheck = z.infer<typeof memoryCheckSchema>;
