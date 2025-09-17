@@ -112,8 +112,8 @@ const SupportFeedback: React.FC<SupportFeedbackProps> = ({ onClose }) => {
   };
 
   return (
-    <section className="absolute top-0 left-0 w-full h-screen bg-black/50 flex justify-center items-center px-2 z-50">
-      <div className="bg-white min-h-100 rounded-xl overflow-hidden">
+    <section className="absolute top-0 left-0 w-full  min-h-screen bg-black/50 flex justify-center items-center px-2 z-50 ">
+      <div className="bg-white min-h-100 rounded-xl overflow-hidden mb-15">
         <h4 className="text-start pl-4 py-4 bg-[#F0F0F3] text-gray-900 text-base font-medium">
           {isSubmitted ? "Support Request Sent" : "What's your challenge"}
         </h4>
