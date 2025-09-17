@@ -29,6 +29,34 @@ export function getProgressColor(value: number, isDatabase: boolean): string {
   }
 }
 
+
+export function timeAgo(date: string | Date): string {
+  const now = new Date();
+  const past = new Date(date);
+  let diffMs = now.getTime() - past.getTime();
+
+  const inFuture = diffMs < 0;
+  if (inFuture) diffMs = Math.abs(diffMs);
+
+  const seconds = Math.floor(diffMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  let result = "";
+  if (days > 0) {
+    result = `${days} ${days === 1 ? "day" : "days"}`;
+  } else if (hours > 0) {
+    result = `${hours} ${hours === 1 ? "hour" : "hours"}`;
+  } else if (minutes > 0) {
+    result = `${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
+  } else {
+    result = `${seconds} ${seconds === 1 ? "second" : "seconds"}`;
+  }
+
+  return inFuture ? `in ${result}` : `${result} ago`;
+}
+
 export function formatUptime(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);

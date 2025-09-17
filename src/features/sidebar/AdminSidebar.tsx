@@ -2,12 +2,17 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 // icons
-import { MdOutlineDashboard, MdOutlineShoppingBag } from "react-icons/md";
-import { BsBoxSeam } from "react-icons/bs";
-import { IoPerson, IoSettingsOutline } from "react-icons/io5";
-import { RiLogoutCircleRLine } from "react-icons/ri";
-import { Bell } from "lucide-react";
+import { MdOutlineShoppingBag } from "react-icons/md";
+// Corrected imports to use lucide-react and react-icons for component-based icons
+import {
+  LayoutDashboard,
+  Book,
+  CreditCard,
+  Settings,
+  Bell,
+} from "lucide-react";
 import { IoIosLogOut } from "react-icons/io";
+import { IoPerson } from "react-icons/io5";
 
 // hooks
 import { useLogout } from "@/hooks/uselogout";
@@ -21,7 +26,6 @@ import {
   Sidebar,
   SidebarContent,
   SidebarGroupContent,
-  // SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -34,31 +38,32 @@ const items = [
   {
     title: "Dashboard",
     url: "/admin/dashboard/overview",
-    icon: MdOutlineDashboard,
+    icon: LayoutDashboard, // Replaced Vector
   },
-  { title: "Inventory", url: "/admin/dashboard/inventory", icon: BsBoxSeam },
+  { title: "Inventory", url: "/admin/dashboard/inventory", icon: Book }, // Replaced Vector with a relevant icon
   { title: "Clients", url: "/admin/dashboard/clients", icon: IoPerson },
   { title: "Sales", url: "/admin/dashboard/sales", icon: MdOutlineShoppingBag },
   {
     title: "Transactions",
     url: "/admin/dashboard/transactions",
-    icon: RiLogoutCircleRLine,
+    icon: CreditCard, // Replaced Transaction
   },
   {
     title: "Notifications",
     url: "/admin/dashboard/admin-notifications",
-    icon: Bell,
+    icon: Bell, // Replaced notification
   },
   {
     title: "Settings",
     url: "/admin/dashboard/settings",
-    icon: IoSettingsOutline,
+    icon: Settings, // Replaced Settings
   },
 ];
 
 type AdminSidebarProps = {
   onLogoutClick: () => void;
 };
+
 function AdminSidebar({ onLogoutClick }: AdminSidebarProps) {
   const { pathname } = useLocation();
 
@@ -107,18 +112,21 @@ function AdminSidebar({ onLogoutClick }: AdminSidebarProps) {
 
 export const AdminSidebarWithModal = () => {
   const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const logoutMutation = useLogout();
 
   const handleLogoutClick = () => {
     setShowModal(true);
   };
 
-  const handleConfirm = () => {
-    logoutMutation.mutate(undefined, {
-      onSettled: () => {
-        setShowModal(false); // close modal no matter what
-      },
-    });
+  const handleConfirm = async () => {
+    setIsLoading(true);
+
+    setTimeout(() => {
+      logoutMutation.mutate();
+      setIsLoading(false);
+      setShowModal(false);
+    }, 500);
   };
 
   return (
@@ -126,47 +134,10 @@ export const AdminSidebarWithModal = () => {
       <AdminSidebar onLogoutClick={handleLogoutClick} />
       <LogoutConfirmModal
         isOpen={showModal}
-        onClose={() => !logoutMutation.isPending && setShowModal(false)}
+        onClose={() => !isLoading && setShowModal(false)}
         onConfirm={handleConfirm}
-        isLoading={logoutMutation.isPending}
+        isLoading={isLoading}
       />
     </>
   );
 };
-
-// export const AdminSidebarWithModal = () => {
-//   const [showModal, setShowModal] = useState(false);
-//   const [isLoading, setIsLoading] = useState(false);
-//   const logoutMutation = useLogout();
-
-//   const handleLogoutClick = () => {
-//     setShowModal(true);
-//   };
-
-//   const handleConfirm = async () => {
-//     setIsLoading(true);
-
-//     // wait for 1 second before logout
-//     // setTimeout(() => {
-//     logoutMutation.mutate(); // trigger logout
-
-//     setIsLoading(false);
-//     setShowModal(false);
-//     // }, 100);
-//   };
-
-//   return (
-//     <>
-//       <AdminSidebar onLogoutClick={handleLogoutClick} />
-//       {/* the logout modal */}
-//       <LogoutConfirmModal
-//         isOpen={showModal}
-//         onClose={() =>
-//           !isLoading && setShowModal(false) && !logoutMutation.isPending
-//         }
-//         onConfirm={handleConfirm}
-//         isLoading={isLoading}
-//       />
-//     </>
-//   );
-// };

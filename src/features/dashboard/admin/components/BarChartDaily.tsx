@@ -20,6 +20,9 @@ const BarChartDaily = () => {
   const { transactions } = useTransactionsStore();
   const salesData: DailySales[] = getDailySales(transactions ?? []);
 
+  const maxValue = Math.max(0, ...salesData.map((item) => item.sales));
+  const step = Math.ceil(maxValue / 6); // about 6 ticks
+
   const data: ChartData<"bar", number[], string> = {
     labels: salesData.map((item) => item.day),
     datasets: [
@@ -37,7 +40,7 @@ const BarChartDaily = () => {
       legend: { display: false },
       tooltip: {
         callbacks: {
-          label: (context) => `₦${context.parsed.y}`,
+          label: (context) => `₦${context.parsed.y.toLocaleString()}`,
         },
       },
     },
@@ -45,18 +48,16 @@ const BarChartDaily = () => {
       x: {
         grid: {
           display: false,
-          // drawBorder: false,
         },
       },
       y: {
         ticks: {
           callback: (value) => `₦${value.toLocaleString()}`,
-          stepSize: 100,
+          stepSize: step,
         },
         beginAtZero: true,
         grid: {
           display: false,
-          // drawBorder: false,
         },
       },
     },

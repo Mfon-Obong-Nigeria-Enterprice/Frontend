@@ -2,6 +2,7 @@ import api from "./baseApi";
 import { useNotificationStore } from "@/stores/useNotificationStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import type { Role } from "@/types/types";
+import { WebSocketNotificationService } from "./webSocketNotificationService";
 
 // Types
 interface GeneratePasswordResponse {
@@ -13,8 +14,8 @@ interface GeneratePasswordResponse {
 interface SendToBranchAdminRequest {
   userId: string;
   branchAdminId: string;
-  branchAdminEmail: string; // Add email field
-  branchId: string; // Add branch ID field
+  branchAdminEmail: string;
+  branchId: string;
   message: string;
   temporaryPassword: string;
 }
@@ -22,7 +23,7 @@ interface SendToBranchAdminRequest {
 interface SupportRequestData {
   issueType: string;
   email: string;
-  description?: string;
+  message?: string;
 }
 
 interface BranchNotification {
@@ -36,7 +37,16 @@ interface BranchNotification {
   __v: number;
 }
 
-// Generate temporary password for user - backend handles generation of password
+interface SupportNotification {
+  _id: string;
+  userEmail: string;
+  message: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
+// Generate temporary password for user
 export const generateTemporaryPassword = async (
   userId: string
 ): Promise<GeneratePasswordResponse> => {
@@ -59,7 +69,6 @@ export const sendPasswordToBranchAdmin = async (
   request: SendToBranchAdminRequest
 ): Promise<void> => {
   try {
-    // Use the correct API payload structure
     const response = await api.post("/maintenance-mode/notify-branch-admin", {
       email: request.branchAdminEmail,
       branch: request.branchId,
@@ -72,9 +81,11 @@ export const sendPasswordToBranchAdmin = async (
       const { addNotification } = useNotificationStore.getState();
 
       addNotification({
-        id: `password-sent-${Date.now()}`,
+        id: `password-sent-${Date.now()}-${Math.random()
+          .toString(36)
+          .substr(2, 9)}`,
         title: "Password Reset Notification Sent",
-        message: `Temporary password has been sent to the branch admin ${currentUser.name} successfully`,
+        message: `Temporary password has been sent to branch admin ${request.branchAdminEmail} successfully`,
         type: "success",
         read: false,
         createdAt: new Date(),
@@ -88,6 +99,16 @@ export const sendPasswordToBranchAdmin = async (
           timestamp: new Date().toISOString(),
         },
       });
+
+      // Also emit via WebSocket if available
+      const wsService = WebSocketNotificationService.getInstance();
+      if (wsService.isConnected()) {
+        wsService.emitPasswordReset({
+          branchAdminEmail: request.branchAdminEmail,
+          temporaryPassword: request.temporaryPassword,
+          userName: currentUser.name || "Unknown User",
+        });
+      }
     }
 
     return response.data;
@@ -97,15 +118,16 @@ export const sendPasswordToBranchAdmin = async (
   }
 };
 
-// Send support request to maintainer
+// Updated sendSupportRequest to use correct API endpoint
 export const sendSupportRequest = async (
   supportData: SupportRequestData
 ): Promise<void> => {
   try {
+    // Use the correct API endpoint structure
     const response = await api.post("/maintenance-mode/contact-support", {
-      email: supportData.email,
+      userEmail: supportData.email,
       message:
-        supportData.description || `Support request: ${supportData.issueType}`,
+        supportData.message || `Support request for: ${supportData.issueType}`,
     });
 
     // Create notification for the user who sent the request
@@ -114,10 +136,12 @@ export const sendSupportRequest = async (
       const { addNotification } = useNotificationStore.getState();
 
       addNotification({
-        id: `support-request-${Date.now()}`,
+        id: `support-request-${Date.now()}-${Math.random()
+          .toString(36)
+          .substr(2, 9)}`,
         title: "Support Request Sent",
-        message: `Your support request has been sent to the maintainer`,
-        type: "info",
+        message: `Your support request has been sent to the maintainer successfully`,
+        type: "success",
         read: false,
         createdAt: new Date(),
         recipients: [currentUser.role as Role],
@@ -131,31 +155,58 @@ export const sendSupportRequest = async (
       });
     }
 
-    // Create a notification for maintainers about the support request
-    // This simulates what the backend should do - create notifications for maintainers
-    const { addNotification } = useNotificationStore.getState();
-    addNotification({
-      id: `support-request-maintainer-${Date.now()}`,
-      title: "New Support Request",
-      message: `Support request from ${supportData.email}: ${supportData.issueType}`,
-      type: "error",
-      read: false,
-      createdAt: new Date(),
-      recipients: ["MAINTAINER"],
-      userId: "maintainer", // This should ideally come from the actual maintainer user ID
-      action: "support_request_received",
-      meta: {
+    // Emit support request via WebSocket for real-time notifications to maintainers
+    const wsService = WebSocketNotificationService.getInstance();
+    if (wsService.isConnected()) {
+      wsService.emitSupportRequest({
+        email: supportData.email,
         issueType: supportData.issueType,
-        userEmail: supportData.email,
-        description: supportData.description,
-        timestamp: new Date().toISOString(),
-      },
-    });
+        message:
+          supportData.message ||
+          `Support request for: ${supportData.issueType}`,
+      });
+    }
 
     return response.data;
   } catch (error) {
     console.error("Error sending support request:", error);
     throw error;
+  }
+};
+
+// Get all support notifications for maintainers (using correct endpoint)
+export const getSupportNotifications = async (): Promise<
+  SupportNotification[]
+> => {
+  try {
+    const currentUser = useAuthStore.getState().user;
+
+    // Only maintainers should access support notifications
+    if (!currentUser || currentUser.role !== "MAINTAINER") {
+      return [];
+    }
+
+    // Ensure we have a valid token
+    const token =
+      localStorage.getItem("accessToken") || localStorage.getItem("token");
+    if (!token) {
+      console.error("getSupportNotifications: No authentication token found");
+      return [];
+    }
+
+    const response = await api.get("/maintenance-mode/notifications", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    // console.log("Support notifications API response:", response.data);
+    return response.data || [];
+  } catch (error) {
+    console.error("Error fetching support notifications:", error);
+
+    return [];
   }
 };
 
@@ -165,10 +216,81 @@ export const getBranchNotifications = async (): Promise<
 > => {
   try {
     const response = await api.get("/branch-notifications");
-    return response.data;
+    return response.data || [];
   } catch (error) {
     console.error("Error fetching branch notifications:", error);
-    throw error;
+    // Don't throw error if endpoint doesn't exist, just return empty array
+    return [];
+  }
+};
+
+// Enhanced sync function for maintainers to get support notifications
+export const syncSupportNotifications = async (): Promise<void> => {
+  try {
+    const currentUser = useAuthStore.getState().user;
+    if (!currentUser || currentUser.role !== "MAINTAINER") {
+      return; // Only maintainers should sync these notifications
+    }
+
+    // Check for valid authentication
+    const token =
+      localStorage.getItem("accessToken") || localStorage.getItem("token");
+    if (!token) {
+      console.warn(
+        "syncSupportNotifications: No authentication token available"
+      );
+      return;
+    }
+
+    const supportNotifications = await getSupportNotifications();
+
+    if (!supportNotifications || supportNotifications.length === 0) {
+      return;
+    }
+
+    const { notifications, addNotification } = useNotificationStore.getState();
+
+    // Get existing notification IDs to avoid duplicates
+    const existingIds = new Set(notifications.map((n) => n.id));
+
+    let syncedCount = 0;
+
+    // Convert support notifications to local notifications
+    supportNotifications.forEach((notification) => {
+      const notificationId = `support-${notification._id}`;
+
+      if (!existingIds.has(notificationId)) {
+        addNotification({
+          id: notificationId,
+          title: "🚨 New Support Request",
+          message: `Urgent: Support request from ${
+            notification.userEmail
+          } - "${notification.message.substring(0, 100)}${
+            notification.message.length > 100 ? "..." : ""
+          }"`,
+          type: "error",
+          read: false,
+          createdAt: new Date(notification.createdAt),
+          recipients: ["MAINTAINER"],
+          userId: undefined, // Global for all maintainers
+          action: "support_request_received",
+          meta: {
+            userEmail: notification.userEmail,
+            issueType: "Support Request", // Default since API doesn't provide specific issue type
+            description: notification.message,
+            timestamp: notification.createdAt,
+            urgent: true,
+          },
+        });
+        syncedCount++;
+      }
+    });
+
+    console.log(
+      `Successfully synced ${syncedCount} new support notifications for maintainer`
+    );
+  } catch (error) {
+    console.error("Error syncing support notifications:", error);
   }
 };
 
@@ -213,15 +335,37 @@ export const syncBranchNotifications = async (): Promise<void> => {
   }
 };
 
-// Mark branch notification as read (remove this if endpoint doesn't exist)
-export const markBranchNotificationRead = async (
+// Enhanced sync function that handles both support and branch notifications
+export const syncAllMaintenanceNotifications = async (): Promise<void> => {
+  const currentUser = useAuthStore.getState().user;
+
+  if (!currentUser?.role) {
+    console.warn("No authenticated user found for notification sync");
+    return;
+  }
+
+  try {
+    // Sync support notifications for maintainers
+    if (currentUser.role === "MAINTAINER") {
+      await syncSupportNotifications();
+    }
+
+    // Sync branch notifications for admins
+    if (currentUser.role === "ADMIN") {
+      await syncBranchNotifications();
+    }
+  } catch (error) {
+    console.error("Error in syncAllMaintenanceNotifications:", error);
+  }
+};
+
+// Mark notification as read locally
+export const markNotificationRead = async (
   notificationId: string
 ): Promise<void> => {
   try {
-    // Since this endpoint doesn't exist yet, we'll handle marking as read locally
     const { markAsRead } = useNotificationStore.getState();
     markAsRead(notificationId);
-    console.log(`Marked notification ${notificationId} as read locally`);
   } catch (error) {
     console.error("Error marking notification as read:", error);
   }

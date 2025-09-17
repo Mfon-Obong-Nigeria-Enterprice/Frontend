@@ -93,7 +93,6 @@ const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
             <SidebarMenu>
               {items.map((item) => {
                 const isActive = pathname.startsWith(item.url);
-
                 return (
                   <SidebarMenuItem key={item.title} className="">
                     <SidebarMenuButton
@@ -142,19 +141,16 @@ const ManagerSidebarWithModal = () => {
 
   const handleConfirm = async () => {
     setIsLoading(true);
-    // simulate a delay for better UX
     setTimeout(() => {
-      logoutMutation.mutate(); // trigger logout
+      logoutMutation.mutate();
       setIsLoading(false);
       setShowModal(false);
-    }, 100);
+    }, 500);
   };
 
   return (
     <>
       <ManagerSidebar onLogoutClick={handleLogoutClick} />
-
-      {/* Modal rendered outside of sidebar - won't disappear when sidebar closes */}
       <LogoutConfirmModal
         isOpen={showModal}
         onClose={() => !isLoading && setShowModal(false)}

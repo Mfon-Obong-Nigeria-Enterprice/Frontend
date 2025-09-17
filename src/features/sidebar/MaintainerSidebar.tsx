@@ -1,15 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-// icons
-import {
-  LayoutDashboard,
-  UserRoundCog,
-  Settings,
-  CreditCard,
-  Bell,
-  LogOut,
-} from "lucide-react";
+// icons imported from react-icons
+import { MdOutlineDashboard } from "react-icons/md";
+import { IoIosPeople, IoIosStats, IoIosNotifications } from "react-icons/io";
+import { RiSettings3Line } from "react-icons/ri";
+import { IoIosLogOut } from "react-icons/io";
 
 // hooks
 import { useLogout } from "@/hooks/uselogout";
@@ -31,35 +27,35 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 
+// Updated items array to use imported icon components
 const items = [
   {
-    title: "Dashboard",
+    title: "Overview",
     url: "/maintainer/dashboard/overview",
-    icon: LayoutDashboard,
+    icon: MdOutlineDashboard,
   },
-
   {
     title: "User Management",
     url: "/maintainer/dashboard/user-management",
-    icon: UserRoundCog,
+    icon: IoIosPeople,
   },
   {
     title: "Activity log",
     url: "/maintainer/dashboard/log",
-    icon: CreditCard,
+    icon: IoIosStats,
   },
   {
     title: "Notification",
     url: "/maintainer/dashboard/maintainer-notifications",
-    icon: Bell,
+    icon: IoIosNotifications,
   },
-
   {
     title: "Settings",
     url: "/maintainer/dashboard/settings",
-    icon: Settings,
+    icon: RiSettings3Line,
   },
 ];
+
 type MaintainerSidebarProps = {
   onLogoutClick: () => void;
 };
@@ -79,7 +75,7 @@ const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
                 const isActive = pathname.startsWith(item.url);
 
                 return (
-                  <SidebarMenuItem key={item.title} className="">
+                  <SidebarMenuItem key={item.title} className="font-bold">
                     <SidebarMenuButton
                       asChild
                       className={`hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all
@@ -90,6 +86,7 @@ const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
                         }`}
                     >
                       <Link to={item.url}>
+                        {/* Render the icon component directly */}
                         <item.icon />
                         <span>{item.title}</span>
                       </Link>
@@ -106,7 +103,8 @@ const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
           className="cursor-pointer"
           onClick={() => onLogoutClick()}
         >
-          <LogOut />
+          {/* Use the imported React icon component for logout */}
+          <IoIosLogOut />
           <span>Logout</span>
         </SidebarMenuButton>
       </SidebarFooter>
@@ -125,10 +123,8 @@ const MaintainerSidebarWithModal = () => {
 
   const handleConfirm = async () => {
     setIsLoading(true);
-
-    // wait for 1 second before logout
     setTimeout(() => {
-      logoutMutation.mutate(); // trigger logout
+      logoutMutation.mutate();
       setIsLoading(false);
       setShowModal(false);
     }, 100);
@@ -137,7 +133,6 @@ const MaintainerSidebarWithModal = () => {
   return (
     <>
       <MaintainerSidebar onLogoutClick={handleLogoutClick} />
-      {/* the logout modal */}
       <LogoutConfirmModal
         isOpen={showModal}
         onClose={() => !isLoading && setShowModal(false)}
@@ -147,4 +142,5 @@ const MaintainerSidebarWithModal = () => {
     </>
   );
 };
+
 export default MaintainerSidebarWithModal;

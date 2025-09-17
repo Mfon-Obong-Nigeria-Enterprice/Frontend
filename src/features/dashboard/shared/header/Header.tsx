@@ -90,9 +90,6 @@ const Header = ({ userRole }: HeaderProps) => {
   const capabilities = getRoleBasedCapabilities(user?.role || "");
 
   const handleProfileUpdate = async (updatedData: UpdatedUserData) => {
-    console.log("=== Header Profile Update ===");
-    console.log("Updated data received:", updatedData);
-
     try {
       // Update the user store with new data immediately for optimistic updates
       if (updateUser) {
@@ -119,8 +116,6 @@ const Header = ({ userRole }: HeaderProps) => {
             updatedData.profilePicture
           );
         }
-
-        // console.log("Profile updates applied:", updates);
       }
     } catch (error) {
       console.error("Error updating profile in header:", error);
@@ -156,9 +151,9 @@ const Header = ({ userRole }: HeaderProps) => {
 
   return (
     <>
-      <header className="h-14 sm:h-16 fixed top-0 right-0 left-0 z-50 flex justify-between items-center px-7 py-3 bg-white border border-[#F5F5F5]">
+      <header className="h-14 sm:h-16 fixed top-0 right-0 left-0 z-50 flex justify-between items-center py-3 bg-white border border-[#F5F5F5]">
         <div>
-          <div className="hidden md:flex md:ml-10">
+          <div className="hidden md:flex ">
             <Logo />
           </div>
         </div>

@@ -21,6 +21,7 @@ export const SettingsPage: React.FC = () => {
     fetchActiveHours,
     saveActiveHoursConfig,
     toggleMaintenanceMode,
+    loading
   } = useSettingsStore();
 
   const { user } = useAuthStore();
@@ -32,8 +33,6 @@ export const SettingsPage: React.FC = () => {
     endTime: "22:00",
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   });
-  const [isSavingMaintenance, setIsSavingMaintenance] = useState(false);
-  const [isSavingSession, setIsSavingSession] = useState(false);
 
   const isMaintainer = user?.role === "MAINTAINER";
 
@@ -55,40 +54,44 @@ export const SettingsPage: React.FC = () => {
 
   const handleMaintenanceToggle = async () => {
     try {
-      setIsSavingMaintenance(true);
+      console.log("Current maintenance mode:", maintenanceMode);
       await toggleMaintenanceMode();
+      
+      // Check the updated state after a short delay
+      setTimeout(() => {
+        console.log("Updated maintenance mode:", useSettingsStore.getState().maintenanceMode);
+      }, 100);
+      
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 2000);
     } catch (err) {
       console.error("Failed to toggle maintenance mode:", err);
-    } finally {
-      setIsSavingMaintenance(false);
     }
   };
 
   const handleSaveSession = async () => {
-  try {
-    setIsSavingSession(true);
+    try {
+      const result = await saveActiveHoursConfig({
+        ...activeHoursForm,
+        description: "Business hours - updated via UI",
+      });
 
-    const result = await saveActiveHoursConfig({
-      ...activeHoursForm,
-      description: "Business hours - updated via UI",
-    });
+      if (result) {
+        setShowForceLogoutSuccess(true);
+        setTimeout(() => setShowForceLogoutSuccess(false), 3000);
+      }
 
-    if (result) {
-      setShowForceLogoutSuccess(true);
-      setTimeout(() => setShowForceLogoutSuccess(false), 3000);
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2000);
+    } catch (err) {
+      console.error("Failed to save session settings:", err);
     }
+  };
 
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 2000);
-  } catch (err) {
-    console.error("Failed to save session settings:", err);
-  } finally {
-    setIsSavingSession(false);
-  }
-};
-
+  // Add this useEffect to log state changes
+  useEffect(() => {
+    console.log("Maintenance mode state changed:", maintenanceMode);
+  }, [maintenanceMode]);
 
   if (error) {
     return (
@@ -108,16 +111,16 @@ export const SettingsPage: React.FC = () => {
     );
   }
 
-  const isMaintOn = !!maintenanceMode?.isActive;
+  const isMaintOn = maintenanceMode?.isActive || false;
 
   return (
     <div className="container mx-auto p-4">
       {showForceLogoutSuccess && (
-        <div >
-          {/* <CheckCircle className="h-5 w-5" />
+        <div className="bg-green-100 text-green-700 p-4 rounded-lg flex items-center gap-2 mb-6">
+          <CheckCircle className="h-5 w-5" />
           <span>
             Active hours updated! Users outside these hours will be logged out.
-          </span> */}
+          </span>
         </div>
       )}
 
@@ -136,27 +139,28 @@ export const SettingsPage: React.FC = () => {
                 <div>
                   <CardTitle>Maintenance Mode</CardTitle>
                   <CardDescription className="text-sm pt-2">
-                    Temporarily disable system access for maintenance
+                   Temporarily disable system access for maintenance
+
                   </CardDescription>
                 </div>
                 <div className="pt-8">
-
-                <Switch
-                  checked={isMaintOn}
-                  onCheckedChange={handleMaintenanceToggle}
-                  disabled={isSavingMaintenance}
-                  className="data-[state=checked]:bg-green-600"
-                />
+                  <Switch
+                    checked={isMaintOn}
+                    onCheckedChange={handleMaintenanceToggle}
+                    disabled={loading}
+                    className="data-[state=checked]:bg-green-600"
+                  />
                 </div>
               </div>
             </CardHeader>
             <CardContent>
+            
               <Button
                 onClick={handleMaintenanceToggle}
-                className="w-full bg-green-600 hover:bg-green-700 text-white"
-                disabled={isSavingMaintenance}
+                className="w-full bg-[#2ECC71] hover:bg-[#2ECC71] text-white"
+                disabled={loading}
               >
-                {isSavingMaintenance ? (
+                {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     {isMaintOn ? "Deactivating..." : "Activating..."}
@@ -174,54 +178,51 @@ export const SettingsPage: React.FC = () => {
         <Card className="flex-1">
           <CardHeader className="pb-4">
             <CardTitle>Session Management</CardTitle>
-            <CardDescription>
-              Active Hours
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
+              <label className="text-sm font-medium mb-2 block">
+                Active Hours
+              </label>
               <div className="space-y-2">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="time"
-                      value={activeHoursForm.startTime}
-                      onChange={(e) =>
-                        setActiveHoursForm({
-                          ...activeHoursForm,
-                          startTime: e.target.value,
-                        })
-                      }
-                      className="w-full"
-                      disabled={isSavingSession}
-                    />
-                    <span className="text-gray-500">to</span>
-                    <Input
-                      type="time"
-                      value={activeHoursForm.endTime}
-                      onChange={(e) =>
-                        setActiveHoursForm({
-                          ...activeHoursForm,
-                          endTime: e.target.value,
-                        })
-                      }
-                      className="w-full"
-                      disabled={isSavingSession}
-                    />
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="time"
+                    value={activeHoursForm.startTime}
+                    onChange={(e) =>
+                      setActiveHoursForm({
+                        ...activeHoursForm,
+                        startTime: e.target.value,
+                      })
+                    }
+                    className="w-full"
+                  />
+                  <span className="text-gray-500">to</span>
+                  <Input
+                    type="time"
+                    value={activeHoursForm.endTime}
+                    onChange={(e) =>
+                      setActiveHoursForm({
+                        ...activeHoursForm,
+                        endTime: e.target.value,
+                      })
+                    }
+                    className="w-full"
+                  />
                 </div>
+                
               </div>
             </div>
 
             <Button
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              className="w-full bg-[#2ECC71] hover:bg-[#2ECC71] text-white"
               onClick={handleSaveSession}
-              disabled={isSavingSession}
+              disabled={loading}
             >
-              {isSavingSession ? (
+              {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading...
+                  Saving...
                 </>
               ) : (
                 "Force Logout All Users"

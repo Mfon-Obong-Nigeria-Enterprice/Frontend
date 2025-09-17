@@ -142,7 +142,14 @@ export const useSettingsStore = create<SettingsStore>()(
         set({ loading: true, error: null });
         try {
           const maintenanceMode = await settingsService.toggleMaintenanceMode();
-          set({ maintenanceMode, loading: false });
+          
+          // Force a complete state update to ensure persistence works
+          set((state) => ({
+            ...state,
+            maintenanceMode,
+            loading: false,
+            error: null
+          }));
         } catch (err: any) {
           set({
             error: err.message || "Failed to toggle maintenance mode",
@@ -156,7 +163,7 @@ export const useSettingsStore = create<SettingsStore>()(
       fetchActiveHours: async () => {
         set({ loading: true, error: null });
         try {
-          const status = await settingsService.getSessionStatus(); // ✅ GET /status
+          const status = await settingsService.getSessionStatus();
           set({ activeHours: status.activeHours || null, loading: false });
         } catch (err: any) {
           set({
@@ -169,7 +176,7 @@ export const useSettingsStore = create<SettingsStore>()(
       saveActiveHoursConfig: async (config) => {
         set({ loading: true, error: null });
         try {
-          const activeHours = await settingsService.saveActiveHoursConfig(config); // ✅ POST /active-hours
+          const activeHours = await settingsService.saveActiveHoursConfig(config);
           set({ activeHours, loading: false });
           return activeHours;
         } catch (err: any) {
@@ -184,7 +191,7 @@ export const useSettingsStore = create<SettingsStore>()(
       deactivateActiveHours: async () => {
         set({ loading: true, error: null });
         try {
-          await settingsService.deactivateActiveHours(); // ✅ DELETE /active-hours
+          await settingsService.deactivateActiveHours();
           set({ activeHours: null, loading: false });
         } catch (err: any) {
           set({

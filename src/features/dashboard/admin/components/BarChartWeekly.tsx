@@ -19,6 +19,9 @@ const BarChartWeekly = () => {
   const { transactions } = useTransactionsStore();
   const salesData: WeeklySales[] = getWeeklySales(transactions ?? []);
 
+  const maxValue = Math.max(0, ...salesData.map((item) => item.sales));
+  const step = Math.ceil(maxValue / 6); // about 6 ticks
+
   const data: ChartData<"bar", number[], string> = {
     labels: salesData.map((item) => item.week),
     datasets: [
@@ -36,7 +39,7 @@ const BarChartWeekly = () => {
       legend: { display: false },
       tooltip: {
         callbacks: {
-          label: (context) => `₦${context.parsed.y}`,
+          label: (context) => `₦${context.parsed.y.toLocaleString()}`,
         },
       },
     },
@@ -50,7 +53,7 @@ const BarChartWeekly = () => {
       y: {
         ticks: {
           callback: (value) => `₦${value.toLocaleString()}`,
-          stepSize: 100000,
+          stepSize: step,
         },
         beginAtZero: true,
         grid: {
