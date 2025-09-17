@@ -220,7 +220,7 @@ export default function AdminUserModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] font-inter rounded-lg shadow-lg">
         <div className="p-4 space-y-6">
-          <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg shadow-sm">
+          <div className="flex items-center space-x-4 p-4 bg-[#D9D9D9] rounded-lg shadow-sm">
             <div
               className={`relative w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center border-2 ${
                 isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
@@ -279,7 +279,7 @@ export default function AdminUserModal({
               </h3>
               {/* <p className="text-sm text-gray-600">ID: {userId || "No ID"}</p> */}
               <p className="hidden md:block text-sm text-gray-600">
-                Last Login: {new Date(adminData.lastLogin).toLocaleString()}
+                {adminData.userRole || "Admin"}
               </p>
             </div>
           </div>

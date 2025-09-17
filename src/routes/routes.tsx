@@ -17,6 +17,7 @@ import UserManagement from "@/features/dashboard/manager/UserManagement";
 import ManagerSettings from "@/features/dashboard/manager/ManagerSettings";
 import ManagerNotifications from "@/features/dashboard/manager/ManagerNotifications";
 
+
 // Modal Page - removed unused import
 
 // Maintainer
@@ -51,6 +52,8 @@ import UserDetailsPage from "@/features/dashboard/shared/usermanagement/userdeta
 import AddProduct from "@/features/dashboard/shared/inventory/AddProduct";
 import ClientDetailsPage from "@/pages/ClientDetailsPage";
 import ImportStockPage from "@/features/import/ImportStockPage";
+import UserLog from "@/features/dashboard/manager/component/UserLog";
+// import UserLog from "@/features/dashboard/shared/usermanagement/UserLog";
 
 const router = createBrowserRouter([
   { path: "/", element: <Login /> },
@@ -72,7 +75,7 @@ const router = createBrowserRouter([
       { path: "user-management/:id", element: <UserDetailsPage /> },
       { path: "user-management/col-settings", element: <ColumnSettings /> },
 
-      { path: "log", element: <ActivityLog /> },
+      { path: "user-log", element: <UserLog/> },
     ],
   },
 

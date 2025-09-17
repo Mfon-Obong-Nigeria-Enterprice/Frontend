@@ -1,7 +1,7 @@
 // features/dashboard/manager/components/ManagerSettings.tsx
 import { SystemPreferencesForm } from "./component/SystemPreferanceForm.tsx";
 import { ClientAccountSettingsForm } from "./component/ClientAccountSettingsForm";
-import { NotificationSettingsSection1 } from "./component/NotificationSettings1";
+// import { NotificationSettingsSection1 } from "./component/NotificationSettings1";
 import { AlertSettingsSection1 } from "./component/AlertSettingsSection1";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import type { AlertAndNotificationSettings } from "@/schemas/SettingsSchemas";
@@ -93,15 +93,15 @@ export default function ManagerSettings() {
           />
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        {/* <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
             Notification Preferences
           </h2>
-          <NotificationSettingsSection1
+         <NotificationSettingsSection1
             settings={currentSettings}
             onSettingChange={handleAlertSettingChange}
-          />
-        </div>
+          /> 
+        </div> */}
       </div>
     </div>
   );

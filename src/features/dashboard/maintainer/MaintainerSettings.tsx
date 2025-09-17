@@ -1,4 +1,4 @@
-import { NotificationSettingsSection3 } from "./components/NotificationSettings3";
+// import { NotificationSettingsSection3 } from "./components/NotificationSettings3";
 import { AlertSettingsSection3 } from "./components/AlertSettings3";
 import type { AlertAndNotificationSettings } from "@/schemas/SettingsSchemas";
 import { useSettingsStore } from "@/stores/useSettingsStore";
@@ -59,15 +59,15 @@ export default function MaintainerSettings() {
           />
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        {/* <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
             Notification Preferences
           </h2>
-          <NotificationSettingsSection3
+           <NotificationSettingsSection3
             settings={currentSettings}
             onSettingChange={handleAlertSettingChange}
-          />
-        </div>
+          /> 
+        </div> */}
       </div>
     </div>
   );
