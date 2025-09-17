@@ -18,6 +18,8 @@ ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 const BarChartMonthly = () => {
   const { transactions } = useTransactionsStore();
   const salesData: MonthlySales[] = getMonthlySales(transactions ?? []);
+  const maxValue = Math.max(0, ...salesData.map((item) => item.sales));
+  const step = Math.ceil(maxValue / 6); // about 6 ticks
 
   const data: ChartData<"bar", number[], string> = {
     labels: salesData.map((item) => item.month),
@@ -36,7 +38,7 @@ const BarChartMonthly = () => {
       legend: { display: false },
       tooltip: {
         callbacks: {
-          label: (context) => `${context.parsed.y} m`,
+          label: (context) => `${context.parsed.y.toLocaleString()} m`,
         },
       },
     },
@@ -50,7 +52,7 @@ const BarChartMonthly = () => {
       y: {
         ticks: {
           callback: (value) => `${value.toLocaleString()} million`,
-          stepSize: 500000,
+          stepSize: step,
         },
         beginAtZero: false,
         grid: {

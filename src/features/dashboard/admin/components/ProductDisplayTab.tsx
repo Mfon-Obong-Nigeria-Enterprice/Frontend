@@ -326,8 +326,9 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
     <article className="bg-white border border-[var(--cl-border-gray)] rounded p-10 sm:p-4 mt-6 font-Arial hover:shadow-xl hover:border-green-400 transition-all duration-200 ease-in-out">
       <div className="flex justify-between" id={product._id}>
         <div>
-          <h6 className="text-lg font-normal text-[var(--cl-text-gray)]">
-            {product.name}
+          <h6 className="text-lg font-normal text-[var(--cl-text-gray)] capitalize">
+            {product.unit}
+            {""} {product.name}
           </h6>
           <p className="text-xs text-gray-500 bg-gray-100 px-3 py-1 inline-block rounded">
             {categoryDisplayName}
@@ -386,7 +387,7 @@ const ProductDisplayTab = ({ product }: ProductDisplayProps) => {
         <div>
           <p className="font-medium text-gray-400">Minimum Level</p>
           <p className="text-[var(--cl-text-semidark)] text-[0.8125rem]">
-            {product.minStockLevel} {product.unit}
+            {product.minStockLevel}
           </p>
         </div>
       </div>

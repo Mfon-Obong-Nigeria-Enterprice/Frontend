@@ -23,6 +23,11 @@ interface SupportRequestSocketData {
   issueType: string;
   timestamp: string;
 }
+interface PasswordRequestSocketData {
+  message: string;
+  temporaryPassword: string;
+  createdAt: string;
+}
 
 // WebSocket-based notification service
 export class WebSocketNotificationService {
@@ -67,10 +72,6 @@ export class WebSocketNotificationService {
       return;
     }
 
-    console.log(
-      `WebSocketNotificationService: Connecting for user ${currentUser.name} (${currentUser.role})`
-    );
-
     this.connectionStatus = "connecting";
 
     this.socket = io(this.getServerUrl(), {
@@ -89,14 +90,11 @@ export class WebSocketNotificationService {
 
     // Connection events
     this.socket.on("connect", () => {
-      console.log("✅ WebSocket connection established");
       this.connectionStatus = "connected";
       this.reconnectAttempts = 0;
 
       // Test connection
-      this.socket?.emit("ping", "test", (response: string) => {
-        console.log("✅ WebSocket ping successful:", response);
-      });
+      this.socket?.emit("ping", "test", () => {});
     });
 
     this.socket.on("connect_error", (error) => {
@@ -110,13 +108,9 @@ export class WebSocketNotificationService {
       }
     });
 
-    this.socket.on("disconnect", (reason) => {
-      console.log("🔌 WebSocket disconnected:", reason);
+    this.socket.on("disconnect", () => {
+      // console.log("🔌 WebSocket disconnected:", reason);
       this.connectionStatus = "disconnected";
-
-      if (reason === "io server disconnect") {
-        console.log("Server disconnected, will auto-reconnect...");
-      }
     });
 
     // Business event listeners
@@ -131,8 +125,6 @@ export class WebSocketNotificationService {
 
     // Transaction created (sales) - Real-time sales notifications
     this.socket.on("transaction_created", (data: WebSocketNotificationData) => {
-      console.log("🔔 New transaction via WebSocket:", data);
-
       const notification = {
         id: `ws-transaction-${data.resourceId}`,
         title: "New Sale Created",
@@ -160,8 +152,6 @@ export class WebSocketNotificationService {
 
     // Client created - Real-time client notifications
     this.socket.on("client_created", (data: WebSocketNotificationData) => {
-      console.log("🔔 New client via WebSocket:", data);
-
       const notification = {
         id: `ws-client-${data.resourceId}`,
         title: "New Client Registered",
@@ -185,8 +175,6 @@ export class WebSocketNotificationService {
 
     // Product created - Real-time product notifications
     this.socket.on("product_created", (data: WebSocketNotificationData) => {
-      console.log("🔔 New product via WebSocket:", data);
-
       const notification = {
         id: `ws-product-${data.resourceId}`,
         title: "New Product Created",
@@ -212,8 +200,6 @@ export class WebSocketNotificationService {
     this.socket.on(
       "support_request_created",
       (data: SupportRequestSocketData) => {
-        console.log("🔔 New support request via WebSocket:", data);
-
         // Only send to maintainers
         if (currentUser?.role === "MAINTAINER") {
           const notification = {
@@ -242,9 +228,7 @@ export class WebSocketNotificationService {
     );
 
     // Password reset - Custom event for password resets
-    this.socket.on("password_reset_sent", (data: any) => {
-      console.log("🔔 Password reset via WebSocket:", data);
-
+    this.socket.on("password_reset_sent", (data: PasswordRequestSocketData) => {
       // Only send to branch admins
       if (currentUser?.role === "ADMIN") {
         const notification = {
@@ -282,7 +266,6 @@ export class WebSocketNotificationService {
       return;
     }
 
-    console.log("📤 Emitting support request via WebSocket:", data);
     this.socket.emit("support_request", {
       email: data.email,
       issueType: data.issueType,
@@ -302,7 +285,6 @@ export class WebSocketNotificationService {
       return;
     }
 
-    console.log("📤 Emitting password reset via WebSocket:", data);
     this.socket.emit("password_reset", {
       branchAdminEmail: data.branchAdminEmail,
       temporaryPassword: data.temporaryPassword,
@@ -313,7 +295,6 @@ export class WebSocketNotificationService {
 
   disconnect(): void {
     if (this.socket) {
-      console.log("🔌 Disconnecting WebSocket");
       this.socket.disconnect();
       this.socket = null;
       this.connectionStatus = "disconnected";
