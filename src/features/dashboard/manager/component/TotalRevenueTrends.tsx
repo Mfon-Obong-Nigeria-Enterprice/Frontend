@@ -1,13 +1,15 @@
 import React from "react";
 import { useState } from "react";
 import {
-  LineChart,
-  Line,
+  // LineChart,
+  // Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Area,
+  AreaChart,
 } from "recharts";
 import { useRevenueStore } from "@/stores/useRevenueStore";
 import { getAllTransactions } from "@/services/transactionService";
@@ -129,7 +131,6 @@ function TotalRevenueTrends() {
 
   // Debug: Log the data to see what's being passed to the chart
   const chartData = getData();
-  console.log(`${selectedTab} chart data:`, chartData);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md border w-full max-w-7xl mx-auto">
@@ -171,23 +172,23 @@ function TotalRevenueTrends() {
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
+            <AreaChart data={chartData}>
+              <CartesianGrid />
               <XAxis dataKey="name" />
               <YAxis
                 tickFormatter={getYAxisTickFormatter}
                 domain={["dataMin", "dataMax"]}
               />
               <Tooltip formatter={getTooltipFormatter} />
-              <Line
-                type="monotone"
+              <Area
                 dataKey={getDataKey()}
                 stroke="#3b82f6"
+                fill="#96bfff"
                 strokeWidth={2}
                 dot={{ r: 4 }}
                 activeDot={{ r: 6 }}
               />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         )}
       </div>

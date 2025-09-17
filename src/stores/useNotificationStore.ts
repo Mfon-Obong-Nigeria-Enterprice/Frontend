@@ -24,7 +24,7 @@ export type Notification = {
   action: ActionType;
   createdAt: Date;
   recipients: Role[];
-  userId?: string; // Add userId to associate notifications with specific users
+  userId?: string;
   meta?: {
     adminName?: string;
     staffName?: string;
@@ -38,13 +38,14 @@ export type Notification = {
     createdBy?: string;
     description?: string;
     issueType?: string;
+    urgent?: boolean;
   };
 };
 
 type NotificationStore = {
   notifications: Notification[];
   unreadCount: number;
-  lastSyncTime: number; // Track when we last synced with server
+  lastSyncTime: number;
 
   addNotification: (notification: Notification) => void;
   markAsRead: (id: string) => void;
@@ -52,11 +53,10 @@ type NotificationStore = {
   markAllAsRead: () => void;
   deleteNotification: (id: string) => void;
   clearNotifications: () => void;
-  clearUserNotifications: (userId: string) => void; // Clear notifications for specific user
+  clearUserNotifications: (userId: string) => void;
   setLastSyncTime: (time: number) => void;
 };
 
-// Custom storage object to handle Date serialization and match PersistStorage interface
 import type { PersistStorage, StorageValue } from "zustand/middleware";
 
 const customStorage: PersistStorage<NotificationStore> = {
@@ -86,34 +86,30 @@ export const useNotificationStore = create<NotificationStore>()(
 
       addNotification: (notification) =>
         set((state) => {
-          console.log(
-            "📨 Adding notification:",
-            notification.title,
-            notification.id
-          );
-
           // Check if notification already exists
           const existingIndex = state.notifications.findIndex(
             (n) => n.id === notification.id
           );
 
           if (existingIndex !== -1) {
-            console.log(
-              "🔄 Notification already exists, skipping:",
-              notification.id
-            );
-            return state;
+            // Update existing notification instead of adding duplicate
+            const updatedNotifications = [...state.notifications];
+            updatedNotifications[existingIndex] = {
+              ...notification,
+              createdAt:
+                notification.createdAt instanceof Date
+                  ? notification.createdAt
+                  : new Date(notification.createdAt),
+            };
+
+            return {
+              notifications: updatedNotifications,
+              unreadCount: updatedNotifications.filter((n) => !n.read).length,
+            };
           }
 
-          // Add current user ID to notification if not present and userId is undefined
-          const currentUser = useAuthStore.getState().user;
-          const notificationWithUser = {
+          const notificationWithDate = {
             ...notification,
-            userId:
-              notification.userId !== undefined
-                ? notification.userId
-                : currentUser?.id || "unknown",
-            // Ensure createdAt is a Date object
             createdAt:
               notification.createdAt instanceof Date
                 ? notification.createdAt
@@ -121,11 +117,9 @@ export const useNotificationStore = create<NotificationStore>()(
           };
 
           const newNotifications = [
-            notificationWithUser,
+            notificationWithDate,
             ...state.notifications,
           ];
-          console.log(`📈 Total notifications now: ${newNotifications.length}`);
-
           const unreadCount = newNotifications.filter((n) => !n.read).length;
 
           return {
@@ -159,14 +153,14 @@ export const useNotificationStore = create<NotificationStore>()(
       markAllAsRead: () =>
         set((state) => {
           const currentUser = useAuthStore.getState().user;
+          if (!currentUser) return state;
+
           const updated = state.notifications.map((n) => {
-            // Mark as read if it's for current user OR if it's a global notification for current user's role
-            const isForCurrentUser =
-              n.userId === currentUser?.id ||
-              (n.userId === undefined &&
-                n.recipients.includes(currentUser?.role as Role));
+            // Check if notification is for current user
+            const isForCurrentUser = isNotificationForUser(n, currentUser);
             return isForCurrentUser ? { ...n, read: true } : n;
           });
+
           return {
             notifications: updated,
             unreadCount: updated.filter((n) => !n.read).length,
@@ -185,8 +179,10 @@ export const useNotificationStore = create<NotificationStore>()(
       clearNotifications: () =>
         set((state) => {
           const currentUser = useAuthStore.getState().user;
+          if (!currentUser) return state;
+
           const updated = state.notifications.filter(
-            (n) => n.userId !== currentUser?.id
+            (n) => !isNotificationForUser(n, currentUser)
           );
           return {
             notifications: updated,
@@ -211,9 +207,8 @@ export const useNotificationStore = create<NotificationStore>()(
         })),
     }),
     {
-      name: "notification-storage", // Storage key
+      name: "notification-storage",
       storage: customStorage,
-      // Rehydrate dates when loading from storage
       onRehydrateStorage: () => (state) => {
         if (state) {
           // Convert date strings back to Date objects
@@ -229,70 +224,73 @@ export const useNotificationStore = create<NotificationStore>()(
   )
 );
 
-// Enhanced filtered notifications hook that considers user context
+// Enhanced helper function to check if notification is for user
+function isNotificationForUser(
+  notification: Notification,
+  user: { id: string; role: string }
+): boolean {
+  if (!user?.role) return false;
+
+  // Check if notification is for current user role
+  const userRoleUpper = user.role.toUpperCase() as Role;
+  const isForCurrentRole = notification.recipients.some(
+    (role) => role.toUpperCase() === userRoleUpper
+  );
+
+  if (!isForCurrentRole) {
+    return false;
+  }
+
+  // Notification targeting logic:
+  // 1. If userId is specified and matches current user -> show
+  // 2. If userId is undefined (global notification) and role matches -> show
+  // 3. If userId is specified but doesn't match current user -> don't show
+  if (notification.userId !== undefined) {
+    return notification.userId === user.id;
+  }
+
+  // Global notification for the role
+  return true;
+}
+
+// Enhanced filtered notifications hook
 export const useFilteredNotifications = () => {
   const user = useAuthStore((state) => state.user);
   const notifications = useNotificationStore((state) => state.notifications);
 
-  if (!user?.role || !user?.id) return [];
+  if (!user?.role || !user?.id) {
+    return [];
+  }
 
-  const userRole = user.role.toUpperCase();
+  const filtered = notifications.filter((notification) =>
+    isNotificationForUser(notification, user)
+  );
 
-  // Filter by role and user - include both user-specific and global notifications
-  const filtered = notifications.filter((notification) => {
-    // Check if notification is for current user role
-    const isForCurrentRole = notification.recipients.some(
-      (role) => role.toUpperCase() === userRole
-    );
-
-    if (!isForCurrentRole) {
-      return false;
+  // Sort by creation date (newest first) and unread first
+  const sorted = filtered.sort((a, b) => {
+    // Unread notifications first
+    if (a.read !== b.read) {
+      return a.read ? 1 : -1;
     }
-
-    // Include notifications that are:
-    // 1. Specifically for this user (userId matches)
-    // 2. Global notifications for this role (userId is undefined)
-    const isForCurrentUser =
-      notification.userId === user.id || // Specifically for this user
-      notification.userId === undefined; // Global notification for all users of the role
-
-    return isForCurrentUser;
+    // Then by creation date (newest first)
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  console.log(`🔍 Filtering notifications for user ${user.id} (${userRole}):`, {
-    total: notifications.length,
-    filtered: filtered.length,
-    userRole,
-    userId: user.id,
-  });
-
-  return filtered;
+  return sorted;
 };
 
-// Hook to get unread count for current user
+// Enhanced unread count hook
 export const useUnreadNotificationCount = () => {
   const user = useAuthStore((state) => state.user);
   const notifications = useNotificationStore((state) => state.notifications);
 
-  if (!user?.id) return 0;
-
-  const userRole = user.role?.toUpperCase();
+  if (!user?.id || !user?.role) {
+    return 0;
+  }
 
   const unreadCount = notifications.filter((notification) => {
-    const isForCurrentRole = notification.recipients.some(
-      (role) => role.toUpperCase() === userRole
-    );
-
-    const isForCurrentUser =
-      notification.userId === user.id || // Specifically for this user
-      notification.userId === undefined; // Global notification for all users of the role
-
-    return isForCurrentRole && isForCurrentUser && !notification.read;
+    return isNotificationForUser(notification, user) && !notification.read;
   }).length;
-
-  console.log(
-    `🔔 Unread count for user ${user.id} (${userRole}): ${unreadCount}`
-  );
 
   return unreadCount;
 };

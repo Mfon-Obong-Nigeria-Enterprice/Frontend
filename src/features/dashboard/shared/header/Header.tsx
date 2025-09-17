@@ -90,9 +90,6 @@ const Header = ({ userRole }: HeaderProps) => {
   const capabilities = getRoleBasedCapabilities(user?.role || "");
 
   const handleProfileUpdate = async (updatedData: UpdatedUserData) => {
-    console.log("=== Header Profile Update ===");
-    console.log("Updated data received:", updatedData);
-
     try {
       // Update the user store with new data immediately for optimistic updates
       if (updateUser) {
@@ -119,8 +116,6 @@ const Header = ({ userRole }: HeaderProps) => {
             updatedData.profilePicture
           );
         }
-
-        // console.log("Profile updates applied:", updates);
       }
     } catch (error) {
       console.error("Error updating profile in header:", error);

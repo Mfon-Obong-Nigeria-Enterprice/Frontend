@@ -70,33 +70,6 @@ const BusinessReport = () => {
     },
   ];
 
-  // const topProducts: Product[] = [
-  //   {
-  //     prodName: "cement",
-  //     soldUnit: 320,
-  //     revenue: 960000,
-  //     category: "construction",
-  //   },
-  //   {
-  //     prodName: "Rod",
-  //     soldUnit: 190,
-  //     revenue: 285000,
-  //     category: "Reinforcement",
-  //   },
-  //   {
-  //     prodName: "Tiles",
-  //     soldUnit: 100,
-  //     revenue: 280000,
-  //     category: "Finishing",
-  //   },
-  // ];
-
-  // Dynamically create selectedMonth in format YYYY-MM
-  // const now = new Date();
-  // const selectedMonth = `${now.getFullYear()}-${String(
-  //   now.getMonth() + 1
-  // ).padStart(2, "0")}`;
-
   return (
     <main className="flex flex-col gap-3 mb-2">
       <DashboardTitle
@@ -109,8 +82,8 @@ const BusinessReport = () => {
         <TotalRevenueTrends />
       </div>
 
-      <div className="bg-white py-10 px-5 border border-[#D9D9D9] rounded-md shadow-md mt-2">
-        <p className="font-medium text-xl text-[#1E1E1E] pb-3">
+      <div className=" py-4   mt-2">
+        <p className="font-medium text-xl text-[#1E1E1E] pb-2 ">
           Sales Performance (Last 30 days)
         </p>
         <MonthlySalesChart />
