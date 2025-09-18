@@ -29,46 +29,6 @@ export default function MonthlySalesChar() {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md border">
-      {/* Sales Summary Stats */}
-      {/* <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <h3 className="text-sm font-medium text-blue-600">
-            Total Sales (30 days)
-          </h3>
-          <p className="text-2xl font-bold text-blue-900">
-            ₦{salesSummary.totalSales.toLocaleString()}
-          </p>
-          <p className="text-sm text-blue-600">
-            {salesSummary.direction === "increase"
-              ? "↗"
-              : salesSummary.direction === "decrease"
-              ? "↘"
-              : "→"}
-            {salesSummary.percentageChange}% vs previous 30 days
-          </p>
-        </div>
-
-        <div className="bg-green-50 p-4 rounded-lg">
-          <h3 className="text-sm font-medium text-green-600">
-            Average Daily Sales
-          </h3>
-          <p className="text-2xl font-bold text-green-900">
-            ₦{Math.round(salesSummary.averageDailySales).toLocaleString()}
-          </p>
-          <p className="text-sm text-green-600">Per day average</p>
-        </div>
-
-        <div className="bg-purple-50 p-4 rounded-lg">
-          <h3 className="text-sm font-medium text-purple-600">
-            Total Transactions
-          </h3>
-          <p className="text-2xl font-bold text-purple-900">
-            {salesSummary.totalTransactions}
-          </p>
-          <p className="text-sm text-purple-600">Completed transactions</p>
-        </div>
-      </div> */}
-
       {/* Chart */}
       <SalesPerformanceChart data={chartData} />
     </div>

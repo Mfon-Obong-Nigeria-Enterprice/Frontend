@@ -8,7 +8,11 @@ import {
   type ActionType,
 } from "@/stores/useNotificationStore";
 import type { Role } from "@/types/types";
-import { syncBranchNotifications } from "@/services/passwordService";
+import {
+  // syncBranchNotifications,
+  // syncSupportNotifications,
+  syncAllMaintenanceNotifications,
+} from "@/services/passwordService";
 
 // Type for notification config entries
 type NotificationConfigEntry = {
@@ -86,7 +90,7 @@ const NOTIFICATION_CONFIG: Record<string, NotificationConfigEntry> = {
     },
   },
 
-  // NEW: Support request notifications (for maintainers)
+  // Support request notifications (for maintainers)
   SUPPORT_REQUEST: {
     recipients: ["MAINTAINER"] as Role[],
     type: "error",
@@ -95,7 +99,7 @@ const NOTIFICATION_CONFIG: Record<string, NotificationConfigEntry> = {
     title: "New Support Request",
   },
 
-  // NEW: Password reset notifications (for branch admins)
+  // Password reset notifications (for branch admins)
   PASSWORD_RESET_SENT: {
     recipients: ["ADMIN"] as Role[],
     type: "info",
@@ -104,7 +108,7 @@ const NOTIFICATION_CONFIG: Record<string, NotificationConfigEntry> = {
     title: "Password Reset Notification",
   },
 
-  // NEW: Login assistance request (for maintainers)
+  // Login assistance request (for maintainers)
   LOGIN_ASSISTANCE_REQUEST: {
     recipients: ["MAINTAINER"] as Role[],
     type: "error",
@@ -190,7 +194,6 @@ function parseActivityDetails(action: string, details: string) {
       break;
     }
 
-    // NEW: Support request parsing
     case "SUPPORT_REQUEST": {
       const supportMatch = details.match(
         /Support request from ([^:]+): Issue - ([^,]+), Email - ([^,]+)(?:, Description - (.+))?/
@@ -204,7 +207,6 @@ function parseActivityDetails(action: string, details: string) {
       break;
     }
 
-    // NEW: Password reset parsing
     case "PASSWORD_RESET_SENT": {
       const passwordMatch = details.match(
         /Password reset notification sent to ([^(]+)\(([^)]+)\) for user ([^(]+)\(([^)]+)\) - Password: (\w+)/
@@ -268,7 +270,6 @@ function generateNotificationMessage(
     case "LOGIN":
       return `${log.performedBy} logged in from ${log.device}`;
 
-    // NEW: Support request message
     case "SUPPORT_REQUEST":
       return parsedInfo.issueType
         ? `Support request: "${parsedInfo.issueType}" from ${
@@ -282,7 +283,6 @@ function generateNotificationMessage(
           }`
         : log.details;
 
-    // NEW: Password reset message
     case "PASSWORD_RESET_SENT":
       return parsedInfo.userName
         ? `Temporary password sent to ${parsedInfo.branchAdminName} for user ${parsedInfo.userName}. Password: ${parsedInfo.temporaryPassword}`
@@ -335,12 +335,12 @@ export function activityLogToNotification(
   };
 }
 
-// Enhanced ActivityNotificationService with branch notification support
+// Enhanced ActivityNotificationService
 export class ActivityNotificationService {
   private static instance: ActivityNotificationService;
   private lastProcessedId: string | null = null;
   private intervalId: NodeJS.Timeout | null = null;
-  private branchSyncInterval: NodeJS.Timeout | null = null;
+  private maintenanceSyncInterval: NodeJS.Timeout | null = null;
   private isProcessing: boolean = false;
   private retryCount: number = 0;
   private maxRetries: number = 3;
@@ -380,19 +380,15 @@ export class ActivityNotificationService {
 
     this.lastProcessedId = this.loadLastProcessedId();
     this.retryCount = 0;
-
-    console.log(
-      `ActivityNotificationService: Initialized for user ${currentUser.id}`
-    );
     return true;
   }
 
-  // Enhanced to also sync branch notifications for admins
+  // Enhanced to handle maintenance notifications properly
   async processNewActivities(): Promise<number> {
     if (this.isProcessing) {
-      console.log(
-        "ActivityNotificationService: Already processing, skipping..."
-      );
+      // console.log(
+      //   "ActivityNotificationService: Already processing, skipping..."
+      // );
       return 0;
     }
 
@@ -433,15 +429,9 @@ export class ActivityNotificationService {
           newLogs = sortedLogs.slice(lastIndex + 1);
         } else {
           newLogs = sortedLogs.slice(-5);
-          console.log(
-            "ActivityNotificationService: Last processed ID not found, using recent logs"
-          );
         }
       } else {
         newLogs = sortedLogs.slice(-10);
-        console.log(
-          "ActivityNotificationService: First time processing for user, using last 10 logs"
-        );
       }
 
       const { addNotification } = useNotificationStore.getState();
@@ -466,18 +456,7 @@ export class ActivityNotificationService {
         this.saveLastProcessedId(sortedLogs[sortedLogs.length - 1]._id);
       }
 
-      // Sync branch notifications for admins
-      if (currentUser.role === "ADMIN") {
-        await syncBranchNotifications();
-      }
-
       this.retryCount = 0;
-
-      if (processedCount > 0) {
-        console.log(
-          `ActivityNotificationService: Successfully processed ${processedCount} notifications`
-        );
-      }
 
       return processedCount;
     } catch (error) {
@@ -500,6 +479,41 @@ export class ActivityNotificationService {
     }
   }
 
+  // Enhanced maintenance notification sync
+  async syncMaintenanceNotifications(): Promise<void> {
+    // const currentUser = useAuthStore.getState().user;
+
+    // Check for valid authentication before syncing
+    const token =
+      localStorage.getItem("accessToken") || localStorage.getItem("token");
+    if (!token) {
+      console.warn(
+        "syncMaintenanceNotifications: No authentication token available"
+      );
+      return;
+    }
+
+    try {
+      await syncAllMaintenanceNotifications();
+    } catch (error: any) {
+      console.error("Error syncing maintenance notifications:", error);
+
+      // Handle authentication errors
+      if (error?.response?.status === 401) {
+        console.warn(
+          "Authentication failed during maintenance notification sync"
+        );
+        // Could trigger token refresh or logout here
+      } else if (error?.response?.status === 403) {
+        console.warn(
+          "Insufficient permissions for maintenance notification sync"
+        );
+      }
+
+      // Don't rethrow to prevent breaking the polling system
+    }
+  }
+
   startPolling(intervalMs: number = 30000) {
     const currentUser = useAuthStore.getState().user;
     if (!currentUser?.id) {
@@ -517,44 +531,46 @@ export class ActivityNotificationService {
       clearInterval(this.intervalId);
     }
 
-    console.log(
-      `ActivityNotificationService: Starting polling every ${intervalMs}ms`
-    );
+    if (this.maintenanceSyncInterval) {
+      clearInterval(this.maintenanceSyncInterval);
+    }
 
+    // Start activity log polling
     this.intervalId = setInterval(() => {
       this.processNewActivities();
     }, intervalMs);
 
-    // Start branch notification sync for admins
-    if (currentUser.role === "ADMIN") {
-      this.branchSyncInterval = setInterval(() => {
-        syncBranchNotifications();
-      }, 60000); // Sync every minute for branch admins
-    }
+    // Start maintenance notification sync based on role
+    const syncInterval = currentUser.role === "MAINTAINER" ? 45000 : 60000; // More frequent for maintainers
 
+    this.maintenanceSyncInterval = setInterval(() => {
+      this.syncMaintenanceNotifications();
+    }, syncInterval);
+
+    // Initial processing
     this.processNewActivities();
+    this.syncMaintenanceNotifications();
   }
 
   stopPolling() {
     if (this.intervalId) {
-      console.log("ActivityNotificationService: Stopping polling");
+      // console.log("ActivityNotificationService: Stopping activity polling");
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
-    if (this.branchSyncInterval) {
-      clearInterval(this.branchSyncInterval);
-      this.branchSyncInterval = null;
+
+    if (this.maintenanceSyncInterval) {
+      // console.log("ActivityNotificationService: Stopping maintenance sync");
+      clearInterval(this.maintenanceSyncInterval);
+      this.maintenanceSyncInterval = null;
     }
+
     this.isProcessing = false;
   }
 
   clearUserData() {
     const currentUser = useAuthStore.getState().user;
     if (currentUser?.id) {
-      console.log(
-        `ActivityNotificationService: Clearing data for user ${currentUser.id}`
-      );
-
       const { clearUserNotifications } = useNotificationStore.getState();
       clearUserNotifications(currentUser.id);
 
@@ -581,9 +597,6 @@ export class ActivityNotificationService {
       if (notification) {
         const { addNotification } = useNotificationStore.getState();
         addNotification(notification);
-        console.log(
-          `ActivityNotificationService: Processed single activity: ${log.action}`
-        );
       }
     } catch (error) {
       console.error(
@@ -599,7 +612,7 @@ export class ActivityNotificationService {
       isProcessing: this.isProcessing,
       lastProcessedId: this.lastProcessedId,
       retryCount: this.retryCount,
-      branchSyncActive: !!this.branchSyncInterval,
+      maintenanceSyncActive: !!this.maintenanceSyncInterval,
     };
   }
 }
@@ -613,23 +626,15 @@ export function useActivityNotifications(
 
   React.useEffect(() => {
     if (autoStart && user?.id) {
-      console.log(
-        "useActivityNotifications: Starting service for user",
-        user.id
-      );
       service.startPolling(pollInterval);
 
       return () => {
-        console.log("useActivityNotifications: Stopping service");
         service.stopPolling();
       };
     } else if (!user?.id) {
-      console.log(
-        "useActivityNotifications: No user, ensuring service is stopped"
-      );
       service.stopPolling();
     }
-  }, [autoStart, pollInterval, user?.id, service]);
+  }, [autoStart, pollInterval, user?.id, user?.role, service]);
 
   React.useEffect(() => {
     if (!user?.id) {
@@ -639,6 +644,7 @@ export function useActivityNotifications(
 
   return {
     processNewActivities: () => service.processNewActivities(),
+    syncMaintenanceNotifications: () => service.syncMaintenanceNotifications(),
     startPolling: (interval?: number) => service.startPolling(interval),
     stopPolling: () => service.stopPolling(),
     processSingleActivity: (log: ActivityLogs) =>

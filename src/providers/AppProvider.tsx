@@ -46,15 +46,6 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
     user?.role && !["STAFF", "ADMIN"].includes(user.role);
   const isBranchUser = user?.role === "STAFF" || user?.role === "ADMIN";
 
-  // Debug logging
-  console.log("AppProvider - Current user:", {
-    role: user?.role,
-    branchId: user?.branchId,
-    userId: user?.id,
-    isBranchUser,
-    isSuperAdminOrHigher,
-  });
-
   // Categories query - always enabled
   const categoriesQuery = useQuery({
     queryKey: ["categories"],
@@ -66,21 +57,10 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const productsQuery = useQuery({
     queryKey: ["products", user?.role, user?.branchId],
     queryFn: () => {
-      console.log("Fetching products for:", {
-        role: user?.role,
-        branchId: user?.branchId,
-      });
-
       if (isBranchUser && user?.branchId) {
-        // Branch users see only their branch products
-        console.log(
-          "Calling getAllProductsByBranch for branch:",
-          user.branchId
-        );
         return getAllProductsByBranch(user.branchId);
       }
       // Super admin sees all products
-      console.log("Calling getAllProducts for super admin");
       return getAllProducts();
     },
     enabled: !isAuthLoading && !!user?.role,
@@ -90,29 +70,17 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const transactionsQuery = useQuery({
     queryKey: ["transactions", user?.role, user?.branchId, user?.id],
     queryFn: () => {
-      console.log("Fetching transactions for:", {
-        role: user?.role,
-        branchId: user?.branchId,
-        userId: user?.id,
-      });
-
       if (user?.role === "STAFF" && user?.id) {
         // Staff sees only their own transactions
-        console.log("Calling getTransactionByUserId for user:", user.id);
         return getTransactionByUserId(user.id);
       }
 
       if (user?.role === "ADMIN" && user?.branchId) {
         // Admin sees all transactions in their branch
-        console.log(
-          "Calling getTransactionsByBranch for branch:",
-          user.branchId
-        );
         return getTransactionsByBranch(user.branchId);
       }
 
       // Super admin sees all transactions
-      console.log("Calling getAllTransactions for super admin");
       return getAllTransactions();
     },
     enabled: !isAuthLoading && !!user?.role,
@@ -149,7 +117,6 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
   // Sync data to stores when available
   useEffect(() => {
     if (categoriesQuery.data && categoriesQuery.isSuccess) {
-      console.log("Setting categories:", categoriesQuery.data.length, "items");
       setCategories(categoriesQuery.data);
     }
   }, [
@@ -161,12 +128,6 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (productsQuery.data && productsQuery.isSuccess) {
-      console.log(
-        "Setting products:",
-        productsQuery.data.length,
-        "items for user:",
-        user?.role
-      );
       setProducts(productsQuery.data);
     }
   }, [
@@ -179,24 +140,6 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (transactionsQuery.data && transactionsQuery.isSuccess) {
-      console.log(
-        "Setting transactions:",
-        transactionsQuery.data.length,
-        "items for user:",
-        {
-          role: user?.role,
-          branchId: user?.branchId,
-        }
-      );
-      console.log(
-        "Sample transactions:",
-        transactionsQuery.data.slice(0, 3).map((t) => ({
-          id: t._id,
-          branchId: t.branchId,
-          type: t.type,
-          amount: t.amount,
-        }))
-      );
       setTransactions(transactionsQuery.data);
     }
   }, [
@@ -210,7 +153,6 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (clientsQuery.data && clientsQuery.isSuccess) {
-      console.log("Setting clients:", clientsQuery.data.length, "items");
       setClients(clientsQuery.data);
     }
   }, [
@@ -222,7 +164,6 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (branchesQuery.data && branchesQuery.isSuccess && isSuperAdminOrHigher) {
-      console.log("Setting branches:", branchesQuery.data.length, "items");
       setBranches(branchesQuery.data);
     }
   }, [
@@ -235,7 +176,6 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (usersQuery.data && usersQuery.isSuccess && isSuperAdminOrHigher) {
-      console.log("Setting users:", usersQuery.data.length, "items");
       setUsers(usersQuery.data);
     }
   }, [
@@ -248,7 +188,6 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (activitiesQuery.data && activitiesQuery.isSuccess) {
-      console.log("Setting activities:", activitiesQuery.data.length, "items");
       setActivities(activitiesQuery.data);
     }
   }, [

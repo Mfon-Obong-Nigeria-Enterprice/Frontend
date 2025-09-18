@@ -141,7 +141,7 @@ const Login = () => {
   const toggleVisibility = () => setPasswordVisible((v) => !v);
 
   return (
-    <main className="bg-[var(--cl-bg-light)] min-h-screen flex justify-center items-center">
+    <main className="bg-[var(--cl-bg-light)] min-h-screen flex justify-center items-center relative">
       <section className="md:max-w-3xl w-full mx-auto lg:bg-white lg:rounded-3xl lg:shadow-lg lg:border border-[var(--cl-secondary)] px-6 sm:px-20 pt-10 pb-14">
         <div className="max-w-34 mx-auto mb-6">
           <img src="/logo.png" alt="Mfon-Obong Enterprise Logo" />

@@ -1,6 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { useWebSocketNotifications } from "@/services/webSocketNotificationService";
 import {
   ActivityNotificationService,
   useActivityNotifications,
@@ -11,68 +10,112 @@ interface NotificationProviderProps {
   children: React.ReactNode;
 }
 
-// Hook that combines both notification systems
+// Enhanced hook with better error handling and debugging
 export const useActivityNotification = () => {
   const service = ActivityNotificationService.getInstance();
 
-  const createNotificationFromActivity = (log: ActivityLogs) => {
-    service.processSingleActivity(log);
-  };
+  const createNotificationFromActivity = useCallback(
+    (log: ActivityLogs) => {
+      try {
+        service.processSingleActivity(log);
+      } catch (error) {
+        console.error("Error creating notification from activity:", error);
+      }
+    },
+    [service]
+  );
 
-  const processNewActivities = async () => {
-    return await service.processNewActivities();
-  };
+  const processNewActivities = useCallback(async () => {
+    try {
+      const count = await service.processNewActivities();
+      return count;
+    } catch (error) {
+      console.error("Error processing new activities:", error);
+      return 0;
+    }
+  }, [service]);
+
+  const startPolling = useCallback(
+    (interval?: number) => {
+      try {
+        service.startPolling(interval);
+      } catch (error) {
+        console.error("Error starting polling:", error);
+      }
+    },
+    [service]
+  );
+
+  const stopPolling = useCallback(() => {
+    try {
+      service.stopPolling();
+    } catch (error) {
+      console.error("Error stopping polling:", error);
+    }
+  }, [service]);
+
+  const clearUserData = useCallback(() => {
+    try {
+      service.clearUserData();
+    } catch (error) {
+      console.error("Error clearing user data:", error);
+    }
+  }, [service]);
+
+  const getServiceStatus = useCallback(() => {
+    return service.getStatus();
+  }, [service]);
 
   return {
     createNotificationFromActivity,
     processNewActivities,
-    startPolling: (interval?: number) => service.startPolling(interval),
-    stopPolling: () => service.stopPolling(),
-    clearUserData: () => service.clearUserData(),
+    startPolling,
+    stopPolling,
+    clearUserData,
+    getServiceStatus,
   };
 };
 
-// Enhanced NotificationProvider with WebSocket + Activity Log support
+// Enhanced NotificationProvider with better lifecycle management
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   children,
 }) => {
   const user = useAuthStore((state) => state.user);
 
-  // Initialize WebSocket notifications (primary - real-time)
-  const webSocketNotifications = useWebSocketNotifications(true);
+  // Get the hook methods but disable auto-start to have more control
+  const activityNotifications = useActivityNotifications(false, 30000);
 
-  // Initialize Activity Log notifications (secondary - fallback for older events)
-  const activityNotifications = useActivityNotifications(true, 60000); // Longer interval since WebSocket handles real-time
-
-  // Handle user authentication changes
+  // Enhanced effect for user authentication changes
   useEffect(() => {
     if (user?.id && user?.role) {
-      // console.log(
-      //   `NotificationProvider: User authenticated - ${user.name} (${user.role})`
-      // );
-      console.log(`WebSocket connected: ${webSocketNotifications.isConnected}`);
-    } else {
-      console.log(
-        "NotificationProvider: No user, stopping notification services"
-      );
-      activityNotifications.stopPolling();
-      webSocketNotifications.disconnect();
-    }
+      // Small delay to ensure all stores are properly initialized
+      const timer = setTimeout(() => {
+        try {
+          activityNotifications.startPolling(30000);
+        } catch (error) {
+          console.error("NotificationProvider: Error starting service:", error);
+        }
+      }, 100);
 
-    return () => {
+      return () => {
+        clearTimeout(timer);
+      };
+    } else {
+      activityNotifications.stopPolling();
+
+      // Only clear data if user is completely logged out
       if (!user?.id) {
         activityNotifications.clearUserData();
       }
-    };
-  }, [user?.id, user?.role, activityNotifications, webSocketNotifications]);
+    }
+  }, [user?.id, user?.role, activityNotifications]);
 
-  // Cleanup on unmount
+  // Cleanup effect
   useEffect(() => {
     return () => {
       activityNotifications.stopPolling();
-      webSocketNotifications.disconnect();
     };
-  }, [activityNotifications, webSocketNotifications]);
+  }, [activityNotifications]);
 
   return <>{children}</>;
 };
