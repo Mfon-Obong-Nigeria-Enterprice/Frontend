@@ -1,6 +1,6 @@
 import api from "./baseApi";
 import { type Category } from "@/types/types";
-// import axios from "axios";
+
 export const getAllCategories = async (): Promise<Category[]> => {
   const response = await api.get("/categories");
   return response.data;
@@ -10,7 +10,6 @@ export const getAllCategoriesByProduct = async (
   id: string
 ): Promise<Category[]> => {
   const response = await api.get(`/products/${id}/category`);
-
   return response.data;
 };
 
@@ -24,9 +23,13 @@ export const createCategory = async (data: Category): Promise<Category> => {
   return response.data;
 };
 
-export const updateCategory = async (id: string, data: { name: string }) => {
+export const updateCategory = async (
+  id: string,
+  data: Partial<Pick<Category, "name" | "description" | "units">>
+) => {
   return api.patch(`/categories/${id}`, data);
 };
+
 
 export const deleteCategory = async (id: string) => {
   return api.delete(`/categories/${id}`);

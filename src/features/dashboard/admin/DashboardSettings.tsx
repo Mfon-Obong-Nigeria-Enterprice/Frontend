@@ -2,9 +2,8 @@
 // features/dashboard/super-admin/components/DashboardSettings.tsx
 import * as React from "react";
 import { AlertSettingsSection } from "./components/AlertSettings";
-// import { NotificationSettingsSection } from "./components/NotificationSettings";
+
 import { PriceUpdateTableSection } from "./components/PriceUpdate";
-import { useUpdateProductPrice } from "@/hooks/useSetting";
 import { useInventoryStore } from "@/stores/useInventoryStore";
 import { type AlertAndNotificationSettings, type Settings } from "@/schemas/SettingsSchemas";
 import { useHasRole } from "@/lib/roles";
@@ -43,22 +42,15 @@ const defaultSettings: Settings = {
   lowStockAlert: false,
   inactivityAlerts: false,
   dashboardNotification: false,
-  emailNotification: false
+  emailNotification: false,
 };
 
 export function DashboardSettings() {
   const canModifySettings = useHasRole(["SUPER_ADMIN", "ADMIN"]);
   const canModifyPrices = useHasRole(["SUPER_ADMIN", "ADMIN", "MAINTAINER"]);
 
-  const { products: storeProducts, updateProduct } = useInventoryStore();
-  const updateProductPriceMutation = useUpdateProductPrice(); // Using the new hook
+  const { products: storeProducts } = useInventoryStore();
 
-  const [editingPrices, setEditingPrices] = React.useState<{
-    [key: string]: number;
-  }>({});
-  const [loadingProductId, setLoadingProductId] = React.useState<string | null>(
-    null
-  );
   const [localSettings, setLocalSettings] =
     React.useState<Settings>(defaultSettings);
 
@@ -87,55 +79,6 @@ export function DashboardSettings() {
     );
   };
 
-  const handlePriceChange = (productId: string, newPrice: number) => {
-    setEditingPrices((prev) => ({ ...prev, [productId]: newPrice }));
-  };
-
-  const handleResetPrice = (productId: string) => {
-    setEditingPrices((prev) => {
-      const newState = { ...prev };
-      delete newState[productId];
-      return newState;
-    });
-  };
-
-const handleUpdatePrice = async (productId: string, newPrice: number) => {
-    if (!canModifyPrices) {
-      toast.error("You don't have permission to modify prices");
-      return;
-    }
-
-    // Validate price
-    if (newPrice <= 0) {
-      toast.error("Price must be greater than 0");
-      handleResetPrice(productId);
-      return;
-    }
-
-    setLoadingProductId(productId);
-    
-    try {
-      const updatedProduct = await updateProductPriceMutation.mutateAsync({
-        id: productId, 
-        price: newPrice,
-      });
-      
-      updateProduct(updatedProduct);
-      handleResetPrice(productId);
-      toast.success("Price updated successfully");
-      
-    } catch (error) {
-      console.error("Failed to update product price:", error);
-      toast.error("Failed to update price. Please try again.");
-      
-      // Optional: Revert the local editing state on error
-      handleResetPrice(productId);
-      
-    } finally {
-      setLoadingProductId(null);
-    }
-  };
-
   // Load settings from localStorage on mount
   React.useEffect(() => {
     const savedSettings = localStorage.getItem("app-settings");
@@ -159,6 +102,7 @@ const handleUpdatePrice = async (productId: string, newPrice: number) => {
         </div>
 
         <div className="space-y-6">
+          {/* Alert Settings */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">
               Alert Settings
@@ -170,26 +114,16 @@ const handleUpdatePrice = async (productId: string, newPrice: number) => {
             />
           </div>
 
-          {/* <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
-              Notification Preferences
-            </h2>
-            <NotificationSettingsSection
-              settings={localSettings}
-              onSettingChange={handleSettingChange}
-              isReadOnly={!canModifySettings}
-            />
-          </div> */}
+         
 
+          {/* Price Update Section */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <PriceUpdateTableSection
               products={storeProducts}
-              editingPrices={editingPrices}
-              loadingProductId={loadingProductId}
-              onPriceChange={handlePriceChange}
-              onUpdate={handleUpdatePrice}
-              onReset={handleResetPrice}
               isReadOnly={!canModifyPrices}
+              onUpdated={() => {
+                toast.success("Product price updated");
+              }}
             />
           </div>
         </div>

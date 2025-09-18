@@ -24,6 +24,7 @@ const InventoryTab = React.memo(
     priceRange,
   }: InventoryTabProps) => {
     const [openCategory, setOpenCategory] = useState<{
+      _id: string; // Added _id field
       name: string;
       count: number;
       description?: string;
@@ -139,6 +140,7 @@ const InventoryTab = React.memo(
                           // Added 'e' parameter to prevent tab change on click
                           e.stopPropagation(); // Stop propagation to prevent tab trigger from firing
                           setOpenCategory({
+                            _id: category._id, // Add category ID
                             name: category.name,
                             count,
                             description: category.description,
@@ -193,9 +195,12 @@ const InventoryTab = React.memo(
         {openCategory && (
           <CategoryModal
             setOpenModal={() => setOpenCategory(null)}
+            categoryId={openCategory._id} // Use the category ID from state
             categoryName={openCategory.name}
             description={openCategory.description}
             productCount={openCategory.count}
+            onCategoryUpdate={() => {}}
+            onCategoryDelete={() => setOpenCategory(null)}
           />
         )}
       </div>
