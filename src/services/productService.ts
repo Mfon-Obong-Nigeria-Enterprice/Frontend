@@ -48,8 +48,15 @@ export const updateProductStock = async (
   return response.data;
 };
 
-// ✅ Delete product function
+
 export const deleteProduct = async (id: string): Promise<void> => {
   const response = await api.delete(`/products/${id}/delete`);
+  return response.data;
+};
+
+export const updateProductPrice = async (productId: string, newPrice: number) => {
+  const response = await api.patch(`/products/${productId}`, {
+    unitPrice: newPrice,
+  });
   return response.data;
 };

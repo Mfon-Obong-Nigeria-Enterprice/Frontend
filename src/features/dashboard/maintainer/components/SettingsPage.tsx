@@ -21,13 +21,15 @@ export const SettingsPage: React.FC = () => {
     fetchActiveHours,
     saveActiveHoursConfig,
     toggleMaintenanceMode,
-    loading
   } = useSettingsStore();
 
   const { user } = useAuthStore();
 
   const [isSaved, setIsSaved] = useState(false);
   const [showForceLogoutSuccess, setShowForceLogoutSuccess] = useState(false);
+  const [loadingMaintenance, setLoadingMaintenance] = useState(false);
+  const [loadingSession, setLoadingSession] = useState(false);
+
   const [activeHoursForm, setActiveHoursForm] = useState({
     startTime: "08:00",
     endTime: "22:00",
@@ -54,23 +56,20 @@ export const SettingsPage: React.FC = () => {
 
   const handleMaintenanceToggle = async () => {
     try {
-      console.log("Current maintenance mode:", maintenanceMode);
+      setLoadingMaintenance(true);
       await toggleMaintenanceMode();
-      
-      // Check the updated state after a short delay
-      setTimeout(() => {
-        console.log("Updated maintenance mode:", useSettingsStore.getState().maintenanceMode);
-      }, 100);
-      
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 2000);
     } catch (err) {
       console.error("Failed to toggle maintenance mode:", err);
+    } finally {
+      setLoadingMaintenance(false);
     }
   };
 
   const handleSaveSession = async () => {
     try {
+      setLoadingSession(true);
       const result = await saveActiveHoursConfig({
         ...activeHoursForm,
         description: "Business hours - updated via UI",
@@ -85,13 +84,10 @@ export const SettingsPage: React.FC = () => {
       setTimeout(() => setIsSaved(false), 2000);
     } catch (err) {
       console.error("Failed to save session settings:", err);
+    } finally {
+      setLoadingSession(false);
     }
   };
-
-  // Add this useEffect to log state changes
-  useEffect(() => {
-    console.log("Maintenance mode state changed:", maintenanceMode);
-  }, [maintenanceMode]);
 
   if (error) {
     return (
@@ -139,34 +135,30 @@ export const SettingsPage: React.FC = () => {
                 <div>
                   <CardTitle>Maintenance Mode</CardTitle>
                   <CardDescription className="text-sm pt-2">
-                   Temporarily disable system access for maintenance
-
+                    Temporarily disable system access for maintenance
                   </CardDescription>
                 </div>
                 <div className="pt-8">
                   <Switch
                     checked={isMaintOn}
                     onCheckedChange={handleMaintenanceToggle}
-                    disabled={loading}
+                    disabled={loadingMaintenance}
                     className="data-[state=checked]:bg-green-600"
                   />
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-            
               <Button
                 onClick={handleMaintenanceToggle}
                 className="w-full bg-[#2ECC71] hover:bg-[#2ECC71] text-white"
-                disabled={loading}
+                disabled={loadingMaintenance}
               >
-                {loading ? (
+                {loadingMaintenance ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     {isMaintOn ? "Deactivating..." : "Activating..."}
                   </>
-                ) : isMaintOn ? (
-                  "Save Changes"
                 ) : (
                   "Save Changes"
                 )}
@@ -210,16 +202,15 @@ export const SettingsPage: React.FC = () => {
                     className="w-full"
                   />
                 </div>
-                
               </div>
             </div>
 
             <Button
               className="w-full bg-[#2ECC71] hover:bg-[#2ECC71] text-white"
               onClick={handleSaveSession}
-              disabled={loading}
+              disabled={loadingSession}
             >
-              {loading ? (
+              {loadingSession ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Saving...
