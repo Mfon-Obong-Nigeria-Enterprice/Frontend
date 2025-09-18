@@ -1,11 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 // features/dashboard/super-admin/components/DashboardSettings.tsx
 import * as React from "react";
 import { AlertSettingsSection } from "./components/AlertSettings";
-
 import { PriceUpdateTableSection } from "./components/PriceUpdate";
 import { useInventoryStore } from "@/stores/useInventoryStore";
-import { type AlertAndNotificationSettings, type Settings } from "@/schemas/SettingsSchemas";
+import {
+  type AlertAndNotificationSettings,
+  type Settings,
+} from "@/schemas/SettingsSchemas";
 import { useHasRole } from "@/lib/roles";
 import { toast } from "react-toastify";
 
@@ -60,7 +62,6 @@ export function DashboardSettings() {
   ) => {
     if (!canModifySettings) return;
 
-    // Update local state only - no API call since settings API doesn't exist
     setLocalSettings((prev) => ({
       ...prev,
       alerts: {
@@ -69,7 +70,7 @@ export function DashboardSettings() {
       },
     }));
 
-    // Optional: Store in localStorage for persistence
+    // Optional: store in localStorage for persistence
     localStorage.setItem(
       "app-settings",
       JSON.stringify({
@@ -85,7 +86,7 @@ export function DashboardSettings() {
     if (savedSettings) {
       try {
         setLocalSettings(JSON.parse(savedSettings));
-      } catch (error) {
+      } catch {
         toast.error("Failed to load settings from localStorage");
       }
     }
@@ -102,7 +103,7 @@ export function DashboardSettings() {
         </div>
 
         <div className="space-y-6">
-          {/* Alert Settings */}
+          {/* 🔔 Alert Settings */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">
               Alert Settings
@@ -114,16 +115,11 @@ export function DashboardSettings() {
             />
           </div>
 
-         
-
-          {/* Price Update Section */}
+          {/* 💰 Price Update Table */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <PriceUpdateTableSection
               products={storeProducts}
               isReadOnly={!canModifyPrices}
-              onUpdated={() => {
-                toast.success("Product price updated");
-              }}
             />
           </div>
         </div>

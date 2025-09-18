@@ -8,6 +8,7 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { deleteCategory, updateCategory } from "@/services/categoryService";
 import { isAxiosError } from "axios";
+import { useInventoryStore } from "@/stores/useInventoryStore";
 
 type ModalProps = {
   setOpenModal: () => void;
@@ -15,8 +16,6 @@ type ModalProps = {
   categoryName: string;
   description?: string;
   productCount: number;
-  onCategoryUpdate?: () => void;
-  onCategoryDelete?: () => void;
 };
 
 const CategoryModal = ({
@@ -25,8 +24,6 @@ const CategoryModal = ({
   categoryName,
   description,
   productCount,
-  onCategoryUpdate,
-  onCategoryDelete,
 }: ModalProps) => {
   const [editMode, setEditMode] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -34,12 +31,16 @@ const CategoryModal = ({
   const [editedName, setEditedName] = useState(categoryName);
   const [editedDescription, setEditedDescription] = useState(description || "");
 
+  // 🔄 Zustand actions
+  const setCategories = useInventoryStore((s) => s.setCategories);
+  const categories = useInventoryStore((s) => s.categories);
+
   // ✅ Save changes
   const handleSave = async () => {
     try {
       setIsLoading(true);
 
-      await updateCategory(categoryId, {
+      const updated = await updateCategory(categoryId, {
         name: editedName,
         description: editedDescription,
       });
@@ -47,9 +48,12 @@ const CategoryModal = ({
       toast.success("Category updated successfully");
       setEditMode(false);
 
-      if (onCategoryUpdate) {
-        onCategoryUpdate(); // 🔄 Refresh categories in parent
-      }
+      // 🔄 Update category in Zustand
+      setCategories(
+        categories.map((cat) =>
+          cat._id === categoryId ? { ...cat, ...updated } : cat
+        )
+      );
     } catch (error) {
       if (isAxiosError(error) && error.response) {
         toast.error(
@@ -69,12 +73,12 @@ const CategoryModal = ({
       await deleteCategory(categoryId);
 
       toast.success("Category deleted successfully");
+
+      // 🔄 Remove from Zustand store
+      setCategories(categories.filter((cat) => cat._id !== categoryId));
+
       setIsDeleteModalOpen(false);
       setOpenModal();
-
-      if (onCategoryDelete) {
-        onCategoryDelete(); // 🔄 Refresh categories in parent
-      }
     } catch (error) {
       if (isAxiosError(error) && error.response) {
         toast.error(
@@ -156,7 +160,7 @@ const CategoryModal = ({
                 </Button>
               )}
 
-              {/* Delete button is ALWAYS visible */}
+              {/* Delete */}
               <Button
                 variant="ghost"
                 className="w-fit p-2"
@@ -203,9 +207,7 @@ const CategoryModal = ({
             <p className="text-sm text-[var(--cl-text-dark)] font-semibold">
               {productCount}
             </p>
-            <p className="text-[var(--cl-secondary)] text-[0.75rem]">
-              Products
-            </p>
+            <p className="text-[var(--cl-secondary)] text-[0.75rem]">Products</p>
           </div>
         </div>
       </div>
