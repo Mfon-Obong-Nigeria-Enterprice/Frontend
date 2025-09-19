@@ -8,6 +8,14 @@ import useClientFiltering, {
   type clientBalance,
   type clientStat,
 } from "@/hooks/useClientFiltering";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  SelectGroup,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
 import autoTable from "jspdf-autotable";
@@ -254,7 +262,7 @@ const ManagerClients = () => {
         />
         <Stats data={stats} />
 
-        <section className="bg-white rounded-[0.625rem] pt-4 border border-[#D9D9D9] mt-10 md:mx-1">
+        <section className="bg-white rounded-[0.625rem] pt-4 border border-[#D9D9D9] mt-10 ">
           <div className="flex items-center justify-between px-7 pt-5 flex-wrap">
             <div className="pb-4 sm:pb-0">
               {" "}
@@ -291,25 +299,36 @@ const ManagerClients = () => {
               />
             </div>
             <div className="flex items-center gap-4 pt-4 sm:pt-0 md:gap-3">
-              <select
-                value={clientStatus}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] p-2 rounded-sm"
-              >
-                <option value="All Status">All Status</option>
-                <option value="Registered">Registered</option>
-                <option value="Unregistered">Unregistered</option>
-              </select>
-              <select
-                value={clientBalance}
-                onChange={(e) => handleBalanceChange(e.target.value)}
-                className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] p-2 rounded-sm"
-              >
-                <option value="All Balances">All Balances</option>
-                <option value="PURCHASE">Purchase</option>
-                <option value="PICKUP">Pickup</option>
-                <option value="DEPOSIT">Deposit</option>
-              </select>
+              {/* Client Status */}
+
+              <Select value={clientStatus} onValueChange={handleStatusChange}>
+                <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] p-2 rounded-sm">
+                  <SelectValue placeholder="AllStatus" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#D9D9D9] text-[#444444]">
+                  <SelectGroup>
+                    <SelectItem value="All Status">All Status</SelectItem>
+                    <SelectItem value="REGISTERED">Registered</SelectItem>
+                    <SelectItem value="UNREGISTERED">Unregistered</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+
+              {/* Client Balance */}
+
+              <Select value={clientBalance} onValueChange={handleBalanceChange}>
+                <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] p-2 rounded-sm">
+                  <SelectValue placeholder="All Balances" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#D9D9D9] text-[#444444]">
+                  <SelectGroup>
+                    <SelectItem value="All Balances">All Balances</SelectItem>
+                    <SelectItem value="PURCHASE">Purchase</SelectItem>
+                    <SelectItem value="PICKUP">Pickup</SelectItem>
+                    <SelectItem value="DEPOSIT">Deposit</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

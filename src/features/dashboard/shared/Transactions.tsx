@@ -50,6 +50,7 @@ import {
 // icons
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getChangeText } from "@/utils/helpersfunction";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 const Transactions = () => {
   const { getOutStandingBalanceData, getClientById } = useClientStore();
@@ -101,14 +102,12 @@ const Transactions = () => {
   const stats: StatCard[] = [
     {
       heading: "Total Sales (Today)",
-      salesValue: `${todaysSales.toLocaleString()}`,
-      format: "currency",
+      salesValue: formatCurrency(todaysSales),
       hideArrow: false,
     },
     {
       heading: "Payments Received",
-      salesValue: `${monthlyPayments.toLocaleString()}`,
-      format: "currency",
+      salesValue: formatCurrency(monthlyPayments),
       statValue: getChangeText(
         monthlyChange.percentage,
         monthlyChange.direction,
@@ -125,8 +124,7 @@ const Transactions = () => {
     },
     {
       heading: "Outstanding balance",
-      salesValue: `${outstandingBalance.totalDebt.toLocaleString()}`,
-      format: "currency",
+      salesValue: formatCurrency(outstandingBalance.totalDebt),
       statValue: `${outstandingBalance.clientsWithDebt} clients with overdue balances`,
       hideArrow: true,
       salesColor: "orange",
@@ -340,7 +338,7 @@ const Transactions = () => {
   );
 
   return (
-    <div>
+    <div className="px-2 md:px-0">
       <Stats data={stats} />
 
       {/* Search bar for invoice number */}

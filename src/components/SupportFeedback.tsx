@@ -83,14 +83,7 @@ const SupportFeedback: React.FC<SupportFeedbackProps> = ({ onClose }) => {
       return;
     }
 
-    // console.log("Submitting support request:", {
-    //   issueType: formData.issueType,
-    //   email: formData.email,
-    //   description: formData.description,
-    // });
-
     supportMutation.mutate({
-      issueType: formData.issueType,
       email: formData.email,
       message:
         formData.description || `Support request for: ${formData.issueType}`,
@@ -214,16 +207,6 @@ const SupportFeedback: React.FC<SupportFeedbackProps> = ({ onClose }) => {
                 />
               </div>
 
-              {/* Connection status */}
-              <div className="text-xs text-gray-500 text-center">
-                Real-time notifications:{" "}
-                {isConnected ? (
-                  <span className="text-green-600">Connected</span>
-                ) : (
-                  <span className="text-amber-600">Disconnected</span>
-                )}
-              </div>
-
               {/* Action Buttons */}
               <div className="flex gap-3 pt-2 justify-end">
                 <Button
@@ -248,7 +231,7 @@ const SupportFeedback: React.FC<SupportFeedbackProps> = ({ onClose }) => {
                       Sending...
                     </>
                   ) : (
-                    "Send Support"
+                    "Send Report"
                   )}
                 </Button>
               </div>

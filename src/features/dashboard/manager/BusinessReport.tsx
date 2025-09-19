@@ -7,6 +7,7 @@ import TopSellingProducts from "../shared/TopSellingProducts";
 import SalesByCategoryChart from "../shared/CategoryTransactionChart";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { getChangeText } from "@/utils/helpersfunction";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 const BusinessReport = () => {
   const {
@@ -30,7 +31,7 @@ const BusinessReport = () => {
   const stats: StatCard[] = [
     {
       heading: "Total Sales (This week)",
-      salesValue: `₦${thisWeekSales.toLocaleString()}`,
+      salesValue: formatCurrency(thisWeekSales),
       statValue: getChangeText(
         weeklyChange.percentage,
         weeklyChange.direction,
@@ -45,7 +46,7 @@ const BusinessReport = () => {
     },
     {
       heading: "Total Sales (This month)",
-      salesValue: `₦${thisMonthSales.toLocaleString()}`,
+      salesValue: formatCurrency(thisMonthSales),
       statValue: getChangeText(
         monthlyChange.percentage,
         monthlyChange.direction,
@@ -94,7 +95,7 @@ const BusinessReport = () => {
           <TopSellingProducts />
         </div>
         <div className="bg-white w-full h-full p-7 border border-[#d9d9d9] rounded-xl  lg:col-span-2">
-          <h4 className="text-xl font-medium text-[#1E1E1E] mb-4">
+          <h4 className="text-xl font-medium text-[#1E1E1E] ">
             Sales by Category
           </h4>
           <SalesByCategoryChart />

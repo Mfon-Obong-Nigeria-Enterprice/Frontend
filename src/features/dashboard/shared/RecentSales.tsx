@@ -12,6 +12,7 @@ import {
 import { MdKeyboardArrowRight } from "react-icons/md";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { toSentenceCaseName } from "@/utils/styles";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 const RecentSales: React.FC = () => {
   const navigate = useNavigate();
@@ -26,15 +27,17 @@ const RecentSales: React.FC = () => {
     .slice(0, 5);
 
   return (
-    <div className="bg-white p-4 sm:px-8 sm:py-6 mx-2 rounded-lg font-Inter">
+    <div className="bg-white p-4 sm:px-8 sm:py-6  rounded-lg font-Inter">
       <h4 className="font-medium text-lg sm:text-xl text-text-dark">
         Recent sales
       </h4>
 
       {recentTxns.length === 0 ? (
         // 🔹 Empty state
-        <div className="flex items-center justify-center text-center text-gray-500">
-          <p className="text-sm sm:text-base">No recent sales yet</p>
+        <div className="flex items-center justify-center text-center text-gray-500 ">
+          <p className="text-sm sm:text-base text-center pt-10">
+            No recent sales yet
+          </p>
         </div>
       ) : (
         // 🔹 Normal table
@@ -68,7 +71,7 @@ const RecentSales: React.FC = () => {
                     txn.total > 0 ? "text-green-400" : "text-[#F95353]"
                   }`}
                 >
-                  ₦{txn.total.toLocaleString()}
+                  {formatCurrency(txn.total)}
                 </TableCell>
                 <TableCell className="text-center text-xs text-[var(--cl-secondary)]">
                   {new Date(txn.createdAt).toLocaleTimeString([], {
@@ -83,11 +86,11 @@ const RecentSales: React.FC = () => {
       )}
 
       {/* Footer always visible */}
-      <div className="flex justify-between items-center bg-[#f0f0f3] mt-10 sm:mt-[35dvh] text-blue-300">
+      <div className="flex justify-between items-center bg-[#f0f0f3] mt-10 text-blue-300">
         <div className="pl-3 py-2 text-sm font-medium">
           <span
             onClick={() => navigate("/admin/dashboard/sales")}
-             className="text-[#3D80FF] hover:text-[#3D80FF]"
+            className="text-[#3D80FF] hover:text-[#3D80FF]"
           >
             View all Sales
           </span>

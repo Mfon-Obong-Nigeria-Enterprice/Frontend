@@ -69,7 +69,7 @@ const Notifications = () => {
   };
 
   return (
-    <div>
+    <div className="px-2 md:px-0">
       <DashboardTitle
         heading={
           user?.role === "MAINTAINER"
@@ -89,7 +89,7 @@ const Notifications = () => {
         />
       </div>
 
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 px-2 md:px-0">
         {/* Header */}
         <div className="p-6 border-b bg-[#F0F0F3]">
           <div className="flex items-center justify-between mb-4">

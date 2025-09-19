@@ -48,7 +48,6 @@ export const useAuthStore = create<AuthState>()(
         set({ loading: true });
         try {
           const { user } = await authService.login(email, password);
-          console.log("Login successful, user data:", user);
 
           set({
             user,
@@ -74,7 +73,6 @@ export const useAuthStore = create<AuthState>()(
       },
 
       updateUser: (updates) => {
-        console.log("Updating user with:", updates);
         set((state) => {
           if (!state.user || !state.userProfile) {
             console.warn("No user or userProfile to update");
@@ -98,8 +96,8 @@ export const useAuthStore = create<AuthState>()(
             name: cleanName || state.userProfile.name, // Use cleaned name
           };
 
-          console.log("Updated user object:", updatedUser);
-          console.log("Updated userProfile object:", updatedUserProfile);
+          // console.log("Updated user object:", updatedUser);
+          // console.log("Updated userProfile object:", updatedUserProfile);
 
           return {
             user: updatedUser,
@@ -138,7 +136,6 @@ export const useAuthStore = create<AuthState>()(
 
           // If no changes, don't update the state
           if (!hasUserChanges && !hasProfileChanges) {
-            console.log("No changes detected, skipping sync");
             return state;
           }
 
@@ -164,12 +161,12 @@ export const useAuthStore = create<AuthState>()(
             createdAt: profileData.createdAt || state.userProfile.createdAt,
           };
 
-          console.log("Syncing user with profile data:", {
-            profileData,
-            cleanName,
-            updatedUser,
-            updatedUserProfile,
-          });
+          // console.log("Syncing user with profile data:", {
+          //   profileData,
+          //   cleanName,
+          //   updatedUser,
+          //   updatedUserProfile,
+          // });
 
           return {
             user: updatedUser,
