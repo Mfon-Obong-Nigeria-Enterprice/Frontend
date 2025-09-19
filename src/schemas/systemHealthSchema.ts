@@ -7,8 +7,10 @@ export const healthStatusSchema = z.enum([
   "down",
   "critical",
   "degraded",
-  "high", 
+  "high",
+  "normal",  
 ]);
+
 
 export type HealthStatus = z.infer<typeof healthStatusSchema>;
 
