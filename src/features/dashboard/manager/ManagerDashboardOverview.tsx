@@ -22,6 +22,7 @@ import { useRevenueStore } from "@/stores/useRevenueStore";
 
 // utils
 import { getChangeText } from "@/utils/helpersfunction";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 const ManagerDashboardOverview = () => {
   const { getTodaysSales, getSalesPercentageChange } = useTransactionsStore();
@@ -34,27 +35,10 @@ const ManagerDashboardOverview = () => {
 
   const navigate = useNavigate();
 
-  // Initialize data
-  // useEffect(() => {
-  //   const initializeData = async () => {
-  //     try {
-  //       const transactionData = await getAllTransactions();
-  //       setTransactions(transactionData);
-  //     } catch (error) {
-  //       console.error("Failed to fetch transactions:", error);
-  //     }
-  //   };
-
-  //   if (!transactions) {
-  //     initializeData();
-  //   }
-  // }, [transactions, setTransactions]);
-
   const stats: StatCard[] = [
     {
       heading: "Total Sales (Today)",
-      salesValue: `${todaysSales.toLocaleString()}`,
-      format: "currency",
+      salesValue: formatCurrency(todaysSales),
       statValue: getChangeText(
         dailyChange.percentage,
         dailyChange.direction,
@@ -70,7 +54,7 @@ const ManagerDashboardOverview = () => {
     },
     {
       heading: "Monthly Revenue ",
-      salesValue: `₦${monthlyRevenue?.totalRevenue.toLocaleString()}`,
+      salesValue: formatCurrency(monthlyRevenue?.totalRevenue),
       statValue: `${
         monthlyRevenue?.direction === "increase"
           ? "+"
@@ -87,7 +71,7 @@ const ManagerDashboardOverview = () => {
     },
     {
       heading: "Outstanding balances",
-      salesValue: `₦${outstandingBalance.totalDebt.toLocaleString()}`,
+      salesValue: formatCurrency(outstandingBalance.totalDebt),
       statValue: ` ${outstandingBalance.clientsWithDebt} Clients with overdue balances`,
       color: "orange",
     },

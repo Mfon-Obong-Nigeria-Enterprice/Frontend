@@ -4,6 +4,7 @@ import type { StatCard } from "@/types/stats";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { formatChangeText, getChangeText } from "@/utils/helpersfunction";
 import { useClientStore } from "@/stores/useClientStore";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 const StaffStats: React.FC = () => {
   const { transactions, getTodaysSales, getSalesPercentageChange } =
@@ -18,7 +19,7 @@ const StaffStats: React.FC = () => {
   const stats: StatCard[] = [
     {
       heading: "Total Sales (Today)",
-      salesValue: `₦${todaysSales.toLocaleString()}`,
+      salesValue: formatCurrency(todaysSales),
       statValue: getChangeText(
         dailyChange.percentage,
         dailyChange.direction,

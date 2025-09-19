@@ -27,6 +27,7 @@ import { getAllTransactions } from "@/services/transactionService";
 import { getPreviousMonthName } from "@/utils/helpersfunction";
 import { getAllProducts } from "@/services/productService";
 import { useEffect } from "react";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 export default function RevenueAnalytics() {
   const {
@@ -138,7 +139,7 @@ export default function RevenueAnalytics() {
   const stats: StatCard[] = [
     {
       heading: "Total Revenue (YTD)",
-      salesValue: `₦${ytdRevenue.totalRevenue.toLocaleString()}`,
+      salesValue: formatCurrency(ytdRevenue.totalRevenue),
       statValue: `${
         ytdRevenue.direction === "increase"
           ? "+"
@@ -155,7 +156,7 @@ export default function RevenueAnalytics() {
     },
     {
       heading: `Previous Month (${getPreviousMonthName()})`,
-      salesValue: `₦${monthlyRevenue.previousPeriodRevenue.toLocaleString()}`,
+      salesValue: formatCurrency(monthlyRevenue.previousPeriodRevenue),
     },
     {
       heading: "Growth Rate (MOM)",

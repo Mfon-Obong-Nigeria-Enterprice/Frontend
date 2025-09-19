@@ -27,13 +27,14 @@ import { ChevronDown, Receipt, TrendingUp } from "lucide-react";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 
 // utils
-import { toSentenceCaseName } from "@/utils/styles";
+import { balanceClassT, toSentenceCaseName } from "@/utils/styles";
 
 // types
 import type { Transaction } from "@/types/transactions";
 
 //hooks
 import { useTransactionSearch } from "@/hooks/useTransactionSearch";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 // Empty State Component
 function EmptySalesState() {
@@ -72,8 +73,6 @@ const SalesTableData = ({
     pageSize: 5,
     onPageChange: (page: number) => setCurrentPage(page),
   });
-
-  const formatCurrency = (value: number) => `₦${value.toLocaleString()}`;
 
   const hasTransactions = currentTransaction && currentTransaction.length > 0;
 
@@ -160,7 +159,7 @@ const SalesTableData = ({
                                   <ChevronDown className="w-4 h-4" />
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent className="text-sm max-w-xs">
+                              <PopoverContent className="text-sm max-w-30">
                                 {transaction.items
                                   .slice(1)
                                   .map(
@@ -177,11 +176,15 @@ const SalesTableData = ({
                         </>
                       )}
                     </TableCell>
-                    <TableCell className="text-green-600">
+                    <TableCell
+                      className={`${balanceClassT(
+                        transaction.total
+                      )} text-start`}
+                    >
                       {formatCurrency(transaction.total)}
                     </TableCell>
                     <TableCell>{transaction.userId.name}</TableCell>
-                    <TableCell className="text-center text-[#3D80FF] text-sm">
+                    <TableCell className="text-start text-[#3D80FF] text-sm">
                       <button
                         onClick={() => openModal(transaction)}
                         className="underline cursor-pointer hover:no-underline transition-all duration-150 ease-in-out"

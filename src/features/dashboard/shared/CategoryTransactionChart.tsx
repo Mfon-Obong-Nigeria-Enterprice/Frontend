@@ -11,7 +11,7 @@ import {
 import { isCategoryObject } from "@/utils/helpers";
 import { TrendingUp, BarChart3 } from "lucide-react";
 
-const COLORS = ["#4285F4", "#FBBC05", "#EA4335"];
+const COLORS = ["#4285F4", "#FBBC05", "#EA4335", "#2ECC71", "#8C1C1380"];
 
 function useCategoryChartData() {
   const transactionsWithCategories = useTransactionWithCategories();
@@ -109,17 +109,17 @@ export default function SalesByCategoryChart() {
             verticalAlign="bottom"
             align="center"
             wrapperStyle={{
-              paddingBottom: "10px",
+              paddingBottom: "0px",
             }}
             content={({ payload }) => (
               <ul
                 style={{
                   listStyle: "none",
                   padding: 0,
-                  margin: 0,
+                  margin: 7,
                   display: "flex",
                   flexWrap: "wrap",
-                  justifyContent: "space-between",
+                  justifyContent: "space-evenly",
                 }}
               >
                 {payload?.map((entry, index) => {
@@ -131,7 +131,7 @@ export default function SalesByCategoryChart() {
                     <li
                       key={`item-${index}`}
                       style={{
-                        margin: "4px 5px",
+                        margin: "0px 0px",
                         display: "flex",
                         alignItems: "center",
                       }}
@@ -139,8 +139,8 @@ export default function SalesByCategoryChart() {
                       <span
                         style={{
                           display: "inline-block",
-                          width: 10,
-                          height: 10,
+                          width: 12,
+                          height: 12,
                           backgroundColor: entry.color,
                           marginRight: 2,
                         }}
