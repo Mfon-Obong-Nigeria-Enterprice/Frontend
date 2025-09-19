@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // utils/transactionHelpers.ts
 import type { Transaction } from "@/types/transactions";
 import type { Client } from "@/types/types";

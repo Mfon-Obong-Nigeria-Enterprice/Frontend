@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
 import { useModalStore } from "@/stores/useModalStore";
-// Replace Zustand store with React Query hook
+
 import { useColumnSettingsManager } from "@/hooks/useColumnSettings";
 
 import {
@@ -42,9 +42,9 @@ interface UserTableProps {
   onEditUser?: (userData: any) => void;
 }
 
-// SUPER_ADMIN filter function (added directly to component)
+
 const filterUsers = (users: any[], currentUserRole: string) => {
-  // If current user is not SUPER_ADMIN, filter out SUPER_ADMIN users
+ 
   if (currentUserRole !== "SUPER_ADMIN") {
     return users.filter(user => user.role !== "SUPER_ADMIN");
   }

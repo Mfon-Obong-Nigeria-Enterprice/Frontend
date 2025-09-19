@@ -31,7 +31,7 @@ export const getBalanceStatus = (balance: number) => {
   };
 };
 
-// Helper to get transaction display name
+
 export const getTypeDisplay = (type: string) => {
   switch (type) {
     case "PURCHASE":

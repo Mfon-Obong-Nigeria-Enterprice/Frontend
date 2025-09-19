@@ -10,7 +10,8 @@ export interface StatCard {
   percentage?: number;
   displayType?: "default" | "circular" | "linear";
   icon?: string;
-  // iconColor?: string;
+  chartType?: "line" | "bar";
+  chartData?: number[]; 
 }
 
 export type StatCardProps = {
@@ -25,3 +26,4 @@ export type StatCardProps = {
   note?: string; // labels like "Need attention"
   className?: string; // custom styling
 };
+

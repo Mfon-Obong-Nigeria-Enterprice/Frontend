@@ -166,7 +166,7 @@ export const saveSettings = async (settings: {
     columnOrder: mapFrontendToBackend(settings.columnOrder),
   };
 
-  console.log("Sending to API:", backendSettings);
+  // console.log("Sending to API:", backendSettings);
 
   const response = await api.put("/column-settings/users", backendSettings);
 
@@ -194,7 +194,7 @@ export const validateSettings = (settings: {
 }): { isValid: boolean; errors: string[] } => {
   const errors: string[] = [];
 
-  console.log("Validating settings:", settings);
+  
 
   if (settings.hiddenColumns.length > 3) {
     errors.push("Cannot hide more than 3 columns");
@@ -238,7 +238,7 @@ export const validateSettings = (settings: {
     errors.push(`Invalid hidden columns: ${invalidHidden.join(", ")}`);
   }
 
-  console.log("Validation result:", { isValid: errors.length === 0, errors });
+ 
 
   return {
     isValid: errors.length === 0,
