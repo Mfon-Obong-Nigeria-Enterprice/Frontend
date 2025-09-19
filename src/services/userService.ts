@@ -157,7 +157,7 @@ export const updateUserData = async (
         "Content-Type": "application/json",
       },
     });
-    console.log(response.data);
+    
     return response.data;
   } catch (error) {
     if (isAxiosError(error)) {
@@ -188,7 +188,7 @@ export const updateUserPassword = async (
   passwordData: UpdatePasswordPayload
 ): Promise<UpdatePasswordResponse> => {
   try {
-    console.log("Sending password update request:", { userId, passwordData });
+  
 
     const response = await api.patch(
       `/users/${userId}/update-password`,
@@ -261,7 +261,7 @@ export const updateProfilePicture = async (
       throw new Error("No image URL returned from server");
     }
 
-    console.log("Profile picture upload successful");
+ 
     return imageUrl;
   } catch (error: unknown) {
     console.error("Failed to upload profile picture:", error);

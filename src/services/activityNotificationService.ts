@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import api from "./baseApi";
 import React from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -386,9 +387,7 @@ export class ActivityNotificationService {
   // Enhanced to handle maintenance notifications properly
   async processNewActivities(): Promise<number> {
     if (this.isProcessing) {
-      // console.log(
-      //   "ActivityNotificationService: Already processing, skipping..."
-      // );
+      
       return 0;
     }
 
@@ -554,13 +553,13 @@ export class ActivityNotificationService {
 
   stopPolling() {
     if (this.intervalId) {
-      // console.log("ActivityNotificationService: Stopping activity polling");
+    
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
 
     if (this.maintenanceSyncInterval) {
-      // console.log("ActivityNotificationService: Stopping maintenance sync");
+      
       clearInterval(this.maintenanceSyncInterval);
       this.maintenanceSyncInterval = null;
     }
