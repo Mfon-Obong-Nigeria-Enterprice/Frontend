@@ -141,15 +141,15 @@ const TransactionTable = ({
                     </p>
                   )}
                 </td>
-                <td className="text-center">
+                <td className={`text-center  items-center flex`}>
                   {transaction.type && (
-                    <span
-                      className={`border text-xs py-1.5 px-3 rounded-[6.25rem]  ${getTypeStyles(
+                    <p
+                      className={`border text-xs py-1.5 rounded-[6.25rem] md:w-[85px]   ${getTypeStyles(
                         transaction.type
                       )}`}
                     >
                       {transaction.type}
-                    </span>
+                    </p>
                   )}
                 </td>
                 <td

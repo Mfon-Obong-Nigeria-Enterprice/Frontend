@@ -94,7 +94,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
   };
 
   return (
-    <div className="mt-7 mb-2 px-4 hidden lg:block">
+    <div className="mt-7 mb-2  hidden lg:block">
       <Card>
         <CardContent>
           <Table>

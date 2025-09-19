@@ -3,6 +3,7 @@ import { useNotificationStore } from "@/stores/useNotificationStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import type { Role } from "@/types/types";
 import { WebSocketNotificationService } from "./webSocketNotificationService";
+import publicApi from "./unAuthorizeApi";
 
 // Types
 interface GeneratePasswordResponse {
@@ -20,11 +21,11 @@ interface SendToBranchAdminRequest {
   temporaryPassword: string;
 }
 
-interface SupportRequestData {
-  issueType: string;
-  email: string;
-  message?: string;
-}
+// interface SupportRequestData {
+//   issueType: string;
+//   email: string;
+//   message?: string;
+// }
 
 interface BranchNotification {
   _id: string;
@@ -119,53 +120,17 @@ export const sendPasswordToBranchAdmin = async (
 };
 
 // Updated sendSupportRequest to use correct API endpoint
-export const sendSupportRequest = async (
-  supportData: SupportRequestData
-): Promise<void> => {
+// Send support request (no auth required)
+export const sendSupportRequest = async (supportData: {
+  email: string;
+  message: string;
+}) => {
   try {
-    // Use the correct API endpoint structure
-    const response = await api.post("/maintenance-mode/contact-support", {
-      userEmail: supportData.email,
-      message:
-        supportData.message || `Support request for: ${supportData.issueType}`,
+    // Call public endpoint with only email + message
+    const response = await publicApi.post("/maintenance-mode/contact-support", {
+      email: supportData.email,
+      message: supportData.message,
     });
-
-    // Create notification for the user who sent the request
-    const currentUser = useAuthStore.getState().user;
-    if (currentUser) {
-      const { addNotification } = useNotificationStore.getState();
-
-      addNotification({
-        id: `support-request-${Date.now()}-${Math.random()
-          .toString(36)
-          .substr(2, 9)}`,
-        title: "Support Request Sent",
-        message: `Your support request has been sent to the maintainer successfully`,
-        type: "success",
-        read: false,
-        createdAt: new Date(),
-        recipients: [currentUser.role as Role],
-        userId: currentUser.id,
-        action: "support_request_sent",
-        meta: {
-          issueType: supportData.issueType,
-          userEmail: supportData.email,
-          timestamp: new Date().toISOString(),
-        },
-      });
-    }
-
-    // Emit support request via WebSocket for real-time notifications to maintainers
-    const wsService = WebSocketNotificationService.getInstance();
-    if (wsService.isConnected()) {
-      wsService.emitSupportRequest({
-        email: supportData.email,
-        issueType: supportData.issueType,
-        message:
-          supportData.message ||
-          `Support request for: ${supportData.issueType}`,
-      });
-    }
 
     return response.data;
   } catch (error) {
@@ -201,7 +166,6 @@ export const getSupportNotifications = async (): Promise<
       },
     });
 
-    // console.log("Support notifications API response:", response.data);
     return response.data || [];
   } catch (error) {
     console.error("Error fetching support notifications:", error);

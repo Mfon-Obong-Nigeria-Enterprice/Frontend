@@ -14,6 +14,7 @@ import { useClientStore } from "@/stores/useClientStore";
 import { type StatCard } from "@/types/stats";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { getChangeText } from "@/utils/helpersfunction";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 const DashboardOverview: React.FC = () => {
   const products = useInventoryStore((state) => state.products);
@@ -38,7 +39,7 @@ const DashboardOverview: React.FC = () => {
   const stats: StatCard[] = [
     {
       heading: "Total Sales (Today)",
-      salesValue: `₦${todaysSales.toLocaleString()}`,
+      salesValue: formatCurrency(todaysSales),
       statValue: getChangeText(
         dailyChange.percentage,
         dailyChange.direction,
@@ -88,7 +89,7 @@ const DashboardOverview: React.FC = () => {
 
   return (
     <main className="p-2">
-      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4 mb-7">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end md:gap-4 mb-7">
         <DashboardTitle
           heading="Dashboard"
           description="Welcome, Admin User! Here's an overview of your business today"

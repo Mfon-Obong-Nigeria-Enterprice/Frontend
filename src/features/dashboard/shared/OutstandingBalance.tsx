@@ -62,22 +62,8 @@ const OutstandingBalance = () => {
     }
   };
 
-  // Create a mock transaction for the modal (since we're working with client data)
-  // const handleViewClient = (client: Client) => {
-  //   // Create a minimal Transaction object from the client
-  //   const debtTransaction = {
-  //     type: "PICKUP", // or another appropriate type
-  //     clientId: client._id,
-  //     items: [],
-  //     amount: Math.abs(client.balance),
-  //     createdAt: client.createdAt,
-  //     updatedAt: client.updatedAt,
-  //   };
-  //   openModal(debtTransaction);
-  // };
-
   return (
-    <div className="bg-white border border-[#D9D9D9] p-4 sm:p-8 mt-5 mx-2 rounded-[8px] font-Inter">
+    <div className="bg-white border border-[#D9D9D9] p-4 sm:p-8 mt-5  rounded-[8px] font-Inter">
       <h4 className="font-medium text-lg sm:text-xl text-text-dark">
         Outstanding Balance
       </h4>

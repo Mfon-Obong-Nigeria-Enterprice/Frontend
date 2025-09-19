@@ -93,7 +93,7 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
       {data.map((stat, index) => (
         <div
           key={index}
-          className="bg-white rounded-lg border border-[#D9D9D9] p-4 sm:p-6 flex flex-col justify-evenly items-start gap-3 sm:gap-4 hover:shadow-md transition-shadow duration-200 relative"
+          className="bg-white rounded-lg border border-[#D9D9D9] p-6 flex flex-col justify-evenly items-start gap-3 sm:gap-4 hover:shadow-md transition-shadow duration-200 relative"
         >
           {/* Icon at the top right */}
           {stat.icon && (

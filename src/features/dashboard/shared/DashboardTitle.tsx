@@ -5,7 +5,7 @@ type DashboardTitleProps = {
 
 const DashboardTitle = ({ heading, description }: DashboardTitleProps) => {
   return (
-    <div className="flex flex-col gap-2 px-4 md:px-0">
+    <div className="flex flex-col gap-2 px-2 md:px-0 mb-4">
       <h2 className="font-Arial font-bold text-xl xl:text-[1.75rem]  text-[#333333]">
         {heading}
       </h2>
