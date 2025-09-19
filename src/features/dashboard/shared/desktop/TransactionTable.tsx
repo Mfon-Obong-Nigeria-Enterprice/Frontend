@@ -38,39 +38,39 @@ const TransactionTable = ({
       <table className=" w-full overflow-x-scroll">
         <thead className="bg-[#F5F5F5] border border-[#d9d9d9]">
           <tr>
-            <th className="py-3 text-base text-[#333333] font-normal text-center">
+            <th className="py-3 pl-1 text-base text-[#333333] font-normal text-start">
               Payment ID
             </th>
-            <th className="py-3 text-base text-[#333333] font-normal text-center">
+            <th className="py-3 text-base text-[#333333] font-normal pl-1 text-start">
               Date/Time
             </th>
             {user?.role === "SUPER_ADMIN" ? (
-              <th className="py-3 text-base text-[#333333] font-normal text-center">
+              <th className="py-3 text-base text-[#333333] font-normal pl-1 text-start">
                 Items
               </th>
             ) : (
-              <th className="py-3 text-base text-[#333333] font-normal text-center">
+              <th className="py-3 text-base text-[#333333] font-normal pl-1 text-start">
                 Clients
               </th>
             )}
-            <th className="py-3 text-base text-[#333333] font-normal text-center">
+            <th className="py-3 text-base text-[#333333] font-normal pl-1 text-start">
               Type
             </th>
-            <th className="py-3 text-base text-[#333333] font-normal text-center">
+            <th className="py-3 text-base text-[#333333] font-normal pl-1 text-start">
               Status
             </th>
-            <th className="py-3 text-base text-[#333333] font-normal text-center">
+            <th className="py-3 text-base text-[#333333] font-normal pl-1 text-start">
               Amount
             </th>
             {user?.role === "SUPER_ADMIN" && (
-              <th className="py-3 text-base text-[#333333] font-normal text-center">
+              <th className="py-3 text-base text-[#333333] font-normal pl-1 text-start">
                 Location
               </th>
             )}
-            <th className="py-3 text-base text-[#333333] font-normal text-center">
+            <th className="py-3 text-base text-[#333333] font-normal pl-1  text-start">
               Balance
             </th>
-            <th className="py-3 text-base text-[#333333] font-normal text-center">
+            <th className="py-3 text-base text-[#333333] font-normal pl-1 text-start">
               Action
             </th>
           </tr>
@@ -83,20 +83,20 @@ const TransactionTable = ({
                 id={`invoice-${transaction.invoiceNumber}`}
                 className="border-b border-[#d9d9d9]"
               >
-                <td className=" text-center text-[#444444] text-sm font-normal py-3">
+                <td className=" text-start pl-1 text-[#444444] text-sm font-normal py-3">
                   {transaction.invoiceNumber}
                 </td>
-                <td className="flex flex-col text-center  font-normal py-3">
-                  <span className="text-xs text-[#444444]">
+                <td className=" py-3 pl-1  font-normal ">
+                  <p className="text-xs text-[#444444] text-start">
                     {new Date(transaction.createdAt).toLocaleDateString()}
-                  </span>
-                  <span className="text-[0.625rem] text-[#7D7D7D]">
+                  </p>
+                  <p className="text-[0.625rem] text-[#7D7D7D] text-start">
                     {new Date(transaction.createdAt).toLocaleTimeString()}
-                  </span>
+                  </p>
                 </td>
-                <td className=" text-center text-[#444444] text-sm font-normal py-3">
+                <td className=" text-start pl-1 text-[#444444] text-sm font-normal py-3">
                   {user?.role === "SUPER_ADMIN" ? (
-                    <div className="flex items-center justify-center text-[#444444] text-xs font-normal py-3">
+                    <div className="flex items-center justify-start text-[#444444] text-xs font-normal py-3">
                       {transaction.items.length > 0 && (
                         <>
                           <span>
@@ -114,7 +114,7 @@ const TransactionTable = ({
                                   <ChevronDown className="w-4 h-4" />
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent className="text-sm max-w-60">
+                              <PopoverContent className="text-sm max-w-30">
                                 {transaction.items
                                   .slice(1)
                                   .map(
@@ -141,7 +141,7 @@ const TransactionTable = ({
                     </p>
                   )}
                 </td>
-                <td className={`text-center  items-center flex`}>
+                <td className={`  text-center pl-1`}>
                   {transaction.type && (
                     <p
                       className={`border text-xs py-1.5 rounded-[6.25rem] md:w-[85px]   ${getTypeStyles(
@@ -153,7 +153,7 @@ const TransactionTable = ({
                   )}
                 </td>
                 <td
-                  className={`text-xs text-center ${
+                  className={`text-xs text-start pl-1 ${
                     transaction.status === "COMPLETED"
                       ? "text-[#2ECC71]"
                       : "text-[#F95353]"
@@ -162,18 +162,26 @@ const TransactionTable = ({
                   {transaction.status}
                 </td>
 
-                <td className={balanceClassT(transaction.total)}>
+                <td
+                  className={`text-start pl-1 ${balanceClassT(
+                    transaction.total
+                  )}`}
+                >
                   {formatCurrency(transaction.total ?? 0).toLocaleString()}
                 </td>
                 {user?.role === "SUPER_ADMIN" && (
-                  <td className=" text-center text-[#444444] text-sm font-normal py-3">
+                  <td className=" text-start pl-1 text-[#444444] text-sm font-normal py-3">
                     {transaction.branchName}
                   </td>
                 )}
-                <td className={balanceClassT(transaction.client?.balance)}>
+                <td
+                  className={`${balanceClassT(
+                    transaction.client?.balance
+                  )} text-start pl-1`}
+                >
                   {formatCurrency(transaction.client?.balance ?? 0)}
                 </td>
-                <td className="text-center text-[#3D80FF] text-sm">
+                <td className="text-start pl-1 text-[#3D80FF] text-sm">
                   <button
                     onClick={() => openModal(transaction)}
                     className="underline cursor-pointer hover:no-underline transition-all duration-150 ease-in-out"

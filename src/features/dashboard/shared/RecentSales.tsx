@@ -12,6 +12,7 @@ import {
 import { MdKeyboardArrowRight } from "react-icons/md";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { toSentenceCaseName } from "@/utils/styles";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 const RecentSales: React.FC = () => {
   const navigate = useNavigate();
@@ -70,7 +71,7 @@ const RecentSales: React.FC = () => {
                     txn.total > 0 ? "text-green-400" : "text-[#F95353]"
                   }`}
                 >
-                  ₦{txn.total.toLocaleString()}
+                  {formatCurrency(txn.total)}
                 </TableCell>
                 <TableCell className="text-center text-xs text-[var(--cl-secondary)]">
                   {new Date(txn.createdAt).toLocaleTimeString([], {
@@ -85,7 +86,7 @@ const RecentSales: React.FC = () => {
       )}
 
       {/* Footer always visible */}
-      <div className="flex justify-between items-center bg-[#f0f0f3] mt-10 sm:mt-[35dvh] text-blue-300">
+      <div className="flex justify-between items-center bg-[#f0f0f3] mt-10 text-blue-300">
         <div className="pl-3 py-2 text-sm font-medium">
           <span
             onClick={() => navigate("/admin/dashboard/sales")}
