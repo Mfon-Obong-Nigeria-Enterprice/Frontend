@@ -25,7 +25,6 @@ const SalesCategoryChart: React.FC<SalesCategoryChartProps> = ({ data }) => {
         <CardContent className="md:p-0 m-0">
           {/* Responsive layout container */}
           <div className="flex items-center justify-center lg:flex-row lg:items-start lg:justify-start min-h-[200px] sm:min-h-[170px] ">
-            
             {/* Category Summary */}
             <div className="mt-4 space-y-2 absolute right-1 bottom-0.5 flex flex-wrap sm:block">
               {data.map((category, index) => (
@@ -50,7 +49,6 @@ const SalesCategoryChart: React.FC<SalesCategoryChartProps> = ({ data }) => {
         </CardContent>
       </Card>
     </div>
-
   );
 };
 

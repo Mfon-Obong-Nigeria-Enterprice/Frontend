@@ -113,8 +113,6 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormInputs) => {
     mutation.mutate(data);
-
-    //   toast.success(`Welcome back, ${user.name || "User"}!`);
   };
 
   // function to set a loading spinner before oprning the support modal
@@ -125,7 +123,7 @@ const Login = () => {
       setIsSupportLoading(false);
       openModal("support");
       reset();
-    }, 2000); // 2 seconds
+    }, 0); // 2 seconds
   };
 
   const openModal = (type: "error" | "support") => setActiveModal(type);

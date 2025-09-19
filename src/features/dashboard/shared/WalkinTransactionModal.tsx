@@ -4,6 +4,8 @@ import Modal from "@/components/Modal";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { Button } from "@/components/ui/button";
 import { ChevronUp } from "lucide-react";
+import { formatCurrency } from "@/utils/formatCurrency";
+import { balanceClassT } from "@/utils/styles";
 
 const WalkinTransactionModal = () => {
   const { open, selectedTransaction, closeModal } = useTransactionsStore();
@@ -119,8 +121,8 @@ const WalkinTransactionModal = () => {
               {/* amount */}
               <p className="flex justify-between items-center text-xs text-[#7D7D7D]  border-b border-[#d9d9d9] py-1 px-3">
                 <span className="font-medium">Amount:</span>
-                <span className=" font-light text-[#F95353]">
-                  -₦{selectedTransaction.total.toLocaleString()}
+                <span className={` font-light ${balanceClassT}`}>
+                  {formatCurrency(selectedTransaction.total)}
                 </span>
               </p>
               {/* process by */}
@@ -159,13 +161,9 @@ const WalkinTransactionModal = () => {
                     >
                       <td className="py-2">{item.productName}</td>
                       <td className="py-2">{item.quantity}</td>
-                      <td className="py-2">
-                        ₦{item.unitPrice.toLocaleString()}
-                      </td>
+                      <td className="py-2">{formatCurrency(item.unitPrice)}</td>
                       <td className="py-2">₦0.00</td>
-                      <td className="py-2">
-                        ₦{item.subtotal.toLocaleString()}
-                      </td>
+                      <td className="py-2">{formatCurrency(item.subtotal)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -178,8 +176,7 @@ const WalkinTransactionModal = () => {
                   <span className="text-[#333333]">Total Discount</span>
                   <span className="text-text-dark ml-3">
                     {selectedTransaction?.discount
-                      ? `₦
-${selectedTransaction.discount.toLocaleString()}`
+                      ? formatCurrency(selectedTransaction.discount)
                       : "0"}
                   </span>
                 </p>
@@ -188,7 +185,7 @@ ${selectedTransaction.discount.toLocaleString()}`
                 <p className="font-medium text-sm">
                   <span className="text-[#333333]">Total Amount:</span>
                   <span className="text-[#F95353] ml-3">
-                    -₦{selectedTransaction.total.toLocaleString()}
+                    {formatCurrency(selectedTransaction.total)}
                   </span>
                 </p>
               </div>
@@ -199,8 +196,7 @@ ${selectedTransaction.discount.toLocaleString()}`
             <span className="mr-1 text-sm text-[#7d7d7d]">Total Discount:</span>
             <span className="text-sm text-[#7D7D7D] font-medium">
               {selectedTransaction?.discount
-                ? `₦
-${selectedTransaction.discount.toLocaleString()}`
+                ? formatCurrency(selectedTransaction.discount)
                 : "No Discounts Applied..."}
             </span>
           </p>

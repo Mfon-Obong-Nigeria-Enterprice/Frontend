@@ -387,7 +387,6 @@ export class ActivityNotificationService {
   // Enhanced to handle maintenance notifications properly
   async processNewActivities(): Promise<number> {
     if (this.isProcessing) {
-      
       return 0;
     }
 
@@ -553,13 +552,11 @@ export class ActivityNotificationService {
 
   stopPolling() {
     if (this.intervalId) {
-    
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
 
     if (this.maintenanceSyncInterval) {
-      
       clearInterval(this.maintenanceSyncInterval);
       this.maintenanceSyncInterval = null;
     }

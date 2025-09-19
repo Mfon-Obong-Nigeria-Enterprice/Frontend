@@ -38,7 +38,7 @@ const SalesOverview = () => {
     transactions.some((t) => t.type === "PURCHASE" || t.type === "PICKUP");
 
   return (
-    <div className="bg-white rounded-xl px-4 sm:px-8 py-6 mx-2 font-Inter">
+    <div className="bg-white rounded-xl px-4 sm:px-8 py-6 font-Inter">
       <Tabs defaultValue="daily">
         <div className="grid grid-cols-[60fr_40fr] sm:grid-cols-[50fr_70fr]">
           <TabsList className="bg-transparent p-0">

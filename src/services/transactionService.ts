@@ -21,7 +21,7 @@ export const getTransactionsByBranch = async (
 export const getTransactionByUserId = async (
   userId?: string
 ): Promise<Transaction[]> => {
-  const url = userId ? `/transactions/user/${userId}` : `/transactions/user/`; // Let interceptor handle this
+  const url = userId ? `/transactions/user/${userId}` : `/transactions/user/`;
 
   const response = await api.get(url);
   return response.data;

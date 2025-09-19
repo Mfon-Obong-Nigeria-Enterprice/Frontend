@@ -1,0 +1,39 @@
+import axios, { type AxiosInstance } from "axios";
+
+// Public API client for unauthenticated endpoints
+const publicApi: AxiosInstance = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+  withCredentials: false, // Don't send cookies or credentials
+  timeout: 30000,
+});
+
+// Optional: Add basic request/response logging
+publicApi.interceptors.request.use((config) => {
+  console.log(
+    `Public API Request: ${config.method?.toUpperCase()} ${config.url}`
+  );
+  return config;
+});
+
+publicApi.interceptors.response.use(
+  (response) => {
+    console.log(
+      `Public API Response: ${response.status} ${response.config.url}`
+    );
+    return response;
+  },
+  (error) => {
+    console.error(
+      `Public API Error: ${error.response?.status || "Network Error"} ${
+        error.config?.url
+      }`
+    );
+    return Promise.reject(error);
+  }
+);
+
+export default publicApi;

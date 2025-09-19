@@ -37,6 +37,7 @@ import {
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { formatChangeText, getChangeText } from "@/utils/helpersfunction";
 import SalesByCategoryChart from "../shared/CategoryTransactionChart";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 const DashboardSales = () => {
   const navigate = useNavigate();
@@ -65,8 +66,7 @@ const DashboardSales = () => {
   const stats: StatCard[] = [
     {
       heading: "Total Sales (Today)",
-      salesValue: `${todaysSales.toLocaleString()}`,
-      format: "currency",
+      salesValue: formatCurrency(todaysSales),
       statValue: getChangeText(
         dailyChange.percentage,
         dailyChange.direction,
@@ -216,7 +216,7 @@ const DashboardSales = () => {
         heading="Sales Management"
         description="Process orders & manage customer purchases"
       />
-      <section className="p-2">
+      <section className="px-2 md:px-0">
         <div className="flex gap-[24px] items-end justify-end mb-5">
           <Button variant="tertiary" onClick={handleExportExcel}>
             Download Excel
@@ -234,8 +234,8 @@ const DashboardSales = () => {
           <div className="lg:col-span-3">
             <SalesAnalytics />
           </div>
-          <div className="bg-white w-full h-full p-7 border border-[#d9d9d9] rounded-xl  lg:col-span-2">
-            <h4 className="text-xl font-medium text-[#1E1E1E] mb-4">
+          <div className="bg-white w-full h-full p-7 border  border-[#d9d9d9] rounded-xl  lg:col-span-2">
+            <h4 className="text-xl font-medium text-[#1E1E1E] pb-4">
               Sales by Category
             </h4>
             <SalesByCategoryChart />
