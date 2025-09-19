@@ -96,8 +96,7 @@ export const useAuthStore = create<AuthState>()(
             name: cleanName || state.userProfile.name, // Use cleaned name
           };
 
-          // console.log("Updated user object:", updatedUser);
-          // console.log("Updated userProfile object:", updatedUserProfile);
+         
 
           return {
             user: updatedUser,
@@ -161,12 +160,7 @@ export const useAuthStore = create<AuthState>()(
             createdAt: profileData.createdAt || state.userProfile.createdAt,
           };
 
-          // console.log("Syncing user with profile data:", {
-          //   profileData,
-          //   cleanName,
-          //   updatedUser,
-          //   updatedUserProfile,
-          // });
+         
 
           return {
             user: updatedUser,
