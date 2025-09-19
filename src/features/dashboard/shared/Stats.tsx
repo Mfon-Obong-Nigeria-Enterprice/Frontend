@@ -1,4 +1,3 @@
-
 import React from "react";
 import type { StatCard } from "@/types/stats";
 import { useRevenueStore } from "@/stores/useRevenueStore";
@@ -16,12 +15,10 @@ interface StatsProps {
   data: StatCard[];
 }
 
-
-
 interface CircularProgressProps {
   percentage: number;
   size?: number;
-  strokeColor: string; 
+  strokeColor: string;
 }
 
 const CircularProgress: React.FC<CircularProgressProps> = ({
@@ -69,12 +66,10 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
   );
 };
 
-
-
 const getColor = (color?: string) => {
   switch (color) {
     case "green":
-      return "#16a34a"; 
+      return "#16a34a";
     case "orange":
       return "#f97316";
     case "red":
@@ -86,11 +81,10 @@ const getColor = (color?: string) => {
   }
 };
 
-
-
 const Stats: React.FC<StatsProps> = ({ data }) => {
   const revenueStore = useRevenueStore();
-  const monthlyRevenue = revenueStore.getMOMRevenue && revenueStore.getMOMRevenue();
+  const monthlyRevenue =
+    revenueStore.getMOMRevenue && revenueStore.getMOMRevenue();
 
   return (
     <section
@@ -118,12 +112,15 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
 
         const color = getColor(stat.color);
         const isCircularCard = stat.displayType === "circular";
-        const showArea = stat.chartType === "line" && chartData.length > 0 && !isCircularCard;
-        const showBar = stat.chartType === "bar" && chartData.length > 0 && !isCircularCard;
+        const showArea =
+          stat.chartType === "line" && chartData.length > 0 && !isCircularCard;
+        const showBar =
+          stat.chartType === "bar" && chartData.length > 0 && !isCircularCard;
 
-        const computedCircularPercent = typeof stat.percentage === "number" 
-          ? stat.percentage 
-          : monthlyRevenue?.percentageChange ?? 0;
+        const computedCircularPercent =
+          typeof stat.percentage === "number"
+            ? stat.percentage
+            : monthlyRevenue?.percentageChange ?? 0;
 
         const renderSales = () => {
           if (stat.format === "currency") {
@@ -144,18 +141,29 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
           return String(stat.salesValue ?? "");
         };
 
-        const statText = stat.statValue?.toLowerCase() || '';
-        const isIncrease = statText.includes("increase") || statText.includes("more") || statText.includes("+") || statText.includes("new");
-        const isDecrease = statText.includes("decrease") || statText.includes("less") || statText.includes("-");
-        
-        
-        let statTextColor = color; 
+        const statText = stat.statValue?.toLowerCase() || "";
+        const isIncrease =
+          statText.includes("increase") ||
+          statText.includes("more") ||
+          statText.includes("+") ||
+          statText.includes("new");
+        const isDecrease =
+          statText.includes("decrease") ||
+          statText.includes("less") ||
+          statText.includes("-");
 
-       
-        if (stat.heading === "Total Sales (Today)" && (stat.color === 'green' || stat.color === 'red')) {
-            statTextColor = isIncrease ? getColor('green') : isDecrease ? getColor('red') : getColor('orange');
+        let statTextColor = color;
+
+        if (
+          stat.heading === "Total Sales (Today)" &&
+          (stat.color === "green" || stat.color === "red")
+        ) {
+          statTextColor = isIncrease
+            ? getColor("green")
+            : isDecrease
+            ? getColor("red")
+            : getColor("orange");
         }
-
 
         return (
           <div
@@ -171,19 +179,22 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
                 {renderSales()}
               </div>
 
-              
               {stat.statValue && (
                 <div className="flex items-center gap-1 mt-1">
-                 
-                  {!stat.hideArrow && (
-                    isIncrease ? (
-                      <ArrowUpRight size={16} style={{ color: statTextColor }} />
+                  {!stat.hideArrow &&
+                    (isIncrease ? (
+                      <ArrowUpRight
+                        size={16}
+                        style={{ color: statTextColor }}
+                      />
                     ) : (
-                      <ArrowDownRight size={16} style={{ color: statTextColor }} />
-                    )
-                  )}
+                      <ArrowDownRight
+                        size={16}
+                        style={{ color: statTextColor }}
+                      />
+                    ))}
                   <span
-                    className="text-sm font-semibold"
+                    className="text-xs font-semibold"
                     style={{ color: statTextColor }}
                   >
                     {stat.statValue}
@@ -192,13 +203,12 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
               )}
             </div>
 
-          
-            <div className="flex items-center justify-center w-1/2 h-24">
+            <div className="flex items-center justify-center w-1/3 h-24">
               {isCircularCard ? (
                 <CircularProgress
                   percentage={computedCircularPercent}
                   size={100}
-                  strokeColor={color} 
+                  strokeColor={color}
                 />
               ) : showArea ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -211,7 +221,11 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
                         y1="0"
                         y2="1"
                       >
-                        <stop offset="0%" stopColor={color} stopOpacity={0.18} />
+                        <stop
+                          offset="0%"
+                          stopColor={color}
+                          stopOpacity={0.18}
+                        />
                         <stop
                           offset="100%"
                           stopColor={color}
@@ -241,7 +255,7 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
                       dataKey="value"
                       fill={color}
                       barSize={20}
-                      radius={[2, 2, 0, 0]} 
+                      radius={[2, 2, 0, 0]}
                       isAnimationActive={false}
                     />
                   </BarChart>
