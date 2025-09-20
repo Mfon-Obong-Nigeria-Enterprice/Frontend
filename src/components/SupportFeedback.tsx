@@ -106,7 +106,7 @@ const SupportFeedback: React.FC<SupportFeedbackProps> = ({ onClose }) => {
 
   return (
     <section className="absolute top-0 left-0 w-full  min-h-screen bg-black/50 flex justify-center items-center px-2 z-50 ">
-      <div className="bg-white min-h-100 rounded-xl overflow-hidden mb-15">
+      <div className="bg-white min-h-100 rounded-xl overflow-hidden mb-22">
         <h4 className="text-start pl-4 py-4 bg-[#F0F0F3] text-gray-900 text-base font-medium">
           {isSubmitted ? "Support Request Sent" : "What's your challenge"}
         </h4>
@@ -122,19 +122,6 @@ const SupportFeedback: React.FC<SupportFeedbackProps> = ({ onClose }) => {
               </p>
               <div className="bg-green-500 flex justify-center items-center mx-auto mb-6 w-20 h-20 rounded-full">
                 <GoCheck size={48} className="fill-white" />
-              </div>
-
-              {/* Connection status indicator */}
-              <div className="text-xs text-center mb-4 text-gray-500">
-                {isConnected ? (
-                  <span className="text-green-600">
-                    ✓ Real-time notifications enabled
-                  </span>
-                ) : (
-                  <span className="text-amber-600">
-                    ⚠ Real-time notifications unavailable
-                  </span>
-                )}
               </div>
 
               <Button
