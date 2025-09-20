@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import api from "./baseApi";
 import React from "react";
 import { useAuthStore } from "@/stores/useAuthStore";

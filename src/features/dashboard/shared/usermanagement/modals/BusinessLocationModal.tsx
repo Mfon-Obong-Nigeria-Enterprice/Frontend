@@ -20,6 +20,13 @@ const BusinessLocationModal = ({ closeModal }: Props) => {
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  const formatPhoneNumber = (value: string) => {
+    const cleaned = value.replace(/\D/g, "");
+    const match = cleaned.match(/^(\d{0,4})(\d{0,3})(\d{0,4})$/);
+    if (!match) return cleaned;
+    return [match[1], match[2], match[3]].filter(Boolean).join("-");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -28,21 +35,17 @@ const BusinessLocationModal = ({ closeModal }: Props) => {
       const payload = {
         name,
         address,
-        phone,
-        email: email.trim() === "" ? undefined : email, 
+        phone: phone.replace(/-/g, ""), 
+        email: email.trim() === "" ? undefined : email,
       };
 
       await addBranch(payload);
-      
-      // Show success notification
+
       setShowSuccess(true);
-      
-      // Auto-close notification and modal after 4 seconds
       setTimeout(() => {
         setShowSuccess(false);
         closeModal();
       }, 4000);
-      
     } catch (error: any) {
       console.error("Error creating branch:", error.response?.data || error.message);
       alert(error.response?.data?.message || "Failed to create branch");
@@ -58,7 +61,6 @@ const BusinessLocationModal = ({ closeModal }: Props) => {
 
   return (
     <>
-      {/* Success Notification */}
       {showSuccess && (
         <div className="fixed top-4 left-4 z-[100] animate-in slide-in-from-left-8 duration-300">
           <div className="bg-green-500 text-white px-4 py-3 rounded-md shadow-lg flex items-center justify-between min-w-[300px]">
@@ -93,7 +95,7 @@ const BusinessLocationModal = ({ closeModal }: Props) => {
               placeholder="e.g 233 Abak Road"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              required 
+              required
               className="bg-[#D9D9D9]"
             />
           </div>
@@ -113,10 +115,16 @@ const BusinessLocationModal = ({ closeModal }: Props) => {
             <Label className="pb-2">Phone</Label>
             <Input
               placeholder="Enter company phone number"
+              type="tel"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                const formatted = formatPhoneNumber(e.target.value);
+                setPhone(formatted);
+              }}
               required
               className="bg-[#D9D9D9]"
+              inputMode="numeric"
+              pattern="[0-9]*"
             />
           </div>
 
