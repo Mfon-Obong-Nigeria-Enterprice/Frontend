@@ -10,7 +10,6 @@ import ClientDisplayBox from "./components/ClientDisplayBox";
 import WalkinClientDetailBox from "./components/WalkinClientDetailBox";
 import SalesReceipt from "./components/SalesReceipt";
 
-
 // store
 import { useInventoryStore } from "@/stores/useInventoryStore";
 import { useClientStore } from "@/stores/useClientStore";
@@ -109,7 +108,7 @@ const NewSales: React.FC = () => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
 
-   const [bankSearch, setBankSearch] = useState("");
+  const [bankSearch, setBankSearch] = useState("");
 
   // listen for socket event
   useEffect(() => {
@@ -180,8 +179,12 @@ const NewSales: React.FC = () => {
     if (isWalkIn) {
       const { total } = calculateTotals();
       const paid = getAmountPaid() || 0;
-      if (paid > total) {
-        toast.error(`Amount is greater than total - ${total}`);
+
+      if (Math.abs(paid - total) > 0.01) {
+        // Allow for small rounding differences
+        toast.error(
+          `Walk-in clients must pay exactly ${formatCurrency(total)}`
+        );
         return false;
       }
     }
@@ -229,7 +232,19 @@ const NewSales: React.FC = () => {
     const newBalance = effectiveAmountPaid - total;
 
     let statusMessage;
-    if (balanceDue === 0) {
+    if (isWalkIn) {
+      if (paid === total) {
+        statusMessage = "Payment complete";
+      } else if (paid > total) {
+        statusMessage = `Overpayment: ₦${(paid - total).toFixed(
+          2
+        )} (not allowed for walk-in)`;
+      } else {
+        statusMessage = `Amount due: ₦${(total - paid).toFixed(
+          2
+        )} (full payment required)`;
+      }
+    } else if (balanceDue === 0) {
       statusMessage = "No balance due";
     } else if (selectedClient && clientBalance > 0) {
       statusMessage = `Balance due: ₦${balanceDue.toFixed(
@@ -270,6 +285,16 @@ const NewSales: React.FC = () => {
       const { discountTotal, total } = calculateTotals();
       const effectiveAmountPaid = getAmountPaid() || 0;
 
+      // Debug log
+      // console.log("Transaction calculation:", {
+      //   subtotal,
+      //   discountTotal,
+      //   total,
+      //   effectiveAmountPaid,
+      //   globalDiscount,
+      //   rowDiscounts: rows.map((r) => r.discount),
+      // });
+
       const apiItems = rows
         .filter((row) => row.productId)
         .map((row) => {
@@ -278,7 +303,7 @@ const NewSales: React.FC = () => {
             productId: row.productId,
             quantity: row.quantity,
             unit: product?.unit || "pcs",
-            discount: discountTotal,
+            discount: 0,
             // discount: row.discount || 0,
           };
         });
@@ -326,6 +351,7 @@ const NewSales: React.FC = () => {
 
       // Invalidate so transactions refetch immediately
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      // queryClient.invalidateQueries({ queryKey: ["clients"] });
 
       handleResetClient();
     } catch (error) {
@@ -468,48 +494,50 @@ const NewSales: React.FC = () => {
                   <Label className="mb-1">
                     Choose {paymentMethod === "pos" ? "POS" : "Bank"}
                   </Label>
-                 
 
                   <Select value={subMethod} onValueChange={setSubMethod}>
                     <SelectTrigger className="w-[180px] bg-[#D9D9D9]">
                       <SelectValue placeholder="Select option" />
                     </SelectTrigger>
-                     <SelectContent side="top" 
-        className="max-h-[250px] overflow-y-auto">
-      
-        <div
-          className="px-2 py-2 sticky top-0 bg-white z-10"
-          onClick={(e) => e.stopPropagation()} // prevent dropdown from closing
-        >
-          <Input
-            type="text"
-            placeholder={`Search ${paymentMethod === "pos" ? "POS" : "Bank"}`}
-            value={bankSearch}
-            onChange={(e) => setBankSearch(e.target.value)}
-            className="h-8 text-sm"
-          />
-        </div>
+                    <SelectContent
+                      side="top"
+                      className="max-h-[250px] overflow-y-auto"
+                    >
+                      <div
+                        className="px-2 py-2 sticky top-0 bg-white z-10"
+                        onClick={(e) => e.stopPropagation()} // prevent dropdown from closing
+                      >
+                        <Input
+                          type="text"
+                          placeholder={`Search ${
+                            paymentMethod === "pos" ? "POS" : "Bank"
+                          }`}
+                          value={bankSearch}
+                          onChange={(e) => setBankSearch(e.target.value)}
+                          className="h-8 text-sm"
+                        />
+                      </div>
 
-        {/* Filtered List */}
-        {getSubList()
-          .filter((name) =>
-            name.toLowerCase().includes(bankSearch.toLowerCase())
-          )
-          .map((name) => (
-            <SelectItem key={name} value={name}>
-              {name}
-            </SelectItem>
-          ))}
+                      {/* Filtered List */}
+                      {getSubList()
+                        .filter((name) =>
+                          name.toLowerCase().includes(bankSearch.toLowerCase())
+                        )
+                        .map((name) => (
+                          <SelectItem key={name} value={name}>
+                            {name}
+                          </SelectItem>
+                        ))}
 
-        {/* Show message if no results */}
-        {getSubList().filter((name) =>
-          name.toLowerCase().includes(bankSearch.toLowerCase())
-        ).length === 0 && (
-          <div className="px-3 py-2 text-sm text-gray-500">
-            No matches found
-          </div>
-        )}
-      </SelectContent>
+                      {/* Show message if no results */}
+                      {getSubList().filter((name) =>
+                        name.toLowerCase().includes(bankSearch.toLowerCase())
+                      ).length === 0 && (
+                        <div className="px-3 py-2 text-sm text-gray-500">
+                          No matches found
+                        </div>
+                      )}
+                    </SelectContent>
                   </Select>
                 </div>
               )}
@@ -521,7 +549,9 @@ const NewSales: React.FC = () => {
                   placeholder="0.00"
                   className="w-40"
                   value={amountPaid}
-                  onChange={(e) => setAmountPaid(e.target.value)}
+                  onChange={(e) =>
+                    setAmountPaid(e.target.value.toLocaleString())
+                  }
                 />
               </div>
             </div>
