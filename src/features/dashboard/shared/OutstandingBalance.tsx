@@ -72,7 +72,7 @@ const OutstandingBalance = () => {
         <Table className="rounded-t-xl overflow-hidden">
           <TableHeader>
             <TableRow className="bg-[#F0F0F3] border-b border-gray-300">
-              <TableHead className="w-[100px] text-center pl-4 font-medium text-[#333333] text-xs sm:text-base">
+              <TableHead className="w-[100px] text-start pl-4 font-medium text-[#333333] text-xs sm:text-base">
                 Client
               </TableHead>
               <TableHead className="text-center font-medium text-[#333333] text-xs sm:text-base">

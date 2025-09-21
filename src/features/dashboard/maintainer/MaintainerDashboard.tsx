@@ -53,15 +53,14 @@ const MaintainerDashboard = () => {
         />
       </div>
       <Stats data={stats} />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-  <div className="h-full">
-    <SystemHealth />
-  </div>
-  <div className="h-full p-4">
-    <RecentActivity />
-  </div>
-</div>
-
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 mt-2 sm:mt-3 lg:mt-4">
+        <div className="h-full min-h-[300px] sm:min-h-[400px] lg:min-h-[500px]">
+          <SystemHealth />
+        </div>
+        <div className="h-full min-h-[300px] sm:min-h-[400px] lg:min-h-[500px]">
+          <RecentActivity />
+        </div>
+      </div>
     </main>
   );
 };

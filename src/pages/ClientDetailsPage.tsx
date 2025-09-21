@@ -33,6 +33,8 @@ import BlockUnblockClient from "@/features/dashboard/manager/BlockUnblockClient"
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { getAllTransactions } from "@/services/transactionService";
+import { useQuery } from "@tanstack/react-query";
 
 interface ClientDetailsPageProps {
   isManagerView?: boolean;
@@ -45,7 +47,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   const navigate = useNavigate();
   //store
   const { clients } = useClientStore();
-  const { transactions } = useTransactionsStore();
+  const { transactions, setTransactions } = useTransactionsStore();
   // Get user from auth store
   const { user } = useAuthStore();
 
@@ -57,6 +59,21 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     const normalizedRole = user.role.toString().trim().toUpperCase();
     return normalizedRole === "SUPER_ADMIN";
   }, [user, isManagerView]);
+  const { data: fetchedTransactions, isLoading: transactionsLoading } =
+    useQuery({
+      queryKey: ["transactions", user?.branchId],
+      queryFn: getAllTransactions,
+      enabled: !!user?.branchId,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: true,
+    });
+
+  // Update store when data is fetched
+  useEffect(() => {
+    if (fetchedTransactions) {
+      setTransactions(fetchedTransactions);
+    }
+  }, [fetchedTransactions, setTransactions]);
   // Filter states
   const [transactionTypeFilter, setTransactionTypeFilter] =
     useState<string>("all");
@@ -168,11 +185,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       { header: "Date", dataKey: "date" },
       { header: "Time", dataKey: "time" },
       { header: "Type", dataKey: "type" },
-      { header: "Amount", dataKey: "amount" },
       { header: "Method", dataKey: "method" },
       { header: "Staff", dataKey: "staff" },
       { header: "Balance Before", dataKey: "balanceBefore" },
       { header: "Balance After", dataKey: "balanceAfter" },
+      { header: "Amount", dataKey: "amount" },
       { header: "Invoice No", dataKey: "invoice" },
       { header: "Items", dataKey: "itemCount" },
     ];
@@ -424,11 +441,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   };
 
   const handleDeleteSuccess = () => {
-    toast.success(`${client?.name} successfully deleted`);
+    toast.success(`${client?.name} deleted successfully `);
     navigate(-1);
   };
   const handleEditSuccess = () => {
-    toast.success(`${client?.name} successfully edited`);
+    toast.success(`${client?.name} edited successfully `);
   };
 
   const handleApplyFilters = () => {
@@ -442,12 +459,12 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   };
 
   // Loading states
-  if (!clients || clients.length === 0) {
+  if (transactionsLoading || !clients || clients.length === 0) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2ECC71] mx-auto mb-4"></div>
-          <p>Loading clients...</p>
+          <p>Loading data...</p>
         </div>
       </div>
     );
