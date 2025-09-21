@@ -5,16 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Loader2, Camera } from "lucide-react";
 import { toast } from "react-toastify";
-import { useAuthStore } from "@/stores/useAuthStore";
 import { useUser, useUserMutations } from "@/hooks/useUserMutation";
 
 type ManagerData = {
   _id: string;
   email: string;
-  lastLogin: string;
   userRole: string;
   name: string;
-  location: string;
+  branch: string;
   profilePicture: string;
   theme?: boolean;
 };
@@ -36,27 +34,29 @@ export function ManagerUsersModal({
   const [profileData, setProfileData] = useState({
     userRole: "",
     name: "",
-    location: "",
+    branch: "",
     image: null as File | null,
     profilePicture: "",
   });
 
-  // React Query hooks - consistent naming with the fixed hook
+  // React Query hooks
   const { data: userProfile, isLoading: isLoadingProfile } = useUser(
     userData._id
   );
-  const { updateProfile } = useUserMutations();
-  const { syncUserWithProfile } = useAuthStore();
+  const { updateProfile } = useUserMutations(); // Only use the combined mutation
 
   // Load profile data when modal opens or userData changes
   useEffect(() => {
     if (userData?._id && open) {
       if (userProfile) {
-        // Use data from React Query
         setProfileData({
           userRole: userProfile.role || userData.userRole,
           name: userProfile.name || userData.name,
-          location: userProfile.branch || userData.location,
+
+          branch:
+            typeof userProfile.branchId === "object"
+              ? userData.branch
+              : userProfile.branch,
           image: null,
           profilePicture:
             userProfile.profilePicture || userData.profilePicture || "",
@@ -66,26 +66,13 @@ export function ManagerUsersModal({
         setProfileData({
           userRole: userData.userRole,
           name: userData.name,
-          location: userData.location,
+          branch: userData.branch,
           image: null,
           profilePicture: userData.profilePicture || "",
         });
       }
     }
   }, [userData, userProfile, open]);
-
-  // Sync with auth store when userProfile loads
-  useEffect(() => {
-    if (userProfile) {
-      syncUserWithProfile({
-        _id: userProfile._id,
-        name: userProfile.name,
-        role: userProfile.role,
-        branch: userProfile.branch,
-        profilePicture: userProfile.profilePicture,
-      });
-    }
-  }, [userProfile, syncUserWithProfile]);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event?.target.files;
@@ -105,7 +92,7 @@ export function ManagerUsersModal({
     });
   };
 
-  // Form submission using the combined mutation
+  // Form submission using ONLY the combined mutation
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -114,25 +101,41 @@ export function ManagerUsersModal({
       return;
     }
 
-    // Prepare update data
-    const updateData = {
-      userId: userData._id,
-      userData: {
-        fullName: profileData.name,
-        location: profileData.location,
-      },
-      imageFile: profileData.image || undefined,
-    };
-
     try {
-      // Use the combined mutation
+      // Use ONLY the combined updateProfile mutation
+      const updateData: {
+        userId: string;
+        userData?: { fullName?: string; location?: string };
+        imageFile?: File;
+      } = {
+        userId: userData._id,
+      };
+
+      // Only add userData if there are actual changes
+      if (
+        profileData.name !== userData.name ||
+        profileData.branch !== userData.branch
+      ) {
+        updateData.userData = {
+          fullName: profileData.name,
+          location: profileData.branch,
+        };
+      }
+
+      // Only add imageFile if there's a new image
+      if (profileData.image) {
+        updateData.imageFile = profileData.image;
+      }
+
+      // Call the combined mutation
       const result = await updateProfile.mutateAsync(updateData);
 
-      // Prepare updated data for callback
+      // Update local callback with the server response
       const updatedData: ManagerData = {
         ...userData,
-        name: profileData.name,
-        location: profileData.location,
+        name: result.user?.fullName || result.user?.name || profileData.name,
+        branch:
+          result.user?.location || result.user?.branch || profileData.branch,
         profilePicture: result.profilePicture || profileData.profilePicture,
       };
 
@@ -142,7 +145,7 @@ export function ManagerUsersModal({
       // Clear form state
       setProfileData((prev) => ({ ...prev, image: null }));
     } catch (error) {
-      toast.error("Update error:" + error);
+      console.error("Update error:", error);
       // Error toast is handled by the mutation hook
     }
   };
@@ -191,18 +194,19 @@ export function ManagerUsersModal({
     });
   };
 
-  // Current display image comes from userProfile or local state
-  const displayImage =
-    userProfile?.profilePicture ||
-    profileData.profilePicture ||
-    userData.profilePicture;
+  // Current display image - show optimistic update if available
+  const displayImage = profileData.image
+    ? URL.createObjectURL(profileData.image)
+    : userProfile?.profilePicture ||
+      profileData.profilePicture ||
+      userData.profilePicture;
 
   const isLoading = updateProfile.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] font-inter rounded-lg  shadow-lg max-h-[90vh] overflow-y-auto">
-        <div className="p-4  space-y-6">
+      <DialogContent className="sm:max-w-[600px] font-inter rounded-lg shadow-lg max-h-[90vh] overflow-y-auto">
+        <div className="p-4 space-y-6">
           <form className="space-y-4" onSubmit={handleFormSubmit}>
             <h2 className="text-lg font-semibold">Edit Profile</h2>
 
@@ -222,10 +226,6 @@ export function ManagerUsersModal({
                     alt={`${userData.userRole} Avatar`}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      // console.error(
-                      //   "Failed to load profile image:",
-                      //   displayImage
-                      // );
                       (e.target as HTMLImageElement).style.display = "none";
                     }}
                   />
@@ -241,12 +241,10 @@ export function ManagerUsersModal({
                 <label
                   htmlFor="profile-upload"
                   className={`absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 text-white cursor-pointer ${
-                    isLoading && profileData.image
-                      ? "opacity-100"
-                      : "opacity-0 hover:opacity-100"
+                    isLoading ? "opacity-100" : "opacity-0 hover:opacity-100"
                   } transition-opacity duration-300 rounded-full`}
                 >
-                  {isLoading && profileData.image ? (
+                  {isLoading ? (
                     <Loader2 className="w-6 h-6 animate-spin" />
                   ) : (
                     <Camera className="w-6 h-6" />
@@ -312,7 +310,7 @@ export function ManagerUsersModal({
               <input
                 name="location"
                 onChange={handleProfileChange}
-                value={profileData.location}
+                value={profileData.branch}
                 placeholder="Enter location"
                 className="w-full px-3 py-2 rounded-md border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition-all duration-200 ease-in-out"
                 disabled={isLoading || isLoadingProfile}
