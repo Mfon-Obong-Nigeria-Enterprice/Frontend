@@ -23,6 +23,8 @@ interface clientStore {
   fetchDebtors: () => Promise<void>;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  refreshClients: () => Promise<void>;
+
 
   // Derivative stats
   getClientsWithDebt: () => Client[];
@@ -94,6 +96,7 @@ const fetchClientDebtors = async (): Promise<Client[]> => {
   return await getClientDebtors();
 };
 
+// CURRENT CODE (around line 200):
 export const useClientStore = create<clientStore>()(
   persist(
     (set, get) => ({
@@ -101,6 +104,12 @@ export const useClientStore = create<clientStore>()(
       debtors: [],
       isLoading: false,
       error: null,
+
+      // ADD THIS FUNCTION:
+      refreshClients: async () => {
+        await get().fetchClients();
+        await get().fetchDebtors();
+      },
 
       // Data fetching methods
       fetchClients: async () => {
