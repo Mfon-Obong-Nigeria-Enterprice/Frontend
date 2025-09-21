@@ -1,5 +1,3 @@
-
-
 // ==================== CORE TYPES ====================
 export type Role = "SUPER_ADMIN" | "MAINTAINER" | "ADMIN" | "STAFF";
 
@@ -8,8 +6,6 @@ export interface PriceHistoryItem {
   date: string;
   _id: string;
 }
-
-
 
 // ==================== PRODUCT TYPES ====================
 export interface Product {
@@ -183,8 +179,6 @@ export type MonthlySales = {
   month: string;
   sales: number;
 };
-
-
 
 // NOTIFICATION TYPES
 export type NotificationType =

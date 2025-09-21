@@ -116,7 +116,7 @@ const NewSales: React.FC = () => {
       setReceiptData(data);
       setShowReceipt(true);
     });
-
+    //clean up function
     return () => {
       socket.off("transaction_created");
     };
@@ -126,8 +126,6 @@ const NewSales: React.FC = () => {
     toast.error("Branch ID is missing");
     return null;
   }
-
- 
 
   // Check if selected client is blocked/suspended
   const isClientBlocked = selectedClient?.isActive === false;

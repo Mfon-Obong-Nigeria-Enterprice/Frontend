@@ -3,7 +3,6 @@ import DashboardTitle from "../shared/DashboardTitle";
 import Stats from "../shared/Stats";
 import RecentTransactions from "./component/desktop/RecentTransaction";
 import RecentTransactionsMobile from "./component/mobile/RecentTransactionsMobile";
-import OutstandingBalance from "../shared/OutstandingBalance";
 
 //icons
 import { ChevronRight } from "lucide-react";
@@ -23,6 +22,7 @@ import { useRevenueStore } from "@/stores/useRevenueStore";
 // utils
 import { getChangeText } from "@/utils/helpersfunction";
 import { formatCurrency } from "@/utils/formatCurrency";
+import ManagerOutstandingDebt from "./component/ManagerOutstandingDebt";
 
 const ManagerDashboardOverview = () => {
   const { getTodaysSales, getSalesPercentageChange } = useTransactionsStore();
@@ -83,9 +83,9 @@ const ManagerDashboardOverview = () => {
         description="welcome back! Here’s an overview of your business"
       />
       <Stats data={stats} />
-      <div className="py-14">
-        <div className="xl:bg-white xl:rounded-lg xl:border xl:border-gray-200 xl:shadow-sm px-2 py-6 md:p-6">
-          <h2 className="bg-white p-4 rounded-md text-xl font-semibold text-gray-800 mb-6">
+      <div className="py-9">
+        <div className="xl:bg-white xl:rounded-lg xl:border xl:border-gray-200 xl:shadow-sm px-2 py-6 md:p-2">
+          <h2 className="bg-white p-4 rounded-md text-xl font-semibold text-gray-800 ">
             Recent Transaction
           </h2>
           <RecentTransactionsMobile />
@@ -102,7 +102,8 @@ const ManagerDashboardOverview = () => {
           </div>
         </div>
       </div>
-      <OutstandingBalance />
+      {/* <OutstandingBalance /> */}
+      <ManagerOutstandingDebt />
     </main>
   );
 };
