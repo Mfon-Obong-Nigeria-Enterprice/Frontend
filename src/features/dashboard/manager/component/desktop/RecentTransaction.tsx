@@ -12,7 +12,7 @@ import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { useMergedTransactions } from "@/hooks/useMergedTransactions";
 
 // utils
-import { formatCurrency } from "@/utils/styles";
+import { balanceClassT, formatCurrency } from "@/utils/styles";
 
 const RecentTransactions = () => {
   const { transactions } = useTransactionsStore();
@@ -24,25 +24,25 @@ const RecentTransactions = () => {
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr className="border-b border-gray-200">
-              <th className="py-3 text-base text-[#333333] font-normal text-center">
+              <th className="py-3 text-base text-[#333333] font-normal text-start pl-1">
                 Invoice
               </th>
-              <th className="py-3 text-base text-[#333333] font-normal text-center">
+              <th className="py-3 text-base text-[#333333] font-normal text-start pl-1">
                 Date/Time
               </th>
-              <th className="py-3 text-base text-[#333333] font-normal text-center">
+              <th className="py-3 text-base text-[#333333] font-normal text-start pl-1">
                 Items
               </th>
-              <th className="py-3 text-base text-[#333333] font-normal text-center">
+              <th className="py-3 text-base text-[#333333] font-normal text-start pl-1">
                 Type
               </th>
-              <th className="py-3 text-base text-[#333333] font-normal text-center">
+              <th className="py-3 text-base text-[#333333] font-normal text-start pl-1">
                 Amount
               </th>
-              <th className="py-3 text-base text-[#333333] font-normal text-center">
+              <th className="py-3 text-base text-[#333333] font-normal text-start pl-1">
                 Location
               </th>
-              <th className="py-3 text-base text-[#333333] font-normal text-center">
+              <th className="py-3 text-base text-[#333333] font-normal text-start pl-1">
                 Balance
               </th>
             </tr>
@@ -58,20 +58,22 @@ const RecentTransactions = () => {
               .slice(0, 5)
               .map((transaction) => (
                 <tr key={transaction._id} className="border-b border-[#d9d9d9]">
-                  <td className="text-center text-[#444444] text-sm font-normal py-3">
+                  <td className="text-start pl-1 text-[#444444] text-sm font-normal py-3">
                     {transaction.invoiceNumber}
                   </td>
 
-                  <td className="text-center text-[#444444] text-sm font-normal py-3">
-                    <span>
-                      {new Date(transaction.createdAt).toLocaleDateString()}
-                    </span>
-                    <span>
-                      {new Date(transaction.createdAt).toLocaleTimeString()}
-                    </span>
+                  <td className="text-start pl-1 text-[#444444] text-sm font-normal py-3 ">
+                    <div className="flex flex-col">
+                      <span>
+                        {new Date(transaction.createdAt).toLocaleDateString()}
+                      </span>
+                      <span className="text-sm text-[#7D7D7D]">
+                        {new Date(transaction.createdAt).toLocaleTimeString()}
+                      </span>
+                    </div>
                   </td>
 
-                  <td className="flex items-center justify-center text-[#444444] text-sm font-normal py-3">
+                  <td className="flex items-center justify-start text-[#444444] text-sm font-normal py-3 ">
                     {transaction.items.length > 0 && (
                       <>
                         <span>
@@ -81,15 +83,11 @@ const RecentTransactions = () => {
                         {transaction.items.length > 1 && (
                           <Popover>
                             <PopoverTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="ml-1"
-                              >
+                              <Button variant="ghost" size="icon">
                                 <ChevronDown className="w-4 h-4" />
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="text-sm max-w-xs">
+                            <PopoverContent className="text-sm max-w-38">
                               {transaction.items
                                 .slice(1)
                                 .map(
@@ -107,22 +105,22 @@ const RecentTransactions = () => {
                     )}
                   </td>
 
-                  <td className="text-center">
-                    <span
-                      className={`border text-[0.625rem] py-1.5 px-3 rounded-[6.25rem] ${
+                  <td className="text-start pl-1">
+                    <p
+                      className={`border text-[0.625rem] py-1.5 px-3 rounded-[6.25rem] max-w-18 text-center ${
                         transaction.type === "PURCHASE"
                           ? "border-[#F95353] bg-[#FFCACA] text-[#F95353]"
                           : transaction.type === "PICKUP"
-                          ? "border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71]"
-                          : "border-[#FFA500] bg-[#FFE7A4] text-[#FFA500]"
+                          ? "border-[#FFA500] bg-[#FFE7A4] text-[#FFA500]"
+                          : " border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71]"
                       }`}
                     >
                       {transaction.type}
-                    </span>
+                    </p>
                   </td>
 
                   <td
-                    className={`text-sm text-center ${
+                    className={`text-sm text-start pl-1 ${
                       transaction.total < 0
                         ? "text-[#F95353]"
                         : "text-[#2ECC71]"
@@ -131,12 +129,14 @@ const RecentTransactions = () => {
                     {formatCurrency(transaction.total)}
                   </td>
 
-                  <td className="text-center text-[#444444] text-sm font-normal py-3">
+                  <td className="text-start pl-1 text-[#444444] text-sm font-normal py-3">
                     {transaction.branchName}
                   </td>
 
                   <td
-                    className={`text-sm text-center 
+                    className={`text-sm text-start pl-1 ${balanceClassT(
+                      transaction.client?.balance
+                    )} 
                       `}
                   >
                     {formatCurrency(transaction.client?.balance ?? 0)}
