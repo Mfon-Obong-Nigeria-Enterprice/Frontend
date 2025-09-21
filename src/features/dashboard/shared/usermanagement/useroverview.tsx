@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/components/UserOverview.tsx
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
@@ -49,6 +50,11 @@ type UserDataProps = {
   profilePicture?: string;
 };
 
+// Add the filterUsers function
+const filterUsers = (users: any[]) => {
+  return users.filter(user => user.role !== "SUPER_ADMIN");
+};
+
 const UserOverview = () => {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
@@ -66,20 +72,22 @@ const UserOverview = () => {
     status: "all"
   });
 
+  const nonSuperAdminUsers = useMemo(() => filterUsers(users), [users]);
+
   // Get unique roles and locations from actual user data
   const roles = useMemo(() => {
-    const uniqueRoles = Array.from(new Set(users.map(user => user.role)));
+    const uniqueRoles = Array.from(new Set(nonSuperAdminUsers.map(user => user.role)));
     return uniqueRoles;
-  }, [users]);
+  }, [nonSuperAdminUsers]);
 
   const locations = useMemo(() => {
-    const uniqueLocations = Array.from(new Set(users.map(user => user.location || user.branch || "")));
+    const uniqueLocations = Array.from(new Set(nonSuperAdminUsers.map(user => user.location || user.branch || "")));
     return uniqueLocations.filter(loc => loc !== "");
-  }, [users]);
+  }, [nonSuperAdminUsers]);
 
-  // Filter users based on search and filters
+  // Filter users based on search and filters (excluding SUPER_ADMIN)
   const filteredUsers = useMemo(() => {
-    return users.filter(user => {
+    return nonSuperAdminUsers.filter(user => { // Changed from users to nonSuperAdminUsers
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -145,7 +153,7 @@ const UserOverview = () => {
       
       return true;
     });
-  }, [users, searchQuery, filters]);
+  }, [nonSuperAdminUsers, searchQuery, filters]); // Changed from users to nonSuperAdminUsers
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);

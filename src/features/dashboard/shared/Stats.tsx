@@ -1,4 +1,3 @@
-
 import React from "react";
 import type { StatCard } from "@/types/stats";
 import { useRevenueStore } from "@/stores/useRevenueStore";
@@ -10,13 +9,10 @@ import {
   Bar,
   Tooltip,
 } from "recharts";
-import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 interface StatsProps {
   data: StatCard[];
 }
-
-
 
 interface CircularProgressProps {
   percentage: number;
@@ -26,10 +22,10 @@ interface CircularProgressProps {
 
 const CircularProgress: React.FC<CircularProgressProps> = ({
   percentage,
-  size = 100,
+  size = 80, // Reduced size for better fit
   strokeColor,
 }) => {
-  const radius = 40;
+  const radius = (size - 10) / 2; // Adjust radius for proper sizing
   const circumference = 2 * Math.PI * radius;
   const clamped = Number.isFinite(percentage)
     ? Math.max(0, Math.min(100, percentage))
@@ -42,34 +38,39 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
       className="flex items-center justify-center"
     >
       <svg className="transform -rotate-90" width={size} height={size}>
+        {/* Background circle */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           stroke="#E5E7EB"
-          strokeWidth="10"
+          strokeWidth="8" // Thinner stroke
           fill="transparent"
+          strokeLinecap="round" // Smooth ends
         />
+        {/* Progress circle */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           stroke={strokeColor}
-          strokeWidth="10"
+          strokeWidth="8" // Thinner stroke
           fill="transparent"
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
-          style={{ transition: "stroke-dashoffset .35s ease" }}
+          strokeLinecap="round" // Smooth ends - THIS FIXES THE EDGES
+          style={{ 
+            transition: "stroke-dashoffset 0.5s ease",
+            filter: "drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.1))" // Optional: subtle shadow
+          }}
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-lg font-bold">{Math.round(clamped)}%</span>
+        <span className="text-sm font-bold text-gray-700">{Math.round(clamped)}%</span>
       </div>
     </div>
   );
 };
-
-
 
 const getColor = (color?: string) => {
   switch (color) {
@@ -80,13 +81,11 @@ const getColor = (color?: string) => {
     case "red":
       return "#ef4444";
     case "blue":
-      return "#2563eb"; // Blue
+      return "#2563eb";
     default:
       return "#6b7280";
   }
 };
-
-
 
 const Stats: React.FC<StatsProps> = ({ data }) => {
   const revenueStore = useRevenueStore();
@@ -144,19 +143,6 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
           return String(stat.salesValue ?? "");
         };
 
-        const statText = stat.statValue?.toLowerCase() || '';
-        const isIncrease = statText.includes("increase") || statText.includes("more") || statText.includes("+") || statText.includes("new");
-        const isDecrease = statText.includes("decrease") || statText.includes("less") || statText.includes("-");
-        
-        
-        let statTextColor = color; 
-
-       
-        if (stat.heading === "Total Sales (Today)" && (stat.color === 'green' || stat.color === 'red')) {
-            statTextColor = isIncrease ? getColor('green') : isDecrease ? getColor('red') : getColor('orange');
-        }
-
-
         return (
           <div
             key={index}
@@ -171,20 +157,11 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
                 {renderSales()}
               </div>
 
-              
               {stat.statValue && (
                 <div className="flex items-center gap-1 mt-1">
-                 
-                  {!stat.hideArrow && (
-                    isIncrease ? (
-                      <ArrowUpRight size={16} style={{ color: statTextColor }} />
-                    ) : (
-                      <ArrowDownRight size={16} style={{ color: statTextColor }} />
-                    )
-                  )}
                   <span
                     className="text-sm font-semibold"
-                    style={{ color: statTextColor }}
+                    style={{ color: color }}
                   >
                     {stat.statValue}
                   </span>
@@ -192,13 +169,13 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
               )}
             </div>
 
-          
-            <div className="flex items-center justify-center w-1/2 h-24">
+            {/* RIGHT: graph - changed width from w-1/2 to w-1/3 */}
+            <div className="flex items-center justify-center w-1/3 h-24">
               {isCircularCard ? (
                 <CircularProgress
                   percentage={computedCircularPercent}
-                  size={100}
-                  strokeColor={color} 
+                  size={80} // Adjusted size
+                  strokeColor={color}
                 />
               ) : showArea ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -241,7 +218,7 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
                       dataKey="value"
                       fill={color}
                       barSize={20}
-                      radius={[2, 2, 0, 0]} 
+                      radius={[2, 2, 0, 0]} // 
                       isAnimationActive={false}
                     />
                   </BarChart>
