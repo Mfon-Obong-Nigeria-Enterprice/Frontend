@@ -1,5 +1,3 @@
-/** @format */
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useClientMutations } from "@/hooks/useClientMutations";
+import { useClientStore } from "@/stores/useClientStore";
 import type { Client } from "@/types/types";
 import { AxiosError, isAxiosError } from "axios";
 import React, { useEffect, useState } from "react";
@@ -20,7 +19,7 @@ interface EditClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   client: Client;
-  onEditSuccess: () => void; // Optional callback for success handling
+  onEditSuccess: () => void;
 }
 
 type FormData = {
@@ -38,6 +37,7 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
   onEditSuccess,
 }) => {
   const { updateMutate } = useClientMutations();
+  const { updateClient } = useClientStore();
   const [isUpdating, setIsUpdating] = useState(false);
 
   const [formData, setFormData] = useState<FormData>({
@@ -69,58 +69,74 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsUpdating(true); // Add this line
 
     if (!client._id) {
       toast.error("Client ID is missing. Cannot update client.");
+      setIsUpdating(false);
       return;
     }
 
     // Client-side validation
     if (!formData.name.trim()) {
       toast.error("Client name is required");
+      setIsUpdating(false);
       return;
     }
 
     if (!formData.phone.trim()) {
       toast.error("Phone number is required");
-
+      setIsUpdating(false);
       return;
     }
 
-    // Basic phone number validation (adjust regex as needed for your format)
+    // Basic phone number validation
     const phoneRegex = /^[0-9+\-\s()]+$/;
     if (!phoneRegex.test(formData.phone)) {
       toast.error("Please enter a valid phone number");
-
+      setIsUpdating(false);
       return;
     }
 
     try {
+      // Only send the fields that can be updated
+      const updateData = {
+        name: formData.name.trim(),
+        phone: formData.phone.trim(),
+        description: formData.description.trim(),
+        balance: Number(formData.balance),
+        address: formData.address.trim(),
+      };
+
+      // Call the API to update the client
       await updateMutate.mutateAsync({
         id: client._id,
         data: {
-          name: formData.name.trim(),
-          phone: formData.phone.trim(),
-          description: formData.description.trim(),
-          balance: Number(formData.balance),
-          address: formData.address.trim(),
-          _id: "",
-          transactions: [],
-          isActive: false,
-          isRegistered: false,
-          createdAt: "",
-          updatedAt: "",
+          ...client,
+          ...updateData,
         },
       });
-      onEditSuccess(); // Call the success callback if provided
+
+      // Update the local store immediately with the new data
+      updateClient(client._id, {
+        name: formData.name.trim(),
+        phone: formData.phone.trim(),
+        description: formData.description.trim(),
+        balance: Number(formData.balance),
+        address: formData.address.trim(),
+      });
+
+      // Call the success callback
+      onEditSuccess();
+
+      // Close the dialog
       onOpenChange(false);
     } catch (err) {
-      // console.error("Failed to add client:", err);
+      console.error("Failed to update client:", err);
 
       if (isAxiosError(err)) {
         const axiosError = err as AxiosError<{ message: string }>;
 
-        // Handle specific error cases
         if (axiosError.response?.status === 409) {
           toast.error(
             "A client with this name or phone number already exists. Please use different details."
@@ -128,8 +144,10 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
         } else if (axiosError.response?.data?.message) {
           toast.error(axiosError.response.data.message);
         } else {
-          toast.error("Failed to add client. Please try again.");
+          toast.error("Failed to update client. Please try again.");
         }
+      } else {
+        toast.error("Failed to update client. Please try again.");
       }
     } finally {
       setIsUpdating(false);
@@ -154,12 +172,12 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
     <div className="">
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent
-          aria-describedby="add-client-dialog z-50"
+          aria-describedby="edit-client-dialog"
           className="max-w-md"
         >
           <DialogHeader>
             <DialogTitle className="font-medium text-xl pb-4 pt-2 text-[#1E1E1E]">
-              Register New Client
+              Edit Client Information
             </DialogTitle>
           </DialogHeader>
 
@@ -170,7 +188,7 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
                   htmlFor="name"
                   className="text-sm text-[#333333] font-[400]"
                 >
-                  Client Name{" "}
+                  Client Name
                 </Label>
                 <Input
                   className="w-full mt-2 font-[400] text-sm border-[#444444] border "
@@ -188,7 +206,7 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
                   htmlFor="phone"
                   className="text-sm text-[#333333] font-[400]"
                 >
-                  Phone Number{" "}
+                  Phone Number
                 </Label>
                 <Input
                   className="w-full mt-2 font-[400] text-sm border border-[#444444] "
@@ -214,28 +232,25 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
                   className="mt-2 font-[400] text-sm border border-[#444444] "
                   id="address"
                   placeholder="Enter Client address"
-                  required
                   disabled={isUpdating}
                   value={formData.address}
                   onChange={(e) => handleInputChange("address", e.target.value)}
                 />
               </div>
 
-              {/*  */}
               <div className="sm:w-[225px] w-full">
                 <Label
-                  htmlFor="number"
+                  htmlFor="balance"
                   className="text-sm text-[#333333] font-[400]"
                 >
-                  Initial Balance(optional)
+                  Balance
                 </Label>
                 <Input
                   className="mt-2 font-[400] text-sm border border-[#444444] "
-                  id="number"
+                  id="balance"
                   type="number"
-                  step="1"
+                  step="0.01"
                   placeholder="0.00"
-                  required
                   disabled={isUpdating}
                   value={formData.balance}
                   onChange={(e) => handleInputChange("balance", e.target.value)}
@@ -245,14 +260,14 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
 
             <div>
               <Label
-                htmlFor="Description"
+                htmlFor="description"
                 className="text-sm text-[#444444] font-[400] "
               >
-                Description(optional)
+                Description (optional)
               </Label>
               <Textarea
                 className="mt-2 font-[400] text-sm border border-[#444444]"
-                id="notes"
+                id="description"
                 value={formData.description}
                 onChange={(e) =>
                   handleInputChange("description", e.target.value)
@@ -266,12 +281,17 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => onOpenChange(false)}
+                onClick={handleClose}
+                disabled={isUpdating}
                 className="border-[#444444] border p-5"
               >
                 Cancel
               </Button>
-              <Button type="submit" className="bg-[#2ECC71] p-5">
+              <Button
+                type="submit"
+                disabled={isUpdating}
+                className="bg-[#2ECC71] p-5"
+              >
                 {isUpdating ? "Updating..." : "Update Client"}
               </Button>
             </div>

@@ -21,12 +21,6 @@ interface SendToBranchAdminRequest {
   temporaryPassword: string;
 }
 
-// interface SupportRequestData {
-//   issueType: string;
-//   email: string;
-//   message?: string;
-// }
-
 interface BranchNotification {
   _id: string;
   branch: string;

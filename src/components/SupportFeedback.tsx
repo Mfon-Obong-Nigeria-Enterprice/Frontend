@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { GoCheck } from "react-icons/go";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -24,22 +23,18 @@ const SupportFeedback: React.FC<SupportFeedbackProps> = ({ onClose }) => {
   const [formData, setFormData] = useState({
     issueType: "",
     email: "",
-    description: "",
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   // WebSocket hook for real-time notifications
   const { emitSupportRequest, isConnected } = useWebSocketNotifications(false);
 
-  // Issue types that users can select from
+  // Only authentication-related issues that maintainers need to handle
   const issueTypes = [
     "Forgot Password",
     "Can't Login",
     "Account Locked",
     "Email Verification Issues",
-    "Performance Issues",
-    "Data Issues",
-    "Other Technical Issues",
   ];
 
   const supportMutation = useMutation({
@@ -53,9 +48,7 @@ const SupportFeedback: React.FC<SupportFeedbackProps> = ({ onClose }) => {
         emitSupportRequest({
           email: formData.email,
           issueType: formData.issueType,
-          message:
-            formData.description ||
-            `Support request for: ${formData.issueType}`,
+          message: `Support request for: ${formData.issueType}`,
         });
       }
     },
@@ -85,8 +78,7 @@ const SupportFeedback: React.FC<SupportFeedbackProps> = ({ onClose }) => {
 
     supportMutation.mutate({
       email: formData.email,
-      message:
-        formData.description || `Support request for: ${formData.issueType}`,
+      message: `Support request for: ${formData.issueType}`,
     });
   };
 
@@ -99,42 +91,36 @@ const SupportFeedback: React.FC<SupportFeedbackProps> = ({ onClose }) => {
 
   // Reset form when closing
   const handleClose = () => {
-    setFormData({ issueType: "", email: "", description: "" });
+    setFormData({ issueType: "", email: "" });
     setIsSubmitted(false);
     onClose();
   };
 
   return (
-    <section className="absolute top-0 left-0 w-full  min-h-screen bg-black/50 flex justify-center items-center px-2 z-50 ">
-      <div className="bg-white min-h-100 rounded-xl overflow-hidden mb-15">
-        <h4 className="text-start pl-4 py-4 bg-[#F0F0F3] text-gray-900 text-base font-medium">
-          {isSubmitted ? "Support Request Sent" : "What's your challenge"}
-        </h4>
+    <section className="absolute top-0 left-0 w-full min-h-screen bg-black/50 flex justify-center items-center px-2 z-50">
+      <div className="bg-white  rounded-xl overflow-hidden ">
+        <div className="    font-medium ">
+          {isSubmitted ? (
+            <p className=" bg-[#F0F0F3] text-center text-[26px] text-[#1E1E1E] px-2">
+              Support Request Sent
+            </p>
+          ) : (
+            <p className="text-start pl-4  text-base text-[#1E1E1E] pt-4">
+              What's your challenge
+            </p>
+          )}
+        </div>
 
         <div className="px-5 pb-5">
           {isSubmitted ? (
             // Success state
             <>
               <p className="py-6 font-Inter font-medium text-sm leading-loose text-center text-gray-600 max-w-[20rem] mx-auto">
-                Your support request has been sent to our maintainers. You
-                should receive a response within 24 hours. Please check back
-                later...
+                Your support request has been sent to our maintainers. Please
+                wait for a response or check back later...
               </p>
               <div className="bg-green-500 flex justify-center items-center mx-auto mb-6 w-20 h-20 rounded-full">
                 <GoCheck size={48} className="fill-white" />
-              </div>
-
-              {/* Connection status indicator */}
-              <div className="text-xs text-center mb-4 text-gray-500">
-                {isConnected ? (
-                  <span className="text-green-600">
-                    ✓ Real-time notifications enabled
-                  </span>
-                ) : (
-                  <span className="text-amber-600">
-                    ⚠ Real-time notifications unavailable
-                  </span>
-                )}
               </div>
 
               <Button
@@ -154,7 +140,7 @@ const SupportFeedback: React.FC<SupportFeedbackProps> = ({ onClose }) => {
               {/* Issue Type Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select an Issue Type *
+                  Select an Issue Type
                 </label>
                 <Select
                   value={formData.issueType}
@@ -191,22 +177,6 @@ const SupportFeedback: React.FC<SupportFeedbackProps> = ({ onClose }) => {
                 />
               </div>
 
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Additional Details (Optional)
-                </label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    handleInputChange("description", e.target.value)
-                  }
-                  placeholder="Please provide any additional details about your issue..."
-                  className="min-h-[100px] resize-none"
-                  disabled={supportMutation.isPending}
-                />
-              </div>
-
               {/* Action Buttons */}
               <div className="flex gap-3 pt-2 justify-end">
                 <Button
@@ -214,7 +184,6 @@ const SupportFeedback: React.FC<SupportFeedbackProps> = ({ onClose }) => {
                   variant="outline"
                   onClick={handleClose}
                   disabled={supportMutation.isPending}
-                  className=""
                 >
                   Cancel
                 </Button>
@@ -231,7 +200,7 @@ const SupportFeedback: React.FC<SupportFeedbackProps> = ({ onClose }) => {
                       Sending...
                     </>
                   ) : (
-                    "Send Report"
+                    "Send Request"
                   )}
                 </Button>
               </div>

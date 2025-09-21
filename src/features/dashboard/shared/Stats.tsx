@@ -17,7 +17,7 @@ interface StatsProps {
 interface CircularProgressProps {
   percentage: number;
   size?: number;
-  strokeColor: string; 
+  strokeColor: string;
 }
 
 const CircularProgress: React.FC<CircularProgressProps> = ({
@@ -75,7 +75,7 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
 const getColor = (color?: string) => {
   switch (color) {
     case "green":
-      return "#16a34a"; 
+      return "#16a34a";
     case "orange":
       return "#f97316";
     case "red":
@@ -89,7 +89,8 @@ const getColor = (color?: string) => {
 
 const Stats: React.FC<StatsProps> = ({ data }) => {
   const revenueStore = useRevenueStore();
-  const monthlyRevenue = revenueStore.getMOMRevenue && revenueStore.getMOMRevenue();
+  const monthlyRevenue =
+    revenueStore.getMOMRevenue && revenueStore.getMOMRevenue();
 
   return (
     <section
@@ -117,12 +118,15 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
 
         const color = getColor(stat.color);
         const isCircularCard = stat.displayType === "circular";
-        const showArea = stat.chartType === "line" && chartData.length > 0 && !isCircularCard;
-        const showBar = stat.chartType === "bar" && chartData.length > 0 && !isCircularCard;
+        const showArea =
+          stat.chartType === "line" && chartData.length > 0 && !isCircularCard;
+        const showBar =
+          stat.chartType === "bar" && chartData.length > 0 && !isCircularCard;
 
-        const computedCircularPercent = typeof stat.percentage === "number" 
-          ? stat.percentage 
-          : monthlyRevenue?.percentageChange ?? 0;
+        const computedCircularPercent =
+          typeof stat.percentage === "number"
+            ? stat.percentage
+            : monthlyRevenue?.percentageChange ?? 0;
 
         const renderSales = () => {
           if (stat.format === "currency") {
@@ -188,7 +192,11 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
                         y1="0"
                         y2="1"
                       >
-                        <stop offset="0%" stopColor={color} stopOpacity={0.18} />
+                        <stop
+                          offset="0%"
+                          stopColor={color}
+                          stopOpacity={0.18}
+                        />
                         <stop
                           offset="100%"
                           stopColor={color}

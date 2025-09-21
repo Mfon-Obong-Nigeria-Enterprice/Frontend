@@ -12,7 +12,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import {
-  ChevronDown,
+  // ChevronDown,
   MoreVertical,
   TrendingUp,
   TrendingDown,
@@ -215,7 +215,7 @@ export default function RevenueAnalytics() {
             heading="Revenue Analytics"
             description="Welcome back! Here's your revenue performance"
           />
-          <div className="flex items-center gap-3">
+          {/* <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-2">
               <span className="text-sm text-gray-600">Filter:</span>
               <span className="text-sm font-medium">Last 12 months</span>
@@ -226,7 +226,7 @@ export default function RevenueAnalytics() {
               <TrendingUp className="w-4 h-4" />
               Export Data
             </button>
-          </div>
+          </div> */}
         </div>
 
         {/* Error State */}
@@ -470,14 +470,14 @@ export default function RevenueAnalytics() {
               <div className="space-y-4 sm:space-y-6">
                 {/* Product Margin */}
                 <div className="bg-white rounded-xl border border-gray-200 p-2 sm:p-6 shadow-sm relative">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 pl-3 sm:pl-0">
                     Product Margin
                   </h3>
 
                   {productMarginData.length > 0 ? (
                     <>
                       <div className="flex items-center lg:justify-start justify-center">
-                        <div className="relative w-32 h-32 mb-5 sm:mb-0">
+                        <div className="relative w-40 h-40 md:w-32 md:h-32 mb-8 md:mb-0">
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                               <Pie
@@ -503,9 +503,9 @@ export default function RevenueAnalytics() {
                       </div>
 
                       <div className="space-y-2 absolute right-3 bottom-1.5 flex gap-4 lg:gap-0 justify-between lg:flex-col">
-                        {productMarginData.slice(0, 3).map((item, index) => (
+                        {productMarginData.map((item, index) => (
                           <div key={index}>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center">
                               <div
                                 className="w-3 h-3"
                                 style={{ backgroundColor: item.color }}
