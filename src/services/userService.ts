@@ -42,7 +42,6 @@ interface ProfilePictureResponse {
 }
 
 interface UpdateUserPayload {
-  fullName?: string;
   name?: string;
   location?: string;
   branch?: string;
@@ -157,7 +156,7 @@ export const updateUserData = async (
         "Content-Type": "application/json",
       },
     });
-    
+
     return response.data;
   } catch (error) {
     if (isAxiosError(error)) {
@@ -188,8 +187,6 @@ export const updateUserPassword = async (
   passwordData: UpdatePasswordPayload
 ): Promise<UpdatePasswordResponse> => {
   try {
-  
-
     const response = await api.patch(
       `/users/${userId}/update-password`,
       passwordData,
@@ -261,7 +258,6 @@ export const updateProfilePicture = async (
       throw new Error("No image URL returned from server");
     }
 
- 
     return imageUrl;
   } catch (error: unknown) {
     console.error("Failed to upload profile picture:", error);

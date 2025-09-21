@@ -96,8 +96,6 @@ export const useAuthStore = create<AuthState>()(
             name: cleanName || state.userProfile.name, // Use cleaned name
           };
 
-         
-
           return {
             user: updatedUser,
             userProfile: updatedUserProfile,
@@ -114,43 +112,21 @@ export const useAuthStore = create<AuthState>()(
           }
 
           // Clean the name if it exists in profileData
-          const cleanName = profileData.name
-            ? profileData.name.trim()
-            : undefined;
+          const cleanName = profileData.name?.trim();
 
-          // Check if there are actual changes to prevent unnecessary updates
-          const hasUserChanges =
-            cleanName !== state.user.name ||
-            profileData.email !== state.user.email ||
-            profileData.branch !== state.user.branch;
-
-          const hasProfileChanges = Object.keys(profileData).some((key) => {
-            const newValue =
-              key === "name"
-                ? cleanName
-                : profileData[key as keyof typeof profileData];
-            const currentValue = state.userProfile![key as keyof UserProfile];
-            return newValue !== currentValue && newValue !== undefined;
-          });
-
-          // If no changes, don't update the state
-          if (!hasUserChanges && !hasProfileChanges) {
-            return state;
-          }
-
-          // Update user object with fresh profile data
+          // Create updated user object
           const updatedUser: LoginUser = {
             ...state.user,
-            name: cleanName || state.user.name,
-            email: profileData.email || state.user.email,
-            branch: profileData.branch || state.user.branch,
+            ...(cleanName && { name: cleanName }),
+            ...(profileData.email && { email: profileData.email }),
+            ...(profileData.branch && { branch: profileData.branch }),
           };
 
-          // Ensure all required fields have values by using existing values as fallbacks
+          // Create updated user profile object
           const updatedUserProfile: UserProfile = {
             ...state.userProfile,
             ...profileData,
-            // Override with explicit fallbacks for required fields and use cleaned name
+            // Ensure required fields have values using existing values as fallbacks
             _id: profileData._id || state.userProfile._id,
             name: cleanName || state.userProfile.name,
             email: profileData.email || state.userProfile.email,
@@ -160,9 +136,42 @@ export const useAuthStore = create<AuthState>()(
             createdAt: profileData.createdAt || state.userProfile.createdAt,
           };
 
-         
+          // Detect what actually changed
+          const userChanges: string[] = [];
+          const profileChanges: string[] = [];
+
+          if (updatedUser.name !== state.user.name)
+            userChanges.push(`name: ${state.user.name} → ${updatedUser.name}`);
+          if (updatedUser.email !== state.user.email)
+            userChanges.push(
+              `email: ${state.user.email} → ${updatedUser.email}`
+            );
+          if (updatedUser.branch !== state.user.branch)
+            userChanges.push(
+              `branch: ${state.user.branch} → ${updatedUser.branch}`
+            );
+
+          if (updatedUserProfile.name !== state.userProfile.name)
+            profileChanges.push(
+              `name: ${state.userProfile.name} → ${updatedUserProfile.name}`
+            );
+          if (updatedUserProfile.branch !== state.userProfile.branch)
+            profileChanges.push(
+              `branch: ${state.userProfile.branch} → ${updatedUserProfile.branch}`
+            );
+          if (
+            updatedUserProfile.profilePicture !==
+            state.userProfile.profilePicture
+          )
+            profileChanges.push(`profilePicture: changed`);
+
+          // Only update if there are actual changes
+          if (userChanges.length === 0 && profileChanges.length === 0) {
+            return state;
+          }
 
           return {
+            ...state,
             user: updatedUser,
             userProfile: updatedUserProfile,
           };

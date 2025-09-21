@@ -256,10 +256,9 @@ const Header = ({ userRole }: HeaderProps) => {
           userData={{
             _id: user?.id ?? "",
             email: user?.email ?? "",
-            lastLogin: new Date().toISOString(),
             userRole: user?.role ?? "",
             name: user?.name ?? "",
-            location: user?.branch ?? "",
+            branch: user?.branch ?? "",
             profilePicture: profileImageUrl,
           }}
           onProfileUpdate={handleProfileUpdate}
