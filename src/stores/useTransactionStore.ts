@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { toSentenceCaseName } from "@/utils/styles";
 import type { Transaction } from "@/types/transactions";
+import { getAllTransactions } from "@/services/transactionService";
 
 type TransactionState = {
   transactions: Transaction[] | null;
@@ -11,6 +12,7 @@ type TransactionState = {
   addTransaction: (transactions: Transaction) => void;
   openModal: (transaction: Transaction) => void;
   closeModal: () => void;
+  refreshTransactions: () => Promise<void>;
   getTodaysSales: () => number;
   getYesterdaysSales: () => number;
   getSalesPercentageChange: () => {
@@ -130,9 +132,20 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
   transactions: [],
   selectedTransaction: null,
   open: false,
+
+  refreshTransactions: async () => {
+    try {
+      const transactions = await getAllTransactions();
+      get().setTransactions(transactions);
+    } catch (error) {
+      console.error('Error refreshing transactions:', error);
+    }
+  },
+
   setTransactions: (transactions) =>
     set({
       transactions: transactions.map((txn) => {
+        
         // Ensure all payment transactions have required properties
         if (txn.type === "DEPOSIT") {
           return {
@@ -150,6 +163,8 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
               : txn.client?.name
               ? toSentenceCaseName(txn.client.name)
               : undefined,
+
+             
           };
         }
 
