@@ -218,10 +218,11 @@ const NewSales: React.FC = () => {
   };
 
   // Helper to get numeric value safely
-  const getAmountPaid = () => {
-    const value = parseFloat(amountPaid);
-    return isNaN(value) ? 0 : value;
-  };
+ // Helper to get numeric value safely
+const getAmountPaid = () => {
+  const value = parseFloat(amountPaid) / 100; // Divide by 100 to get actual amount
+  return isNaN(value) ? null : value;
+};
 
   const canSubmit = () => {
     if (selectedClient && isClientBlocked) return false;
@@ -241,33 +242,33 @@ const NewSales: React.FC = () => {
   };
 
   const validateSales = () => {
-    if (selectedClient && isClientBlocked) {
+  if (selectedClient && isClientBlocked) {
+    toast.error(
+      "Cannot create transaction for suspended client. Please contact manager."
+    );
+    return false;
+  }
+  if (!canSubmit()) {
+    toast.error("Please fill all required fields correctly");
+    return false;
+  }
+
+
+  if (isWalkIn) {
+    const { total } = calculateTotals();
+    const paid = getAmountPaid() || 0; 
+
+    if (Math.abs(paid - total) > 0.01) {
+     
       toast.error(
-        "Cannot create transaction for suspended client. Please contact manager."
+        `Walk-in clients must pay exactly ${formatCurrency(total)}`
       );
       return false;
     }
-    if (!canSubmit()) {
-      toast.error("Please fill all required fields correctly");
-      return false;
-    }
+  }
 
-    // prevent walk-in from overpaying
-    if (isWalkIn) {
-      const { total } = calculateTotals();
-      const paid = getAmountPaid() || 0;
-
-      if (Math.abs(paid - total) > 0.01) {
-        // Allow for small rounding differences
-        toast.error(
-          `Walk-in clients must pay exactly ${formatCurrency(total)}`
-        );
-        return false;
-      }
-    }
-
-    return true;
-  };
+  return true;
+};
 
   const calculateTotals = () => {
     const subtotal = rows.reduce(
@@ -298,41 +299,50 @@ const NewSales: React.FC = () => {
   };
 
   const getBalanceInfo = () => {
-    const { total } = calculateTotals();
-    const paid = getAmountPaid(); // ✅ Use consistent method
-    const clientBalance =
-      clients.find((c) => c._id === selectedClient?._id)?.balance || 0;
+  const { total } = calculateTotals();
+  const paid = parseFloat(amountPaid) / 100 || 0; // Divide by 100 to get the actual amount
+  const clientBalance =
+    clients.find((c) => c._id === selectedClient?._id)?.balance || 0;
 
-    const availableBalance = selectedClient ? clientBalance : 0;
-    const effectiveAmountPaid = paid + availableBalance;
-    const balanceDue = Math.max(0, total - effectiveAmountPaid);
-    const newBalance = effectiveAmountPaid - total;
+  const availableBalance = selectedClient ? clientBalance : 0;
+  const effectiveAmountPaid = paid + availableBalance;
+  const balanceDue = Math.max(0, total - effectiveAmountPaid);
+  const newBalance = effectiveAmountPaid - total;
 
-    let statusMessage;
-    if (isWalkIn) {
-      if (Math.abs(paid - total) <= 0.01) {
-        statusMessage = "Payment complete";
-      } else if (paid > total) {
-        statusMessage = `Overpayment: ${formatCurrency(
-          paid - total
-        )} (not allowed for walk-in)`;
-      } else {
-        statusMessage = `Amount due: ${formatCurrency(
-          total - paid
-        )} (full payment required)`;
-      }
-    } else if (balanceDue === 0) {
-      statusMessage = "No balance due";
-    } else if (selectedClient && clientBalance > 0) {
-      statusMessage = `Balance due: ${formatCurrency(
-        balanceDue
-      )} (Account balance: ${formatCurrency(clientBalance)})`;
+  let statusMessage;
+  if (isWalkIn) {
+    if (paid === total) {
+      statusMessage = "Payment complete";
+    } else if (paid > total) {
+      statusMessage = `Overpayment: ₦${(paid - total).toLocaleString('en-NG', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })} (not allowed for walk-in)`;
     } else {
-      statusMessage = `Balance due: ${formatCurrency(balanceDue)}`;
+      statusMessage = `Amount due: ₦${(total - paid).toLocaleString('en-NG', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })} (full payment required)`;
     }
+  } else if (balanceDue === 0) {
+    statusMessage = "No balance due";
+  } else if (selectedClient && clientBalance > 0) {
+    statusMessage = `Balance due: ₦${balanceDue.toLocaleString('en-NG', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })} (Account balance: ₦${clientBalance.toLocaleString('en-NG', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })})`;
+  } else {
+    statusMessage = `Balance due: ₦${balanceDue.toLocaleString('en-NG', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  }
 
-    return { statusMessage, total, paid, clientBalance, newBalance };
-  };
+  return { statusMessage, total, paid, clientBalance, newBalance };
+};
 
   const { statusMessage, total, paid, clientBalance, newBalance } =
     getBalanceInfo();
@@ -355,22 +365,13 @@ const NewSales: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!validateSales()) return;
+  if (!validateSales()) return;
 
-    setIsSubmitting(true);
-    try {
-      const { discountTotal, total } = calculateTotals();
-      const effectiveAmountPaid = getAmountPaid() || 0;
+  setIsSubmitting(true);
+  try {
+    const { discountTotal, total } = calculateTotals();
+    const effectiveAmountPaid = getAmountPaid() || 0;
 
-      // Debug log
-      // console.log("Transaction calculation:", {
-      //   subtotal,
-      //   discountTotal,
-      //   total,
-      //   effectiveAmountPaid,
-      //   globalDiscount,
-      //   rowDiscounts: rows.map((r) => r.discount),
-      // });
 
       const apiItems = rows
         .filter((row) => row.productId)
@@ -381,7 +382,7 @@ const NewSales: React.FC = () => {
             quantity: row.quantity,
             unit: product?.unit || "pcs",
             discount: 0,
-            // discount: row.discount || 0,
+          
           };
         });
 
@@ -411,25 +412,20 @@ const NewSales: React.FC = () => {
         amountPaid: effectiveAmountPaid,
         discount: discountTotal,
         paymentMethod:
-          // saleType === "PICKUP" ? "PICKUP" : paymentMethodForBackend,
+          
           saleType === "PICKUP" ? "Credit" : paymentMethodForBackend,
         notes,
       };
 
-      // get the actual transaction returned from backend
+      
       await AddTransaction(payload);
-      // const transaction = await AddTransaction(payload);
+      
 
       toast.success("Transaction created successfully");
 
-      // pass the backend transaction to the receipt
-      // setReceiptData(transaction);
-      // setShowReceipt(true);
-
-      // Invalidate so transactions refetch immediately
+    
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      // queryClient.invalidateQueries({ queryKey: ["clients"] });
-
+      
       handleResetClient();
     } catch (error) {
       handleApiError(error, "Transaction error");
@@ -552,7 +548,7 @@ const NewSales: React.FC = () => {
                     <SelectValue placeholder="Select Payment Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="cash"> Cash </SelectItem>
                     <SelectItem value="transfer">Transfer</SelectItem>
                     <SelectItem value="bank">Bank</SelectItem>
                     <SelectItem value="pos">P.O.S</SelectItem>
@@ -582,7 +578,7 @@ const NewSales: React.FC = () => {
                     >
                       <div
                         className="px-2 py-2 sticky top-0 bg-white z-10"
-                        onClick={(e) => e.stopPropagation()} // prevent dropdown from closing
+                        onClick={(e) => e.stopPropagation()} 
                       >
                         <Input
                           type="text"
@@ -686,7 +682,7 @@ const NewSales: React.FC = () => {
                 </p>
               </div>
             )}
-            {/* only show warning if the client will owe */}
+            
             {selectedClient && newBalance < 0 && (
               <div className="flex items-center bg-[#FFF2CE] border border-[#ffa500] rounded-[8px] min-h-[63px] px-14 mt-5">
                 <p className="font-Inter text-amber-800">
