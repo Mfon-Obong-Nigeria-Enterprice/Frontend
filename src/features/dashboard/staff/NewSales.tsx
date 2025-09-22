@@ -128,67 +128,73 @@ const NewSales: React.FC = () => {
     return null;
   }
 
-   const formatCurrencyInput = (value: string) => {
-    if (!value) return '₦0.00';
-    
-    // Remove all non-digit characters
-    const digitsOnly = value.replace(/\D/g, '');
-    
+  const formatCurrencyInput = (value: string) => {
+    if (!value) return "₦0.00";
+    let digitsOnly = value.replace(/[^\d.]/g, "");
+
+    // Handle multiple decimal points - keep only the first one
+    const decimalIndex = digitsOnly.indexOf(".");
+    if (decimalIndex !== -1) {
+      digitsOnly =
+        digitsOnly.substring(0, decimalIndex + 1) +
+        digitsOnly.substring(decimalIndex + 1).replace(/\./g, "");
+    }
+
     // Handle empty value
-    if (digitsOnly === '') return '₦0.00';
-    
+    if (digitsOnly === "" || digitsOnly === ".") return "₦0.00";
+
     // Convert to number and format
-    const numericValue = parseFloat(digitsOnly) / 100;
-    
-    return `₦${numericValue.toLocaleString('en-NG', {
+    const numericValue = parseFloat(digitsOnly);
+
+    if (isNaN(numericValue)) return "₦0.00";
+
+    return `₦${numericValue.toLocaleString(undefined, {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     })}`;
   };
 
   // Parse formatted currency back to raw digits
   const parseCurrency = (formattedValue: string) => {
-    return formattedValue.replace(/[^\d]/g, '');
+    const digitsOnly = formattedValue.replace(/[^\d.]/g, "");
+    const numericValue = parseFloat(digitsOnly);
+    return isNaN(numericValue) ? 0 : numericValue;
   };
-
   const handleAmountPaidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target;
-    const originalValue = input.value;
-    
-    // Get raw digits from current value
-    
-    // Get new raw value by processing the input
-    let newRawValue = parseCurrency(originalValue);
-    
-    // Limit to 12 digits (₦999,999,999.99)
-    if (newRawValue.length > 12) {
-      newRawValue = newRawValue.slice(0, 12);
+    const rawValue = input.value;
+
+    // Extract numeric value
+    const numericValue = parseCurrency(rawValue);
+
+    // Limit to reasonable amount (adjust as needed)
+    if (numericValue > 999999999.99) {
+      return; // Don't update if too large
     }
-    
-    setAmountPaid(newRawValue);
-    
-    // Set cursor position after formatting
-    setTimeout(() => {
-      if (amountPaidInputRef.current) {
-        // Calculate new cursor position based on formatting changes
-        const formattedValue = formatCurrencyInput(newRawValue);
-        const newCursorPosition = formattedValue.length;
-        
-        // Try to maintain cursor position relative to the end
-        amountPaidInputRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
-      }
-    }, 0);
+
+    // Store the actual numeric value as string
+    setAmountPaid(numericValue.toString());
   };
 
-  const handleAmountPaidKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleAmountPaidKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
     // Allow navigation keys, backspace, delete, tab, etc.
     const allowedKeys = [
-      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
-      'Backspace', 'Delete', 'Tab', 'Home', 'End'
+      "ArrowLeft",
+      "ArrowRight",
+      "ArrowUp",
+      "ArrowDown",
+      "Backspace",
+      "Delete",
+      "Tab",
+      "Home",
+      "End",
+      ".",
     ];
-    
+
     if (!allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey) {
-      // Allow only digits
+      // Allow only digits and one decimal point
       if (!/\d/.test(e.key)) {
         e.preventDefault();
       }
@@ -609,19 +615,19 @@ const getAmountPaid = () => {
                 </div>
               )}
 
-             <div>
-              <Label className="mb-1">Amount Paid</Label>
-              <Input
-                ref={amountPaidInputRef}
-                type="text"
-                placeholder="₦0.00"
-                className="w-40"
-                value={formatCurrencyInput(amountPaid)}
-                onChange={handleAmountPaidChange}
-                onKeyDown={handleAmountPaidKeyDown}
-                onFocus={handleAmountPaidFocus}
-              />
-            </div>
+              <div>
+                <Label className="mb-1">Amount Paid</Label>
+                <Input
+                  ref={amountPaidInputRef}
+                  type="text"
+                  placeholder="₦0.00"
+                  className="w-40"
+                  value={formatCurrencyInput(amountPaid)}
+                  onChange={handleAmountPaidChange}
+                  onKeyDown={handleAmountPaidKeyDown}
+                  onFocus={handleAmountPaidFocus}
+                />
+              </div>
             </div>
             {isWalkIn && (
               <p className="mt-3 text-sm text-[#7D7D7D]">{statusMessage}</p>

@@ -2,7 +2,7 @@
 // stores/useActivityLogsStore.ts
 import { create } from "zustand";
 import type { Role } from "@/types/types";
-import { getSystemActivityLogs } from "@/services/activityLogService";// Import your API function
+import { getSystemActivityLogs } from "@/services/activityLogService"; // Import your API function
 
 export type ActivityLogs = {
   _id: string;
@@ -42,9 +42,9 @@ export const useActivityLogsStore = create<ActivityLogsState>((set, get) => ({
       const activities = await getSystemActivityLogs();
       set({ activities, loading: false });
     } catch (error: any) {
-      set({ 
-        error: error.message || "Failed to fetch activities", 
-        loading: false 
+      set({
+        error: error.message || "Failed to fetch activities",
+        loading: false,
       });
     }
   },
@@ -52,9 +52,9 @@ export const useActivityLogsStore = create<ActivityLogsState>((set, get) => ({
   getTotalActivityToday: () => {
     const activities = get().activities;
     const today = new Date();
-   
-    today.setHours(0, 0, 0, 0); 
-    
+
+    today.setHours(0, 0, 0, 0);
+
     return activities.filter((activity) => {
       const activityDate = new Date(activity.timestamp);
       return activityDate.getTime() >= today.getTime();
