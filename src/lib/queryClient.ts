@@ -18,6 +18,10 @@ export const queryClient = new QueryClient({
         return failureCount < 2;
       },
       refetchOnWindowFocus: false, // Disable refetch on window focus for better UX
+      refetchOnMount: false, // Don't refetch on mount if data exists
+      refetchOnReconnect: true, // Refetch when reconnecting to internet
+      // Enable background refetching for better UX
+      refetchInterval: false, // Disable automatic background refetching by default
     },
     mutations: {
       retry: 1,

@@ -30,4 +30,37 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks for better caching
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
+          'vendor-query': ['@tanstack/react-query'],
+          'vendor-charts': ['chart.js', 'react-chartjs-2', 'recharts'],
+          'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'yup', 'zod'],
+          'vendor-utils': ['axios', 'date-fns', 'dayjs', 'uuid', 'clsx'],
+          'vendor-excel': ['exceljs', 'xlsx', 'papaparse']
+        }
+      }
+    },
+    // Increase chunk size warning limit since we're now chunking properly
+    chunkSizeWarningLimit: 1000,
+    // Enable source maps for better debugging in production
+    sourcemap: false,
+    // Optimize CSS
+    cssCodeSplit: true,
+  },
+  // Enable dependency pre-bundling for faster dev
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@tanstack/react-query',
+      'axios',
+      'zustand'
+    ]
+  }
 });

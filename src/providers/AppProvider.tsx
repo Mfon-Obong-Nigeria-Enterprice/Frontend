@@ -51,6 +51,7 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
     queryKey: ["categories"],
     queryFn: getAllCategories,
     enabled: !isAuthLoading,
+    staleTime: 10 * 60 * 1000, // 10 minutes - categories don't change often
   });
 
   // Products query - branch-aware
@@ -64,6 +65,7 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
       return getAllProducts();
     },
     enabled: !isAuthLoading && !!user?.role,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Transactions query - role and branch aware with explicit branch ID passing

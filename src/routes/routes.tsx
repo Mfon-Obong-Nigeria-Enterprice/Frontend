@@ -1,57 +1,64 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
-
-// Auth
+// Auth components - keep eagerly loaded for initial page
 import Login from "@/features/auth/Login";
 import Notfound from "@/components/Notfound";
 
-// Manager
-import ManagerDashboardLayout from "@/layout/ManagerDashboardLayout";
-import ManagerDashboardOverview from "@/features/dashboard/manager/ManagerDashboardOverview";
-import BusinessReport from "@/features/dashboard/manager/BusinessReport";
-import ManagerTransactions from "@/features/dashboard/manager/ManagerTransactions";
-import ManagerClients from "@/features/dashboard/manager/ManagerClients";
-import RevenueAnalytics from "@/features/dashboard/manager/RevenueAnalytics";
-import UserManagement from "@/features/dashboard/manager/UserManagement";
-import ManagerSettings from "@/features/dashboard/manager/ManagerSettings";
-import ManagerNotifications from "@/features/dashboard/manager/ManagerNotifications";
+// Lazy load components to reduce initial bundle size
+// Manager Components
+const ManagerDashboardLayout = lazy(() => import("@/layout/ManagerDashboardLayout"));
+const ManagerDashboardOverview = lazy(() => import("@/features/dashboard/manager/ManagerDashboardOverview"));
+const BusinessReport = lazy(() => import("@/features/dashboard/manager/BusinessReport"));
+const ManagerTransactions = lazy(() => import("@/features/dashboard/manager/ManagerTransactions"));
+const ManagerClients = lazy(() => import("@/features/dashboard/manager/ManagerClients"));
+const RevenueAnalytics = lazy(() => import("@/features/dashboard/manager/RevenueAnalytics"));
+const UserManagement = lazy(() => import("@/features/dashboard/manager/UserManagement"));
+const ManagerSettings = lazy(() => import("@/features/dashboard/manager/ManagerSettings"));
+const ManagerNotifications = lazy(() => import("@/features/dashboard/manager/ManagerNotifications"));
 
-// Modal Page - removed unused import
+// Maintainer Components
+const MaintainerLayout = lazy(() => import("@/layout/MaintainerLayout"));
+const MaintainerDashboard = lazy(() => import("@/features/dashboard/maintainer/MaintainerDashboard"));
+const ActivityLog = lazy(() => import("@/features/dashboard/maintainer/ActivityLog"));
+const MaintainerSettings = lazy(() => import("@/features/dashboard/maintainer/MaintainerSettings"));
+const MaintainerNotification = lazy(() => import("@/features/dashboard/maintainer/MaintainerNotification"));
+const ColumnSettings = lazy(() => import("@/features/dashboard/shared/usermanagement/columnsettings"));
+const ManageUser = lazy(() => import("@/features/dashboard/maintainer/ManageUser"));
 
-// Maintainer
-import MaintainerLayout from "@/layout/MaintainerLayout";
-import MaintainerDashboard from "@/features/dashboard/maintainer/MaintainerDashboard";
-import ActivityLog from "@/features/dashboard/maintainer/ActivityLog";
-import MaintainerSettings from "@/features/dashboard/maintainer/MaintainerSettings";
-import MaintainerNotification from "@/features/dashboard/maintainer/MaintainerNotification";
-import ColumnSettings from "@/features/dashboard/shared/usermanagement/columnsettings";
-import ManageUser from "@/features/dashboard/maintainer/ManageUser";
+// Admin Components
+const AdminDashboardLayout = lazy(() => import("@/layout/AdminDashboardLayout"));
+const DashboardOverview = lazy(() => import("@/features/dashboard/admin/DashboardOverview"));
+const AdminInventory = lazy(() => import("@/features/dashboard/admin/AdminInventory"));
+const Clients = lazy(() => import("@/features/dashboard/admin/Clients"));
+const DashboardSales = lazy(() => import("@/features/dashboard/admin/DashboardSales"));
+const DashboardTransactions = lazy(() => import("@/features/dashboard/admin/DashboardTransactions"));
+const DashboardSettings = lazy(() => import("@/features/dashboard/admin/DashboardSettings").then(module => ({ default: module.DashboardSettings })));
+const AdminNotification = lazy(() => import("@/features/dashboard/admin/AdminNotification"));
 
-// Admin
-import AdminDashboardLayout from "@/layout/AdminDashboardLayout";
-import DashboardOverview from "@/features/dashboard/admin/DashboardOverview";
-import AdminInventory from "@/features/dashboard/admin/AdminInventory";
-import Clients from "@/features/dashboard/admin/Clients";
-import DashboardSales from "@/features/dashboard/admin/DashboardSales";
-import DashboardTransactions from "@/features/dashboard/admin/DashboardTransactions";
-import { DashboardSettings } from "@/features/dashboard/admin/DashboardSettings";
-import AdminNotification from "@/features/dashboard/admin/AdminNotification";
+// Staff Components
+const StaffDashboardLayout = lazy(() => import("@/layout/StaffDashboardLayout"));
+const StaffDashboardOverview = lazy(() => import("@/features/dashboard/staff/DashboardOverview"));
+const StaffSales = lazy(() => import("@/features/dashboard/staff/StaffSales"));
+const NewSales = lazy(() => import("@/features/dashboard/staff/NewSales"));
+const Stock = lazy(() => import("@/features/dashboard/staff/Stock"));
+const StaffClients = lazy(() => import("@/features/dashboard/staff/StaffClients"));
 
-// Staff
-import StaffDashboardLayout from "@/layout/StaffDashboardLayout";
-import StaffDashboardOverview from "@/features/dashboard/staff/DashboardOverview";
-import StaffSales from "@/features/dashboard/staff/StaffSales";
-import NewSales from "@/features/dashboard/staff/NewSales";
-import Stock from "@/features/dashboard/staff/Stock";
-import StaffClients from "@/features/dashboard/staff/StaffClients";
+// Shared Components
+const UserDetailsPage = lazy(() => import("@/features/dashboard/shared/usermanagement/userdetailpage"));
+const AddProduct = lazy(() => import("@/features/dashboard/shared/inventory/AddProduct"));
+const ClientDetailsPage = lazy(() => import("@/pages/ClientDetailsPage"));
+const ImportStockPage = lazy(() => import("@/features/import/ImportStockPage"));
+const UserLog = lazy(() => import("@/features/dashboard/manager/component/UserLog"));
 
-// Shared
-import UserDetailsPage from "@/features/dashboard/shared/usermanagement/userdetailpage";
-import AddProduct from "@/features/dashboard/shared/inventory/AddProduct";
-import ClientDetailsPage from "@/pages/ClientDetailsPage";
-import ImportStockPage from "@/features/import/ImportStockPage";
-import UserLog from "@/features/dashboard/manager/component/UserLog";
+// Loading wrapper component
+const LazyWrapper = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<LoadingSpinner />}>
+    {children}
+  </Suspense>
+);
 // import UserLog from "@/features/dashboard/shared/usermanagement/UserLog";
 
 const router = createBrowserRouter([
@@ -62,22 +69,24 @@ const router = createBrowserRouter([
     path: "/manager/dashboard",
     element: (
       <ProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
-        <ManagerDashboardLayout />
+        <LazyWrapper>
+          <ManagerDashboardLayout />
+        </LazyWrapper>
       </ProtectedRoute>
     ),
     children: [
       { index: true, element: <Navigate to="m-overview" replace /> },
-      { path: "m-overview", element: <ManagerDashboardOverview /> },
-      { path: "business-report", element: <BusinessReport /> },
-      { path: "manage-clients", element: <ManagerClients /> },
-      { path: "manage-transactions", element: <ManagerTransactions /> },
-      { path: "revenue-analytics", element: <RevenueAnalytics /> },
-      { path: "manage-user", element: <UserManagement /> },
-      { path: "manager-settings", element: <ManagerSettings /> },
-      { path: "manager-notifications", element: <ManagerNotifications /> },
-      { path: "user-management/:id", element: <UserDetailsPage /> },
-      { path: "user-management/col-settings", element: <ColumnSettings /> },
-      { path: "user-log", element: <UserLog/> },
+      { path: "m-overview", element: <LazyWrapper><ManagerDashboardOverview /></LazyWrapper> },
+      { path: "business-report", element: <LazyWrapper><BusinessReport /></LazyWrapper> },
+      { path: "manage-clients", element: <LazyWrapper><ManagerClients /></LazyWrapper> },
+      { path: "manage-transactions", element: <LazyWrapper><ManagerTransactions /></LazyWrapper> },
+      { path: "revenue-analytics", element: <LazyWrapper><RevenueAnalytics /></LazyWrapper> },
+      { path: "manage-user", element: <LazyWrapper><UserManagement /></LazyWrapper> },
+      { path: "manager-settings", element: <LazyWrapper><ManagerSettings /></LazyWrapper> },
+      { path: "manager-notifications", element: <LazyWrapper><ManagerNotifications /></LazyWrapper> },
+      { path: "user-management/:id", element: <LazyWrapper><UserDetailsPage /></LazyWrapper> },
+      { path: "user-management/col-settings", element: <LazyWrapper><ColumnSettings /></LazyWrapper> },
+      { path: "user-log", element: <LazyWrapper><UserLog/></LazyWrapper> },
     ],
   },
 
