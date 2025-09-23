@@ -194,9 +194,18 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage", // Persist key
-      // Only persist essential data
+      // Only persist essential NON-SENSITIVE data
       partialize: (state) => ({
-        user: state.user,
+        user: state.user ? {
+          id: state.user.id,
+          name: state.user.name,
+          email: state.user.email,
+          role: state.user.role,
+          branch: state.user.branch,
+          branchId: state.user.branchId,
+          createdAt: state.user.createdAt,
+          // NEVER persist tokens or sensitive data
+        } : null,
         userProfile: state.userProfile,
         isAuthenticated: state.isAuthenticated,
       }),
