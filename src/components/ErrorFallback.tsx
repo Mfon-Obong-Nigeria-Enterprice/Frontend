@@ -1,10 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { useNavigate, useRouteError } from "react-router-dom";
 
-const ErrorFallback = () => {
-  const error = useRouteError() as any; // You can refine this type if needed
-  const navigate = useNavigate();
+interface ErrorFallbackProps {
+  error: any;
+  resetErrorBoundary?: () => void;
+}
+
+const ErrorFallback = ({ error, resetErrorBoundary }: ErrorFallbackProps) => {
   const logout = useAuthStore((s) => s.logout);
 
   useEffect(() => {
@@ -12,9 +15,17 @@ const ErrorFallback = () => {
 
     if (status === 401) {
       logout();
-      navigate("/");
+      window.location.href = "/";
     }
-  }, [error, logout, navigate]);
+  }, [error, logout]);
+
+  const handleTryAgain = () => {
+    if (resetErrorBoundary) {
+      resetErrorBoundary();
+    } else {
+      window.location.reload();
+    }
+  };
 
   return (
     <div
@@ -31,7 +42,7 @@ const ErrorFallback = () => {
 
       <div className="flex gap-4 justify-center mt-4">
         <button
-          onClick={() => navigate(0)}
+          onClick={handleTryAgain}
           className="bg-gradient-to-t from-blue-200 to-blue-100 border border-blue-300 hover:text-blue-700 rounded-lg p-2 transition-color duration-100 ease-in-out"
         >
           Try again

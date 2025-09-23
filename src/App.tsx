@@ -3,6 +3,7 @@ import router from "./routes/routes";
 import { QueryProvider } from "./providers/QueryProvider";
 import NotificationProvider from "./providers/NotificationsProvider";
 
+
 function App() {
   return (
     <QueryProvider>

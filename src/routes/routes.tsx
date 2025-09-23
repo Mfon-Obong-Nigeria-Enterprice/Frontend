@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-// import TestLocationPage from "@/pages/TestLocationPage";
-// import TestFormPage from "@/pages/TestFormPage";
+import ProtectedRoute from "@/components/ProtectedRoute";
+
 
 // Auth
 import Login from "@/features/auth/Login";
@@ -16,7 +16,6 @@ import RevenueAnalytics from "@/features/dashboard/manager/RevenueAnalytics";
 import UserManagement from "@/features/dashboard/manager/UserManagement";
 import ManagerSettings from "@/features/dashboard/manager/ManagerSettings";
 import ManagerNotifications from "@/features/dashboard/manager/ManagerNotifications";
-
 
 // Modal Page - removed unused import
 
@@ -58,10 +57,14 @@ import UserLog from "@/features/dashboard/manager/component/UserLog";
 const router = createBrowserRouter([
   { path: "/", element: <Login /> },
 
-  // Manager Routes
+  // Manager Routes - Only for SUPER_ADMIN
   {
     path: "/manager/dashboard",
-    element: <ManagerDashboardLayout />,
+    element: (
+      <ProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
+        <ManagerDashboardLayout />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, element: <Navigate to="m-overview" replace /> },
       { path: "m-overview", element: <ManagerDashboardOverview /> },
@@ -74,15 +77,18 @@ const router = createBrowserRouter([
       { path: "manager-notifications", element: <ManagerNotifications /> },
       { path: "user-management/:id", element: <UserDetailsPage /> },
       { path: "user-management/col-settings", element: <ColumnSettings /> },
-
       { path: "user-log", element: <UserLog/> },
     ],
   },
 
-  // Maintainer Routes
+  // Maintainer Routes - Only for MAINTAINER
   {
     path: "/maintainer/dashboard",
-    element: <MaintainerLayout />,
+    element: (
+      <ProtectedRoute allowedRoles={["MAINTAINER"]}>
+        <MaintainerLayout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         index: true,
@@ -99,10 +105,14 @@ const router = createBrowserRouter([
     ],
   },
 
-  // Admin Routes
+  // Admin Routes - Only for ADMIN
   {
     path: "/admin/dashboard",
-    element: <AdminDashboardLayout />,
+    element: (
+      <ProtectedRoute allowedRoles={["ADMIN"]}>
+        <AdminDashboardLayout />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, element: <Navigate to="overview" replace /> },
       { path: "overview", element: <DashboardOverview /> },
@@ -116,10 +126,14 @@ const router = createBrowserRouter([
     ],
   },
 
-  // Staff Routes
+  // Staff Routes - Only for STAFF
   {
     path: "/staff/dashboard",
-    element: <StaffDashboardLayout />,
+    element: (
+      <ProtectedRoute allowedRoles={["STAFF"]}>
+        <StaffDashboardLayout />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, element: <Navigate to="s-overview" replace /> },
       { path: "s-stock", element: <Stock /> },
@@ -130,10 +144,31 @@ const router = createBrowserRouter([
     ],
   },
 
-  // Other Routes
-  { path: "add-prod", element: <AddProduct /> },
-  { path: "clients/:clientId", element: <ClientDetailsPage /> },
-  { path: "import-stock", element: <ImportStockPage /> },
+  // Other Routes - Protected but no specific role required
+  { 
+    path: "add-prod", 
+    element: (
+      <ProtectedRoute>
+        <AddProduct />
+      </ProtectedRoute>
+    ) 
+  },
+  { 
+    path: "clients/:clientId", 
+    element: (
+      <ProtectedRoute>
+        <ClientDetailsPage />
+      </ProtectedRoute>
+    ) 
+  },
+  { 
+    path: "import-stock", 
+    element: (
+      <ProtectedRoute>
+        <ImportStockPage />
+      </ProtectedRoute>
+    ) 
+  },
   { path: "*", element: <Notfound /> },
 ]);
 
