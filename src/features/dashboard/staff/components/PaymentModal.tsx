@@ -230,8 +230,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 disabled={isProcessing}
                 required
                 type="number"
-                min="0.01"
-                step="0.01"
+                min="1"
+                step="1"
                 value={amount || ""}
                 onChange={(e) => setAmount(Number(e.target.value))}
                 className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"

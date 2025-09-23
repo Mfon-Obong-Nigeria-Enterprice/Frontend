@@ -249,8 +249,8 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
                   className="mt-2 font-[400] text-sm border border-[#444444] "
                   id="balance"
                   type="number"
-                  step="0.01"
-                  placeholder="0.00"
+                  step="1"
+                  placeholder="0"
                   disabled={isUpdating}
                   value={formData.balance}
                   onChange={(e) => handleInputChange("balance", e.target.value)}

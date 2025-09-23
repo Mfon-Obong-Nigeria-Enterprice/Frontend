@@ -50,8 +50,23 @@ import { AlertCircle } from "lucide-react";
 // data
 import { bankNames, posNames } from "@/data/banklist";
 
-// connect to socket
-const socket = io(import.meta.env.VITE_API_URL?.replace('/api', '') || "http://localhost:3000");
+// connect to socket with authentication
+const getAuthenticatedSocket = () => {
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    console.warn('No access token available for Socket.IO connection');
+    return null;
+  }
+  
+  return io(import.meta.env.VITE_API_URL?.replace('/api', '') || "http://localhost:3000", {
+    auth: {
+      token: token
+    },
+    autoConnect: false, // Don't auto connect, we'll connect manually when we have a token
+  });
+};
+
+const socket = getAuthenticatedSocket();
 
 export type Row = {
   productId: string;
@@ -113,13 +128,32 @@ const NewSales: React.FC = () => {
 
   // listen for socket event
   useEffect(() => {
-    socket.on("transaction_created", (data: ReceiptData) => {
-      setReceiptData(data);
-      setShowReceipt(true);
-    });
+    // Connect socket when component mounts and we have a token
+    if (socket && localStorage.getItem('access_token')) {
+      socket.connect();
+      
+      socket.on("transaction_created", (data: ReceiptData) => {
+        setReceiptData(data);
+        setShowReceipt(true);
+      });
+
+      socket.on("authenticated", (data) => {
+        console.log("Socket authenticated:", data);
+      });
+
+      socket.on("error", (error) => {
+        console.error("Socket error:", error);
+      });
+    }
+    
     //clean up function
     return () => {
-      socket.off("transaction_created");
+      if (socket) {
+        socket.off("transaction_created");
+        socket.off("authenticated");
+        socket.off("error");
+        socket.disconnect();
+      }
     };
   }, []);
 
@@ -129,81 +163,26 @@ const NewSales: React.FC = () => {
   }
 
   const formatCurrencyInput = (value: string) => {
-    if (!value) return "₦0.00";
-    let digitsOnly = value.replace(/[^\d.]/g, "");
-
-    // Handle multiple decimal points - keep only the first one
-    const decimalIndex = digitsOnly.indexOf(".");
-    if (decimalIndex !== -1) {
-      digitsOnly =
-        digitsOnly.substring(0, decimalIndex + 1) +
-        digitsOnly.substring(decimalIndex + 1).replace(/\./g, "");
-    }
-
-    // Handle empty value
-    if (digitsOnly === "" || digitsOnly === ".") return "₦0.00";
-
-    // Convert to number and format
-    const numericValue = parseFloat(digitsOnly);
-
-    if (isNaN(numericValue)) return "₦0.00";
-
-    return `₦${numericValue.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
+    if (!value || value === "0") return "";
+    // Add commas for thousands
+    return Number(value).toLocaleString();
   };
 
-  // Parse formatted currency back to raw digits
-  const parseCurrency = (formattedValue: string) => {
-    const digitsOnly = formattedValue.replace(/[^\d.]/g, "");
-    const numericValue = parseFloat(digitsOnly);
-    return isNaN(numericValue) ? 0 : numericValue;
-  };
   const handleAmountPaidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target;
-    const rawValue = input.value;
-
-    // Extract numeric value
-    const numericValue = parseCurrency(rawValue);
-
-    // Limit to reasonable amount (adjust as needed)
-    if (numericValue > 999999999.99) {
-      return; // Don't update if too large
+    const rawValue = e.target.value;
+    // Remove all non-digits including commas
+    const numericValue = rawValue.replace(/[^\d]/g, "");
+    
+    // Limit to reasonable amount
+    if (Number(numericValue) > 999999999) {
+      return;
     }
 
-    // Store the actual numeric value as string
-    setAmountPaid(numericValue.toString());
+    setAmountPaid(numericValue);
   };
 
-  const handleAmountPaidKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    // Allow navigation keys, backspace, delete, tab, etc.
-    const allowedKeys = [
-      "ArrowLeft",
-      "ArrowRight",
-      "ArrowUp",
-      "ArrowDown",
-      "Backspace",
-      "Delete",
-      "Tab",
-      "Home",
-      "End",
-      ".",
-    ];
-
-    if (!allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey) {
-      // Allow only digits and one decimal point
-      if (!/\d/.test(e.key)) {
-        e.preventDefault();
-      }
-    }
-  };
-
-  const handleAmountPaidFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    // Select all text when focused for easy editing
-    setTimeout(() => e.target.select(), 0);
+  const handleAmountPaidBlur = () => {
+    // Not needed anymore since we have real-time formatting
   };
 
   // Check if selected client is blocked/suspended
@@ -220,7 +199,7 @@ const NewSales: React.FC = () => {
   // Helper to get numeric value safely
  // Helper to get numeric value safely
 const getAmountPaid = () => {
-  const value = parseFloat(amountPaid) / 100; // Divide by 100 to get actual amount
+  const value = Number(amountPaid);
   return isNaN(value) ? null : value;
 };
 
@@ -258,7 +237,7 @@ const getAmountPaid = () => {
     const { total } = calculateTotals();
     const paid = getAmountPaid() || 0; 
 
-    if (Math.abs(paid - total) > 0.01) {
+    if (paid !== total) {
      
       toast.error(
         `Walk-in clients must pay exactly ${formatCurrency(total)}`
@@ -271,36 +250,40 @@ const getAmountPaid = () => {
 };
 
   const calculateTotals = () => {
+    // Use the pre-calculated row totals which already include individual discounts
+    const subtotalWithRowDiscounts = rows.reduce(
+      (acc, row) => acc + (row.total || 0),
+      0
+    );
+
+    // Calculate subtotal without any discounts for display purposes
     const subtotal = rows.reduce(
       (acc, row) => acc + (Number(row.quantity) * Number(row.unitPrice) || 0),
       0
     );
 
-    const rowDiscountTotal = rows.reduce((acc, row) => {
-      const lineAmount = Number(row.quantity) * Number(row.unitPrice);
-      if (!row.discount) return acc;
+    // Calculate total row-level discounts for display
+    const rowDiscountTotal = subtotal - subtotalWithRowDiscounts;
 
-      let discountAmount = 0;
-      if (row.discountType === "percent") {
-        discountAmount = (lineAmount * Number(row.discount)) / 100;
-      } else if (row.discountType === "amount") {
-        discountAmount = Number(row.discount);
-      }
+    // Only apply global discount if no row-level discounts exist
+    const finalTotal = rowDiscountTotal > 0 
+      ? subtotalWithRowDiscounts 
+      : subtotalWithRowDiscounts - globalDiscount;
 
-      return acc + discountAmount;
-    }, 0);
+    const totalDiscount = rowDiscountTotal > 0 
+      ? rowDiscountTotal 
+      : globalDiscount;
 
-    // only apply global discount if no discount exists
-    const discountTotal =
-      rowDiscountTotal > 0 ? rowDiscountTotal : globalDiscount;
-
-    const total = subtotal - discountTotal;
-    return { subtotal, discountTotal, total };
+    return { 
+      subtotal, 
+      discountTotal: totalDiscount, 
+      total: Math.max(finalTotal, 0) // Ensure no negative totals
+    };
   };
 
   const getBalanceInfo = () => {
   const { total } = calculateTotals();
-  const paid = parseFloat(amountPaid) / 100 || 0; // Divide by 100 to get the actual amount
+  const paid = Number(amountPaid) || 0; // Use the actual amount, no division
   const clientBalance =
     clients.find((c) => c._id === selectedClient?._id)?.balance || 0;
 
@@ -617,16 +600,18 @@ const getAmountPaid = () => {
 
               <div>
                 <Label className="mb-1">Amount Paid</Label>
-                <Input
-                  ref={amountPaidInputRef}
-                  type="text"
-                  placeholder="₦0.00"
-                  className="w-40"
-                  value={formatCurrencyInput(amountPaid)}
-                  onChange={handleAmountPaidChange}
-                  onKeyDown={handleAmountPaidKeyDown}
-                  onFocus={handleAmountPaidFocus}
-                />
+                <div className="relative w-40">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₦</span>
+                  <Input
+                    ref={amountPaidInputRef}
+                    type="text"
+                    placeholder="0"
+                    className="pl-8"
+                    value={formatCurrencyInput(amountPaid)}
+                    onChange={handleAmountPaidChange}
+                    onBlur={handleAmountPaidBlur}
+                  />
+                </div>
               </div>
             </div>
             {isWalkIn && (
@@ -663,10 +648,7 @@ const getAmountPaid = () => {
                 <p className="flex justify-between items-center text-sm font-Inter">
                   <span className="text-[#444444]">Amount Paid:</span>
                   <span className="font-medium text-[#2ECC71]">
-                    +₦
-                    {`${paid.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}`}
+                    +₦{paid.toLocaleString()}
                   </span>
                 </p>
 

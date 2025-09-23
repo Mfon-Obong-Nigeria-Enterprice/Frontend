@@ -203,14 +203,14 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                   id="number"
                   type="number"
                   step="1"
-                  placeholder="0.00"
+                  placeholder="0"
                   required
                   disabled={isLoading}
                   value={formData.balance}
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      balance: Number.parseFloat(e.target.value),
+                      balance: Number.parseInt(e.target.value) || 0,
                     }))
                   }
                 />

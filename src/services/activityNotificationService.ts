@@ -399,6 +399,13 @@ export class ActivityNotificationService {
     this.isProcessing = true;
 
     try {
+      // Only fetch activity logs if user has permission (not STAFF)
+      if (currentUser.role === 'STAFF') {
+        console.log('ActivityNotificationService: STAFF users do not have access to activity logs');
+        this.isProcessing = false;
+        return 0;
+      }
+
       // Process regular activity logs
       const response = await api.get("/system-activity-logs");
       const logs: ActivityLogs[] = response.data;
