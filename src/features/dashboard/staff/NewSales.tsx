@@ -51,7 +51,7 @@ import { AlertCircle } from "lucide-react";
 import { bankNames, posNames } from "@/data/banklist";
 
 // connect to socket
-const socket = io("https://mfon-obong-enterprise.onrender.com");
+const socket = io(import.meta.env.VITE_API_URL?.replace('/api', '') || "http://localhost:3000");
 
 export type Row = {
   productId: string;

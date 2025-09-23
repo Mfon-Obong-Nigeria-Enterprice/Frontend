@@ -132,7 +132,7 @@ const UserList: React.FC = () => {
   useEffect(() => {
     const token = localStorage.getItem("token") || "";
     // Fetch users
-    fetch("https://mfon-obong-enterprise.onrender.com/api/users", {
+    fetch(`${import.meta.env.VITE_API_URL}/users`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -153,7 +153,7 @@ const UserList: React.FC = () => {
       .catch(() => setUsers([]));
 
     // Fetch roles
-    fetch("https://mfon-obong-enterprise.onrender.com/api/roles", {
+    fetch(`${import.meta.env.VITE_API_URL}/roles`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -174,7 +174,7 @@ const UserList: React.FC = () => {
       .catch(() => setRoles(defaultRoles));
 
     // Fetch locations
-    fetch("https://mfon-obong-enterprise.onrender.com/api/locations", {
+    fetch(`${import.meta.env.VITE_API_URL}/locations`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
