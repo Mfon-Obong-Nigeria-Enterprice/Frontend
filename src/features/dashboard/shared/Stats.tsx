@@ -94,15 +94,15 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
 
   return (
     <section
-      className="gap-4 mt-2"
+      className="gap-3 sm:gap-4 mt-2 px-2"
       style={{
         display: "grid",
         gridTemplateColumns:
           data.length <= 2
-            ? "repeat(auto-fit, minmax(250px, 1fr))"
-            : data.length === 3
             ? "repeat(auto-fit, minmax(280px, 1fr))"
-            : "repeat(auto-fit, minmax(220px, 1fr))",
+            : data.length === 3
+            ? "repeat(auto-fit, minmax(260px, 1fr))"
+            : "repeat(auto-fit, minmax(240px, 1fr))",
         maxWidth: "100%",
       }}
     >

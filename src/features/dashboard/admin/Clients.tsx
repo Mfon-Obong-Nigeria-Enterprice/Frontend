@@ -196,7 +196,7 @@ export const Clients: React.FC<ClientProps> = ({
   };
 
   return (
-    <main>
+    <main className="w-full max-w-full overflow-x-hidden">
       <DashboardTitle
         heading="Client Management"
         description="Manage client accounts & relationships"
@@ -205,9 +205,9 @@ export const Clients: React.FC<ClientProps> = ({
       <ClientStats />
 
       {/* client directory */}
-      <section className="bg-white rounded-[0.625rem] pt-4 border border-[#D9D9D9] mt-10 mx-3 md:mx-0 ">
-        <div className="flex justify-between items-center px-7 pt-5 flex-wrap">
-          <h4 className="font-medium text-xl font-Inter text-[#1E1E1E]">
+      <section className="bg-white rounded-[0.625rem] pt-4 border border-[#D9D9D9] mt-10 mx-2 lg:mx-0 overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center px-4 sm:px-7 pt-5 gap-4">
+          <h4 className="font-medium text-lg sm:text-xl font-Inter text-[#1E1E1E]">
             Client directory
           </h4>
 
@@ -289,22 +289,21 @@ export const Clients: React.FC<ClientProps> = ({
         </div>
 
         {/* search */}
-        <div className="flex justify-between items-center px-4 py-5 mt-5 flex-wrap sm:flex-nowrap sm:px-2 md:px-8 ">
-          <div className="bg-[#F5F5F5] flex items-center gap-1 px-4 rounded-md w-full sm:w-1/2">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center px-4 py-5 mt-5 gap-4">
+          <div className="bg-[#F5F5F5] flex items-center gap-1 px-4 rounded-md w-full lg:w-1/2 max-w-md">
             <Search size={18} />
             <input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               type="search"
               placeholder="Search products, categories..."
-              className="py-2 outline-0 w-full"
+              className="py-2 outline-0 w-full bg-transparent"
             />
           </div>
-          <div className="flex items-center gap-4 pt-4 sm:pt-0 md:gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
             {/* Client Status */}
-
             <Select value={clientStatus} onValueChange={handleStatusChange}>
-              <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] p-2 rounded-sm">
+              <SelectTrigger className="w-full sm:w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] p-2 rounded-sm">
                 <SelectValue placeholder="AllStatus" />
               </SelectTrigger>
               <SelectContent className="bg-[#D9D9D9] text-[#444444]">
@@ -317,9 +316,8 @@ export const Clients: React.FC<ClientProps> = ({
             </Select>
 
             {/* Client Balance */}
-
             <Select value={clientBalance} onValueChange={handleBalanceChange}>
-              <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] p-2 rounded-sm">
+              <SelectTrigger className="w-full sm:w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] p-2 rounded-sm">
                 <SelectValue placeholder="All Balances" />
               </SelectTrigger>
               <SelectContent className="bg-[#D9D9D9] text-[#444444]">

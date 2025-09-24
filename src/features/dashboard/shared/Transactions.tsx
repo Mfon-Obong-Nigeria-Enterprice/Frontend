@@ -412,8 +412,8 @@ const Transactions = () => {
 
       {/* Transaction table */}
       <div className="my-4 xl:shadow-lg rounded-xl overflow-hidden">
-        <div className="xl:bg-white xl:border">
-          <h5 className="bg-white text-[#1E1E1E] text-xl font-medium py-3 my-4 pl-8 rounded-xl">
+        <div className="xl:bg-white xl:border overflow-x-auto">
+          <h5 className="bg-white text-[#1E1E1E] text-lg sm:text-xl font-medium py-3 my-4 pl-4 sm:pl-8 rounded-xl">
             All Transactions
           </h5>
           <TransactionTable currentTransaction={currentTransaction} />

@@ -211,38 +211,38 @@ const DashboardSales = () => {
   };
 
   return (
-    <main>
+    <main className="w-full max-w-full overflow-x-hidden">
       <DashboardTitle
         heading="Sales Management"
         description="Process orders & manage customer purchases"
       />
-      <section className="px-2 md:px-0">
-        <div className="flex gap-[24px] items-end justify-end mb-5">
-          <Button variant="tertiary" onClick={handleExportExcel}>
+      <section className="w-full max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end justify-end mb-5 px-2">
+          <Button variant="tertiary" onClick={handleExportExcel} className="w-full sm:w-auto">
             Download Excel
           </Button>
-          <Button variant="tertiary" onClick={handleExportPDF}>
+          <Button variant="tertiary" onClick={handleExportPDF} className="w-full sm:w-auto">
             Export PDF
           </Button>
-          <Button onClick={() => navigate("/admin/dashboard/sale")}>
+          <Button onClick={() => navigate("/admin/dashboard/sale")} className="w-full sm:w-auto">
             Add Sales
           </Button>
         </div>
         <Stats data={stats} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 items-center justify-center gap-5 my-8 ">
-          <div className="lg:col-span-3">
+        <div className="grid grid-cols-1 xl:grid-cols-5 items-start gap-5 my-8 px-2">
+          <div className="xl:col-span-3 w-full">
             <SalesAnalytics />
           </div>
-          <div className="bg-white w-full h-full p-7 border  border-[#d9d9d9] rounded-xl  lg:col-span-2">
-            <h4 className="text-xl font-medium text-[#1E1E1E] pb-4">
+          <div className="bg-white w-full p-4 sm:p-6 lg:p-7 border border-[#d9d9d9] rounded-xl xl:col-span-2">
+            <h4 className="text-lg sm:text-xl font-medium text-[#1E1E1E] pb-4">
               Sales by Category
             </h4>
             <SalesByCategoryChart />
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl">
+        <div className="bg-white rounded-2xl shadow-xl mx-2 overflow-hidden">
           <SalesTableData
             currentTransaction={currentTransaction}
             setCurrentPage={setCurrentPage}

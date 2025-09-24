@@ -34,8 +34,9 @@ const TransactionTable = ({
   const { user } = useAuthStore();
 
   return (
-    <div className="hidden xl:block">
-      <table className=" w-full overflow-x-scroll">
+    <div className="hidden xl:block overflow-x-auto">
+      <div className="min-w-full">
+        <table className="w-full min-w-[800px]">
         <thead className="bg-[#F5F5F5] border border-[#d9d9d9]">
           <tr>
             <th className="py-3 pl-1 text-base text-[#333333] font-normal text-start">
@@ -212,7 +213,8 @@ const TransactionTable = ({
             </tr>
           )}
         </tbody>
-      </table>
+        </table>
+      </div>
 
       {open && selectedTransaction?.clientId ? (
         <ClientTransactionModal />

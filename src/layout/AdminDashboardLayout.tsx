@@ -14,7 +14,7 @@ const AdminDashboardLayout = () => {
         <Header userRole="admin" />
         <SidebarTrigger className="fixed z-50" />
 
-        <div className="bg-[#f5f5f5] pt-10 md:p-10 mt-[3rem] min-h-[90dvh]">
+        <div className="bg-[#f5f5f5] p-2 sm:p-4 md:p-6 lg:p-8 xl:p-10 mt-[3rem] min-h-[90dvh] overflow-x-hidden">
           <AppProvider>
             <Outlet />
           </AppProvider>

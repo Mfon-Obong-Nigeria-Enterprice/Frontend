@@ -52,17 +52,15 @@ import { bankNames, posNames } from "@/data/banklist";
 
 // connect to socket with authentication
 const getAuthenticatedSocket = () => {
-  const token = localStorage.getItem('access_token');
-  if (!token) {
-    console.warn('No access token available for Socket.IO connection');
+  const { isAuthenticated } = useAuthStore.getState();
+  if (!isAuthenticated) {
+    console.warn('User not authenticated for Socket.IO connection');
     return null;
   }
   
   return io(import.meta.env.VITE_API_URL?.replace('/api', '') || "http://localhost:3000", {
-    auth: {
-      token: token
-    },
-    autoConnect: false, // Don't auto connect, we'll connect manually when we have a token
+    withCredentials: true, // Use cookies for authentication
+    autoConnect: false, // Don't auto connect, we'll connect manually when authenticated
   });
 };
 
@@ -128,8 +126,8 @@ const NewSales: React.FC = () => {
 
   // listen for socket event
   useEffect(() => {
-    // Connect socket when component mounts and we have a token
-    if (socket && localStorage.getItem('access_token')) {
+    // Connect socket when component mounts and user is authenticated
+    if (socket && useAuthStore.getState().isAuthenticated) {
       socket.connect();
       
       socket.on("transaction_created", (data: ReceiptData) => {

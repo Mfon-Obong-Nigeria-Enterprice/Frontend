@@ -62,12 +62,11 @@ export class WebSocketNotificationService {
       return;
     }
 
-    // Get JWT token from your auth system
-    const token =
-      localStorage.getItem("accessToken") || localStorage.getItem("token");
-    if (!token) {
+    // Check if user is authenticated
+    const { isAuthenticated } = useAuthStore.getState();
+    if (!isAuthenticated) {
       console.error(
-        "WebSocketNotificationService: No authentication token found"
+        "WebSocketNotificationService: User not authenticated, cannot connect"
       );
       return;
     }
@@ -75,7 +74,7 @@ export class WebSocketNotificationService {
     this.connectionStatus = "connecting";
 
     this.socket = io(this.getServerUrl(), {
-      auth: { token },
+      withCredentials: true, // Use cookies for authentication
       transports: ["websocket", "polling"], // Fallback to polling if websocket fails
       reconnection: true,
       reconnectionAttempts: this.maxReconnectAttempts,

@@ -88,30 +88,30 @@ const DashboardOverview: React.FC = () => {
   ];
 
   return (
-    <main className="p-2">
-      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end md:gap-4 mb-7">
+    <main className="w-full max-w-full overflow-x-hidden">
+      <div className="flex flex-col xl:flex-row xl:justify-between xl:items-end gap-4 mb-7">
         <DashboardTitle
           heading="Dashboard"
           description="Welcome, Admin User! Here's an overview of your business today"
         />
-        <div className="flex gap-5 mx-5">
+        <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
           <Button
             onClick={() => window.location.reload()}
-            className="w-40 bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
+            className="flex-1 sm:flex-none sm:min-w-[140px] bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
           >
             <VscRefresh />
             Refresh
           </Button>
-          <Link to="/add-prod">
-            <Button className="w-40 bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)] transition-colors duration-200 ease-in-out [&_span]:text-5xl">
-              <Plus className="w-10 h-10 text-white" />
+          <Link to="/add-prod" className="flex-1 sm:flex-none">
+            <Button className="w-full sm:min-w-[140px] bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)] transition-colors duration-200 ease-in-out">
+              <Plus className="w-4 h-4 text-white mr-2" />
               Add Product
             </Button>
           </Link>
         </div>
       </div>
       <Stats data={stats} />
-      <div className="grid grid-cols-1 lg:grid-cols-[60fr_40fr] gap-5 mt-5">
+      <div className="grid grid-cols-1 xl:grid-cols-[60fr_40fr] gap-5 mt-5">
         <SalesOverview />
         <RecentSales />
       </div>

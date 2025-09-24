@@ -4,7 +4,7 @@ import type { DragEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -18,6 +18,7 @@ import { Loader2, Eye, EyeOff, Camera } from "lucide-react";
 import { useUser, useUserMutations } from "@/hooks/useUserMutation";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "react-toastify";
+import type { UserProfile } from "@/types/types";
 
 const passwordSchema = z
   .object({
@@ -65,24 +66,32 @@ export default function AdminUserModal({
   const { updatePassword, updateProfilePicture } = useUserMutations();
 
   // Only call useUser if userId exists
-  const { data: userProfile } = useUser(userId || "");
+  const { data: userProfile, isError, error } = useUser(userId || "");
 
   // Add auth store hook
   const { syncUserWithProfile } = useAuthStore();
 
+  // Check if user access is forbidden due to branch restrictions
+  const isBranchRestricted = isError && 
+    (error as any)?.response?.status === 403 &&
+    (error as any)?.response?.data?.message?.includes?.("branch");
+
+  // Type-safe access to userProfile
+  const profileData = userProfile as UserProfile | null;
+
   // Sync with auth store when userProfile is loaded
   const handleSyncUserWithProfile = useCallback(() => {
-    if (userProfile && userId) {
+    if (profileData && userId) {
       syncUserWithProfile({
         _id: userId,
-        name: userProfile.name || adminData.adminName,
-        email: userProfile.email || adminData.email,
-        role: userProfile.role || adminData.userRole,
-        profilePicture: userProfile.profilePicture,
+        name: profileData.name || adminData.adminName,
+        email: profileData.email || adminData.email,
+        role: profileData.role || adminData.userRole,
+        profilePicture: profileData.profilePicture,
       });
     }
   }, [
-    userProfile,
+    profileData,
     userId,
     adminData.adminName,
     adminData.email,
@@ -213,12 +222,20 @@ export default function AdminUserModal({
   };
 
   // Current profile picture comes from userProfile or fallback to adminData
-  const currentProfilePicture =
-    userProfile?.profilePicture || adminData.profilePicture;
+  // Don't try to access profile picture if branch restricted
+  const currentProfilePicture = isBranchRestricted ? 
+    adminData.profilePicture : 
+    (profileData?.profilePicture || adminData.profilePicture);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] font-inter rounded-lg shadow-lg">
+        <DialogHeader className="sr-only">
+          <DialogTitle>User Profile Settings</DialogTitle>
+          <DialogDescription>
+            Update your profile information and change your password.
+          </DialogDescription>
+        </DialogHeader>
         <div className="p-4 space-y-6">
           <div className="flex items-center space-x-4 p-4 bg-[#D9D9D9] rounded-lg shadow-sm">
             <div
@@ -281,6 +298,11 @@ export default function AdminUserModal({
               <p className="hidden md:block text-sm text-gray-600">
                 {adminData.userRole || "Admin"}
               </p>
+              {isBranchRestricted && (
+                <p className="text-xs text-amber-600 mt-1">
+                  Limited access - branch restricted
+                </p>
+              )}
             </div>
           </div>
 

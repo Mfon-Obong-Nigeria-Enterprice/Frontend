@@ -258,19 +258,19 @@ const AdminInventory = () => {
   }, [dragging, rel]);
 
   return (
-    <main className="px-2 sm:px-1 lg:px-4 lg:max-w-4xl xl:max-w-6xl mx-auto">
-      <div className="">
+    <main className="w-full max-w-full overflow-x-hidden">
+      <div className="w-full max-w-7xl mx-auto px-2 sm:px-4">
         <DashboardTitle
           heading="Inventory Management"
           description="Manage your products and categories"
         />
 
         {products?.length > 0 ? (
-          <section className="bg-white rounded-lg shadow-sm mt-5">
+          <section className="bg-white rounded-lg shadow-sm mt-5 overflow-hidden">
             {/* Header Section */}
             <div className="border-b border-gray-200">
               <div className="px-4 sm:px-6 py-4 sm:py-6">
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">
                     Products & Categories
                   </h3>

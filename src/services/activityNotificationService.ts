@@ -489,11 +489,10 @@ export class ActivityNotificationService {
     // const currentUser = useAuthStore.getState().user;
 
     // Check for valid authentication before syncing
-    const token =
-      localStorage.getItem("accessToken") || localStorage.getItem("token");
-    if (!token) {
+    const isAuthenticated = useAuthStore.getState().isAuthenticated;
+    if (!isAuthenticated) {
       console.warn(
-        "syncMaintenanceNotifications: No authentication token available"
+        "syncMaintenanceNotifications: User not authenticated"
       );
       return;
     }
