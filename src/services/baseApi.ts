@@ -12,6 +12,9 @@ const api: AxiosInstance = axios.create({
   withCredentials: true,
 });
 
+// Debug log to check API URL
+console.log("🔍 API Base URL:", import.meta.env.VITE_API_URL);
+
 type FailedRequest = {
   resolve: (value?: unknown) => void;
   reject: (reason?: unknown) => void;

@@ -6,6 +6,7 @@ import type {
   BasicHealthResponse,
   DetailedHealthResponse,
 } from "@/schemas/systemHealthSchema";
+import { getTabId, createTabSessionStorage } from "@/utils/tabSession";
 
 type HealthState = {
   basic: BasicHealthResponse | null;
@@ -50,8 +51,8 @@ export const useHealthStore = create<HealthState>()(
       clearError: () => set({ error: null }),
     }),
     {
-      name: "health-storage",
-      storage: createJSONStorage(() => sessionStorage),
+      name: `health-storage-${getTabId()}`,
+      storage: createTabSessionStorage(),
       partialize: (state) =>
         Object.fromEntries(
           Object.entries(state).filter(

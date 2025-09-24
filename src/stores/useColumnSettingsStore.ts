@@ -2,6 +2,7 @@
 // This store is now optional and serves as a fallback when API is unavailable
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { getTabId, createTabSessionStorage } from "@/utils/tabSession";
 
 const INITIAL_COLUMNS = [
   "User ID",
@@ -115,7 +116,8 @@ export const useColumnSettingsStore = create<ColumnSettingsState>()(
       },
     }),
     {
-      name: "column-settings-fallback", // Changed name to indicate this is fallback
+      name: `column-settings-fallback-${getTabId()}`, // Tab-specific fallback storage
+      storage: createTabSessionStorage(),
       partialize: (state) => ({
         visibleColumns: state.visibleColumns,
         hiddenColumns: state.hiddenColumns,

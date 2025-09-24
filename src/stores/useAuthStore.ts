@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { type LoginUser, type UserProfile } from "@/types/types";
 import * as authService from "@/services/authService";
+import { getTabId, createTabSessionStorage, clearTabSessionData } from "@/utils/tabSession";
 
 type AuthState = {
   user: LoginUser | null;
@@ -184,6 +185,9 @@ export const useAuthStore = create<AuthState>()(
         } catch {
           console.warn("Logout request failed, clearing store anyway.");
         } finally {
+          // Clear tab-specific session data to prevent data leakage
+          clearTabSessionData();
+          
           set({
             user: null,
             userProfile: null,
@@ -193,8 +197,8 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: "auth-storage", // Persist key
-      // Only persist essential NON-SENSITIVE data
+      name: `auth-storage-${getTabId()}`, // Tab-specific persist key for session isolation
+      storage: createTabSessionStorage(), // Use shared session storage utility
       partialize: (state) => ({
         user: state.user ? {
           id: state.user.id,

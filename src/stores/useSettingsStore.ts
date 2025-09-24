@@ -12,6 +12,7 @@ import type {
   ActiveHoursSettings,
 } from "@/schemas/SettingsSchemas";
 import * as settingsService from "@/services/settingsService";
+import { getTabId, createTabSessionStorage } from "@/utils/tabSession";
 
 interface SettingsStore {
   currentSettings: Settings;
@@ -231,7 +232,8 @@ export const useSettingsStore = create<SettingsStore>()(
       },
     }),
     {
-      name: "settings-store",
+      name: `settings-store-${getTabId()}`,
+      storage: createTabSessionStorage(),
       partialize: (state) => ({
         currentSettings: state.currentSettings,
         maintenanceMode: state.maintenanceMode,

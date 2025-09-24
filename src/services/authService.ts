@@ -5,15 +5,31 @@ export const login = async (
   email: string,
   password: string
 ): Promise<{ user: LoginUser }> => {
-  const response = await api.post("/auth/login", { email, password });
+  console.log("🔍 Login attempt starting...");
+  console.log("📡 Full request URL:", `${api.defaults.baseURL}/auth/login`);
+  
+  try {
+    const response = await api.post("/auth/login", { email, password });
+    console.log("✅ Login response:", response);
 
-  const user = response.data.user;
+    const user = response.data.user;
 
-  if (!user) {
-    throw new Error("Invalid login response");
+    if (!user) {
+      throw new Error("Invalid login response");
+    }
+
+    return { user };
+  } catch (error: any) {
+    console.error("❌ Login error:", error);
+    console.error("🔍 Error details:", {
+      message: error?.message,
+      response: error?.response,
+      status: error?.response?.status,
+      statusText: error?.response?.statusText,
+      url: error?.config?.url
+    });
+    throw error;
   }
-
-  return { user };
 };
 
 export const refreshToken = async (

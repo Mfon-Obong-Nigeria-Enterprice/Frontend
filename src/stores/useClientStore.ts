@@ -4,6 +4,7 @@ import type { Client } from "@/types/types";
 import { toSentenceCaseName } from "@/utils/styles";
 import { getAllClients, getClientDebtors } from "@/services/clientService";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { getTabId, createTabSessionStorage } from "@/utils/tabSession";
 
 interface clientStore {
   clients: Client[];
@@ -515,11 +516,8 @@ export const useClientStore = create<clientStore>()(
       },
     }),
     {
-      name: "client-store",
-      partialize: (state) => ({
-        clients: state.clients,
-        debtors: state.debtors,
-      }),
+      name: `client-store-${getTabId()}`,
+      storage: createTabSessionStorage(),
     }
   )
 );

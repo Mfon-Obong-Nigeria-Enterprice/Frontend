@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Role } from "@/types/types";
 import { useAuthStore } from "./useAuthStore";
+import { getTabId, createTabSessionStorage } from "@/utils/tabSession";
 
 export type ActionType =
   | "category_added"
@@ -57,25 +58,26 @@ type NotificationStore = {
   setLastSyncTime: (time: number) => void;
 };
 
-import type { PersistStorage, StorageValue } from "zustand/middleware";
+// import type { PersistStorage, StorageValue } from "zustand/middleware";
 
-const customStorage: PersistStorage<NotificationStore> = {
-  getItem: (name: string): StorageValue<NotificationStore> | null => {
-    const item = localStorage.getItem(name);
-    if (!item) return null;
-    try {
-      return JSON.parse(item);
-    } catch {
-      return null;
-    }
-  },
-  setItem: (name: string, value: StorageValue<NotificationStore>): void => {
-    localStorage.setItem(name, JSON.stringify(value));
-  },
-  removeItem: (name: string): void => {
-    localStorage.removeItem(name);
-  },
-};
+// Use the shared tab session storage utility for consistency
+// const customStorage: PersistStorage<NotificationStore> = {
+//   getItem: (name: string): StorageValue<NotificationStore> | null => {
+//     const item = sessionStorage.getItem(name);
+//     if (!item) return null;
+//     try {
+//       return JSON.parse(item);
+//     } catch {
+//       return null;
+//     }
+//   },
+//   setItem: (name: string, value: StorageValue<NotificationStore>): void => {
+//     sessionStorage.setItem(name, JSON.stringify(value));
+//   },
+//   removeItem: (name: string): void => {
+//     sessionStorage.removeItem(name);
+//   },
+// };
 
 export const useNotificationStore = create<NotificationStore>()(
   persist(
@@ -207,8 +209,8 @@ export const useNotificationStore = create<NotificationStore>()(
         })),
     }),
     {
-      name: "notification-storage",
-      storage: customStorage,
+      name: `notification-storage-${getTabId()}`,
+      storage: createTabSessionStorage(), // Use shared session storage utility
       onRehydrateStorage: () => (state) => {
         if (state) {
           // Convert date strings back to Date objects
