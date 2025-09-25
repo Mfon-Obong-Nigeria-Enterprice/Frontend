@@ -1,8 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useNavigate } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -13,151 +18,139 @@ const SessionTimeout = () => {
 
   const [showWarning, setShowWarning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
-  
-  const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const logoutTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const lastActivityRef = useRef<number>(Date.now());
+  const warningTimeout = useRef<NodeJS.Timeout | null>(null);
+  const logoutTimeout = useRef<NodeJS.Timeout | null>(null);
+  const countdownInterval = useRef<NodeJS.Timeout | null>(null);
 
-  const WARNING_TIME = 14 * 60 * 1000;
-  const LOGOUT_TIME = 15 * 60 * 1000;
+  // Add refs to prevent excessive timer resets
+  const lastActivityTime = useRef<number>(Date.now());
+  const isResettingTimers = useRef<boolean>(false);
 
-  const clearAllTimers = () => {
-    if (warningTimeoutRef.current) {
-      clearTimeout(warningTimeoutRef.current);
-      warningTimeoutRef.current = null;
-    }
-    if (logoutTimeoutRef.current) {
-      clearTimeout(logoutTimeoutRef.current);
-      logoutTimeoutRef.current = null;
-    }
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-      countdownIntervalRef.current = null;
-    }
-  };
+  // Updated timing
+  const WARNING_TIME = 12 * 60 * 1000;
+  const LOGOUT_TIME = 13 * 60 * 1000;
 
-  const resetTimers = () => {
-    if (!isAuthenticated) {
-      clearAllTimers();
-      return;
-    }
-    
-    lastActivityRef.current = Date.now();
-    
-    clearAllTimers();
+  // Use useCallback to prevent recreation on every render
+  const resetTimers = useCallback(() => {
+    if (!isAuthenticated || isResettingTimers.current) return;
+
+    // Remove the throttling logic that was causing the delay
+    isResettingTimers.current = true;
+    lastActivityTime.current = Date.now();
+
+    // Clear existing timers
+    if (warningTimeout.current) clearTimeout(warningTimeout.current);
+    if (logoutTimeout.current) clearTimeout(logoutTimeout.current);
+    if (countdownInterval.current) clearInterval(countdownInterval.current);
 
     setTimeLeft(60);
     setShowWarning(false);
 
-    warningTimeoutRef.current = setTimeout(() => {
+    // Set new timers
+    warningTimeout.current = setTimeout(() => {
       setShowWarning(true);
       startCountdown();
     }, WARNING_TIME);
 
-    logoutTimeoutRef.current = setTimeout(() => {
-      handleLogout();
-    }, LOGOUT_TIME);
-  };
+    logoutTimeout.current = setTimeout(() => handleLogout(), LOGOUT_TIME);
 
-  const startCountdown = () => {
-    countdownIntervalRef.current = setInterval(() => {
+    // Reset the throttling flag after a short delay
+    setTimeout(() => {
+      isResettingTimers.current = false;
+    }, 100);
+  }, [isAuthenticated]);
+
+  const startCountdown = useCallback(() => {
+    countdownInterval.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          if (countdownIntervalRef.current) {
-            clearInterval(countdownIntervalRef.current);
-            countdownIntervalRef.current = null;
-          }
+          if (countdownInterval.current)
+            clearInterval(countdownInterval.current);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-  };
+  }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     setShowWarning(false);
-    clearAllTimers();
+    if (countdownInterval.current) clearInterval(countdownInterval.current);
     await logout();
-    navigate("/", { replace: true });
-  };
+    navigate("/");
+  }, [logout, navigate]);
 
-  const handleStayLoggedIn = () => {
+  const handleStayLoggedIn = useCallback(() => {
     setShowWarning(false);
-    clearAllTimers();
+    if (countdownInterval.current) clearInterval(countdownInterval.current);
     resetTimers();
-  };
+  }, [resetTimers]);
 
-  const throttledResetTimers = useRef(() => {
-    const now = Date.now();
-    if (now - lastActivityRef.current > 1000) {
-      resetTimers();
-    }
-  }).current;
-
+  // Activity detection effect
   useEffect(() => {
-    if (!isAuthenticated) {
-      clearAllTimers();
-      return;
-    }
+    if (!isAuthenticated) return;
 
     resetTimers();
 
     const events = [
-      "mousemove", "mousedown", "click", "scroll", 
-      "keydown", "keypress", "touchstart", "touchmove"
+      "mousemove",
+      "keydown",
+      "click",
+      "scroll",
+      "touchstart",
+      "mousedown",
     ];
-    
+
+    // Throttled activity handler
+    let activityTimeout: NodeJS.Timeout | null = null;
     const activityHandler = () => {
-      throttledResetTimers();
+      if (activityTimeout) clearTimeout(activityTimeout);
+      activityTimeout = setTimeout(() => {
+        resetTimers();
+      }, 1000); // Debounce activity by 1 second
     };
 
-    events.forEach((event) => {
-      document.addEventListener(event, activityHandler, { passive: true });
-    });
-
-    const visibilityHandler = () => {
-      if (!document.hidden) {
-        throttledResetTimers();
-      }
-    };
-    document.addEventListener('visibilitychange', visibilityHandler);
+    events.forEach((event) =>
+      window.addEventListener(event, activityHandler, { passive: true })
+    );
 
     return () => {
-      events.forEach((event) => {
-        document.removeEventListener(event, activityHandler);
-      });
-      document.removeEventListener('visibilitychange', visibilityHandler);
-      clearAllTimers();
+      events.forEach((event) =>
+        window.removeEventListener(event, activityHandler)
+      );
+      if (activityTimeout) clearTimeout(activityTimeout);
+      if (warningTimeout.current) clearTimeout(warningTimeout.current);
+      if (logoutTimeout.current) clearTimeout(logoutTimeout.current);
+      if (countdownInterval.current) clearInterval(countdownInterval.current);
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, resetTimers]);
 
+  // React Query activity detection - FIXED to prevent render cycle issues
   useEffect(() => {
     if (!isAuthenticated) return;
 
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      if (event?.query?.state?.status === "success" || event?.query?.state?.status === "error") {
-        resetTimers();
+      if (event?.query?.state?.status === "success") {
+        // Use setTimeout to break out of the render cycle
+        setTimeout(() => {
+          resetTimers();
+        }, 0);
       }
     });
 
-    return () => {
-      unsubscribe();
-    };
-  }, [isAuthenticated, queryClient]);
+    return () => unsubscribe?.();
+  }, [isAuthenticated, queryClient, resetTimers]);
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (!isAuthenticated) return null;
 
   return (
     <Dialog open={showWarning} onOpenChange={setShowWarning}>
-      <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Session Expiring Soon</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
-          Your session will expire in {timeLeft} seconds due to inactivity.
+          You will be logged out in {timeLeft} seconds due to inactivity.
         </p>
         <div className="flex justify-end gap-2 mt-4">
           <Button variant="secondary" onClick={handleStayLoggedIn}>
