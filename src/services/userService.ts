@@ -119,13 +119,27 @@ export const getUserById = async (id: string): Promise<UserProfile | null> => {
   } catch (error) {
     if (isAxiosError(error)) {
       const status = error.response?.status;
-      const serverMessage = error.response?.data?.message || error.message;
 
+      // Handle common error cases gracefully
       if (status === 404) {
         if (process.env.NODE_ENV === "development") {
           console.warn(`User ${id} not found (404)`, error.response?.data);
         }
         return null; // gracefully handle not found
+      }
+
+      if (status === 401) {
+        if (process.env.NODE_ENV === "development") {
+          console.warn(`Unauthorized access for user ${id} (401) - Session may have expired`, error.response?.data);
+        }
+        return null; // gracefully handle unauthorized access
+      }
+
+      if (status === 500) {
+        if (process.env.NODE_ENV === "development") {
+          console.error(`Server error fetching user ${id} (500)`, error.response?.data);
+        }
+        return null; // gracefully handle server errors
       }
 
       if (process.env.NODE_ENV === "development") {
@@ -134,14 +148,16 @@ export const getUserById = async (id: string): Promise<UserProfile | null> => {
           error.response?.data ?? error.message
         );
       }
-      throw new Error(serverMessage);
+      
+      // For other errors, return null instead of throwing to prevent UI crashes
+      return null;
     }
 
     // Non-Axios unexpected error
     if (process.env.NODE_ENV === "development") {
       console.error("Unexpected error fetching user:", error);
     }
-    throw new Error("Failed to fetch user");
+    return null; // gracefully handle unexpected errors
   }
 };
 

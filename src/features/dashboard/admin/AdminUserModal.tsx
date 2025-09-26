@@ -4,7 +4,7 @@ import type { DragEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -219,6 +219,10 @@ export default function AdminUserModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] font-inter rounded-lg shadow-lg">
+        <DialogTitle className="sr-only">Admin User Profile</DialogTitle>
+        <DialogDescription className="sr-only">
+          Manage admin user profile, update profile picture and change password
+        </DialogDescription>
         <div className="p-4 space-y-6">
           <div className="flex items-center space-x-4 p-4 bg-[#D9D9D9] rounded-lg shadow-sm">
             <div

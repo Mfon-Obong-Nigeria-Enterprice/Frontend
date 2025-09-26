@@ -101,8 +101,8 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
           data.length <= 2
             ? "repeat(auto-fit, minmax(250px, 1fr))"
             : data.length === 3
-            ? "repeat(auto-fit, minmax(280px, 1fr))"
-            : "repeat(auto-fit, minmax(220px, 1fr))",
+            ? "repeat(3, 1fr)"
+            : "repeat(auto-fit, minmax(200px, 1fr))",
         maxWidth: "100%",
       }}
     >

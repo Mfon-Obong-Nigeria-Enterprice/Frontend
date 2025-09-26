@@ -61,7 +61,10 @@ const WalkinClientDetailBox: React.FC<WalkinClientDetailBoxProps> = ({
             type="tel"
             placeholder="Enter phone number"
             value={formData.phone}
-            onChange={(e) => handleInputChange("phone", e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value.replace(/[^0-9]/g, '');
+              handleInputChange("phone", value);
+            }}
             className="w-full"
           />
         </div>
