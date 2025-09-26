@@ -107,6 +107,12 @@ api.interceptors.response.use(
         return api(originalRequest); // retry original request
       } catch (refreshError) {
         processQueue(refreshError, null);
+        
+        // Show user-friendly session expired message
+        if (process.env.NODE_ENV === "development") {
+          console.warn("Session expired - redirecting to login");
+        }
+        
         useAuthStore.getState().logout(); // clear local state
         window.location.href = "/";
         return Promise.reject(refreshError);
