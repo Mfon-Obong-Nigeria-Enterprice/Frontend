@@ -154,7 +154,7 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
           >
             {/* LEFT: text */}
             <div className="flex-1">
-              <div className="text-xs sm:text-sm text-[#7D7D7D]">
+              <div className="text-xs sm:text-sm text-[#7D7D7D] whitespace-nowrap">
                 {stat.heading}
               </div>
               <div className="mt-2 text-base sm:text-xl font-bold text-text-dark">
@@ -164,7 +164,7 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
               {stat.statValue && (
                 <div className="flex items-center gap-1 mt-1">
                   <span
-                    className="text-sm font-semibold"
+                    className="text-sm font-semibold whitespace-nowrap"
                     style={{ color: color }}
                   >
                     {stat.statValue}
