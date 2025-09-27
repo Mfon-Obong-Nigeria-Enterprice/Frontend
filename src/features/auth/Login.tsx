@@ -138,8 +138,8 @@ const Login = () => {
   const toggleVisibility = () => setPasswordVisible((v) => !v);
 
   return (
-    <main className="bg-[var(--cl-bg-light)] min-h-screen flex justify-center items-center relative">
-      <section className="md:max-w-3xl w-full mx-auto lg:bg-white lg:rounded-3xl lg:shadow-lg lg:border border-[var(--cl-secondary)] px-6 sm:px-20 pt-10 pb-14">
+    <main className="bg-[var(--cl-bg-light)] min-h-screen flex justify-center items-start md:items-center relative py-8">
+      <section className="md:max-w-3xl w-full mx-auto lg:bg-white lg:rounded-3xl lg:shadow-lg lg:border border-[var(--cl-secondary)] px-6 sm:px-20 pt-6 pb-14 mt-12 md:mt-0">
         <div className="max-w-34 mx-auto mb-6">
           <img src="/logo.png" alt="Mfon-Obong Enterprise Logo" />
         </div>
@@ -154,6 +154,8 @@ const Login = () => {
         >
           <input
             type="text"
+            inputMode="email"
+            autoComplete="email"
             {...register("email")}
             placeholder="Email address"
             disabled={mutation.isPending}
@@ -175,6 +177,7 @@ const Login = () => {
               placeholder="Password"
               aria-invalid={!!formErrors.password}
               disabled={mutation.isPending}
+              autoComplete="current-password"
               className={`border outline-0 pl-4 pr-10 py-3 rounded-[0.625rem] text-base w-full ${
                 formErrors.password
                   ? "border-[var(--cl-error)]"
