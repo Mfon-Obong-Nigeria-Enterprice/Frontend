@@ -20,7 +20,7 @@ const SessionTimeout = () => {
   const lastActivityRef = useRef<number>(Date.now());
 
   const WARNING_TIME = 14 * 60 * 1000;
-  const LOGOUT_TIME = 15 * 60 * 1000;
+  const LOGOUT_TIME = 15* 60 * 1000;
 
   const clearAllTimers = () => {
     if (warningTimeoutRef.current) {
