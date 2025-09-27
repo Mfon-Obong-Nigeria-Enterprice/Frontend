@@ -51,26 +51,29 @@ export class WebSocketNotificationService {
   }
 
   private getServerUrl(): string {
-    // Check if we're in development and API is set to production
+    // Prefer deriving the real-time server URL from the API base URL when available.
+    // This allows dev setups where the API (and socket server) run on localhost:3001
+    // while the frontend runs on a different port.
     const apiUrl = import.meta.env.VITE_API_URL;
-    
-    // If we're in development, prefer local development server for real-time features
-    if (import.meta.env.DEV && (
-      !apiUrl || 
-      apiUrl.includes('onrender.com') || 
-      window.location.hostname === 'localhost'
-    )) {
-      return "http://localhost:3000";
+
+    if (apiUrl) {
+      try {
+        const baseUrl = apiUrl.replace(/\/api\/?$/, "");
+        // Debug log to help diagnose wrong host issues in development
+        // eslint-disable-next-line no-console
+        console.debug("WebSocketNotificationService using server url derived from VITE_API_URL:", baseUrl);
+        return baseUrl;
+      } catch (e) {
+        // ignore and fallback
+      }
     }
-    
-    // For production, extract base URL from API URL
-    if (apiUrl && apiUrl.includes('onrender.com')) {
-      const baseUrl = apiUrl.replace('/api', '');
-      return baseUrl;
+
+    // If no API URL is provided, fall back to a local dev socket server or current origin
+    if (import.meta.env.DEV) {
+      return window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
     }
-    
-    // Fallback
-    return "http://localhost:3000";
+
+    return window.location.origin;
   }
 
   // Cache invalidation helper methods
