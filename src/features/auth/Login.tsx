@@ -11,7 +11,7 @@ import MobileError from "./MobileError";
 import SupportFeedback from "../../components/SupportFeedback";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "react-toastify";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import InlineSpinner from "@/components/InlineSpinner";
 import { useMutation } from "@tanstack/react-query";
 import * as authService from "@/services/authService";
 
@@ -26,7 +26,7 @@ const Login = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorCode, setErrorCode] = useState<string | undefined>();
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [isSupportLoading, setIsSupportLoading] = useState<boolean>(false);
+  // removed transient fullscreen loading spinner to avoid blocking inputs on some browsers
 
   const {
     register,
@@ -115,15 +115,10 @@ const Login = () => {
     mutation.mutate(data);
   };
 
-  // function to set a loading spinner before oprning the support modal
+  // open support modal immediately; use a small inline spinner in the UI instead
   const openSupportModal = () => {
-    setIsSupportLoading(true);
-
-    setTimeout(() => {
-      setIsSupportLoading(false);
-      openModal("support");
-      reset();
-    }, 0); // 2 seconds
+    openModal("support");
+    reset();
   };
 
   const openModal = (type: "error" | "support") => setActiveModal(type);
@@ -219,13 +214,14 @@ const Login = () => {
                 need help?
               </span>
             )}
-            <span
-              className="text-[var(--cl-blue)] hover:text-blue-700 text-sm cursor-pointer"
+            <button
+              type="button"
+              className="text-[var(--cl-blue)] hover:text-blue-700 text-sm flex items-center"
               onClick={openSupportModal}
             >
-              {isSupportLoading && <LoadingSpinner />}
-              Contact Support
-            </span>
+              <InlineSpinner />
+              <span>Contact Support</span>
+            </button>
           </div>
         </form>
         {activeModal === "error" && (
