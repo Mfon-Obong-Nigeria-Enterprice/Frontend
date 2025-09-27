@@ -115,8 +115,12 @@ const Login = () => {
     mutation.mutate(data);
   };
 
-  // open support modal immediately; use a small inline spinner in the UI instead
+  // track whether we're opening the support modal so the inline spinner shows only briefly
+  const [isOpeningSupport, setIsOpeningSupport] = useState<boolean>(false);
+
+  // open support modal immediately; set a transient opening state and reset it when the modal closes
   const openSupportModal = () => {
+    setIsOpeningSupport(true);
     openModal("support");
     reset();
   };
@@ -219,7 +223,7 @@ const Login = () => {
               className="text-[var(--cl-blue)] hover:text-blue-700 text-sm flex items-center"
               onClick={openSupportModal}
             >
-              <InlineSpinner />
+              {isOpeningSupport && <InlineSpinner />}
               <span>Contact Support</span>
             </button>
           </div>
@@ -236,7 +240,15 @@ const Login = () => {
           />
         )}
 
-        {activeModal === "support" && <SupportFeedback onClose={closeModal} />}
+        {activeModal === "support" && (
+          <SupportFeedback
+            onClose={() => {
+              // close modal and ensure opening spinner is cleared
+              closeModal();
+              setIsOpeningSupport(false);
+            }}
+          />
+        )}
       </section>
     </main>
   );
