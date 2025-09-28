@@ -27,6 +27,16 @@ const api: AxiosInstance = axios.create({
   withCredentials: true,
 });
 
+// If tokens are persisted locally (for browsers that block cross-site cookies), use them as Authorization fallback
+try {
+  const localAccess = localStorage.getItem("__mfon_access_token");
+  if (localAccess) {
+    api.defaults.headers.common["Authorization"] = `Bearer ${localAccess}`;
+  }
+} catch (e) {
+  // ignore
+}
+
 type FailedRequest = {
   resolve: (value?: unknown) => void;
   reject: (reason?: unknown) => void;
@@ -115,8 +125,14 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Call refresh endpoint
-        await api.post("/auth/refresh");
+        // Call refresh endpoint; this will use cookie-based refresh when possible,
+        // or body-based refresh if the client provided tokens in localStorage.
+        // Use the authService refresh helper to persist tokens correctly.
+  await (await import("./authService")).refreshToken();
+
+        // ensure axios default Authorization header is up-to-date
+        const access = localStorage.getItem("__mfon_access_token");
+        if (access) api.defaults.headers.common["Authorization"] = `Bearer ${access}`;
 
         processQueue(null);
         return api(originalRequest); // retry original request
@@ -128,7 +144,8 @@ api.interceptors.response.use(
           console.warn("Session expired - redirecting to login");
         }
         
-        useAuthStore.getState().logout(); // clear local state
+        // clear local auth state and any stored tokens
+        useAuthStore.getState().logout(); // this will clear localStorage via authService.logout
         window.location.href = "/";
         return Promise.reject(refreshError);
       } finally {
