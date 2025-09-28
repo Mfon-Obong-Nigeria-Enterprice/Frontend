@@ -1,6 +1,7 @@
 import { io, Socket } from "socket.io-client";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useNotificationStore } from "@/stores/useNotificationStore";
+import { queryClient } from "@/lib/queryClient";
 // import { syncBranchNotifications } from "@/services/passwordService";
 import type { Role } from "@/types/types";
 import { useEffect, useRef, useState } from "react";
@@ -37,6 +38,9 @@ export class WebSocketNotificationService {
   private maxReconnectAttempts = 5;
   private connectionStatus: "disconnected" | "connecting" | "connected" =
     "disconnected";
+  private lastErrorTime = 0;
+  private errorCount = 0;
+  private readonly ERROR_THROTTLE_MS = 5000; // Only log errors every 5 seconds
 
   static getInstance(): WebSocketNotificationService {
     if (!WebSocketNotificationService.instance) {
@@ -47,10 +51,118 @@ export class WebSocketNotificationService {
   }
 
   private getServerUrl(): string {
-    // Use environment variable or default to production URL
-    return process.env.NODE_ENV === "development"
-      ? "http://localhost:3000"
-      : "https://mfon-obong-enterprise.onrender.com";
+    // Prefer deriving the real-time server URL from the API base URL when available.
+    // This allows dev setups where the API (and socket server) run on localhost:3001
+    // while the frontend runs on a different port.
+    const apiUrl = import.meta.env.VITE_API_URL;
+
+    if (apiUrl) {
+      try {
+        const baseUrl = apiUrl.replace(/\/api\/?$/, "");
+        // Debug log to help diagnose wrong host issues in development
+        // eslint-disable-next-line no-console
+        console.debug("WebSocketNotificationService using server url derived from VITE_API_URL:", baseUrl);
+        return baseUrl;
+      } catch (e) {
+        // ignore and fallback
+      }
+    }
+
+    // If no API URL is provided, fall back to a local dev socket server or current origin
+    if (import.meta.env.DEV) {
+      return window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
+    }
+
+    return window.location.origin;
+  }
+
+  // Cache invalidation helper methods
+  private invalidateRelevantQueries(
+    resourceType: string, 
+    _branchId?: string, 
+    _currentUser?: any
+  ): void {
+    try {
+      switch (resourceType.toLowerCase()) {
+        case "transaction":
+          // Invalidate transactions and related data
+          queryClient.invalidateQueries({ queryKey: ["transactions"] });
+          queryClient.invalidateQueries({ queryKey: ["clients"] }); // Transactions affect client balances
+          queryClient.invalidateQueries({ queryKey: ["products"] }); // Transactions affect inventory
+          queryClient.invalidateQueries({ queryKey: ["inventory"] });
+          break;
+          
+        case "client":
+          // Invalidate clients data
+          queryClient.invalidateQueries({ queryKey: ["clients"] });
+          break;
+          
+        case "product":
+          // Invalidate products and inventory
+          queryClient.invalidateQueries({ queryKey: ["products"] });
+          queryClient.invalidateQueries({ queryKey: ["inventory"] });
+          break;
+          
+        case "category":
+          // Invalidate categories and products
+          queryClient.invalidateQueries({ queryKey: ["categories"] });
+          queryClient.invalidateQueries({ queryKey: ["products"] });
+          break;
+          
+        default:
+          // For unknown types, invalidate common queries
+          queryClient.invalidateQueries({ queryKey: ["transactions"] });
+          queryClient.invalidateQueries({ queryKey: ["clients"] });
+          queryClient.invalidateQueries({ queryKey: ["products"] });
+          break;
+      }
+
+      // Also invalidate dashboard data that might be affected
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
+      
+    } catch (error) {
+      console.error("❌ Error invalidating queries:", error);
+    }
+  }
+
+  // Error throttling to prevent console spam
+  private logThrottledError(message: string, error?: any): void {
+    const now = Date.now();
+    this.errorCount++;
+
+    // Only log if enough time has passed since last error log
+    if (now - this.lastErrorTime > this.ERROR_THROTTLE_MS) {
+      if (this.errorCount > 1) {
+        console.error(`${message} (${this.errorCount} similar errors suppressed)`, error);
+      } else {
+        console.error(message, error);
+      }
+      this.lastErrorTime = now;
+      this.errorCount = 0;
+    }
+  }
+
+  // Check if user should receive real-time updates based on role and branch
+  private shouldReceiveRealTimeUpdate(
+    eventBranchId: string,
+    currentUser: any
+  ): boolean {
+    if (!currentUser) return false;
+
+    // SUPER_ADMIN sees all branches
+    if (currentUser.role === "SUPER_ADMIN") return true;
+    
+    // MAINTAINER sees all branches  
+    if (currentUser.role === "MAINTAINER") return true;
+    
+    // ADMIN and STAFF only see their branch
+    if (currentUser.role === "ADMIN" || currentUser.role === "STAFF") {
+      return currentUser.branchId === eventBranchId;
+    }
+
+    return false;
   }
 
   connect(): void {
@@ -62,25 +174,36 @@ export class WebSocketNotificationService {
       return;
     }
 
-    // Get JWT token from your auth system
-    const token =
-      localStorage.getItem("accessToken") || localStorage.getItem("token");
-    if (!token) {
-      console.error(
-        "WebSocketNotificationService: No authentication token found"
-      );
-      return;
-    }
-
     this.connectionStatus = "connecting";
 
-    this.socket = io(this.getServerUrl(), {
-      auth: { token },
-      transports: ["websocket", "polling"], // Fallback to polling if websocket fails
+    // Get any available token for fallback
+    const possibleTokens = {
+      localStorage_accessToken: localStorage.getItem('accessToken'),
+      localStorage_token: localStorage.getItem('token'),
+      sessionStorage_accessToken: sessionStorage.getItem('accessToken'),
+      sessionStorage_token: sessionStorage.getItem('token'),
+    };
+
+    const fallbackToken = possibleTokens.localStorage_accessToken || 
+                         possibleTokens.localStorage_token ||
+                         possibleTokens.sessionStorage_accessToken ||
+                         possibleTokens.sessionStorage_token;
+
+    const socketConfig: any = {
+      withCredentials: true, // Send cookies
+      transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: this.maxReconnectAttempts,
       reconnectionDelay: 1000,
-    });
+      forceNew: true,
+    };
+
+    // If we have a fallback token, send it in auth as backup
+    if (fallbackToken) {
+      socketConfig.auth = { token: fallbackToken };
+    }
+
+    this.socket = io(this.getServerUrl(), socketConfig);
 
     this.setupEventListeners();
   }
@@ -92,19 +215,23 @@ export class WebSocketNotificationService {
     this.socket.on("connect", () => {
       this.connectionStatus = "connected";
       this.reconnectAttempts = 0;
+      // Reset error tracking on successful connection
+      this.errorCount = 0;
+      this.lastErrorTime = 0;
 
       // Test connection
-      this.socket?.emit("ping", "test", () => {});
+      this.socket?.emit("ping", "test");
     });
 
     this.socket.on("connect_error", (error) => {
-      console.error("❌ WebSocket connection failed:", error);
       this.connectionStatus = "disconnected";
-
+      
+      // Use throttled error logging to prevent console spam
       if (error.message.includes("Authentication")) {
-        console.error("Authentication failed - redirecting to login");
-        // Handle auth failure - you might want to redirect to login
+        this.logThrottledError("❌ WebSocket authentication failed", error);
         useAuthStore.getState().logout?.();
+      } else {
+        this.logThrottledError("❌ WebSocket connection failed", error);
       }
     });
 
@@ -125,6 +252,11 @@ export class WebSocketNotificationService {
 
     // Transaction created (sales) - Real-time sales notifications
     this.socket.on("transaction_created", (data: WebSocketNotificationData) => {
+      // Check if current user should receive this update
+      if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
+        return;
+      }
+
       const notification = {
         id: `ws-transaction-${data.resourceId}`,
         title: "New Sale Created",
@@ -148,10 +280,18 @@ export class WebSocketNotificationService {
       };
 
       addNotification(notification);
+      
+      // REAL-TIME UI UPDATE: Invalidate relevant queries to refresh data
+      this.invalidateRelevantQueries("transaction", data.branchId, currentUser);
     });
 
     // Client created - Real-time client notifications
     this.socket.on("client_created", (data: WebSocketNotificationData) => {
+      // Check if current user should receive this update
+      if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
+        return;
+      }
+
       const notification = {
         id: `ws-client-${data.resourceId}`,
         title: "New Client Registered",
@@ -171,10 +311,18 @@ export class WebSocketNotificationService {
       };
 
       addNotification(notification);
+      
+      // REAL-TIME UI UPDATE: Invalidate relevant queries to refresh data
+      this.invalidateRelevantQueries("client", data.branchId, currentUser);
     });
 
     // Product created - Real-time product notifications
     this.socket.on("product_created", (data: WebSocketNotificationData) => {
+      // Check if current user should receive this update
+      if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
+        return;
+      }
+
       const notification = {
         id: `ws-product-${data.resourceId}`,
         title: "New Product Created",
@@ -194,6 +342,128 @@ export class WebSocketNotificationService {
       };
 
       addNotification(notification);
+      
+      // REAL-TIME UI UPDATE: Invalidate relevant queries to refresh data
+      this.invalidateRelevantQueries("product", data.branchId, currentUser);
+    });
+
+    // Product updated - Real-time product update notifications
+    this.socket.on("product_updated", (data: WebSocketNotificationData) => {
+      if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
+        return;
+      }
+      // Invalidate queries without showing notification for updates
+      this.invalidateRelevantQueries("product", data.branchId, currentUser);
+    });
+
+    // Product deleted - Real-time product deletion notifications
+    this.socket.on("product_deleted", (data: WebSocketNotificationData) => {
+      if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
+        return;
+      }
+      // Invalidate queries for product deletions
+      this.invalidateRelevantQueries("product", data.branchId, currentUser);
+    });
+
+    // Client updated - Real-time client update notifications  
+    this.socket.on("client_updated", (data: WebSocketNotificationData) => {
+      if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
+        return;
+      }
+      this.invalidateRelevantQueries("client", data.branchId, currentUser);
+    });
+
+    // Client deleted - Real-time client deletion notifications
+    this.socket.on("client_deleted", (data: WebSocketNotificationData) => {
+      if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
+        return;
+      }
+      this.invalidateRelevantQueries("client", data.branchId, currentUser);
+    });
+
+    // Client balance updated - Real-time balance changes
+    this.socket.on("client_balance_updated", (data: WebSocketNotificationData) => {
+      if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
+        return;
+      }
+      this.invalidateRelevantQueries("client", data.branchId, currentUser);
+    });
+
+    // Transaction updated - Real-time transaction updates
+    this.socket.on("transaction_updated", (data: WebSocketNotificationData) => {
+      if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
+        return;
+      }
+      this.invalidateRelevantQueries("transaction", data.branchId, currentUser);
+    });
+
+    // Transaction status changed - Real-time status updates
+    this.socket.on("transaction_status_changed", (data: WebSocketNotificationData) => {
+      if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
+        return;
+      }
+      this.invalidateRelevantQueries("transaction", data.branchId, currentUser);
+    });
+
+    // Sale completed - Real-time sale completion (might be different from transaction_created)
+    this.socket.on("sale_completed", (data: WebSocketNotificationData) => {
+      if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
+        return;
+      }
+      this.invalidateRelevantQueries("transaction", data.branchId, currentUser);
+    });
+
+    // Category events - Real-time category management
+    this.socket.on("category_created", (data: WebSocketNotificationData) => {
+      if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
+        return;
+      }
+      this.invalidateRelevantQueries("category", data.branchId, currentUser);
+    });
+
+    this.socket.on("category_updated", (data: WebSocketNotificationData) => {
+      if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
+        return;
+      }
+      this.invalidateRelevantQueries("category", data.branchId, currentUser);
+    });
+
+    this.socket.on("category_deleted", (data: WebSocketNotificationData) => {
+      if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
+        return;
+      }
+      this.invalidateRelevantQueries("category", data.branchId, currentUser);
+    });
+
+    // User management events - For admins and super admins
+    this.socket.on("user_created", (_data: WebSocketNotificationData) => {
+      if (currentUser?.role === "SUPER_ADMIN" || currentUser?.role === "MAINTAINER") {
+        queryClient.invalidateQueries({ queryKey: ["users"] });
+      }
+    });
+
+    this.socket.on("user_updated", (_data: WebSocketNotificationData) => {
+      if (currentUser?.role === "SUPER_ADMIN" || currentUser?.role === "MAINTAINER") {
+        queryClient.invalidateQueries({ queryKey: ["users"] });
+      }
+    });
+
+    this.socket.on("user_deleted", (_data: WebSocketNotificationData) => {
+      if (currentUser?.role === "SUPER_ADMIN" || currentUser?.role === "MAINTAINER") {
+        queryClient.invalidateQueries({ queryKey: ["users"] });
+      }
+    });
+
+    this.socket.on("user_blocked", (_data: WebSocketNotificationData) => {
+      if (currentUser?.role === "SUPER_ADMIN" || currentUser?.role === "MAINTAINER") {
+        queryClient.invalidateQueries({ queryKey: ["users"] });
+      }
+    });
+
+    this.socket.on("user_unblocked", (_data: WebSocketNotificationData) => {
+      if (currentUser?.role === "SUPER_ADMIN" || currentUser?.role === "MAINTAINER") {
+        queryClient.invalidateQueries({ queryKey: ["users"] });
+      }
     });
 
     // Support request - Custom event for support requests

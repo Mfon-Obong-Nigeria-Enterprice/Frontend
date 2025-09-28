@@ -6,8 +6,23 @@ import axios, {
 
 import { useAuthStore } from "@/stores/useAuthStore";
 
+// Resolve API base URL with a safe production fallback.
+const resolvedApiUrl = (() => {
+  const envUrl = import.meta.env.VITE_API_URL as string | undefined;
+  // If building for production and envUrl is missing or points to a relative /api,
+  // fall back to the Render deployment URL so staged frontend can reach the backend.
+  if (import.meta.env.PROD) {
+    if (!envUrl || envUrl === '/api' || envUrl === '/api/') {
+      return 'https://mfon-obong-enterprise.onrender.com/api';
+    }
+    return envUrl;
+  }
+  // In dev, allow local relative API proxy
+  return envUrl ?? '/api';
+})();
+
 const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: resolvedApiUrl,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
 });
@@ -107,6 +122,12 @@ api.interceptors.response.use(
         return api(originalRequest); // retry original request
       } catch (refreshError) {
         processQueue(refreshError, null);
+        
+        // Show user-friendly session expired message
+        if (process.env.NODE_ENV === "development") {
+          console.warn("Session expired - redirecting to login");
+        }
+        
         useAuthStore.getState().logout(); // clear local state
         window.location.href = "/";
         return Promise.reject(refreshError);

@@ -199,29 +199,31 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
     <div className="bg-white border px-2 py-5">
       <h6 className="text-[#1E1E1E] text-base font-medium">Add Products</h6>
 
-      <Table className="w-full mt-2 space-y-20">
-        <TableHeader className="bg-[#F0F0F3] h-12">
-          <TableRow>
-            <TableHead className="text-[#333333] font-normal px-4">
-              Product
-            </TableHead>
-            <TableHead className="text-[#333333] text-center font-normal">
-              Quantity
-            </TableHead>
-            <TableHead className="text-[#333333] text-center font-normal">
-              Unit Price
-            </TableHead>
-            <TableHead className=" text-[#333333] text-center font-normal">
-              Discount
-            </TableHead>
-            <TableHead className="text-[#333333] text-center font-normal">
-              Total
-            </TableHead>
-            <TableHead className="text-[#333333] pr-5 text-center font-normal">
-              Actions
-            </TableHead>
-          </TableRow>
-        </TableHeader>
+      <div className="overflow-x-auto -mx-4 sm:mx-0">
+        <div className="min-w-[700px] px-4 sm:px-0">
+          <Table className="w-full mt-2 space-y-20">
+            <TableHeader className="bg-[#F0F0F3] h-12">
+              <TableRow>
+                <TableHead className="text-[#333333] font-normal px-4">
+                  Product
+                </TableHead>
+                <TableHead className="text-[#333333] text-center font-normal">
+                  Quantity
+                </TableHead>
+                <TableHead className="text-[#333333] text-center font-normal">
+                  Unit Price
+                </TableHead>
+                <TableHead className=" text-[#333333] text-center font-normal">
+                  Discount
+                </TableHead>
+                <TableHead className="text-[#333333] text-center font-normal">
+                  Total
+                </TableHead>
+                <TableHead className="text-[#333333] pr-5 text-center font-normal">
+                  Actions
+                </TableHead>
+              </TableRow>
+            </TableHeader>
         <TableBody>
           {rows.map((row, index) => {
             const selectedProduct = products.find(
@@ -383,6 +385,8 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
           })}
         </TableBody>
       </Table>
+        </div>
+      </div>
 
       {/* Modal */}
       <Modal
