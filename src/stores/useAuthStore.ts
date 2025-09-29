@@ -19,10 +19,11 @@ type AuthState = {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      user: null,
-      userProfile: null,
-      isAuthenticated: false,
-      loading: false,
+  user: null,
+  userProfile: null,
+  isAuthenticated: false,
+  // Start in loading state so the app can attempt a silent auth refresh on boot
+  loading: true,
 
       setUser: (user) => {
         set({
@@ -69,6 +70,39 @@ export const useAuthStore = create<AuthState>()(
           console.error("Login failed", error);
           set({ loading: false });
           throw error;
+        }
+      },
+
+      // Attempt to silently initialize auth state from cookies or localStorage.
+      initAuth: async () => {
+        set({ loading: true });
+        try {
+          // Try to refresh using authService which will prefer cookies but fall back to localStorage
+          const { user } = await authService.refreshToken();
+
+          set({
+            user,
+            userProfile: user
+              ? {
+                  _id: user.id,
+                  name: user.name,
+                  email: user.email,
+                  role: user.role,
+                  branch: user.branch,
+                  branchId: user.branchId,
+                  createdAt: user.createdAt,
+                  profilePicture: undefined,
+                }
+              : null,
+            isAuthenticated: !!user,
+            loading: false,
+          });
+
+          return true;
+        } catch (err) {
+          // No valid session
+          set({ loading: false });
+          return false;
         }
       },
 

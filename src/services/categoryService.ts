@@ -30,7 +30,6 @@ export const updateCategory = async (
   return api.patch(`/categories/${id}`, data);
 };
 
-
 export const deleteCategory = async (id: string) => {
   return api.delete(`/categories/${id}`);
 };

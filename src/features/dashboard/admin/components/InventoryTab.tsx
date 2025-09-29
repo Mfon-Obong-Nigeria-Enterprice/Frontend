@@ -101,8 +101,8 @@ const InventoryTab = React.memo(
       <div className="px-5 min-h-30">
         <Tabs defaultValue="allProducts">
           {/* Tabs Header */}
-          <div className="flex w-full overflow-hidden">
-            <TabsList className="bg-[#F5F5F5] gap-1 sm:gap-3 whitespace-nowrap h-16 w-full text-xs sm:text-sm">
+          <div className="flex w-full overflow-x-auto">
+            <TabsList className="bg-[#F5F5F5] gap-1 sm:gap-3 whitespace-nowrap h-16 w-full text-xs sm:text-sm overflow-x-auto hide-scrollbar lg:max-w-[65vw] 2xl:max-w-full">
               {/* All Products tab */}
               <TabsTrigger
                 value="allProducts"
