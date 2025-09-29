@@ -25,7 +25,6 @@ interface clientStore {
   setError: (error: string | null) => void;
   refreshClients: () => Promise<void>;
 
-
   // Derivative stats
   getClientsWithDebt: () => Client[];
   getNewClients: () => number;

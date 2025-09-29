@@ -660,7 +660,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
               </div>
 
               <ClientTransactionDetails
-                client={client}
+                // client={client}
                 clientTransactions={clientTransactions}
               />
             </TabsContent>

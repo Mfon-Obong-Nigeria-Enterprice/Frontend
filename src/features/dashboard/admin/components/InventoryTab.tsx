@@ -16,7 +16,12 @@ interface InventoryTabProps {
 }
 
 const InventoryTab = React.memo(
-  ({ products = [], categories = [], stockStatus, priceRange }: InventoryTabProps) => {
+  ({
+    products = [],
+    categories = [],
+    stockStatus,
+    priceRange,
+  }: InventoryTabProps) => {
     const [openCategory, setOpenCategory] = useState<{
       _id: string;
       name: string;
@@ -43,7 +48,8 @@ const InventoryTab = React.memo(
     function filterByStockStatus(product: Product) {
       if (stockStatus === "all") return true;
       if (stockStatus === "high") return product.stock > 20;
-      if (stockStatus === "low") return product.stock > 0 && product.stock <= 20;
+      if (stockStatus === "low")
+        return product.stock > 0 && product.stock <= 20;
       if (stockStatus === "out") return product.stock === 0;
       return true;
     }
@@ -64,7 +70,9 @@ const InventoryTab = React.memo(
     const filteredProducts = useMemo(
       () =>
         products.filter((product) => {
-          const productCategoryName = getCategoryNameForProduct(product.categoryId);
+          const productCategoryName = getCategoryNameForProduct(
+            product.categoryId
+          );
           return (
             (product.name.toLowerCase().includes(searchQuery) ||
               productCategoryName.toLowerCase().includes(searchQuery)) &&
@@ -114,7 +122,9 @@ const InventoryTab = React.memo(
               {categories?.map((category) => {
                 const categoryName = category.name;
                 const count = products.filter((prod) => {
-                  const productCategoryName = getCategoryNameForProduct(prod.categoryId);
+                  const productCategoryName = getCategoryNameForProduct(
+                    prod.categoryId
+                  );
                   return productCategoryName === categoryName;
                 }).length;
 
