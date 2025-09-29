@@ -12,7 +12,7 @@ import AddCategory from "@/features/dashboard/shared/inventory/AddCategory";
 import { useInventoryStore } from "@/stores/useInventoryStore";
 
 import { IoIosArrowUp, IoIosSearch } from "react-icons/io";
-import { CiImport } from "react-icons/ci";
+// import { CiImport } from "react-icons/ci";
 import { Plus, ChevronRight, RotateCcw, MoreVertical } from "lucide-react";
 
 import type { Product } from "@/types/types";
@@ -309,14 +309,14 @@ const AdminInventory = () => {
                       Update Stock
                     </Button>
 
-                    <Button
+                    {/* <Button
                       variant="outline"
                       onClick={() => navigate("/import-stock")}
                       className="gap-2"
                     >
                       <CiImport size={20} />
                       Import Stock
-                    </Button>
+                    </Button> */}
                     <Button
                       onClick={() => navigate("/admin/dashboard/sale")}
                       className="gap-2"
@@ -367,14 +367,14 @@ const AdminInventory = () => {
                           <RotateCcw size={16} />
                           Update Stock
                         </Button>
-                        <Button
+                        {/* <Button
                           variant="ghost"
                           onClick={() => navigate("/import-stock")}
                           className="justify-start gap-2"
                         >
                           <CiImport size={16} />
                           Import Stock
-                        </Button>
+                        </Button> */}
                         <Button
                           variant="ghost"
                           onClick={() => navigate("/admin/dashboard/sale")}
