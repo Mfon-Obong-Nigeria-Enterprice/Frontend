@@ -21,22 +21,6 @@ export const formatCurrency = (value: number): string => {
   })}`;
 };
 
-// this is the function for balance or amount with border and background dependent on zero
-// export function balanceClass(balance: number | null | undefined) {
-//   if (balance && balance > 0) return "border-[#2ECC71] bg-[#C8F9DD]";
-//   if (balance && balance === 0) return "border-[#7d7d7d] bg-[#f9f9f9]";
-//   return "border-[#F95353] bg-[#FFE9E9]";
-// }
-
-// export function balanceClass(balance: number | null | undefined) {
-//   if (balance == null) return "border-[#F95353] bg-[#FFE9E9]";
-
-//   if (balance > 0) return "border-[#2ECC71] bg-[#C8F9DD]";
-//   if (balance === 0) return "border-[#7d7d7d] bg-[#f9f9f9]";
-
-//   return "border-[#F95353] bg-[#FFE9E9]";
-// }
-
 export function balanceClass(balance: number | null | undefined) {
   return cn("text-sm text-center ", {
     "text-[#2ECC71] bg-[#C8F9DD] border-[#2ECC71] ":

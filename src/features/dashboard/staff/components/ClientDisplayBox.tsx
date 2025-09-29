@@ -1,3 +1,5 @@
+import { formatCurrency } from "@/utils/formatCurrency";
+
 type Props = {
   clientName: string;
   phoneNumber?: string;
@@ -12,7 +14,15 @@ const ClientDisplayBox = ({
   balance,
 }: Props) => {
   return (
-    <div className="bg-gradient-to-r from-[#176639] via-[#2ECC71] to-[#2ECC72] border-l-[6px] border-[#2ECC71] my-8 py-5 px-8 rounded-md space-y-1 text-white">
+    <div
+      className={`${
+        balance > 0
+          ? "bg-gradient-to-r from-[#176639] via-[#2ECC71] to-[#2ECC72] border-l-[6px] border-[#2ECC71]"
+          : balance < 0
+          ? "bg-gradient-to-r from-[#c51515] via-[#c51515] to-[#d58c8c] border-l-[6px] border-[#c51515]"
+          : "bg-gradient-to-r from-[#7D7D7D] via-[#7D7D7D] to-[#b5b2b2] border-l-[6px] border-[#F5F5F5]"
+      } my-8 py-5 px-8 rounded-md space-y-1 text-white`}
+    >
       {/* name and number */}
       <div className="flex justify-between items-center">
         <p className="font-medium">
@@ -31,7 +41,7 @@ const ClientDisplayBox = ({
       {/* acc balan */}
       <div className="flex justify-between">
         <p>Current Account Balance:</p>
-        <p className="font-semibold">₦ {balance.toLocaleString()}</p>
+        <p className="font-semibold">{formatCurrency(balance)}</p>
       </div>
     </div>
   );
