@@ -97,7 +97,7 @@ const ClientSearch = ({
                       setOpen(false);
                       onClientSelect?.(client);
                     }}
-                    className="flex justify-between  items-center border-b border-[#D9D9D9] hover:bg-[#D9D9D9]"
+                    className={`flex justify-between  items-center border-b border-[#D9D9D9] hover:bg-[#D9D9D9]`}
                   >
                     <div className="space-y-2 py-2.5 px-2">
                       <p className="font-medium font-Inter text-[#444444]">
