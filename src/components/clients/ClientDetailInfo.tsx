@@ -37,7 +37,7 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
   }, [client.balance]);
 
   return (
-    <section className=" bg-white py-8 px-5 rounded sticky top-20 h-fit">
+    <section className=" bg-white py-8 px-5 rounded sticky top-10 h-fit">
       {client && (
         <div>
           <p className="text-lg text-[#333333] mb-6">
