@@ -1,5 +1,5 @@
 import type { Transaction } from "@/types/transactions";
-import type { Client } from "@/types/types";
+// import type { Client } from "@/types/types";
 import { balanceTextClass } from "@/utils/format";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getTypeDisplay, getTypeStyles } from "@/utils/helpersfunction";
@@ -8,40 +8,50 @@ import { useMemo } from "react";
 
 interface clientTrasactionDetailsProps {
   clientTransactions: Transaction[];
-  client: Client;
 }
 
 export const ClientTransactionDetails: React.FC<
   clientTrasactionDetailsProps
-> = ({ clientTransactions, client }) => {
+> = ({ clientTransactions }) => {
   const transactionWithBalance = useMemo(() => {
     if (!clientTransactions?.length) {
       return [];
     }
-    let runningBal = client.balance;
 
+    // Sort transactions by date (oldest first for proper balance calculation)
     const sortedTransactions = [...clientTransactions].sort(
       (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
 
-    const transactions = sortedTransactions.map((txn) => {
-      const balanceAfter = runningBal;
+    // Start with initial balance of 0 (assuming clients start with no debt)
+    let runningBalance = 0;
 
-      const transactionImpact = txn.type === "DEPOSIT" ? -txn.total : txn.total;
-      const balanceBefore = runningBal - transactionImpact;
-      runningBal = balanceBefore;
+    const transactions = sortedTransactions.map((txn) => {
+      const balanceBefore = runningBalance;
+      let balanceAfter = balanceBefore;
+
+      if (txn.type === "DEPOSIT") {
+        // Deposit reduces the debt (increases the balance toward zero)
+        balanceAfter = balanceBefore + (txn.amountPaid || 0);
+      } else {
+        // Purchase/Pickup increases debt by the outstanding amount
+        const outstandingAmount = txn.total - (txn.amountPaid || 0);
+        balanceAfter = balanceBefore - outstandingAmount;
+      }
+
+      runningBalance = balanceAfter;
 
       return {
         ...txn,
-        balanceAfter,
         balanceBefore,
+        balanceAfter,
       };
     });
 
-    const order = transactions;
-    return order;
-  }, [client.balance, clientTransactions]);
+    // Return in reverse order (newest first for display)
+    return transactions.reverse();
+  }, [clientTransactions]);
 
   return (
     <div>
@@ -129,13 +139,13 @@ export const ClientTransactionDetails: React.FC<
                         </div>
 
                         <div className="flex justify-between items-center">
-                          <span className="text-[#444444] text-sm font-medium flex-1 text-left truncate">
+                          <span className="text-[#444444] text-sm font-medium flex-1 text-left truncate md:text-clip md:whitespace-normal">
                             {formatCurrency(txn.balanceBefore)}
                           </span>
                           <span className="mx-2 sm:mx-3 flex-shrink-0">
                             <ArrowRight size={14} className="text-[#666]" />
                           </span>
-                          <span className="text-[#444444] text-sm  font-medium flex-1 text-right truncate">
+                          <span className="text-[#444444] text-sm  font-medium flex-1 text-right truncate md:text-clip md:whitespace-normal ">
                             {formatCurrency(txn.balanceAfter)}
                           </span>
                         </div>
@@ -154,6 +164,13 @@ export const ClientTransactionDetails: React.FC<
                             ₦{(txn.total || 0).toLocaleString()}
                           </span>
                         </li>
+                        <li className="font-medium text-[#444444] text-sm ">
+                          Amount Paid:{" "}
+                          <span className="font-normal">
+                            ₦{txn.amountPaid?.toLocaleString()}
+                          </span>
+                        </li>
+
                         <li className="font-medium text-[#444444] text-sm ">
                           Method:{" "}
                           <span className="font-normal">

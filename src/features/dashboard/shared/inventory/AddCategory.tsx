@@ -182,18 +182,22 @@ const AddCategory = ({ closeBothModals }: Props) => {
         </div>
       </div>
 
-      <div className="flex justify-end items-center gap-4 mt-6">
-        <div className="w-full lg:w-[30%]">
+      <div className="flex justify-end gap-4 mt-6  flex-wrap">
+        <div className="w-full sm:w-[100px]">
           <Button
             variant="ghost"
             onClick={closeBothModals}
-            className="border px-6 py-3"
+            className="border px-6 py-3 w-full sm:w-[100px]"
           >
             Cancel
           </Button>
         </div>
-        <div className="w-full lg:w-[30%]">
-          <Button type="submit" disabled={isPending}>
+        <div className="w-full sm:w-[110px]">
+          <Button
+            type="submit"
+            disabled={isPending}
+            className="w-full sm:w-[110px] border px-6 py-3"
+          >
             {isPending ? "Creating..." : "Add Category"}
           </Button>
         </div>
