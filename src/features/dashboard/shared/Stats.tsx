@@ -93,19 +93,21 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
     revenueStore.getMOMRevenue && revenueStore.getMOMRevenue();
 
   return (
-    <section
-      className="gap-4 mt-2"
-      style={{
-        display: "grid",
-        gridTemplateColumns:
-          data.length <= 2
-            ? "repeat(auto-fit, minmax(250px, 1fr))"
-            : data.length === 3
-            ? "repeat(3, 1fr)"
-            : "repeat(auto-fit, minmax(200px, 1fr))",
-        maxWidth: "100%",
-      }}
-    >
+  <section
+  className={`
+    grid gap-4 mt-2
+    grid-cols-1 md:grid-cols-1  
+    ${
+      data.length <= 2
+        ? "lg:grid-cols-2 xl:grid-cols-2"  
+        : data.length === 3
+        ? "lg:grid-cols-3 xl:grid-cols-3"  
+        : "lg:grid-cols-2 xl:grid-cols-4" 
+    }
+  `}
+>
+ 
+
       {data.map((stat, index) => {
         const rawSeries = Array.isArray(stat.chartData) ? stat.chartData : [];
         const numericSeries = rawSeries.map((v) =>
@@ -164,7 +166,7 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
               {stat.statValue && (
                 <div className="flex items-center gap-1 mt-1">
                   <span
-                    className="text-sm font-semibold whitespace-nowrap"
+                    className="text-xs font-semibold whitespace-normal break-words"
                     style={{ color: color }}
                   >
                     {stat.statValue}

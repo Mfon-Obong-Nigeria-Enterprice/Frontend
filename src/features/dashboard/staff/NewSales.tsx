@@ -151,84 +151,60 @@ const NewSales: React.FC = () => {
     return null;
   }
 
-  // Format currency for display with commas
-  const formatCurrencyDisplay = (value: string) => {
-    if (!value) return '₦0.00';
-    
-    // Remove all non-digit characters
-    const digitsOnly = value.replace(/\D/g, '');
-    
-    // Handle empty value
-    if (digitsOnly === '') return '₦0.00';
-    
-    // Convert to number (divide by 100 to get actual amount)
-    const numericValue = parseFloat(digitsOnly) / 100;
-    
-    // Format with commas and 2 decimal places
-    return `₦${numericValue.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })}`;
-  };
+const formatCurrencyDisplay = (value: string) => {
+  if (!value) return '₦0';
+  
+  // Remove all non-digit characters except numbers
+  const digitsOnly = value.replace(/\D/g, '');
+  
+  // Handle empty value
+  if (digitsOnly === '') return '₦0';
+  
+  // Convert to number directly (no division by 100)
+  const numericValue = parseFloat(digitsOnly);
+  
+  // Format with commas but NO decimal places
+  return `₦${numericValue.toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  })}`;
+};
 
-  const handleAmountPaidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target;
-    const cursorPosition = input.selectionStart;
-    const originalValue = input.value;
-    
-    // Extract only digits (remove currency symbol, commas, etc.)
-    const newRawValue = originalValue.replace(/\D/g, '');
-    
-    // Limit to 15 digits (₦999,999,999,999.99)
-    const limitedDigits = newRawValue.slice(0, 15);
-    
-    setAmountPaid(limitedDigits);
-    
-    // Set cursor position after formatting
-    setTimeout(() => {
-      if (amountPaidInputRef.current) {
-        // Calculate new cursor position - try to maintain relative position
-        const newFormattedValue = formatCurrencyDisplay(limitedDigits);
-        let newCursorPosition = cursorPosition || 0;
-        
-        // Adjust cursor position based on comma changes
-        const commaCountBefore = (originalValue.substring(0, cursorPosition || 0).match(/,/g) || []).length;
-        const commaCountAfter = (newFormattedValue.substring(0, cursorPosition || 0).match(/,/g) || []).length;
-        
-        newCursorPosition += (commaCountAfter - commaCountBefore);
-        newCursorPosition = Math.max(1, Math.min(newCursorPosition, newFormattedValue.length));
-        
-        amountPaidInputRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
-      }
-    }, 0);
-  };
+const handleAmountPaidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const input = e.target.value;
+  
+  // Extract only digits
+  const newRawValue = input.replace(/\D/g, '');
+  
+  setAmountPaid(newRawValue);
+};
 
-  const handleAmountPaidKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Allow navigation keys, backspace, delete, tab, etc.
-    const allowedKeys = [
-      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
-      'Backspace', 'Delete', 'Tab', 'Home', 'End'
-    ];
-    
-    if (!allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey) {
-      // Allow only digits
-      if (!/\d/.test(e.key)) {
-        e.preventDefault();
-      }
+const handleAmountPaidKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  // Allow navigation keys, backspace, delete, tab, etc.
+  const allowedKeys = [
+    'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+    'Backspace', 'Delete', 'Tab', 'Home', 'End'
+  ];
+  
+  if (!allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey) {
+    // Allow only digits
+    if (!/\d/.test(e.key)) {
+      e.preventDefault();
     }
-  };
+  }
+};
 
-  const handleAmountPaidFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    // Select all text when focused for easy editing
-    setTimeout(() => e.target.select(), 0);
-  };
+const handleAmountPaidFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+  // Select all text when focused for easy editing
+  setTimeout(() => e.target.select(), 0);
+};
 
-  // Helper to get numeric value safely (divide by 100 to get actual amount)
-  const getAmountPaid = () => {
-    if (!amountPaid) return 0;
-    const value = parseFloat(amountPaid) / 100;
-    return isNaN(value) ? 0 : value;
-  };
+// Helper to get numeric value safely
+const getAmountPaid = () => {
+  if (!amountPaid) return 0;
+  const value = parseFloat(amountPaid);
+  return isNaN(value) ? 0 : value;
+};
 
   const canSubmit = () => {
     if (selectedClient && isClientBlocked) return false;
@@ -259,13 +235,11 @@ const NewSales: React.FC = () => {
     return false;
   }
 
-
   if (isWalkIn) {
     const { total } = calculateTotals();
     const paid = getAmountPaid() || 0; 
 
     if (Math.abs(paid - total) > 0.01) {
-     
       toast.error(
         `Walk-in clients must pay exactly ${formatCurrency(total)}`
       );
@@ -304,51 +278,51 @@ const NewSales: React.FC = () => {
     return { subtotal, discountTotal, total };
   };
 
-  const getBalanceInfo = () => {
-    const { total } = calculateTotals();
-    const paid = getAmountPaid();
-    const clientBalance =
-      clients.find((c) => c._id === selectedClient?._id)?.balance || 0;
+const getBalanceInfo = () => {
+  const { total } = calculateTotals();
+  const paid = getAmountPaid();
+  const clientBalance =
+    clients.find((c) => c._id === selectedClient?._id)?.balance || 0;
 
-    const availableBalance = selectedClient ? clientBalance : 0;
-    const effectiveAmountPaid = paid + availableBalance;
-    const balanceDue = Math.max(0, total - effectiveAmountPaid);
-    const newBalance = effectiveAmountPaid - total;
+  const availableBalance = selectedClient ? clientBalance : 0;
+  const effectiveAmountPaid = paid + availableBalance;
+  const balanceDue = Math.max(0, total - effectiveAmountPaid);
+  const newBalance = effectiveAmountPaid - total;
 
-    let statusMessage;
-    if (isWalkIn) {
-      if (paid === total) {
-        statusMessage = "Payment complete";
-      } else if (paid > total) {
-        statusMessage = `Overpayment: ₦${(paid - total).toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        })} (not allowed for walk-in)`;
-      } else {
-        statusMessage = `Amount due: ₦${(total - paid).toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        })} (full payment required)`;
-      }
-    } else if (balanceDue === 0) {
-      statusMessage = "No balance due";
-    } else if (selectedClient && clientBalance > 0) {
-      statusMessage = `Balance due: ₦${balanceDue.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })} (Account balance: ₦${clientBalance.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })})`;
+  let statusMessage;
+  if (isWalkIn) {
+    if (paid === total) {
+      statusMessage = "Payment complete";
+    } else if (paid > total) {
+      statusMessage = `Overpayment: ₦${(paid - total).toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      })} (not allowed for walk-in)`;
     } else {
-      statusMessage = `Balance due: ₦${balanceDue.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })}`;
+      statusMessage = `Amount due: ₦${(total - paid).toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      })} (full payment required)`;
     }
+  } else if (balanceDue === 0) {
+    statusMessage = "No balance due";
+  } else if (selectedClient && clientBalance > 0) {
+    statusMessage = `Balance due: ₦${balanceDue.toLocaleString('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    })} (Account balance: ₦${clientBalance.toLocaleString('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    })})`;
+  } else {
+    statusMessage = `Balance due: ₦${balanceDue.toLocaleString('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    })}`;
+  }
 
-    return { statusMessage, total, paid, clientBalance, newBalance };
-  };
+  return { statusMessage, total, paid, clientBalance, newBalance };
+};
 
   const { statusMessage, total, paid, clientBalance, newBalance } =
     getBalanceInfo();
@@ -641,7 +615,7 @@ const isClientBlocked = selectedClient ?
                 <Input
                   ref={amountPaidInputRef}
                   type="text"
-                  placeholder="₦0.00"
+                  placeholder="₦0"
                   className="w-full sm:w-40"
                   value={formatCurrencyDisplay(amountPaid)}
                   onChange={handleAmountPaidChange}
@@ -670,26 +644,27 @@ const isClientBlocked = selectedClient ?
                 </p>
 
                 {/* total purchase */}
-                <p className="flex justify-between items-center text-sm font-Inter">
-                  <span className="text-[#444444]">Purchase Total:</span>
-                  <span className="font-medium text-[#F95353]">
-                    -₦{total.toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })}
-                  </span>
-                </p>
+               {/* total purchase */}
+<p className="flex justify-between items-center text-sm font-Inter">
+  <span className="text-[#444444]">Purchase Total:</span>
+  <span className="font-medium text-[#F95353]">
+    -₦{total.toLocaleString('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    })}
+  </span>
+</p>
 
-                {/* amount paid */}
-                <p className="flex justify-between items-center text-sm font-Inter">
-                  <span className="text-[#444444]">Amount Paid:</span>
-                  <span className="font-medium text-[#2ECC71]">
-                    +₦{paid.toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })}
-                  </span>
-                </p>
+{/* amount paid */}
+<p className="flex justify-between items-center text-sm font-Inter">
+  <span className="text-[#444444]">Amount Paid:</span>
+  <span className="font-medium text-[#2ECC71]">
+    +₦{paid.toLocaleString('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    })}
+  </span>
+</p>
 
                 {/* new balance */}
                 <p className="flex justify-between items-center text-sm font-Inter border-t border-[#7D7D7D] pt-2 font-medium">
@@ -711,8 +686,8 @@ const isClientBlocked = selectedClient ?
                   <span className="text-sm">
                     This transaction will result in a debt of ₦
                     {Math.abs(newBalance).toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0
                     })}
                     . Client will owe money after this purchase
                   </span>

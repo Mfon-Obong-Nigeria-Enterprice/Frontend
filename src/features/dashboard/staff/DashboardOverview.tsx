@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
 import { Button } from "@/components/ui/button";
+import { GrRefresh } from "react-icons/gr";
 import StaffStats from "./components/StaffStats";
 import QuickActions from "./components/QuickActions";
 import RecentSalesActivity from "./components/RecentSalesActivity";
@@ -31,16 +32,30 @@ const StaffDashboardOverview: React.FC = () => {
         </div>
 
         <div className="flex gap-3 md:gap-5">
-          <Button
-            onClick={() => window.location.reload()}
-            className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)]"
-          >
-            Refresh
-          </Button>
-          <Link to="/staff/dashboard/new-sales">
-            <Button>+ Add Sales</Button>
-          </Link>
-        </div>
+<Button
+  onClick={() => window.location.reload()}
+  className="
+    bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)]
+    font-extrabold text-lg sm:text-sm px-8 sm:px-4 py-4 sm:py-2
+  "
+>
+  <GrRefresh className="size-5" />
+  Refresh
+</Button>
+
+<Link to="/staff/dashboard/new-sales">
+  <Button
+    className="
+      font-extrabold text-lg sm:text-sm px-8 sm:px-4 py-4 sm:py-2
+    "
+  >
+    + Add Sales
+  </Button>
+</Link>
+
+</div>
+
+
       </div>
 
       <StaffStats />
