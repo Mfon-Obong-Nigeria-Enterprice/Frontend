@@ -11,7 +11,7 @@ import MobileError from "./MobileError";
 import SupportFeedback from "../../components/SupportFeedback";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "react-toastify";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import InlineSpinner from "@/components/InlineSpinner";
 import { useMutation } from "@tanstack/react-query";
 import * as authService from "@/services/authService";
 
@@ -26,7 +26,7 @@ const Login = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorCode, setErrorCode] = useState<string | undefined>();
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [isSupportLoading, setIsSupportLoading] = useState<boolean>(false);
+  // removed transient fullscreen loading spinner to avoid blocking inputs on some browsers
 
   const {
     register,
@@ -115,15 +115,14 @@ const Login = () => {
     mutation.mutate(data);
   };
 
-  // function to set a loading spinner before oprning the support modal
-  const openSupportModal = () => {
-    setIsSupportLoading(true);
+  // track whether we're opening the support modal so the inline spinner shows only briefly
+  const [isOpeningSupport, setIsOpeningSupport] = useState<boolean>(false);
 
-    setTimeout(() => {
-      setIsSupportLoading(false);
-      openModal("support");
-      reset();
-    }, 0); // 2 seconds
+  // open support modal immediately; set a transient opening state and reset it when the modal closes
+  const openSupportModal = () => {
+    setIsOpeningSupport(true);
+    openModal("support");
+    reset();
   };
 
   const openModal = (type: "error" | "support") => setActiveModal(type);
@@ -139,8 +138,8 @@ const Login = () => {
   const toggleVisibility = () => setPasswordVisible((v) => !v);
 
   return (
-    <main className="bg-[var(--cl-bg-light)] min-h-screen flex justify-center items-center relative">
-      <section className="md:max-w-3xl w-full mx-auto lg:bg-white lg:rounded-3xl lg:shadow-lg lg:border border-[var(--cl-secondary)] px-6 sm:px-20 pt-10 pb-14">
+    <main className="bg-[var(--cl-bg-light)] min-h-screen flex justify-center items-start md:items-center relative py-8">
+      <section className="md:max-w-3xl w-full mx-auto lg:bg-white lg:rounded-3xl lg:shadow-lg lg:border border-[var(--cl-secondary)] px-6 sm:px-20 pt-6 pb-14 mt-12 md:mt-0">
         <div className="max-w-34 mx-auto mb-6">
           <img src="/logo.png" alt="Mfon-Obong Enterprise Logo" />
         </div>
@@ -155,6 +154,8 @@ const Login = () => {
         >
           <input
             type="text"
+            inputMode="email"
+            autoComplete="email"
             {...register("email")}
             placeholder="Email address"
             disabled={mutation.isPending}
@@ -176,6 +177,7 @@ const Login = () => {
               placeholder="Password"
               aria-invalid={!!formErrors.password}
               disabled={mutation.isPending}
+              autoComplete="current-password"
               className={`border outline-0 pl-4 pr-10 py-3 rounded-[0.625rem] text-base w-full ${
                 formErrors.password
                   ? "border-[var(--cl-error)]"
@@ -219,13 +221,14 @@ const Login = () => {
                 need help?
               </span>
             )}
-            <span
-              className="text-[var(--cl-blue)] hover:text-blue-700 text-sm cursor-pointer"
+            <button
+              type="button"
+              className="text-[var(--cl-blue)] hover:text-blue-700 text-sm flex items-center"
               onClick={openSupportModal}
             >
-              {isSupportLoading && <LoadingSpinner />}
-              Contact Support
-            </span>
+              {isOpeningSupport && <InlineSpinner />}
+              <span>Contact Support</span>
+            </button>
           </div>
         </form>
         {activeModal === "error" && (
@@ -240,7 +243,15 @@ const Login = () => {
           />
         )}
 
-        {activeModal === "support" && <SupportFeedback onClose={closeModal} />}
+        {activeModal === "support" && (
+          <SupportFeedback
+            onClose={() => {
+              // close modal and ensure opening spinner is cleared
+              closeModal();
+              setIsOpeningSupport(false);
+            }}
+          />
+        )}
       </section>
     </main>
   );

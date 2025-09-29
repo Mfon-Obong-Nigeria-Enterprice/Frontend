@@ -6,11 +6,36 @@ import axios, {
 
 import { useAuthStore } from "@/stores/useAuthStore";
 
+// Resolve API base URL with a safe production fallback.
+const resolvedApiUrl = (() => {
+  const envUrl = import.meta.env.VITE_API_URL as string | undefined;
+  // If building for production and envUrl is missing or points to a relative /api,
+  // fall back to the Render deployment URL so staged frontend can reach the backend.
+  if (import.meta.env.PROD) {
+    if (!envUrl || envUrl === '/api' || envUrl === '/api/') {
+      return 'https://mfon-obong-enterprise.onrender.com/api';
+    }
+    return envUrl;
+  }
+  // In dev, allow local relative API proxy
+  return envUrl ?? '/api';
+})();
+
 const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: resolvedApiUrl,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
 });
+
+// If tokens are persisted locally (for browsers that block cross-site cookies), use them as Authorization fallback
+try {
+  const localAccess = localStorage.getItem("__mfon_access_token");
+  if (localAccess) {
+    api.defaults.headers.common["Authorization"] = `Bearer ${localAccess}`;
+  }
+} catch (e) {
+  // ignore
+}
 
 type FailedRequest = {
   resolve: (value?: unknown) => void;
@@ -100,14 +125,27 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Call refresh endpoint
-        await api.post("/auth/refresh");
+        // Call refresh endpoint; this will use cookie-based refresh when possible,
+        // or body-based refresh if the client provided tokens in localStorage.
+        // Use the authService refresh helper to persist tokens correctly.
+  await (await import("./authService")).refreshToken();
+
+        // ensure axios default Authorization header is up-to-date
+        const access = localStorage.getItem("__mfon_access_token");
+        if (access) api.defaults.headers.common["Authorization"] = `Bearer ${access}`;
 
         processQueue(null);
         return api(originalRequest); // retry original request
       } catch (refreshError) {
         processQueue(refreshError, null);
-        useAuthStore.getState().logout(); // clear local state
+        
+        // Show user-friendly session expired message
+        if (process.env.NODE_ENV === "development") {
+          console.warn("Session expired - redirecting to login");
+        }
+        
+        // clear local auth state and any stored tokens
+        useAuthStore.getState().logout(); // this will clear localStorage via authService.logout
         window.location.href = "/";
         return Promise.reject(refreshError);
       } finally {

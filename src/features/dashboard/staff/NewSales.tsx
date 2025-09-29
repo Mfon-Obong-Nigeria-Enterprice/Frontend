@@ -50,8 +50,31 @@ import { AlertCircle } from "lucide-react";
 // data
 import { bankNames, posNames } from "@/data/banklist";
 
-// connect to socket
-const socket = io("https://mfon-obong-enterprise.onrender.com");
+// Helper function to get the correct server URL
+const getServerUrl = () => {
+  const apiUrl = import.meta.env.VITE_API_URL;
+  
+  // For development with localhost
+  if (
+    apiUrl?.includes('localhost') || 
+    apiUrl?.includes('127.0.0.1') || 
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1'
+  ) {
+    return "http://localhost:3000";
+  }
+  
+  // For production with onrender
+  if (apiUrl && apiUrl.includes('onrender.com')) {
+    return apiUrl.replace('/api', ''); // Remove /api path for websocket
+  }
+  
+  // Fallback to localhost for development
+  return "http://localhost:3000";
+};
+
+// connect to socket with proper URL detection
+const socket = io(getServerUrl());
 
 export type Row = {
   productId: string;
@@ -531,8 +554,8 @@ const isClientBlocked = selectedClient ?
         {(!selectedClient || !isClientBlocked || isWalkIn) && (
           <div className="p-5 my-7 border rounded-[8px]">
             <h5 className="text-xl font-medium mb-4">Payment Details</h5>
-            <div className="flex gap-6 flex-wrap">
-              <div>
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+              <div className="w-full sm:w-auto">
                 <Label className="mb-1">Payment Method</Label>
                 <Select
                   value={paymentMethod}
@@ -542,7 +565,7 @@ const isClientBlocked = selectedClient ?
                     setBankSearch("");
                   }}
                 >
-                  <SelectTrigger className="w-[180px] bg-[#D9D9D9]">
+                  <SelectTrigger className="w-full sm:w-[180px] bg-[#D9D9D9]">
                     <SelectValue placeholder="Select Payment Type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -561,13 +584,13 @@ const isClientBlocked = selectedClient ?
               </div>
 
               {["bank", "transfer", "pos"].includes(paymentMethod) && (
-                <div>
+                <div className="w-full sm:w-auto">
                   <Label className="mb-1">
                     Choose {paymentMethod === "pos" ? "POS" : "Bank"}
                   </Label>
 
                   <Select value={subMethod} onValueChange={setSubMethod}>
-                    <SelectTrigger className="w-[180px] bg-[#D9D9D9]">
+                    <SelectTrigger className="w-full sm:w-[180px] bg-[#D9D9D9]">
                       <SelectValue placeholder="Select option" />
                     </SelectTrigger>
                     <SelectContent
@@ -613,13 +636,13 @@ const isClientBlocked = selectedClient ?
                 </div>
               )}
 
-              <div>
+              <div className="w-full sm:w-auto">
                 <Label className="mb-1">Amount Paid</Label>
                 <Input
                   ref={amountPaidInputRef}
                   type="text"
                   placeholder="₦0.00"
-                  className="w-40"
+                  className="w-full sm:w-40"
                   value={formatCurrencyDisplay(amountPaid)}
                   onChange={handleAmountPaidChange}
                   onKeyDown={handleAmountPaidKeyDown}
@@ -682,7 +705,7 @@ const isClientBlocked = selectedClient ?
             )}
             
             {selectedClient && newBalance < 0 && (
-              <div className="flex items-center bg-[#FFF2CE] border border-[#ffa500] rounded-[8px] min-h-[63px] px-14 mt-5">
+              <div className="flex items-center bg-[#FFF2CE] border border-[#ffa500] rounded-[8px] min-h-[63px] px-4 sm:px-14 mt-5">
                 <p className="font-Inter text-amber-800">
                   <span className="font-medium text-[15px]">Warning:</span>
                   <span className="text-sm">
@@ -700,18 +723,18 @@ const isClientBlocked = selectedClient ?
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <Button
             variant="outline"
             onClick={handleResetClient}
-            className="w-30"
+            className="w-full sm:w-auto"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || !canSubmit()}
-            className="text-white"
+            className="text-white w-full sm:w-auto"
           >
             {isSubmitting ? "Processing..." : "Complete Sales"}
           </Button>

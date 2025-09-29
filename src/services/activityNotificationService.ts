@@ -345,6 +345,13 @@ export class ActivityNotificationService {
   private isProcessing: boolean = false;
   private retryCount: number = 0;
   private maxRetries: number = 3;
+  
+  // Error throttling properties
+  private lastErrorTime = 0;
+  private errorCount = 0;
+  private authErrorCount = 0;
+  private readonly ERROR_THROTTLE_MS = 10000; // Only log errors every 10 seconds
+  private readonly AUTH_ERROR_THROTTLE_MS = 30000; // Auth errors every 30 seconds
 
   private loadLastProcessedId(): string | null {
     const currentUser = useAuthStore.getState().user;
@@ -361,6 +368,37 @@ export class ActivityNotificationService {
     const key = `notification-last-processed-${currentUser.id}`;
     localStorage.setItem(key, id);
     this.lastProcessedId = id;
+  }
+
+  // Error throttling to prevent console spam
+  private logThrottledError(message: string, error?: any, isAuthError = false): void {
+    const now = Date.now();
+    
+    if (isAuthError) {
+      this.authErrorCount++;
+      // Only log auth errors every 30 seconds
+      if (now - this.lastErrorTime > this.AUTH_ERROR_THROTTLE_MS) {
+        if (this.authErrorCount > 1) {
+          console.warn(`${message} (${this.authErrorCount} similar auth errors suppressed)`);
+        } else {
+          console.warn(message);
+        }
+        this.lastErrorTime = now;
+        this.authErrorCount = 0;
+      }
+    } else {
+      this.errorCount++;
+      // Only log regular errors every 10 seconds
+      if (now - this.lastErrorTime > this.ERROR_THROTTLE_MS) {
+        if (this.errorCount > 1) {
+          console.error(`${message} (${this.errorCount} similar errors suppressed)`, error);
+        } else {
+          console.error(message, error);
+        }
+        this.lastErrorTime = now;
+        this.errorCount = 0;
+      }
+    }
   }
 
   static getInstance(): ActivityNotificationService {
@@ -392,8 +430,13 @@ export class ActivityNotificationService {
 
     const currentUser = useAuthStore.getState().user;
     if (!currentUser?.id) {
-      console.warn("ActivityNotificationService: No authenticated user");
-      return 0;
+      return 0; // Silent skip - user not authenticated
+    }
+
+    // STAFF users don't have permission to access system activity logs
+    // Only ADMIN, MAINTAINER, and SUPER_ADMIN can access this endpoint
+    if (currentUser.role === 'STAFF') {
+      return 0; // Silent skip - STAFF users don't need system activity logs
     }
 
     this.isProcessing = true;
@@ -455,17 +498,37 @@ export class ActivityNotificationService {
       }
 
       this.retryCount = 0;
+      // Reset error tracking on successful processing
+      this.errorCount = 0;
+      this.authErrorCount = 0;
+      this.lastErrorTime = 0;
 
       return processedCount;
-    } catch (error) {
+    } catch (error: any) {
       this.retryCount++;
-      console.error(
-        `ActivityNotificationService: Error processing activities (attempt ${this.retryCount}):`,
-        error
-      );
+      
+      // Handle specific error types more gracefully
+      if (error?.response?.status === 403) {
+        this.logThrottledError(
+          "ActivityNotificationService: Access forbidden - insufficient permissions",
+          undefined,
+          true
+        );
+      } else if (error?.response?.status === 401) {
+        this.logThrottledError(
+          "ActivityNotificationService: Authentication required",
+          undefined,
+          true
+        );
+      } else {
+        this.logThrottledError(
+          `ActivityNotificationService: Error processing activities (attempt ${this.retryCount})`,
+          error
+        );
+      }
 
       if (this.retryCount >= this.maxRetries) {
-        console.error(
+        this.logThrottledError(
           "ActivityNotificationService: Max retries reached, stopping polling"
         );
         this.stopPolling();
@@ -479,16 +542,16 @@ export class ActivityNotificationService {
 
   // Enhanced maintenance notification sync
   async syncMaintenanceNotifications(): Promise<void> {
-    // const currentUser = useAuthStore.getState().user;
+    const currentUser = useAuthStore.getState().user;
+    
+    // Skip if user is not authenticated
+    if (!currentUser?.id) {
+      return; // Silent skip - no error needed
+    }
 
-    // Check for valid authentication before syncing
-    const token =
-      localStorage.getItem("accessToken") || localStorage.getItem("token");
-    if (!token) {
-      console.warn(
-        "syncMaintenanceNotifications: No authentication token available"
-      );
-      return;
+    // Only certain roles need maintenance notifications
+    if (currentUser.role === 'STAFF') {
+      return; // Silent skip - STAFF users don't need maintenance notifications
     }
 
     try {

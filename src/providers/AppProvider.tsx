@@ -29,6 +29,7 @@ import { useActivityLogsStore } from "@/stores/useActivityLogsStore";
 
 const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const { user, loading: isAuthLoading } = useAuthStore();
+  const initAuth = useAuthStore((state) => (state as any).initAuth);
 
   // Get store setters only
   const setProducts = useInventoryStore((state) => state.setProducts);
@@ -116,6 +117,16 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
 
   // Sync data to stores when available
   useEffect(() => {
+    // Ensure auth initialization completes before applying data to stores
+    // If initAuth exists, run it once on mount to allow cookie/localStorage refresh
+    (async () => {
+      try {
+        if (initAuth) await initAuth();
+      } catch (e) {
+        // ignore
+      }
+    })();
+
     if (categoriesQuery.data && categoriesQuery.isSuccess) {
       setCategories(categoriesQuery.data);
     }
