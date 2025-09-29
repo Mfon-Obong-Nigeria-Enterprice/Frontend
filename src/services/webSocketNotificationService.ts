@@ -61,7 +61,10 @@ export class WebSocketNotificationService {
         const baseUrl = apiUrl.replace(/\/api\/?$/, "");
         // Debug log to help diagnose wrong host issues in development
         // eslint-disable-next-line no-console
-        console.debug("WebSocketNotificationService using server url derived from VITE_API_URL:", baseUrl);
+        console.debug(
+          "WebSocketNotificationService using server url derived from VITE_API_URL:",
+          baseUrl
+        );
         return baseUrl;
       } catch (e) {
         // ignore and fallback
@@ -70,7 +73,9 @@ export class WebSocketNotificationService {
 
     // If no API URL is provided, fall back to a local dev socket server or current origin
     if (import.meta.env.DEV) {
-      return window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin;
+      return window.location.hostname === "localhost"
+        ? "http://localhost:3000"
+        : window.location.origin;
     }
 
     return window.location.origin;
@@ -78,8 +83,8 @@ export class WebSocketNotificationService {
 
   // Cache invalidation helper methods
   private invalidateRelevantQueries(
-    resourceType: string, 
-    _branchId?: string, 
+    resourceType: string,
+    _branchId?: string,
     _currentUser?: any
   ): void {
     try {
@@ -91,24 +96,24 @@ export class WebSocketNotificationService {
           queryClient.invalidateQueries({ queryKey: ["products"] }); // Transactions affect inventory
           queryClient.invalidateQueries({ queryKey: ["inventory"] });
           break;
-          
+
         case "client":
           // Invalidate clients data
           queryClient.invalidateQueries({ queryKey: ["clients"] });
           break;
-          
+
         case "product":
           // Invalidate products and inventory
           queryClient.invalidateQueries({ queryKey: ["products"] });
           queryClient.invalidateQueries({ queryKey: ["inventory"] });
           break;
-          
+
         case "category":
           // Invalidate categories and products
           queryClient.invalidateQueries({ queryKey: ["categories"] });
           queryClient.invalidateQueries({ queryKey: ["products"] });
           break;
-          
+
         default:
           // For unknown types, invalidate common queries
           queryClient.invalidateQueries({ queryKey: ["transactions"] });
@@ -121,7 +126,6 @@ export class WebSocketNotificationService {
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["reports"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
-      
     } catch (error) {
       console.error("❌ Error invalidating queries:", error);
     }
@@ -135,7 +139,10 @@ export class WebSocketNotificationService {
     // Only log if enough time has passed since last error log
     if (now - this.lastErrorTime > this.ERROR_THROTTLE_MS) {
       if (this.errorCount > 1) {
-        console.error(`${message} (${this.errorCount} similar errors suppressed)`, error);
+        console.error(
+          `${message} (${this.errorCount} similar errors suppressed)`,
+          error
+        );
       } else {
         console.error(message, error);
       }
@@ -153,10 +160,10 @@ export class WebSocketNotificationService {
 
     // SUPER_ADMIN sees all branches
     if (currentUser.role === "SUPER_ADMIN") return true;
-    
-    // MAINTAINER sees all branches  
+
+    // MAINTAINER sees all branches
     if (currentUser.role === "MAINTAINER") return true;
-    
+
     // ADMIN and STAFF only see their branch
     if (currentUser.role === "ADMIN" || currentUser.role === "STAFF") {
       return currentUser.branchId === eventBranchId;
@@ -178,16 +185,17 @@ export class WebSocketNotificationService {
 
     // Get any available token for fallback
     const possibleTokens = {
-      localStorage_accessToken: localStorage.getItem('accessToken'),
-      localStorage_token: localStorage.getItem('token'),
-      sessionStorage_accessToken: sessionStorage.getItem('accessToken'),
-      sessionStorage_token: sessionStorage.getItem('token'),
+      localStorage_accessToken: localStorage.getItem("accessToken"),
+      localStorage_token: localStorage.getItem("token"),
+      sessionStorage_accessToken: sessionStorage.getItem("accessToken"),
+      sessionStorage_token: sessionStorage.getItem("token"),
     };
 
-    const fallbackToken = possibleTokens.localStorage_accessToken || 
-                         possibleTokens.localStorage_token ||
-                         possibleTokens.sessionStorage_accessToken ||
-                         possibleTokens.sessionStorage_token;
+    const fallbackToken =
+      possibleTokens.localStorage_accessToken ||
+      possibleTokens.localStorage_token ||
+      possibleTokens.sessionStorage_accessToken ||
+      possibleTokens.sessionStorage_token;
 
     const socketConfig: any = {
       withCredentials: true, // Send cookies
@@ -225,7 +233,7 @@ export class WebSocketNotificationService {
 
     this.socket.on("connect_error", (error) => {
       this.connectionStatus = "disconnected";
-      
+
       // Use throttled error logging to prevent console spam
       if (error.message.includes("Authentication")) {
         this.logThrottledError("❌ WebSocket authentication failed", error);
@@ -280,7 +288,7 @@ export class WebSocketNotificationService {
       };
 
       addNotification(notification);
-      
+
       // REAL-TIME UI UPDATE: Invalidate relevant queries to refresh data
       this.invalidateRelevantQueries("transaction", data.branchId, currentUser);
     });
@@ -311,7 +319,7 @@ export class WebSocketNotificationService {
       };
 
       addNotification(notification);
-      
+
       // REAL-TIME UI UPDATE: Invalidate relevant queries to refresh data
       this.invalidateRelevantQueries("client", data.branchId, currentUser);
     });
@@ -342,7 +350,7 @@ export class WebSocketNotificationService {
       };
 
       addNotification(notification);
-      
+
       // REAL-TIME UI UPDATE: Invalidate relevant queries to refresh data
       this.invalidateRelevantQueries("product", data.branchId, currentUser);
     });
@@ -365,7 +373,7 @@ export class WebSocketNotificationService {
       this.invalidateRelevantQueries("product", data.branchId, currentUser);
     });
 
-    // Client updated - Real-time client update notifications  
+    // Client updated - Real-time client update notifications
     this.socket.on("client_updated", (data: WebSocketNotificationData) => {
       if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
         return;
@@ -382,12 +390,15 @@ export class WebSocketNotificationService {
     });
 
     // Client balance updated - Real-time balance changes
-    this.socket.on("client_balance_updated", (data: WebSocketNotificationData) => {
-      if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
-        return;
+    this.socket.on(
+      "client_balance_updated",
+      (data: WebSocketNotificationData) => {
+        if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
+          return;
+        }
+        this.invalidateRelevantQueries("client", data.branchId, currentUser);
       }
-      this.invalidateRelevantQueries("client", data.branchId, currentUser);
-    });
+    );
 
     // Transaction updated - Real-time transaction updates
     this.socket.on("transaction_updated", (data: WebSocketNotificationData) => {
@@ -398,12 +409,19 @@ export class WebSocketNotificationService {
     });
 
     // Transaction status changed - Real-time status updates
-    this.socket.on("transaction_status_changed", (data: WebSocketNotificationData) => {
-      if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
-        return;
+    this.socket.on(
+      "transaction_status_changed",
+      (data: WebSocketNotificationData) => {
+        if (!this.shouldReceiveRealTimeUpdate(data.branchId, currentUser)) {
+          return;
+        }
+        this.invalidateRelevantQueries(
+          "transaction",
+          data.branchId,
+          currentUser
+        );
       }
-      this.invalidateRelevantQueries("transaction", data.branchId, currentUser);
-    });
+    );
 
     // Sale completed - Real-time sale completion (might be different from transaction_created)
     this.socket.on("sale_completed", (data: WebSocketNotificationData) => {
@@ -437,31 +455,46 @@ export class WebSocketNotificationService {
 
     // User management events - For admins and super admins
     this.socket.on("user_created", (_data: WebSocketNotificationData) => {
-      if (currentUser?.role === "SUPER_ADMIN" || currentUser?.role === "MAINTAINER") {
+      if (
+        currentUser?.role === "SUPER_ADMIN" ||
+        currentUser?.role === "MAINTAINER"
+      ) {
         queryClient.invalidateQueries({ queryKey: ["users"] });
       }
     });
 
     this.socket.on("user_updated", (_data: WebSocketNotificationData) => {
-      if (currentUser?.role === "SUPER_ADMIN" || currentUser?.role === "MAINTAINER") {
+      if (
+        currentUser?.role === "SUPER_ADMIN" ||
+        currentUser?.role === "MAINTAINER"
+      ) {
         queryClient.invalidateQueries({ queryKey: ["users"] });
       }
     });
 
     this.socket.on("user_deleted", (_data: WebSocketNotificationData) => {
-      if (currentUser?.role === "SUPER_ADMIN" || currentUser?.role === "MAINTAINER") {
+      if (
+        currentUser?.role === "SUPER_ADMIN" ||
+        currentUser?.role === "MAINTAINER"
+      ) {
         queryClient.invalidateQueries({ queryKey: ["users"] });
       }
     });
 
     this.socket.on("user_blocked", (_data: WebSocketNotificationData) => {
-      if (currentUser?.role === "SUPER_ADMIN" || currentUser?.role === "MAINTAINER") {
+      if (
+        currentUser?.role === "SUPER_ADMIN" ||
+        currentUser?.role === "MAINTAINER"
+      ) {
         queryClient.invalidateQueries({ queryKey: ["users"] });
       }
     });
 
     this.socket.on("user_unblocked", (_data: WebSocketNotificationData) => {
-      if (currentUser?.role === "SUPER_ADMIN" || currentUser?.role === "MAINTAINER") {
+      if (
+        currentUser?.role === "SUPER_ADMIN" ||
+        currentUser?.role === "MAINTAINER"
+      ) {
         queryClient.invalidateQueries({ queryKey: ["users"] });
       }
     });

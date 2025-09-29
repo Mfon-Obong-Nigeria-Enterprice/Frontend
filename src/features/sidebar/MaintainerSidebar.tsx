@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 // icons imported from react-icons
-import { MdOutlineDashboard } from "react-icons/md";
+import { MdOutlineDashboard} from "react-icons/md";
 import { IoIosPeople, IoIosStats, IoIosNotifications } from "react-icons/io";
 import { RiSettings3Line } from "react-icons/ri";
 import { IoIosLogOut } from "react-icons/io";

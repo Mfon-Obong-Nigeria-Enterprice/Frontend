@@ -149,7 +149,11 @@ const StaffStats: React.FC = () => {
         
       </div>
 
+      <div className="">
+
       <Stats data={stats}/>
+      </div>
+     
     </div>
   );
 };
