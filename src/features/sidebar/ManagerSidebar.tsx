@@ -3,16 +3,14 @@ import { Link, useLocation } from "react-router-dom";
 
 // icons
 import {
-  LayoutDashboard,
-  Book,
-  UserRound,
-  UserRoundCog,
-  Settings,
-  LogOut,
-} from "lucide-react";
-import { MdOutlineNotifications } from "react-icons/md";
-import { HiMiniChartBar } from "react-icons/hi2";
-
+  MdOutlineDashboard,
+  MdInventory2,
+  MdBarChart,
+  MdManageAccounts,
+} from "react-icons/md";
+import { FiUsers, FiSettings, FiLogOut } from "react-icons/fi";
+import { IoNotificationsOutline } from "react-icons/io5";
+import { CgArrowsExchangeAlt } from "react-icons/cg";
 // hooks
 import { useLogout } from "@/hooks/uselogout";
 
@@ -37,42 +35,42 @@ const items = [
   {
     title: "Dashboard",
     url: "/manager/dashboard/m-overview",
-    icon: LayoutDashboard,
+    icon: MdOutlineDashboard,
   },
   {
     title: "Business Report",
     url: "/manager/dashboard/business-report",
-    icon: Book,
+    icon: MdInventory2,
   },
   {
     title: "Clients",
     url: "/manager/dashboard/manage-clients",
-    icon: UserRound,
+    icon: FiUsers,
   },
   {
     title: "Transaction",
     url: "/manager/dashboard/manage-transactions",
-    icon: UserRound,
+    icon: CgArrowsExchangeAlt,
   },
   {
     title: "Revenue Analytics",
     url: "/manager/dashboard/revenue-analytics",
-    icon: HiMiniChartBar,
+    icon: MdBarChart,
   },
   {
     title: "User Management",
     url: "/manager/dashboard/manage-user",
-    icon: UserRoundCog,
+    icon: MdManageAccounts,
   },
   {
     title: "Notifications",
     url: "/manager/dashboard/manager-notifications",
-    icon: MdOutlineNotifications,
+    icon: IoNotificationsOutline,
   },
   {
     title: "Settings",
     url: "/manager/dashboard/manager-settings",
-    icon: Settings,
+    icon: FiSettings,
   },
 ];
 
@@ -121,7 +119,7 @@ const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
           className="cursor-pointer"
           onClick={() => onLogoutClick()}
         >
-          <LogOut />
+          <FiLogOut />
           <span>Logout</span>
         </SidebarMenuButton>
       </SidebarFooter>

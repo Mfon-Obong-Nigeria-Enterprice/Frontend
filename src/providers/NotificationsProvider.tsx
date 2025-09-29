@@ -4,6 +4,7 @@ import {
   ActivityNotificationService,
   useActivityNotifications,
 } from "@/services/activityNotificationService";
+import { useWebSocketNotifications } from "@/services/webSocketNotificationService";
 import type { ActivityLogs } from "@/stores/useActivityLogsStore";
 
 interface NotificationProviderProps {
@@ -84,38 +85,58 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
   // Get the hook methods but disable auto-start to have more control
   const activityNotifications = useActivityNotifications(false, 30000);
+  
+  // Initialize WebSocket notifications for real-time updates
+  const webSocketNotifications = useWebSocketNotifications(false);
 
   // Enhanced effect for user authentication changes
   useEffect(() => {
     if (user?.id && user?.role) {
-      // Small delay to ensure all stores are properly initialized
+      // Longer delay to ensure all stores and auth are properly initialized
       const timer = setTimeout(() => {
         try {
+          console.log("NotificationProvider: Starting services for user:", user.email);
           activityNotifications.startPolling(30000);
+          // Start WebSocket connection for real-time updates (using cookie authentication)
+          webSocketNotifications.connect();
         } catch (error) {
-          console.error("NotificationProvider: Error starting service:", error);
+          console.error("NotificationProvider: Error starting services:", error);
         }
-      }, 100);
+      }, 1000); // Increased delay to 1 second
 
       return () => {
         clearTimeout(timer);
+        try {
+          // Clean up both services when component unmounts or user changes
+          webSocketNotifications.disconnect();
+        } catch (error) {
+          console.error("NotificationProvider: Error cleaning up WebSocket:", error);
+        }
       };
     } else {
       activityNotifications.stopPolling();
+      
+      // Stop WebSocket when user logs out
+      try {
+        webSocketNotifications.disconnect();
+      } catch (error) {
+        console.error("NotificationProvider: Error stopping WebSocket on logout:", error);
+      }
 
       // Only clear data if user is completely logged out
       if (!user?.id) {
         activityNotifications.clearUserData();
       }
     }
-  }, [user?.id, user?.role, activityNotifications]);
+  }, [user?.id, user?.role, activityNotifications, webSocketNotifications]);
 
   // Cleanup effect
   useEffect(() => {
     return () => {
       activityNotifications.stopPolling();
+      webSocketNotifications.disconnect();
     };
-  }, [activityNotifications]);
+  }, [activityNotifications, webSocketNotifications]);
 
   return <>{children}</>;
 };

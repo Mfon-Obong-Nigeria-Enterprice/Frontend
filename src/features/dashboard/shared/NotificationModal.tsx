@@ -144,7 +144,7 @@ const NotificationModal = ({ onClose }: NotificationModalProps) => {
   }
 
   return (
-    <div className="bg-white shadow-lg border max-h-150 flex flex-col">
+    <div className="bg-white shadow-lg border max-h-[32rem] flex flex-col">
       {/* Header - Fixed */}
       <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -180,7 +180,7 @@ const NotificationModal = ({ onClose }: NotificationModalProps) => {
       </div>
 
       {/* Notification List - Scrollable */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden min-h-0">
         <ScrollArea className="h-full">
           <div className="divide-y divide-gray-100">
             {previewNotifications.map((notification) => (

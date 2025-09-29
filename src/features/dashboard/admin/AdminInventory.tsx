@@ -41,9 +41,9 @@ import EmptyInventory from "../shared/EmptyInventory";
 const AdminInventory = () => {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [position, setPosition] = useState({ xPercent: 80, yPercent: 80 });
+  const [, setPosition] = useState({ xPercent: 80, yPercent: 80 });
   const [dragging, setDragging] = useState(false);
-  const [rel, setRel] = useState({ x: 0, y: 0 });
+  const [rel] = useState({ x: 0, y: 0 });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
   const [stockStatus, setStockStatus] = useState("all");
@@ -163,11 +163,6 @@ const AdminInventory = () => {
     setAddCategoryModalOpen(false);
   };
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
-    setDragging(true);
-    const button = e.currentTarget.getBoundingClientRect();
-    setRel({ x: e.clientX - button.left, y: e.clientY - button.top });
-  };
 
   const handleMouseUp = () => setDragging(false);
 
@@ -464,27 +459,23 @@ const AdminInventory = () => {
 
             {/* Content */}
             <div className="p-4 sm:p-6" ref={containerRef}>
-              <InventoryTab
-                products={filteredProducts}
-                categories={categories}
-                stockStatus={stockStatus}
-                priceRange={priceRange}
-              />
+  <InventoryTab
+    products={filteredProducts}
+    categories={categories}
+    stockStatus={stockStatus}
+    priceRange={priceRange}
+  />
 
-              {/* Floating Add Button */}
-              <button
-                onClick={() => setIsAddModalOpen(true)}
-                onMouseDown={handleMouseDown}
-                className="fixed z-50 flex justify-center items-center bg-green-600 hover:bg-green-700 w-14 h-14 sm:w-16 sm:h-16 rounded-full text-white shadow-xl cursor-move transition-colors"
-                style={{
-                  left: `${position.xPercent}vw`,
-                  top: `${position.yPercent}vh`,
-                  transform: "translate(-50%, -50%)",
-                }}
-              >
-                <Plus className="h-6 w-6 sm:h-8 sm:w-8" />
-              </button>
-            </div>
+  {/* Floating Add Button - Fixed */}
+  <div>
+    <button
+      onClick={() => setIsAddModalOpen(true)}
+      className="fixed bottom-6 right-6 z-50 flex justify-center items-center bg-green-600 hover:bg-green-700 w-14 h-14 sm:w-16 sm:h-16 rounded-full text-white shadow-xl transition-colors"
+    >
+      <Plus className="h-6 w-6 sm:h-8 sm:w-8" />
+    </button>
+  </div>
+</div>
 
             <UpdateStock
               products={productsForUpdateStock}
@@ -494,9 +485,19 @@ const AdminInventory = () => {
               onSave={handleSave}
             />
 
+            {/* <div className="fixed bottom-6 right-6 z-40">
+  <button
+    onClick={() => setIsAddModalOpen(true)}
+    className="fixed bottom-6 right-6 z-50 flex justify-center items-center bg-green-600 hover:bg-green-700 w-14 h-14 sm:w-16 sm:h-16 rounded-full text-white shadow-xl transition-colors"
+  >
+    <Plus className="h-6 w-6 sm:h-8 sm:w-8" />
+  </button>
+</div> */}
+
             <Modal
               isOpen={isAddModalOpen}
               onClose={() => setIsAddModalOpen(false)}
+              className="fixed inset-0 z-50 flex items-center justify-center"
             >
               <div className="p-4 sm:p-6">
                 <h6 className="text-lg font-semibold text-gray-900 mb-4">

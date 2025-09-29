@@ -8,20 +8,20 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   base: "/",
   server: {
-    port: 3000,
+    port: 3001,
     open: true,
     proxy: {
       "/api": {
-        target: "https://mfon-obong-enterprise.onrender.com",
+        target: "http://localhost:3000",
         changeOrigin: true,
-        secure: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
+        secure: false,
+        // Don't rewrite - keep the /api prefix since backend expects it
       },
     },
     hmr: {
       protocol: "ws",
       host: "localhost",
-      port: 3000,
+      port: 3001,
     },
   },
   plugins: [react(), tailwindcss()],

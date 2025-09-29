@@ -1,8 +1,19 @@
 import axios, { type AxiosInstance } from "axios";
 
 // Public API client for unauthenticated endpoints
+const resolvedPublicApiUrl = (() => {
+  const envUrl = import.meta.env.VITE_API_URL as string | undefined;
+  if (import.meta.env.PROD) {
+    if (!envUrl || envUrl === '/api' || envUrl === '/api/') {
+      return 'https://mfon-obong-enterprise.onrender.com/api';
+    }
+    return envUrl;
+  }
+  return envUrl ?? '/api';
+})();
+
 const publicApi: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: resolvedPublicApiUrl,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
