@@ -167,7 +167,7 @@ const TransactionTable = ({
                     transaction.total
                   )}`}
                 >
-                  {formatCurrency(transaction.total ?? 0).toLocaleString()}
+                  {formatCurrency(transaction.total ?? 0)}
                 </td>
                 {user?.role === "SUPER_ADMIN" && (
                   <td className=" text-start pl-1 text-[#444444] text-sm font-normal py-3">

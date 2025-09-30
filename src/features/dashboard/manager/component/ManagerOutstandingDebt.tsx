@@ -9,6 +9,7 @@ import {
 import usePagination from "@/hooks/usePagination";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useClientStore } from "@/stores/useClientStore";
+import { calculateClientBalance } from "@/utils/calculateOutstanding";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo } from "react";
@@ -64,19 +65,22 @@ const ManagerOutstandingDebt = () => {
             </Button>
           </div>
         ) : (
-          currentDebtors.map((client, index) => (
-            <div
-              key={`${client._id}-${index}`}
-              className={`border-b border-gray-300 flex justify-between items-center pt-4 `}
-            >
-              <p className="font-medium  text-[#444444] text-xs sm:text-base capitalize">
-                {client.name}
-              </p>
-              <p className="text-start text-[#F95353] text-xs sm:text-base ">
-                -{formatCurrency(Math.abs(client.balance))}
-              </p>
-            </div>
-          ))
+          currentDebtors.map((client, index) => {
+            const clientBalance = calculateClientBalance(client);
+            return (
+              <div
+                key={`${client._id}-${index}`}
+                className={`border-b border-gray-300 flex justify-between items-center pt-4 `}
+              >
+                <p className="font-medium  text-[#444444] text-xs sm:text-base capitalize">
+                  {client.name}
+                </p>
+                <p className="text-start text-[#F95353] text-xs sm:text-base ">
+                  -{formatCurrency(Math.abs(clientBalance))}
+                </p>
+              </div>
+            );
+          })
         )}
       </div>
 
