@@ -157,7 +157,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                       <div>
                         <p className={`font-[400] text-[#444444] text-sm `}>
                           {lastTransaction
-                            ? formatCurrency(lastTransaction.amount || 0)
+                            ? formatCurrency(lastTransaction.amountPaid || 0)
                             : "₦0"}
                         </p>
                       </div>
