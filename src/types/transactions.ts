@@ -45,6 +45,7 @@ export interface Transaction {
   amountPaid?: number;
   paymentMethod?: string;
   status: string;
+  date?: string;
   createdAt: string;
   notes?: string;
   waybillNumber?: string;
@@ -53,6 +54,7 @@ export interface Transaction {
   branchId?: string;
   branchName?: string;
   reference?: string;
+  // clientBalance: number;
 }
 
 export type MergedTransaction = Transaction & {
@@ -75,6 +77,7 @@ export type TransactionCreate = {
   notes: string;
   branchId?: string;
   clientId?: string;
+  date?: string;
 };
 
 // New type specifically for client debt payments

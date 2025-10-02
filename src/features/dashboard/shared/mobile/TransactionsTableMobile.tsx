@@ -4,6 +4,10 @@ import WalkinTransactionModal from "../WalkinTransactionModal";
 
 //utils
 import { formatCurrency } from "@/utils/styles";
+import {
+  getTransactionDateString,
+  getTransactionTimeString,
+} from "@/utils/transactions";
 
 // types
 import type { Transaction } from "@/types/transactions";
@@ -62,10 +66,10 @@ const TransactionsTableMobile = ({
               {/* time,date*/}
               <p className="flex flex-col text-[#444444]">
                 <span className="text-xs">
-                  {new Date(transaction.createdAt).toLocaleDateString()}
+                  {getTransactionDateString(transaction, "en-GB")}
                 </span>
                 <span className="text-xs ml-1">
-                  {new Date(transaction.createdAt).toLocaleTimeString()}
+                  {getTransactionTimeString(transaction)}
                 </span>
               </p>
 

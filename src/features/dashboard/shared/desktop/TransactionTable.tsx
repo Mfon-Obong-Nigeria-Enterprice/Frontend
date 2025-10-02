@@ -6,6 +6,7 @@ import WalkinTransactionModal from "../WalkinTransactionModal";
 import { balanceClassT } from "@/utils/styles";
 import { getTypeStyles } from "@/utils/helpersfunction";
 import { formatCurrency, toSentenceCaseName } from "@/utils/styles";
+import { getTransactionDateString, getTransactionTimeString } from "@/utils/transactions";
 
 // types
 import type { Transaction } from "@/types/transactions";
@@ -32,6 +33,7 @@ const TransactionTable = ({
 }) => {
   const { open, openModal, selectedTransaction } = useTransactionsStore();
   const { user } = useAuthStore();
+
 
   return (
     <div className="hidden xl:block">
@@ -88,10 +90,10 @@ const TransactionTable = ({
                 </td>
                 <td className=" py-3 pl-1  font-normal ">
                   <p className="text-xs text-[#444444] text-start">
-                    {new Date(transaction.createdAt).toLocaleDateString()}
+                    {getTransactionDateString(transaction, "en-GB")}
                   </p>
                   <p className="text-[0.625rem] text-[#7D7D7D] text-start">
-                    {new Date(transaction.createdAt).toLocaleTimeString()}
+                    {getTransactionTimeString(transaction)}
                   </p>
                 </td>
                 <td className=" text-start pl-1 text-[#444444] text-sm font-normal py-3">
