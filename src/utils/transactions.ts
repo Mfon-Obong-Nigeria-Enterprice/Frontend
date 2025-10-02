@@ -1,31 +1,3 @@
-import type { Transaction } from "@/types/transactions";
-
-// Prefer backend-provided date over createdAt when present
-export const getTransactionDate = (tx: Partial<Transaction>): Date => {
-  const raw = (tx as any)?.date ?? tx.createdAt;
-  try {
-    return new Date(raw as string);
-  } catch {
-    return new Date();
-  }
-};
-
-export const getTransactionDateString = (
-  tx: Partial<Transaction>,
-  locale: string = undefined
-): string => {
-  const d = getTransactionDate(tx);
-  return d.toLocaleDateString(locale);
-};
-
-export const getTransactionTimeString = (
-  tx: Partial<Transaction>,
-  locale: string = undefined
-): string => {
-  const d = getTransactionDate(tx);
-  return d.toLocaleTimeString(locale);
-};
-
 import type { Transaction, MergedTransaction } from "@/types/transactions";
 import type { Client } from "@/types/types";
 
@@ -48,39 +20,56 @@ export const mergeTransactionsWithClients = (
   });
 };
 
+// Prefer backend-provided date over createdAt when present
+export const getTransactionDate = (tx: Partial<Transaction>): Date => {
+  const raw = (tx as any)?.date ?? tx.createdAt;
+  if (!raw) return new Date();
+  const parsed = new Date(raw as string);
+  return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+};
+
+export const getTransactionDateString = (
+  tx: Partial<Transaction>,
+  locale: string = undefined
+): string => {
+  const d = getTransactionDate(tx);
+  return d.toLocaleDateString(locale);
+};
+
+export const getTransactionTimeString = (
+  tx: Partial<Transaction>,
+  locale: string = undefined
+): string => {
+  const d = getTransactionDate(tx);
+  return d.toLocaleTimeString(locale);
+};
+
 export function getClientsWithDebt(mergedTransaction: MergedTransaction[]) {
-  const clientMap: Record<
-    string,
-    { client: Client; _id: string; createdAt: string }
-  > = {};
+  const clientMap: Record<string, { client: Client; _id: string; createdAt: string }> = {};
 
   mergedTransaction.forEach((tx) => {
     const client = tx.client;
-
     if (!client) return; // Skip walk-in clients
 
     const clientId = client._id;
-
-    // Assuming 'total' is what they should pay, and 'amountPaid' is what they paid
-    // const amountOwed = tx.total - tx.amountPaid;
 
     // Only store the first occurrence (for createdAt)
     if (!clientMap[clientId]) {
       clientMap[clientId] = {
         client,
         _id: clientId,
-        createdAt: tx.createdAt, // use the first transaction's date
+        createdAt: tx.createdAt,
       };
     }
   });
 
-  // Filter clients with balance < 0 (i.e., they owe money)
+  // Filter clients with negative balance (they owe money) and map to output
   return Object.values(clientMap)
     .filter(({ client }) => client.balance < 0)
-    .map((client, createdAt) => ({
-      name: client.client.name,
-      _id: client._id,
-      balance: client.client.balance,
+    .map(({ client, _id, createdAt }) => ({
+      name: client.name,
+      _id,
+      balance: client.balance,
       createdAt,
     }));
 }
