@@ -101,6 +101,15 @@ const emptyRow: Row = {
   productName: "",
 };
 
+// Returns today's date in local timezone formatted as YYYY-MM-DD for input[type="date"]
+const getTodayDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const NewSales: React.FC = () => {
   const queryClient = useQueryClient();
   // Store data
@@ -134,7 +143,7 @@ const NewSales: React.FC = () => {
 
   const [bankSearch, setBankSearch] = useState("");
 
-  const [date, setDate] = useState<string>("");
+  const [date, setDate] = useState<string>(() => getTodayDateString());
 
   // listen for socket event
   useEffect(() => {
@@ -356,6 +365,7 @@ const NewSales: React.FC = () => {
     setNotes("");
     setIsSubmitting(false);
     setGlobalDiscount(0);
+    setDate(getTodayDateString());
   };
 
   const handleSubmit = async () => {

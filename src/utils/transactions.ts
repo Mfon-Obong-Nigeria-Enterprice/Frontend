@@ -1,3 +1,31 @@
+import type { Transaction } from "@/types/transactions";
+
+// Prefer backend-provided date over createdAt when present
+export const getTransactionDate = (tx: Partial<Transaction>): Date => {
+  const raw = (tx as any)?.date ?? tx.createdAt;
+  try {
+    return new Date(raw as string);
+  } catch {
+    return new Date();
+  }
+};
+
+export const getTransactionDateString = (
+  tx: Partial<Transaction>,
+  locale: string = undefined
+): string => {
+  const d = getTransactionDate(tx);
+  return d.toLocaleDateString(locale);
+};
+
+export const getTransactionTimeString = (
+  tx: Partial<Transaction>,
+  locale: string = undefined
+): string => {
+  const d = getTransactionDate(tx);
+  return d.toLocaleTimeString(locale);
+};
+
 import type { Transaction, MergedTransaction } from "@/types/transactions";
 import type { Client } from "@/types/types";
 

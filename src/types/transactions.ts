@@ -77,6 +77,7 @@ export type TransactionCreate = {
   notes: string;
   branchId?: string;
   clientId?: string;
+  date?: string;
 };
 
 // New type specifically for client debt payments
