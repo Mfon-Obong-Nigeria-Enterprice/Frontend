@@ -21,12 +21,12 @@ const ImportLoading = () => {
 
     const processImport = async () => {
       if (isProcessing) return;
-      
+
       setIsProcessing(true);
       const startTime = Date.now();
 
       try {
-        const result = await bulkImportProducts(data, (processed, total) => {
+        const result = await bulkImportProducts(data, (processed) => {
           setProcessed(processed);
         });
 
@@ -41,14 +41,18 @@ const ImportLoading = () => {
         });
 
         // Set error rows for display
-        setErrorRows(result.errors.map((error, index) => ({
-          row: index + 1,
-          message: error.error,
-        })));
+        setErrorRows(
+          result.errors.map((error, index) => ({
+            row: index + 1,
+            message: error.error,
+          }))
+        );
 
         // Show success message
         if (result.success.length > 0) {
-          toast.success(`Successfully imported ${result.success.length} products!`);
+          toast.success(
+            `Successfully imported ${result.success.length} products!`
+          );
         }
 
         if (result.errors.length > 0) {
@@ -59,7 +63,6 @@ const ImportLoading = () => {
         setTimeout(() => {
           setStep("complete");
         }, 1000);
-
       } catch (error) {
         console.error("Import failed:", error);
         toast.error("Import failed. Please try again.");

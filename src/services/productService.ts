@@ -2,6 +2,7 @@
 import api from "./baseApi";
 import type { Product, NewProduct } from "@/types/types";
 import { useAuthStore } from "@/stores/useAuthStore";
+import type { ProductImportRow } from "@/types/types";
 
 export const getAllProducts = async (): Promise<Product[]> => {
   const response = await api.get("/products");
@@ -48,13 +49,15 @@ export const updateProductStock = async (
   return response.data;
 };
 
-
 export const deleteProduct = async (id: string): Promise<void> => {
   const response = await api.delete(`/products/${id}/delete`);
   return response.data;
 };
 
-export const updateProductPrice = async (productId: string, newPrice: number) => {
+export const updateProductPrice = async (
+  productId: string,
+  newPrice: number
+) => {
   const response = await api.patch(`/products/${productId}`, {
     unitPrice: newPrice,
   });
@@ -67,15 +70,15 @@ const resolveCategoryId = async (categoryName: string): Promise<string> => {
     // First, try to get all categories to find a match
     const response = await api.get("/categories");
     const categories = response.data;
-    
-    const matchingCategory = categories.find((cat: any) => 
-      cat.name.toLowerCase() === categoryName.toLowerCase()
+
+    const matchingCategory = categories.find(
+      (cat: any) => cat.name.toLowerCase() === categoryName.toLowerCase()
     );
-    
+
     if (matchingCategory) {
       return matchingCategory._id;
     }
-    
+
     // If no category found, you might want to create a default category
     // or throw an error. For now, we'll use a fallback approach
     throw new Error(`Category "${categoryName}" not found`);
@@ -89,7 +92,10 @@ const resolveCategoryId = async (categoryName: string): Promise<string> => {
 export const bulkImportProducts = async (
   products: ProductImportRow[],
   onProgress?: (processed: number, total: number) => void
-): Promise<{ success: Product[]; errors: Array<{ product: ProductImportRow; error: string }> }> => {
+): Promise<{
+  success: Product[];
+  errors: Array<{ product: ProductImportRow; error: string }>;
+}> => {
   const branchId = useAuthStore.getState().user?.branchId;
   if (!branchId) {
     throw new Error("Branch ID is required to create products");
@@ -101,23 +107,25 @@ export const bulkImportProducts = async (
   // Process products sequentially to avoid overwhelming the server
   for (let i = 0; i < products.length; i++) {
     const productData = products[i];
-    
+
     try {
       // Resolve category name to categoryId
       const categoryId = await resolveCategoryId(productData.Category);
-      
+
       // Transform ProductImportRow to NewProduct format
       const newProduct: NewProduct = {
         name: productData["Product Name"],
         categoryId: categoryId,
         unit: "pcs", // Default unit, you might want to make this configurable
-        unitPrice: typeof productData["Price per unit"] === "string" 
-          ? parseFloat(productData["Price per unit"]) 
-          : productData["Price per unit"],
+        unitPrice:
+          typeof productData["Price per unit"] === "string"
+            ? parseFloat(productData["Price per unit"])
+            : productData["Price per unit"],
         minStockLevel: 0, // Default minimum stock level
-        stock: typeof productData["Stock Quantity"] === "string"
-          ? parseInt(productData["Stock Quantity"])
-          : productData["Stock Quantity"],
+        stock:
+          typeof productData["Stock Quantity"] === "string"
+            ? parseInt(productData["Stock Quantity"])
+            : productData["Stock Quantity"],
       };
 
       const createdProduct = await createProduct(newProduct);
@@ -125,7 +133,8 @@ export const bulkImportProducts = async (
     } catch (error) {
       errors.push({
         product: productData,
-        error: error instanceof Error ? error.message : "Unknown error occurred"
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
       });
     }
 
@@ -135,7 +144,7 @@ export const bulkImportProducts = async (
     }
 
     // Small delay to avoid overwhelming the server
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
   return { success, errors };

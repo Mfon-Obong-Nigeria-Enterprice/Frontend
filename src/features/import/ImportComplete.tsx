@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 const ImportComplete = () => {
   const navigate = useNavigate();
   const goBack = useGoBack();
-  const { data, summary, setStep, reset } = useImportStore();
+  const { summary, setStep, reset } = useImportStore();
 
   const [showCheck, setShowCheck] = useState(false);
 
@@ -27,7 +27,10 @@ const ImportComplete = () => {
     { title: "Products Updated", quantity: summary.updated },
     { title: "New Products", quantity: summary.new },
     { title: "Errors", quantity: summary.errors },
-    { title: "Processing Time", quantity: `${summary.processingTime.toFixed(1)}s` },
+    {
+      title: "Processing Time",
+      quantity: `${summary.processingTime.toFixed(1)}s`,
+    },
   ];
   return (
     <div>

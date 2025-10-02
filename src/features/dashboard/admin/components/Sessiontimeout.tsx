@@ -9,12 +9,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useQueryClient } from "@tanstack/react-query";
+// import { useQueryClient } from "@tanstack/react-query";
 
 const SessionTimeout = () => {
   const { isAuthenticated, logout } = useAuthStore();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
 
   const [showWarning, setShowWarning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
@@ -69,16 +69,15 @@ const SessionTimeout = () => {
     }, 1000);
   }, []);
 
- const handleLogout = useCallback(async () => {
-  if (countdownInterval.current) clearInterval(countdownInterval.current);
-  if (warningTimeout.current) clearTimeout(warningTimeout.current);
-  if (logoutTimeout.current) clearTimeout(logoutTimeout.current);
+  const handleLogout = useCallback(async () => {
+    if (countdownInterval.current) clearInterval(countdownInterval.current);
+    if (warningTimeout.current) clearTimeout(warningTimeout.current);
+    if (logoutTimeout.current) clearTimeout(logoutTimeout.current);
 
-  setShowWarning(false);
-  await logout();
-  navigate("/");
-}, [logout, navigate]);
-
+    setShowWarning(false);
+    await logout();
+    navigate("/");
+  }, [logout, navigate]);
 
   const handleStayLoggedIn = useCallback(() => {
     setShowWarning(false);
@@ -116,7 +115,7 @@ const SessionTimeout = () => {
       if (activityTimeout) clearTimeout(activityTimeout);
       activityTimeout = setTimeout(() => {
         resetTimers();
-      }, 1000); 
+      }, 1000);
     };
 
     events.forEach((event) =>
