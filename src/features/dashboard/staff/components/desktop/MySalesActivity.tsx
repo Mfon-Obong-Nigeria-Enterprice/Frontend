@@ -11,6 +11,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { getTransactionTimeString } from "@/utils/transactions";
 
 //  icons
 import { ChevronDown, Receipt, TrendingUp } from "lucide-react";
@@ -117,11 +118,7 @@ const MySalesActivity = ({
                   {transaction.amountPaid?.toLocaleString()}
                 </td>
                 <td className="uppercase text-[#444444] text-base text-right pr-5 md:pr-10">
-                  {new Date(transaction.createdAt).toLocaleTimeString("en-NG", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: true,
-                  })}
+                  {getTransactionTimeString(transaction, "en-NG")}
                 </td>
               </tr>
             ))
