@@ -2,7 +2,6 @@ import { balanceClass, balanceTextClass } from "@/utils/styles";
 import type { Client } from "@/types/types";
 import { getDaysSince } from "@/utils/helpersfunction";
 import { useEffect, useMemo, useState } from "react";
-import { calculateClientBalance } from "@/utils/calculateOutstanding";
 import { formatCurrency } from "@/utils/formatCurrency";
 
 const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
@@ -11,12 +10,10 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
     setClient(initialClient);
   }, [initialClient]);
 
-  const clientBalance = calculateClientBalance(client);
-
   const daysOverdue = useMemo(() => {
     if (!client.lastTransactionDate) return 0;
-    return clientBalance < 0 ? getDaysSince(client.lastTransactionDate) : 0;
-  }, [clientBalance, client.lastTransactionDate]);
+    return client.balance < 0 ? getDaysSince(client.lastTransactionDate) : 0;
+  }, [client.balance, client.lastTransactionDate]);
 
   const lifetimeValue = useMemo(() => {
     if (!client.transactions || client.transactions.length === 0) return "₦0";
@@ -26,7 +23,7 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
         txn.type === "DEPOSIT" ||
         txn.type === "PICKUP"
       ) {
-        return sum + Math.abs(txn.amountPaid);
+        return sum + Math.abs(txn.amount ?? txn.amountPaid ?? 0);
       }
       return sum;
     }, 0);
@@ -35,10 +32,10 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
 
   // Get account status
   const accountStatus = useMemo(() => {
-    if (clientBalance > 0) return { text: "Credit", class: "text-[#2ECC71]" };
-    if (clientBalance < 0) return { text: "Overdue", class: "text-[#F95353]" };
+    if (client.balance > 0) return { text: "Credit", class: "text-[#2ECC71]" };
+    if (client.balance < 0) return { text: "Overdue", class: "text-[#F95353]" };
     return { text: "Current", class: "text-[#7d7d7d]" };
-  }, [clientBalance]);
+  }, [client.balance]);
 
   return (
     <section className=" bg-white py-8 px-5 rounded sticky top-10 h-fit">
@@ -49,16 +46,18 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
           </p>
           <div
             className={`flex flex-col items-start gap-1 min-h-18 border-l-4 text-xs py-6 px-3 rounded-[8px] ${balanceClass(
-              clientBalance
+              client.balance
             )}
                  
             }`}
           >
             <p className="text-[#444444] text-xs">Current balance</p>
             <p
-              className={`text-lg font-bold ${balanceTextClass(clientBalance)}`}
+              className={`text-lg font-bold ${balanceTextClass(
+                client.balance
+              )}`}
             >
-              {formatCurrency(Math.abs(clientBalance))}
+              {formatCurrency(Math.abs(client.balance))}
             </p>
           </div>
 

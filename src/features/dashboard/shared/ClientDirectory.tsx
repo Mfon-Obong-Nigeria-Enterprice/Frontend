@@ -26,7 +26,6 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { useNavigate } from "react-router-dom";
 import { getTypeDisplay } from "@/utils/helpersfunction";
-import { calculateClientBalance } from "@/utils/calculateOutstanding";
 
 interface ClientDirectoryProps {
   searchTerm: string;
@@ -111,8 +110,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
             <TableBody>
               {currentClient.map((client) => {
                 const lastTransaction = getClientTransaction(client);
-                const calculatedBalance = calculateClientBalance(client);
-                const isOwing = calculatedBalance < 0;
+                const isOwing = client.balance < 0;
 
                 return (
                   <TableRow key={client._id} className="text-start">
@@ -159,7 +157,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                       <div>
                         <p className={`font-[400] text-[#444444] text-sm `}>
                           {lastTransaction
-                            ? formatCurrency(lastTransaction.total || 0)
+                            ? formatCurrency(lastTransaction.amount || 0)
                             : "₦0"}
                         </p>
                       </div>
@@ -169,21 +167,20 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                       <div>
                         <span
                           className={`font-medium ${
-                            calculatedBalance > 0
+                            client.balance > 0
                               ? "text-green-400"
-                              : calculatedBalance < 0
+                              : client.balance < 0
                               ? "text-red-400"
                               : "text-gray-300"
                           } `}
                         >
-                          {formatCurrency(calculatedBalance)}
+                          {formatCurrency(client.balance)}
                         </span>
                       </div>
                     </TableCell>
 
                     <TableCell>
                       {isStaffView ? (
-                        // isOwing ? (
                         <Button
                           variant="ghost"
                           className="w-40 border-[#3D80FF] border text-[#3D80FF] cursor-pointer hover:text-[#3D80FF] transition-colors duration-200 ease-in-out"
@@ -192,7 +189,6 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                           {isOwing ? "Add payment" : "Deposit"}
                         </Button>
                       ) : (
-                        // ) : null
                         <Button
                           variant="link"
                           size="icon"

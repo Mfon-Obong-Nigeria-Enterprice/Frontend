@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Client, TransactionItem } from "@/types/types";
+import type { Client } from "@/types/types";
 import { toSentenceCaseName } from "@/utils/styles";
 import { getAllClients, getClientDebtors } from "@/services/clientService";
 
@@ -84,34 +84,6 @@ const calculatePercentageChange = (current: number, previous: number) => {
         ? ("decrease" as const)
         : ("no-change" as const),
   };
-};
-
-const calculateBalanceFromClientTransactions = (
-  transactions: TransactionItem[]
-) => {
-  if (!transactions || transactions.length === 0) return 0;
-
-  let balance = 0;
-
-  const sortedTransactions = [...transactions].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
-
-  sortedTransactions.forEach((txn) => {
-    if (txn.type === "DEPOSIT") {
-      // Deposit reduces debt - use amountPaid if available, otherwise amount
-      const depositAmount = txn.amountPaid || txn.amount || 0;
-      balance += depositAmount;
-    } else {
-      // For PURCHASE/PICKUP - calculate outstanding amount
-      const total = txn.total || txn.amount || 0;
-      const paid = txn.amountPaid || 0;
-      const outstandingAmount = total - paid;
-      balance -= outstandingAmount;
-    }
-  });
-
-  return balance;
 };
 
 // Client service functions - Now using proper service imports
@@ -371,30 +343,24 @@ export const useClientStore = create<clientStore>()(
       },
 
       getClientsWithDebt: () => {
-        const { clients } = get();
-
-        return clients.filter((client) => {
-          const calculatedBalance = calculateBalanceFromClientTransactions(
-            client.transactions || []
-          );
-          return calculatedBalance < 0;
-        });
+        const { clients, debtors } = get();
+        // Use debtors if available and has data, otherwise filter clients
+        if (debtors.length > 0) {
+          return debtors.filter((d) => d.balance < 0);
+        }
+        return clients.filter((c) => c.balance < 0);
       },
 
       getOutStandingBalanceData: () => {
-        const { clients } = get();
-
-        const clientsWithDebt = clients
-          .map((client) => ({
-            ...client,
-            calculatedBalance: calculateBalanceFromClientTransactions(
-              client.transactions || []
-            ),
-          }))
-          .filter((client) => client.calculatedBalance < 0);
+        const { clients, debtors } = get();
+        // Prioritize debtors array if it exists and has data, otherwise filter clients
+        const clientsWithDebt =
+          debtors.length > 0
+            ? debtors.filter((d) => d.balance < 0)
+            : clients.filter((c) => c.balance < 0);
 
         const totalDebt = clientsWithDebt.reduce(
-          (sum, client) => sum + Math.abs(client.calculatedBalance),
+          (sum, client) => sum + Math.abs(client.balance),
           0
         );
 
@@ -460,29 +426,32 @@ export const useClientStore = create<clientStore>()(
         return calculatePercentageChange(currentTotal, lastMonthTotal);
       },
       getOutStandingBalanceLastWeek: () => {
-        const { clients } = get();
+        const { clients, debtors } = get();
         const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const clientsToCheck =
+          debtors.length > 0 ? debtors : clients.filter((c) => c.balance < 0);
 
         let totalDebtLastWeek = 0;
         let clientsWithDebtLastWeek = 0;
 
-        clients.forEach((client) => {
-          if (!client.transactions || client.transactions.length === 0) return;
+        clientsToCheck.forEach((client) => {
+          // Check if client had debt a week ago by looking at transaction history
+          const recentTransactions =
+            client.transactions?.filter(
+              (txn) => new Date(txn.date) > oneWeekAgo
+            ) || [];
 
-          // Get transactions up to one week ago
-          const oldTransactions = client.transactions.filter(
-            (txn) => new Date(txn.date) <= oneWeekAgo
-          );
+          // Calculate what the balance would have been without recent transactions
+          const recentTransactionSum = recentTransactions.reduce((sum, txn) => {
+            return sum + (txn.type === "DEPOSIT" ? -txn.amount : txn.amount);
+          }, 0);
 
-          if (oldTransactions.length === 0) return;
+          const estimatedBalanceLastWeek =
+            client.balance - recentTransactionSum;
 
-          // Calculate balance as it was a week ago
-          const balanceLastWeek =
-            calculateBalanceFromClientTransactions(oldTransactions);
-
-          if (balanceLastWeek < 0) {
+          if (estimatedBalanceLastWeek < 0) {
             clientsWithDebtLastWeek++;
-            totalDebtLastWeek += Math.abs(balanceLastWeek);
+            totalDebtLastWeek += Math.abs(estimatedBalanceLastWeek);
           }
         });
 

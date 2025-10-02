@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { calculateClientBalance } from "@/utils/calculateOutstanding";
 
 const OutstandingBalance = () => {
   const navigate = useNavigate();
@@ -108,8 +107,6 @@ const OutstandingBalance = () => {
               </TableRow>
             ) : (
               currentDebtors.map((client, index) => {
-                const clientBalance = calculateClientBalance(client);
-
                 return (
                   <TableRow
                     key={client._id}
@@ -121,7 +118,7 @@ const OutstandingBalance = () => {
                       {client.name}
                     </TableCell>
                     <TableCell className="text-center text-[#F95353] text-xs sm:text-base ">
-                      -{formatCurrency(Math.abs(clientBalance))}
+                      -{formatCurrency(Math.abs(client.balance))}
                     </TableCell>
                     <TableCell className="text-center text-[#444444] text-xs sm:text-base">
                       {getDaysSince(

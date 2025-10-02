@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import usePagination from "@/hooks/usePagination";
 import { useClientStore } from "@/stores/useClientStore";
 import type { Client } from "@/types/types";
-import { calculateClientBalance } from "@/utils/calculateOutstanding";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getTypeDisplay } from "@/utils/helpersfunction";
 import { useMemo } from "react";
@@ -81,7 +80,6 @@ const ClientDirectoryMobile: React.FC<ClientDirectoryProps> = ({
       <ul className="space-y-3">
         {currentClient.map((client, idx) => {
           const lastTransaction = getClientTransaction(client);
-          const clientBalance = calculateClientBalance(client);
           return (
             <li
               key={idx}
@@ -130,18 +128,18 @@ const ClientDirectoryMobile: React.FC<ClientDirectoryProps> = ({
                   <span>Balance:</span>
                   <span
                     className={`font-medium ${
-                      clientBalance > 0
+                      client.balance > 0
                         ? "text-green-400"
-                        : clientBalance < 0
+                        : client.balance < 0
                         ? "text-red-400"
                         : "text-gray-300"
                     } `}
                   >
-                    {formatCurrency(clientBalance)}
+                    {formatCurrency(client.balance)}
                   </span>
                 </div>
                 {isStaffView ? (
-                  clientBalance < 0 ? (
+                  client.balance < 0 ? (
                     <Button
                       variant="ghost"
                       className="border-[#3D80FF] border text-[#3D80FF] cursor-pointer hover:text-[#3D80FF] transition-colors duration-200 ease-in-out"

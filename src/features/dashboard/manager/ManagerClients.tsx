@@ -25,7 +25,6 @@ import { Search } from "lucide-react";
 import Stats from "../shared/Stats";
 import type { StatCard } from "@/types/stats";
 import ClientDirectoryMobile from "../shared/mobile/ClientDirectoryMobile";
-import { calculateClientBalance } from "@/utils/calculateOutstanding";
 
 const ManagerClients = () => {
   const {
@@ -138,7 +137,6 @@ const ManagerClients = () => {
     ];
 
     const rows = filteredClients.map((client) => {
-      const clientBal = calculateClientBalance(client);
       const getLatestTransaction = (client: Client): TransactionItem | null => {
         if (
           !client.transactions ||
@@ -162,9 +160,13 @@ const ManagerClients = () => {
         "Last Transaction Type": latestTransaction
           ? latestTransaction.type
           : "No Transaction",
-        Amount: clientBal,
+        Amount: client.balance,
         "Balance Status":
-          clientBal > 0 ? "DEPOSIT" : clientBal < 0 ? "PICKUP" : "PURCHASE",
+          client.balance > 0
+            ? "DEPOSIT"
+            : client.balance < 0
+            ? "PICKUP"
+            : "PURCHASE",
         "Total Transaction": client.transactions
           ? client.transactions.length
           : 0,
@@ -211,7 +213,7 @@ const ManagerClients = () => {
         );
         return sortedTransactions[0] || null;
       };
-      const clientBal = calculateClientBalance(client);
+
       const latestTransaction = getLatestTransaction(client);
 
       return {
@@ -232,9 +234,13 @@ const ManagerClients = () => {
         "Last Transaction Amount": latestTransaction
           ? latestTransaction.amount
           : 0,
-        Amount: clientBal,
+        Amount: client.balance,
         "Balance Status":
-          clientBal > 0 ? "DEPOSIT" : clientBal < 0 ? "PICKUP" : "PURCHASE",
+          client.balance > 0
+            ? "DEPOSIT"
+            : client.balance < 0
+            ? "PICKUP"
+            : "PURCHASE",
         "Total Transaction": client.transactions
           ? client.transactions.length
           : 0,

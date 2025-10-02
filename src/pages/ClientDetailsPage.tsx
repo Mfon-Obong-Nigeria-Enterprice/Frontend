@@ -35,6 +35,7 @@ import autoTable from "jspdf-autotable";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getAllTransactions } from "@/services/transactionService";
 import { useQuery } from "@tanstack/react-query";
+import { calculateTransactionsWithBalance } from "@/utils/calculateOutstanding";
 
 interface ClientDetailsPageProps {
   isManagerView?: boolean;
@@ -153,32 +154,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     );
 
     // Calculate balance progression for transactions
-    const calculateTransactionsWithBalance = () => {
-      if (!clientTransactions?.length) return [];
 
-      let runningBalance = client?.balance || 0;
-
-      const sortedTransactions = [...clientTransactions].sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-
-      return sortedTransactions.map((txn) => {
-        const balanceAfter = runningBalance;
-        const transactionImpact =
-          txn.type === "DEPOSIT" ? -txn.total : txn.total;
-        const balanceBefore = runningBalance - transactionImpact;
-        runningBalance = balanceBefore;
-
-        return {
-          ...txn,
-          balanceAfter,
-          balanceBefore,
-        };
-      });
-    };
-
-    const transactionsWithBalance = calculateTransactionsWithBalance();
+    const transactionsWithBalance = calculateTransactionsWithBalance(
+      clientTransactions,
+      0
+    );
 
     // Define table columns for transactions
     const columns = [
@@ -336,6 +316,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     if (!transactions || !clients) return [];
     const merged = mergeTransactionsWithClients(transactions, clients);
 
+    console.log("merged det", merged);
     return merged;
   }, [transactions, clients]);
 
