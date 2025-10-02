@@ -37,6 +37,7 @@ export const ClientTransactionDetails: React.FC<
       } else {
         // Purchase/Pickup increases debt by the outstanding amount
         const outstandingAmount = txn.total - (txn.amountPaid || 0);
+
         balanceAfter = balanceBefore - outstandingAmount;
       }
 
@@ -146,7 +147,8 @@ export const ClientTransactionDetails: React.FC<
                             <ArrowRight size={14} className="text-[#666]" />
                           </span>
                           <span className="text-[#444444] text-sm  font-medium flex-1 text-right truncate md:text-clip md:whitespace-normal ">
-                            {formatCurrency(txn.balanceAfter)}
+                            {/* {formatCurrency(txn.balanceAfter)} */}
+                            {txn.balanceAfter || 0}
                           </span>
                         </div>
                       </div>
