@@ -130,7 +130,7 @@ export const SettingsPage: React.FC = () => {
       <div className="flex flex-col lg:flex-row gap-6">
         {isMaintainer && (
           <Card className="flex-1">
-            <CardHeader className="pb-4">
+            <CardContent className="flex flex-col justify-between h-full">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Maintenance Mode</CardTitle>
@@ -147,11 +147,9 @@ export const SettingsPage: React.FC = () => {
                   />
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
               <Button
                 onClick={handleMaintenanceToggle}
-                className="w-full bg-[#2ECC71] hover:bg-[#2ECC71] text-white"
+                className="w-full bg-[#2ECC71] hover:bg-[#2ECC71] text-white mt-auto"
                 disabled={loadingMaintenance}
               >
                 {loadingMaintenance ? (

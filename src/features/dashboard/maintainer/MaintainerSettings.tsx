@@ -1,25 +1,20 @@
 // import { NotificationSettingsSection3 } from "./components/NotificationSettings3";
-import { AlertSettingsSection3 } from "./components/AlertSettings3";
-import type { AlertAndNotificationSettings } from "@/schemas/SettingsSchemas";
+// import { AlertSettingsSection3 } from "./components/AlertSettings3";
+// import type { AlertAndNotificationSettings } from "@/schemas/SettingsSchemas";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { SettingsPage } from "./components/SettingsPage";
 
-
-
 export default function MaintainerSettings() {
-  const {
-    currentSettings,
-    error,
-    setAlertSetting
-  } = useSettingsStore();
+  const { error } = useSettingsStore();
+  // const { currentSettings, error, setAlertSetting } = useSettingsStore();
 
-  const handleAlertSettingChange = (
-    key: keyof AlertAndNotificationSettings,
-    value: boolean
-  ) => {
-    // Update settings in the store (local only)
-    setAlertSetting(key, value);
-  };
+  // const handleAlertSettingChange = (
+  //   key: keyof AlertAndNotificationSettings,
+  //   value: boolean
+  // ) => {
+  //   // Update settings in the store (local only)
+  //   setAlertSetting(key, value);
+  // };
 
   if (error) {
     return (
@@ -32,7 +27,7 @@ export default function MaintainerSettings() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="py-8 px-4">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -47,9 +42,9 @@ export default function MaintainerSettings() {
           </div>
         )}
 
-       <SettingsPage/>
-            
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <SettingsPage />
+
+        {/* <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
             Alert Preferences
           </h2>
@@ -57,7 +52,7 @@ export default function MaintainerSettings() {
             settings={currentSettings}
             onSettingChange={handleAlertSettingChange}
           />
-        </div>
+        </div> */}
 
         {/* <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
