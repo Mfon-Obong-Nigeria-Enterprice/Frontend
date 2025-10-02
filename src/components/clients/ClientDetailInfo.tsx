@@ -133,7 +133,7 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
             </li>
 
             <li className="bg-[#F5F5F5] flex flex-col gap-0.5 justify-center items-center rounded-[8px] p-5">
-              <span className="text-sm text-[#333333] font-semibold">2</span>
+              <span className="text-sm text-[#333333] font-semibold">0</span>
               <span className="text-xs text-[#444444] font-normal">
                 Pending invoices
               </span>

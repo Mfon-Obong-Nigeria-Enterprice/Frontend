@@ -152,6 +152,7 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (transactionsQuery.data && transactionsQuery.isSuccess) {
       setTransactions(transactionsQuery.data);
+      console.log("transaction", transactionsQuery.data);
     }
   }, [
     transactionsQuery.data,

@@ -134,6 +134,8 @@ const NewSales: React.FC = () => {
 
   const [bankSearch, setBankSearch] = useState("");
 
+  const [date, setDate] = useState<string>("");
+
   // listen for socket event
   useEffect(() => {
     socket.on("transaction_created", (data: ReceiptData) => {
@@ -626,6 +628,18 @@ const NewSales: React.FC = () => {
                   onFocus={handleAmountPaidFocus}
                 />
               </div>
+
+              {/* for date */}
+              <div className="w-full sm:w-auto">
+                <Label className="mb-1">Transaction Date</Label>
+                <Input
+                  type="date"
+                  placeholder=""
+                  className="w-full sm:w-40"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </div>
             </div>
             {isWalkIn && (
               <p className="mt-3 text-sm text-[#7D7D7D]">{statusMessage}</p>
@@ -646,7 +660,6 @@ const NewSales: React.FC = () => {
                   </span>
                 </p>
 
-                {/* total purchase */}
                 {/* total purchase */}
                 <p className="flex justify-between items-center text-sm font-Inter">
                   <span className="text-[#444444]">Purchase Total:</span>
