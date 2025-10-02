@@ -188,6 +188,105 @@ export const PriceUpdateTableSection: React.FC<
           </TableBody>
         </Table>
       </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-4">
+        {products.map((product) => {
+          const currentPrice =
+            editingPrices[product._id] ?? product.unitPrice;
+          const change =
+            ((currentPrice - product.unitPrice) / product.unitPrice) * 100;
+          const displayChange = parseFloat(change.toFixed(2));
+
+          const isEditing = editingPrices[product._id] !== undefined;
+          const isChanged = isEditing && currentPrice !== product.unitPrice;
+          const isValid = isEditing && !isNaN(currentPrice) && currentPrice > 0;
+
+          return (
+            <div
+              key={product._id}
+              className="border border-[#D9D9D9] rounded-lg p-4 space-y-3 bg-white"
+            >
+              {/* Product Header */}
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold text-gray-800 text-lg">
+                    {product.name || "Unnamed Product"}
+                  </h3>
+                  <p className="text-sm text-gray-500">{product.unit || "No unit specified"}</p>
+                </div>
+                <span
+                  className={`inline-block px-2 py-1 border ${
+                    change >= 0
+                      ? "border-[#E2F3EB] bg-[#E2F3EB]"
+                      : "border-[#FFF2CE] bg-[#FFF2CE]"
+                  } rounded text-[#444444] text-sm font-medium`}
+                >
+                  {change > 0 ? "+" : ""}
+                  {displayChange}%
+                </span>
+              </div>
+
+              {/* Price Information */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Current Price</p>
+                  <p className="font-medium text-gray-800">
+                    ₦{(product.unitPrice || 0).toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">New Price</p>
+                  <Input
+                    type="number"
+                    value={currentPrice}
+                    onChange={(e) =>
+                      handlePriceChange(
+                        product._id,
+                        parseFloat(e.target.value)
+                      )
+                    }
+                    className="w-full h-8"
+                    disabled={loadingProductId === product._id || isReadOnly}
+                  />
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex space-x-2 pt-2">
+                <Button
+                  size="sm"
+                  onClick={() => handleUpdate(product._id, currentPrice)}
+                  disabled={
+                    loadingProductId === product._id ||
+                    !isChanged ||
+                    !isValid ||
+                    isReadOnly
+                  }
+                  className="flex-1 h-9"
+                >
+                  {loadingProductId === product._id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Update"
+                  )}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleReset(product._id)}
+                  disabled={
+                    loadingProductId === product._id || !isEditing || isReadOnly
+                  }
+                  className="flex-1 h-9"
+                >
+                  Reset
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };

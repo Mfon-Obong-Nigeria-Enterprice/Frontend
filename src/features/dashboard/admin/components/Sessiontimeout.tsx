@@ -73,12 +73,16 @@ const SessionTimeout = () => {
     }, 1000);
   }, []);
 
-  const handleLogout = useCallback(async () => {
-    setShowWarning(false);
-    if (countdownInterval.current) clearInterval(countdownInterval.current);
-    await logout();
-    navigate("/");
-  }, [logout, navigate]);
+ const handleLogout = useCallback(async () => {
+  if (countdownInterval.current) clearInterval(countdownInterval.current);
+  if (warningTimeout.current) clearTimeout(warningTimeout.current);
+  if (logoutTimeout.current) clearTimeout(logoutTimeout.current);
+
+  setShowWarning(false);
+  await logout();
+  navigate("/");
+}, [logout, navigate]);
+
 
   const handleStayLoggedIn = useCallback(() => {
     setShowWarning(false);
@@ -109,7 +113,7 @@ const SessionTimeout = () => {
       if (activityTimeout) clearTimeout(activityTimeout);
       activityTimeout = setTimeout(() => {
         resetTimers();
-      }, 1000); // Debounce activity by 1 second
+      }, 1000); 
     };
 
     events.forEach((event) =>
