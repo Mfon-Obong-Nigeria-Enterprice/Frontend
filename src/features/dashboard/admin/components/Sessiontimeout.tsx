@@ -103,6 +103,7 @@ const SessionTimeout = () => {
       "scroll",
       "touchstart",
       "mousedown",
+      // Treat focus/visibility changes as activity
       "focus",
     ];
 
