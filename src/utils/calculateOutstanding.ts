@@ -21,7 +21,7 @@ export function calculateTransactionsWithBalance(
       runningBalance =
         balanceBefore + (txn.amount ?? txn.amountPaid ?? txn.total ?? 0);
     } else {
-      // Purchases/Pickups → debt = total - amountPaid
+      // Purchases/Pickups === debt = total - amountPaid
       const total = txn.total ?? 0;
       const paid = txn.amountPaid ?? 0;
       const outstanding = total - paid;
