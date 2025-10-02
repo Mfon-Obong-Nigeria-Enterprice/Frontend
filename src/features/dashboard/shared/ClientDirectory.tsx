@@ -44,6 +44,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
 }) => {
   const { clients } = useClientStore();
   const navigate = useNavigate();
+
   const filteredClients = (
     filteredClientsData.length > 0 ? filteredClientsData : clients ?? []
   ).filter(
@@ -52,7 +53,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
       client._id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // this is where the transaction is coming from
+  // Get the last transaction for a client
   const getClientTransaction = (client: Client) => {
     if (
       !client.transactions ||
@@ -77,7 +78,6 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
     canGoNext,
   } = usePagination(filteredClients.length, 20);
 
-  // Memoized current page using useMemo since the value is an object
   const currentClient = useMemo(() => {
     const startIndex = (currentPage - 1) * 20;
     const endIndex = startIndex + 20;
@@ -85,7 +85,6 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
   }, [filteredClients, currentPage]);
 
   const handleViewClient = (client: Client) => {
-    // Navigate to client details page
     if (onClientAction) {
       onClientAction(client);
     } else {
@@ -111,8 +110,8 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
             <TableBody>
               {currentClient.map((client) => {
                 const lastTransaction = getClientTransaction(client);
-
                 const isOwing = client.balance < 0;
+
                 return (
                   <TableRow key={client._id} className="text-start">
                     <TableCell>
@@ -127,7 +126,6 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                       </div>
                     </TableCell>
 
-                    {/* registered clients */}
                     <TableCell className=" md:w-[95px]  lg:w-[125px] lg:pr-5 pr-10">
                       <div>
                         <p className="font-[400] text-[#444444] text-sm capitalize">
@@ -136,7 +134,6 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                       </div>
                     </TableCell>
 
-                    {/* transaction type */}
                     <TableCell>
                       <Badge
                         variant="outline"
@@ -156,18 +153,16 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                       </Badge>
                     </TableCell>
 
-                    {/* clients Amount */}
                     <TableCell>
                       <div>
                         <p className={`font-[400] text-[#444444] text-sm `}>
                           {lastTransaction
-                            ? formatCurrency(Math.abs(lastTransaction.amount))
+                            ? formatCurrency(lastTransaction.amount || 0)
                             : "₦0"}
                         </p>
                       </div>
                     </TableCell>
 
-                    {/* client balance */}
                     <TableCell>
                       <div>
                         <span
@@ -179,19 +174,13 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                               : "text-gray-300"
                           } `}
                         >
-                          {client.balance < 0
-                            ? "-"
-                            : client.balance > 0
-                            ? "+"
-                            : ""}
-                          ₦{Math.abs(client.balance).toLocaleString()}
+                          {formatCurrency(client.balance)}
                         </span>
                       </div>
                     </TableCell>
 
                     <TableCell>
                       {isStaffView ? (
-                        // isOwing ? (
                         <Button
                           variant="ghost"
                           className="w-40 border-[#3D80FF] border text-[#3D80FF] cursor-pointer hover:text-[#3D80FF] transition-colors duration-200 ease-in-out"
@@ -200,7 +189,6 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                           {isOwing ? "Add payment" : "Deposit"}
                         </Button>
                       ) : (
-                        // ) : null
                         <Button
                           variant="link"
                           size="icon"
@@ -228,7 +216,6 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
             </TableBody>
           </Table>
 
-          {/* pagination state */}
           {currentClient.length > 0 && totalPages > 1 && (
             <div className="mt-6 flex justify-center">
               <Pagination>

@@ -1,4 +1,5 @@
 import type { Transaction } from "@/types/transactions";
+import { calculateTransactionsWithBalance } from "@/utils/calculateOutstanding";
 // import type { Client } from "@/types/types";
 import { balanceTextClass } from "@/utils/format";
 import { formatCurrency } from "@/utils/formatCurrency";
@@ -13,45 +14,9 @@ interface clientTrasactionDetailsProps {
 export const ClientTransactionDetails: React.FC<
   clientTrasactionDetailsProps
 > = ({ clientTransactions }) => {
+  //
   const transactionWithBalance = useMemo(() => {
-    if (!clientTransactions?.length) {
-      return [];
-    }
-
-    // Sort transactions by date (oldest first for proper balance calculation)
-    const sortedTransactions = [...clientTransactions].sort(
-      (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
-
-    // Start with initial balance of 0 (assuming clients start with no debt)
-    let runningBalance = 0;
-
-    const transactions = sortedTransactions.map((txn) => {
-      const balanceBefore = runningBalance;
-      let balanceAfter = balanceBefore;
-
-      if (txn.type === "DEPOSIT") {
-        // Deposit reduces the debt (increases the balance toward zero)
-        balanceAfter = balanceBefore + (txn.amountPaid || 0);
-      } else {
-        // Purchase/Pickup increases debt by the outstanding amount
-        const outstandingAmount = txn.total - (txn.amountPaid || 0);
-
-        balanceAfter = balanceBefore - outstandingAmount;
-      }
-
-      runningBalance = balanceAfter;
-
-      return {
-        ...txn,
-        balanceBefore,
-        balanceAfter,
-      };
-    });
-
-    // Return in reverse order (newest first for display)
-    return transactions.reverse();
+    return calculateTransactionsWithBalance(clientTransactions, 0).reverse();
   }, [clientTransactions]);
 
   return (
@@ -113,8 +78,10 @@ export const ClientTransactionDetails: React.FC<
                   </div>
 
                   <p className={`${balanceTextClass(txn.balanceAfter)}`}>
-                    {txn.balanceAfter < 0 ? "-" : ""} ₦
-                    {Math.abs(Number(txn.balanceAfter)).toLocaleString()}
+                    {/* {txn.balanceAfter < 0 ? "-" : ""} ₦
+                    {Math.abs(Number(txn.balanceAfter)).toLocaleString()} 
+                    */}
+                    {formatCurrency(txn.balanceAfter)}
                   </p>
                 </div>
               </header>
@@ -147,8 +114,8 @@ export const ClientTransactionDetails: React.FC<
                             <ArrowRight size={14} className="text-[#666]" />
                           </span>
                           <span className="text-[#444444] text-sm  font-medium flex-1 text-right truncate md:text-clip md:whitespace-normal ">
-                            {/* {formatCurrency(txn.balanceAfter)} */}
-                            {txn.balanceAfter || 0}
+                            {formatCurrency(txn.balanceAfter)}
+                            {/* {txn.balanceAfter || 0} */}
                           </span>
                         </div>
                       </div>

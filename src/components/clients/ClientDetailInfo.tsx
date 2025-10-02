@@ -2,6 +2,7 @@ import { balanceClass, balanceTextClass } from "@/utils/styles";
 import type { Client } from "@/types/types";
 import { getDaysSince } from "@/utils/helpersfunction";
 import { useEffect, useMemo, useState } from "react";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
   const [client, setClient] = useState(initialClient);
@@ -22,11 +23,11 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
         txn.type === "DEPOSIT" ||
         txn.type === "PICKUP"
       ) {
-        return sum + Math.abs(txn.amount);
+        return sum + Math.abs(txn.amount ?? txn.amountPaid ?? 0);
       }
       return sum;
     }, 0);
-    return `₦${total.toLocaleString()}`;
+    return `${formatCurrency(total)}`;
   }, [client.transactions]);
 
   // Get account status
@@ -56,8 +57,7 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
                 client.balance
               )}`}
             >
-              {client.balance && client.balance < 0 ? "-" : ""}₦
-              {Math.abs(Number(client.balance))?.toLocaleString()}
+              {formatCurrency(Math.abs(client.balance))}
             </p>
           </div>
 

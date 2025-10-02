@@ -106,33 +106,37 @@ const OutstandingBalance = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              currentDebtors.map((client, index) => (
-                <TableRow
-                  key={client._id}
-                  className={`border-b border-gray-300 ${
-                    index % 2 !== 0 ? "bg-[#F0F0F3]" : ""
-                  }`}
-                >
-                  <TableCell className="font-medium pl-4 text-[#444444] text-xs sm:text-base capitalize">
-                    {client.name}
-                  </TableCell>
-                  <TableCell className="text-center text-[#F95353] text-xs sm:text-base ">
-                    -{formatCurrency(Math.abs(client.balance))}
-                  </TableCell>
-                  <TableCell className="text-center text-[#444444] text-xs sm:text-base">
-                    {getDaysSince(
-                      client.lastTransactionDate ||
-                        client.updatedAt ||
-                        client.createdAt
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center text-blue-400 underline cursor-pointer text-xs sm:text-base">
-                    <button onClick={() => navigate(`/clients/${client._id}`)}>
-                      View
-                    </button>
-                  </TableCell>
-                </TableRow>
-              ))
+              currentDebtors.map((client, index) => {
+                return (
+                  <TableRow
+                    key={client._id}
+                    className={`border-b border-gray-300 ${
+                      index % 2 !== 0 ? "bg-[#F0F0F3]" : ""
+                    }`}
+                  >
+                    <TableCell className="font-medium pl-4 text-[#444444] text-xs sm:text-base capitalize">
+                      {client.name}
+                    </TableCell>
+                    <TableCell className="text-center text-[#F95353] text-xs sm:text-base ">
+                      -{formatCurrency(Math.abs(client.balance))}
+                    </TableCell>
+                    <TableCell className="text-center text-[#444444] text-xs sm:text-base">
+                      {getDaysSince(
+                        client.lastTransactionDate ||
+                          client.updatedAt ||
+                          client.createdAt
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center text-blue-400 underline cursor-pointer text-xs sm:text-base">
+                      <button
+                        onClick={() => navigate(`/clients/${client._id}`)}
+                      >
+                        View
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
