@@ -26,9 +26,9 @@ const SessionTimeout = () => {
   const lastActivityTime = useRef<number>(Date.now());
   const isResettingTimers = useRef<boolean>(false);
 
-  // Updated timing
-  const WARNING_TIME = 12 * 60 * 1000;
-  const LOGOUT_TIME = 13 * 60 * 1000;
+  // Timing: warn at 14 minutes, logout at 15 minutes of inactivity
+  const WARNING_TIME = 14 * 60 * 1000;
+  const LOGOUT_TIME = 15 * 60 * 1000;
 
   // Use useCallback to prevent recreation on every render
   const resetTimers = useCallback(() => {
@@ -103,8 +103,7 @@ const SessionTimeout = () => {
       "scroll",
       "touchstart",
       "mousedown",
-      "input", 
-  "change", 
+      "focus",
     ];
 
     // Throttled activity handler
@@ -113,17 +112,26 @@ const SessionTimeout = () => {
       if (activityTimeout) clearTimeout(activityTimeout);
       activityTimeout = setTimeout(() => {
         resetTimers();
-      }, 1000); // Debounce activity by 1 second
+      }, 1000); 
     };
 
     events.forEach((event) =>
       window.addEventListener(event, activityHandler, { passive: true })
     );
+    const visibilityHandler = () => {
+      if (document.visibilityState === "visible") {
+        activityHandler();
+      }
+    };
+    document.addEventListener("visibilitychange", visibilityHandler, {
+      passive: true,
+    });
 
     return () => {
       events.forEach((event) =>
         window.removeEventListener(event, activityHandler)
       );
+      document.removeEventListener("visibilitychange", visibilityHandler);
       if (activityTimeout) clearTimeout(activityTimeout);
       if (warningTimeout.current) clearTimeout(warningTimeout.current);
       if (logoutTimeout.current) clearTimeout(logoutTimeout.current);
