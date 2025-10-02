@@ -7,6 +7,7 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
+import { getTransactionDate } from "@/utils/transactions";
 import { toast } from "sonner";
 
 // stores
@@ -192,7 +193,7 @@ const Transactions = () => {
     //date filter
     if (dateRangeFilter.from && dateRangeFilter.to) {
       filtered = filtered.filter((tx) => {
-        const txDate = new Date(tx.createdAt);
+        const txDate = getTransactionDate(tx);
         return txDate >= dateRangeFilter.from! && txDate <= dateRangeFilter.to!;
       });
     }
@@ -205,6 +206,7 @@ const Transactions = () => {
     mergedTransactions,
   ]);
 
+  console.log("txn",filteredTransactions);
   // Use filteredTransactions for pagination instead of filterByInvoice
   const {
     currentPage,
@@ -228,7 +230,7 @@ const Transactions = () => {
       filteredTransactions &&
       filteredTransactions.map((txn) => ({
         "Invoice Number": txn.invoiceNumber,
-        Date: new Date(txn.createdAt).toLocaleDateString("en-NG"),
+        Date: getTransactionDate(txn).toLocaleDateString("en-NG"),
         Name: txn.clientName || "Unregistered",
         "Type of Transaction": txn.type,
         Status: txn.status,
@@ -258,7 +260,7 @@ const Transactions = () => {
 
     const rows = (filteredTransactions ?? []).map((t) => [
       t.invoiceNumber ?? "N/A",
-      format(new Date(t.createdAt), "dd/MM/yyyy"),
+      format(getTransactionDate(t), "dd/MM/yyyy"),
       t.clientName ?? "N/A",
       t.type ?? "N/A",
       t.status ?? "N/A",

@@ -165,8 +165,8 @@ const ManagerClients = () => {
           client.balance > 0
             ? "DEPOSIT"
             : client.balance < 0
-            ? "PURCHASE"
-            : "PICKUP",
+            ? "PICKUP"
+            : "PURCHASE",
         "Total Transaction": client.transactions
           ? client.transactions.length
           : 0,
@@ -239,8 +239,8 @@ const ManagerClients = () => {
           client.balance > 0
             ? "DEPOSIT"
             : client.balance < 0
-            ? "PURCHASE"
-            : "PICKUP",
+            ? "PICKUP"
+            : "PURCHASE",
         "Total Transaction": client.transactions
           ? client.transactions.length
           : 0,

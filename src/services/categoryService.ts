@@ -33,3 +33,5 @@ export const updateCategory = async (
 export const deleteCategory = async (id: string) => {
   return api.delete(`/categories/${id}`);
 };
+
+export type { Category };

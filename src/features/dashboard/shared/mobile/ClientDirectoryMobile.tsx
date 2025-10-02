@@ -135,8 +135,7 @@ const ClientDirectoryMobile: React.FC<ClientDirectoryProps> = ({
                         : "text-gray-300"
                     } `}
                   >
-                    {client.balance < 0 ? "-" : client.balance > 0 ? "+" : ""}₦
-                    {Math.abs(client.balance).toLocaleString()}
+                    {formatCurrency(client.balance)}
                   </span>
                 </div>
                 {isStaffView ? (

@@ -20,6 +20,51 @@ export const mergeTransactionsWithClients = (
   });
 };
 
+// Prefer backend-provided date over createdAt when present
+// export const getTransactionDate = (tx: Partial<Transaction>): Date => {
+//   const raw = (tx as any)?.date ?? tx.createdAt;
+//   // if (!raw) return new Date(); // fallback to now
+//   // return new Date(raw);
+//   try {
+//     return new Date(raw as string);
+//   } catch {
+//     return new Date();
+//   }
+// };
+// Prefer backend-provided date over createdAt when present
+export const getTransactionDate = (tx: Partial<Transaction>): Date => {
+  const raw = (tx as any)?.date ?? tx.createdAt;
+
+  if (!raw) {
+    return new Date(); // fallback if no date
+  }
+
+  const d = new Date(raw as string);
+
+  // Check if the parsed date is valid
+  if (isNaN(d.getTime())) {
+    return new Date(); // fallback to now
+  }
+
+  return d;
+};
+
+export const getTransactionDateString = (
+  tx: Partial<Transaction>,
+  locale: string = "en-GB"
+): string => {
+  const d = getTransactionDate(tx);
+  return d.toLocaleDateString(locale);
+};
+
+export const getTransactionTimeString = (
+  tx: Partial<Transaction>,
+  locale: string = "en-GB"
+): string => {
+  const d = getTransactionDate(tx);
+  return d.toLocaleTimeString(locale);
+};
+
 export function getClientsWithDebt(mergedTransaction: MergedTransaction[]) {
   const clientMap: Record<
     string,
@@ -49,10 +94,10 @@ export function getClientsWithDebt(mergedTransaction: MergedTransaction[]) {
   // Filter clients with balance < 0 (i.e., they owe money)
   return Object.values(clientMap)
     .filter(({ client }) => client.balance < 0)
-    .map((client, createdAt) => ({
-      name: client.client.name,
-      _id: client._id,
-      balance: client.client.balance,
+    .map(({ client, _id, createdAt }) => ({
+      name: client.name,
+      _id,
+      balance: client.balance,
       createdAt,
     }));
 }
@@ -96,27 +141,3 @@ export function getTopSellingProducts(
     .sort((a, b) => b.quantitySold - a.quantitySold)
     .slice(0, topN);
 }
-
-// export function getTopSellingProducts(transactions: Transaction[], topN = 5) {
-//   const productSalesMap = {};
-
-//   transactions.forEach((tx) => {
-//     tx.items.forEach((item) => {
-//       const id = item.productId;
-//       if (!productSalesMap[id]) {
-//         productSalesMap[id] = {
-//           productId: id,
-//           productName: item.productName,
-//           quantitySold: 0,
-//           totalRevenue: 0,
-//         };
-//       }
-//       productSalesMap[id].quantitySold += item.quantity;
-//       productSalesMap[id].totalRevenue += item.subtotal;
-//     });
-//   });
-
-//   return Object.values(productSalesMap)
-//     .sort((a, b) => b.quantitySold - a.quantitySold)
-//     .slice(0, topN);
-// }

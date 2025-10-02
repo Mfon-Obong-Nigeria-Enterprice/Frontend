@@ -6,6 +6,10 @@ import WalkinTransactionModal from "../WalkinTransactionModal";
 import { balanceClassT } from "@/utils/styles";
 import { getTypeStyles } from "@/utils/helpersfunction";
 import { formatCurrency, toSentenceCaseName } from "@/utils/styles";
+import {
+  getTransactionDateString,
+  getTransactionTimeString,
+} from "@/utils/transactions";
 
 // types
 import type { Transaction } from "@/types/transactions";
@@ -88,10 +92,11 @@ const TransactionTable = ({
                 </td>
                 <td className=" py-3 pl-1  font-normal ">
                   <p className="text-xs text-[#444444] text-start">
-                    {new Date(transaction.createdAt).toLocaleDateString()}
+                    {getTransactionDateString(transaction)}
+                    {/* {transaction.date} */}
                   </p>
                   <p className="text-[0.625rem] text-[#7D7D7D] text-start">
-                    {new Date(transaction.createdAt).toLocaleTimeString()}
+                    {getTransactionTimeString(transaction)}
                   </p>
                 </td>
                 <td className=" text-start pl-1 text-[#444444] text-sm font-normal py-3">
@@ -167,7 +172,7 @@ const TransactionTable = ({
                     transaction.total
                   )}`}
                 >
-                  {formatCurrency(transaction.total ?? 0).toLocaleString()}
+                  {formatCurrency(transaction.total ?? 0)}
                 </td>
                 {user?.role === "SUPER_ADMIN" && (
                   <td className=" text-start pl-1 text-[#444444] text-sm font-normal py-3">

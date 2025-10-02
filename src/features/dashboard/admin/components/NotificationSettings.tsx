@@ -18,16 +18,16 @@ export const NotificationSettingsSection: React.FC<NotificationSettingsSectionPr
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-6">
-        <div className="flex items-center space-x-3">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-4 sm:gap-6">
+        <div className="flex items-center space-x-3 w-full sm:w-auto">
           <Checkbox
             id="dashboardNotification"
             checked={alerts.dashboardNotification || false}
             onCheckedChange={(checked) => onSettingChange('dashboardNotification', checked as boolean)}
             disabled={isReadOnly}
-            className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+            className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600 flex-shrink-0"
           />
-          <Label htmlFor="dashboardNotification" className="text-gray-700">Dashboard Notification</Label>
+          <Label htmlFor="dashboardNotification" className="text-gray-700 text-sm sm:text-base">Dashboard Notification</Label>
         </div>
 
        

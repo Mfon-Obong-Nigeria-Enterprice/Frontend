@@ -179,9 +179,9 @@ const ActivityLog = () => {
 
   return (
     <main>
-      <div className="flex flex-col md:flex-row justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between ">
         <DashboardTitle heading="System Activity Log" description="" />
-        <Button>Export User Report</Button>
+        <Button className="w-fit p-5 ">Export User Report</Button>
       </div>
 <div className="bg-white mt-8 ">
       <h2 className="p-3 font-medium"> Filter & Controls </h2>
