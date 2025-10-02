@@ -150,29 +150,29 @@ const Notifications = () => {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-1">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-1 gap-2 sm:gap-0">
                       <h3
                         className={cn(
-                          "text-sm font-medium leading-5",
+                          "text-sm font-medium leading-5 break-words",
                           !notification.read ? "text-gray-900" : "text-gray-700"
                         )}
                       >
                         {notification.title}
                       </h3>
 
-                      <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-                        <span className="text-xs text-gray-500">
+                      <div className="flex items-center gap-2 flex-shrink-0 sm:ml-4">
+                        <span className="text-xs text-gray-500 whitespace-nowrap">
                           {formatDate(notification.createdAt)}
                         </span>
                         {!notification.read && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
                         )}
                       </div>
                     </div>
 
                     <p
                       className={cn(
-                        "text-sm leading-5 mb-3",
+                        "text-sm leading-5 mb-3 break-words",
                         !notification.read ? "text-gray-800" : "text-gray-600"
                       )}
                     >
@@ -180,25 +180,25 @@ const Notifications = () => {
                     </p>
 
                     {/* Meta information */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
                         {notification.meta?.adminName && (
-                          <span>by {notification.meta.adminName}</span>
+                          <span className="whitespace-nowrap">by {notification.meta.adminName}</span>
                         )}
                         {notification.meta?.transactionId && (
-                          <span>ID: {notification.meta.transactionId}</span>
+                          <span className="whitespace-nowrap">ID: {notification.meta.transactionId}</span>
                         )}
-                        <span className="capitalize">{notification.type}</span>
+                        <span className="capitalize whitespace-nowrap">{notification.type}</span>
                       </div>
 
                       {/* Action buttons */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         {!notification.read && (
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => markAsRead(notification.id)}
-                            className="h-7 px-3 text-xs"
+                            className="h-7 px-3 text-xs whitespace-nowrap"
                           >
                             <Check className="h-3 w-3 mr-1" />
                             Mark read
@@ -208,7 +208,7 @@ const Notifications = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => deleteNotification(notification.id)}
-                          className="h-7 px-3 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="h-7 px-3 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 whitespace-nowrap"
                         >
                           <Trash2 className="h-3 w-3 mr-1" />
                           Delete

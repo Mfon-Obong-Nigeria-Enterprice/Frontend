@@ -45,32 +45,44 @@ export const AlertSettingsSection1: React.FC<AlertSettingsSectionProps> = ({
     }
   };
 
-  return (
+   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center space-x-3">
-          <Checkbox
-            id="clientsDebtsAlert"
-            checked={alerts.clientsDebtsAlert || false}
-            onCheckedChange={(checked) => onSettingChange('clientsDebtsAlert', checked as boolean)}
-            disabled={isReadOnly}
-            className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-          />
-          <Label htmlFor="clientsDebtsAlert" className="text-gray-700 text-xs">Clients Debts Alerts</Label>
+      {/* Main container with responsive wrapping */}
+      <div className="flex flex-col sm:flex-row flex-wrap items-start gap-4">
+        
+        {/* First column for Clients Debts and Custom Threshold */}
+        <div className="flex flex-col sm:flex-row items-start gap-4 flex-1 min-w-[200px]">
+          {/* Clients Debts Alert */}
+          <div className="flex items-center space-x-3  flex-1">
+            <Checkbox
+              id="clientsDebtsAlert"
+              checked={alerts.clientsDebtsAlert || false}
+              onCheckedChange={(checked) => onSettingChange('clientsDebtsAlert', checked as boolean)}
+              disabled={isReadOnly}
+              className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+            />
+            <Label htmlFor="clientsDebtsAlert" className="text-gray-700 text-xs font-normal whitespace-nowrap">
+              Clients Debts Alerts
+            </Label>
+          </div>
+
+          {/* Custom Threshold Alerts */}
+          <div className="flex items-center space-x-3  flex-1">
+            <Checkbox
+              id="CustomThresholdAlerts"
+              checked={alerts.CustomThresholdAlerts || false}
+              onCheckedChange={(checked) => onSettingChange('CustomThresholdAlerts', checked as boolean)}
+              disabled={isReadOnly}
+              className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+            />
+            <Label htmlFor="CustomThresholdAlerts" className="text-gray-700 text-xs font-normal whitespace-nowrap">
+              Custom Threshold Alerts
+            </Label>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <Checkbox
-            id="CustomThresholdAlerts"
-            checked={alerts.CustomThresholdAlerts || false}
-            onCheckedChange={(checked) => onSettingChange('CustomThresholdAlerts', checked as boolean)}
-            disabled={isReadOnly}
-            className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-          />
-          <Label htmlFor="CustomThresholdAlerts" className="text-gray-700 text-xs">Custom Threshold Alerts</Label>
-        </div>
-
-        <div className="flex items-center space-x-3">
+        
+        <div className="flex items-center space-x-3 w-full sm:w-auto">
           <Checkbox
             id="LargeBalanceAlertThreshold"
             checked={alerts.LargeBalanceAlertThreshold || false}
@@ -78,7 +90,9 @@ export const AlertSettingsSection1: React.FC<AlertSettingsSectionProps> = ({
             disabled={isReadOnly}
             className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
           />
-          <Label htmlFor="LargeBalanceAlertThreshold" className="text-gray-700 text-xs">Large Balance Alert Threshold</Label>
+          <Label htmlFor="LargeBalanceAlertThreshold" className="text-gray-700 text-xs font-normal whitespace-nowrap">
+            Large Balance Alert Threshold
+          </Label>
           
           <Input
             type="number"
@@ -92,7 +106,8 @@ export const AlertSettingsSection1: React.FC<AlertSettingsSectionProps> = ({
           />
         </div>
 
-        <div className="flex items-center space-x-3">
+        {/* Price Change Notification - Full width on mobile, then normal */}
+        <div className="flex items-center space-x-3 w-full sm:w-auto">
           <Checkbox
             id="PriceChangeNotification"
             checked={alerts.PriceChangeNotification || false}
@@ -100,7 +115,9 @@ export const AlertSettingsSection1: React.FC<AlertSettingsSectionProps> = ({
             disabled={isReadOnly}
             className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
           />
-          <Label htmlFor="PriceChangeNotification" className="text-gray-700 text-xs">Price Change Notification</Label>
+          <Label htmlFor="PriceChangeNotification" className="text-gray-700 text-xs font-normal whitespace-nowrap">
+            Price Change Notification
+          </Label>
         </div>
       </div>
     </div>

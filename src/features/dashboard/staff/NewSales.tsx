@@ -101,6 +101,15 @@ const emptyRow: Row = {
   productName: "",
 };
 
+// Returns today's date in local timezone formatted as YYYY-MM-DD for input[type="date"]
+const getTodayDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const NewSales: React.FC = () => {
   const queryClient = useQueryClient();
   // Store data
@@ -134,7 +143,7 @@ const NewSales: React.FC = () => {
 
   const [bankSearch, setBankSearch] = useState("");
 
-  const [date, setDate] = useState<string>("");
+  const [date, setDate] = useState<string>(() => getTodayDateString());
 
   // listen for socket event
   useEffect(() => {
@@ -166,7 +175,7 @@ const NewSales: React.FC = () => {
     const numericValue = parseFloat(digitsOnly);
 
     // Format with commas but NO decimal places
-    return `₦${numericValue.toLocaleString("en-US", {
+    return `₦${numericValue.toLocaleString("en-GB", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     })}`;
@@ -356,6 +365,7 @@ const NewSales: React.FC = () => {
     setNotes("");
     setIsSubmitting(false);
     setGlobalDiscount(0);
+    setDate(getTodayDateString());
   };
 
   const handleSubmit = async () => {
@@ -406,10 +416,11 @@ const NewSales: React.FC = () => {
         paymentMethod:
           saleType === "PICKUP" ? "Credit" : paymentMethodForBackend,
         notes,
+        date,
       };
 
       await AddTransaction(payload);
-
+      // console.log("payload", payload);
       toast.success("Transaction created successfully");
 
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
