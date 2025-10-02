@@ -59,6 +59,13 @@ export const AddClientPayment = async (
   return response.data;
 };
 
+export const getClientTransactions = async (
+  clientId: string
+): Promise<Transaction[]> => {
+  const response = await api.get(`/clients/${clientId}/transactions`);
+  return response.data;
+};
+
 export const createTransaction = async (
   transactionData: Partial<Transaction>
 ): Promise<Transaction> => {
