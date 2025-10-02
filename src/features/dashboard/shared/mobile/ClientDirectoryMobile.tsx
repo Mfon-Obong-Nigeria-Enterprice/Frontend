@@ -119,7 +119,9 @@ const ClientDirectoryMobile: React.FC<ClientDirectoryProps> = ({
                 <div>
                   <p className={`font-[400] text-[#444444] text-sm `}>
                     {lastTransaction
-                      ? formatCurrency(Math.abs(lastTransaction.amount))
+                      ? formatCurrency(
+                          Math.abs(lastTransaction.amountPaid || 0)
+                        )
                       : "₦0"}
                   </p>
                 </div>
