@@ -216,7 +216,9 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         invoice: txn.invoiceNumber || "N/A",
         itemCount:
           txn.items?.length > 0
-            ? txn.items.map((item) => item.productName).join(", ")
+            ? txn.items
+                .map((item) => `${item.quantity}X ${item.productName} `)
+                .join(", ")
             : "N/A",
       };
     });
@@ -486,7 +488,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
   return (
     <>
-      <header className="grid md:grid-cols-5 grid-cols-1 items-center py-1 md:px-10 sticky top-0 bg-white z-10 border-b border-[#D9D9D9]">
+      <header className="grid md:grid-cols-5 grid-cols-1 items-center  md:px-10 sticky top-0 bg-white z-10 border-b border-[#D9D9D9]">
         <div className="flex gap-5 justify-between md:justify-start col-span-2 md:col-span-2 px-5 md:px-0">
           <button
             onClick={() => navigate(-1)}
@@ -499,7 +501,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
             Client Account Management
           </p>
         </div>
-        <div className="flex justify-end gap-4 my-4 md:mx-7 col-span-3 md:col-span-3 border-t-[#D9D9D9] md:border-none border-t-2 pt-2 md:pt-0 transition-all px-5 md:px-0">
+        <div className="flex justify-end gap-4 my-2 md:mx-7 col-span-3 md:col-span-3 border-t-[#D9D9D9] md:border-none border-t-2 pt-2 md:pt-0 transition-all px-5 md:px-0">
           <Button
             className="bg-white hover:bg-gray-100 text-text-dark border border-[#7D7D7D]"
             onClick={handleExportPDF}
