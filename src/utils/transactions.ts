@@ -21,15 +21,32 @@ export const mergeTransactionsWithClients = (
 };
 
 // Prefer backend-provided date over createdAt when present
+// export const getTransactionDate = (tx: Partial<Transaction>): Date => {
+//   const raw = (tx as any)?.date ?? tx.createdAt;
+//   // if (!raw) return new Date(); // fallback to now
+//   // return new Date(raw);
+//   try {
+//     return new Date(raw as string);
+//   } catch {
+//     return new Date();
+//   }
+// };
+// Prefer backend-provided date over createdAt when present
 export const getTransactionDate = (tx: Partial<Transaction>): Date => {
   const raw = (tx as any)?.date ?? tx.createdAt;
-  if (!raw) return new Date(); // fallback to now
-  return new Date(raw);
-  // try {
-  //   return new Date(raw as string);
-  // } catch {
-  //   return new Date();
-  // }
+
+  if (!raw) {
+    return new Date(); // fallback if no date
+  }
+
+  const d = new Date(raw as string);
+
+  // Check if the parsed date is valid
+  if (isNaN(d.getTime())) {
+    return new Date(); // fallback to now
+  }
+
+  return d;
 };
 
 export const getTransactionDateString = (

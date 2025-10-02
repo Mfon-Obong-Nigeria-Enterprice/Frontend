@@ -175,7 +175,7 @@ const NewSales: React.FC = () => {
     const numericValue = parseFloat(digitsOnly);
 
     // Format with commas but NO decimal places
-    return `₦${numericValue.toLocaleString("en-US", {
+    return `₦${numericValue.toLocaleString("en-GB", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     })}`;
@@ -416,10 +416,11 @@ const NewSales: React.FC = () => {
         paymentMethod:
           saleType === "PICKUP" ? "Credit" : paymentMethodForBackend,
         notes,
+        date,
       };
 
       await AddTransaction(payload);
-
+      // console.log("payload", payload);
       toast.success("Transaction created successfully");
 
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
