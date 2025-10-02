@@ -23,14 +23,18 @@ export const mergeTransactionsWithClients = (
 // Prefer backend-provided date over createdAt when present
 export const getTransactionDate = (tx: Partial<Transaction>): Date => {
   const raw = (tx as any)?.date ?? tx.createdAt;
-  if (!raw) return new Date();
-  const parsed = new Date(raw as string);
-  return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  if (!raw) return new Date(); // fallback to now
+  return new Date(raw);
+  // try {
+  //   return new Date(raw as string);
+  // } catch {
+  //   return new Date();
+  // }
 };
 
 export const getTransactionDateString = (
   tx: Partial<Transaction>,
-  locale: string = undefined
+  locale: string
 ): string => {
   const d = getTransactionDate(tx);
   return d.toLocaleDateString(locale);
@@ -45,28 +49,35 @@ export const getTransactionTimeString = (
 };
 
 export function getClientsWithDebt(mergedTransaction: MergedTransaction[]) {
-  const clientMap: Record<string, { client: Client; _id: string; createdAt: string }> = {};
+  const clientMap: Record<
+    string,
+    { client: Client; _id: string; createdAt: string }
+  > = {};
 
   mergedTransaction.forEach((tx) => {
     const client = tx.client;
+
     if (!client) return; // Skip walk-in clients
 
     const clientId = client._id;
+
+    // Assuming 'total' is what they should pay, and 'amountPaid' is what they paid
+    // const amountOwed = tx.total - tx.amountPaid;
 
     // Only store the first occurrence (for createdAt)
     if (!clientMap[clientId]) {
       clientMap[clientId] = {
         client,
         _id: clientId,
-        createdAt: tx.createdAt,
+        createdAt: tx.createdAt, // use the first transaction's date
       };
     }
   });
 
-  // Filter clients with negative balance (they owe money) and map to output
+  // Filter clients with balance < 0 (i.e., they owe money)
   return Object.values(clientMap)
     .filter(({ client }) => client.balance < 0)
-    .map(({ client, _id, createdAt }) => ({
+    .map(({client, _id, createdAt}) => ({
       name: client.name,
       _id,
       balance: client.balance,
@@ -113,27 +124,3 @@ export function getTopSellingProducts(
     .sort((a, b) => b.quantitySold - a.quantitySold)
     .slice(0, topN);
 }
-
-// export function getTopSellingProducts(transactions: Transaction[], topN = 5) {
-//   const productSalesMap = {};
-
-//   transactions.forEach((tx) => {
-//     tx.items.forEach((item) => {
-//       const id = item.productId;
-//       if (!productSalesMap[id]) {
-//         productSalesMap[id] = {
-//           productId: id,
-//           productName: item.productName,
-//           quantitySold: 0,
-//           totalRevenue: 0,
-//         };
-//       }
-//       productSalesMap[id].quantitySold += item.quantity;
-//       productSalesMap[id].totalRevenue += item.subtotal;
-//     });
-//   });
-
-//   return Object.values(productSalesMap)
-//     .sort((a, b) => b.quantitySold - a.quantitySold)
-//     .slice(0, topN);
-// }

@@ -37,9 +37,8 @@ export const ClientTransactionDetails: React.FC<
       } else {
         // Purchase/Pickup increases debt by the outstanding amount
         const outstandingAmount = txn.total - (txn.amountPaid || 0);
-        balanceAfter = txn?.clientBalance;
-        console.log("balance after", balanceAfter);
-        // balanceAfter = balanceBefore - outstandingAmount;
+
+        balanceAfter = balanceBefore - outstandingAmount;
       }
 
       runningBalance = balanceAfter;
