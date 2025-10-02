@@ -305,13 +305,13 @@ export const Clients: React.FC<ClientProps> = ({
 
             <Select value={clientStatus} onValueChange={handleStatusChange}>
               <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] p-2 rounded-sm">
-                <SelectValue placeholder="AllStatus" />
+                <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent className="bg-[#D9D9D9] text-[#444444]">
                 <SelectGroup>
-                  <SelectItem value="All Status">All Status</SelectItem>
-                  <SelectItem value="REGISTERED">Registered</SelectItem>
-                  <SelectItem value="UNREGISTERED">Unregistered</SelectItem>
+                  <SelectItem value="All status">All Status</SelectItem>
+                  <SelectItem value="registered">Registered</SelectItem>
+                  <SelectItem value="unregistered">Unregistered</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
