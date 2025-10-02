@@ -2,7 +2,7 @@ import type { Transaction } from "@/types/transactions";
 
 export function calculateTransactionsWithBalance(
   transactions: Transaction[],
-  startingBalance: number = 0
+  startingBalance: number
 ) {
   if (!transactions?.length) return [];
 

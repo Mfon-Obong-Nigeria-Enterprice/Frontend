@@ -130,13 +130,13 @@ export const ClientTransactionDetails: React.FC<
                         <li className="font-medium text-[#444444] text-sm ">
                           Amount:{" "}
                           <span className="font-normal">
-                            ₦{(txn.total || 0).toLocaleString()}
+                            {formatCurrency(txn.subtotal || 0)}
                           </span>
                         </li>
                         <li className="font-medium text-[#444444] text-sm ">
                           Amount Paid:{" "}
                           <span className="font-normal">
-                            ₦{txn.amountPaid?.toLocaleString()}
+                            {formatCurrency(txn.amountPaid || 0)}
                           </span>
                         </li>
 
