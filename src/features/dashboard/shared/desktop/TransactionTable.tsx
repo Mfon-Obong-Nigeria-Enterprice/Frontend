@@ -33,7 +33,7 @@ const TransactionTable = ({
 }) => {
   const { open, openModal, selectedTransaction } = useTransactionsStore();
   const { user } = useAuthStore();
-  console.log("transaction table", currentTransaction);
+
 
   return (
     <div className="hidden xl:block">
@@ -90,7 +90,7 @@ const TransactionTable = ({
                 </td>
                 <td className=" py-3 pl-1  font-normal ">
                   <p className="text-xs text-[#444444] text-start">
-                    {getTransactionDateString(transaction)}
+                    {getTransactionDateString(transaction, "en-GB")}
                   </p>
                   <p className="text-[0.625rem] text-[#7D7D7D] text-start">
                     {getTransactionTimeString(transaction)}

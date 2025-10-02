@@ -34,7 +34,7 @@ export const getTransactionDate = (tx: Partial<Transaction>): Date => {
 
 export const getTransactionDateString = (
   tx: Partial<Transaction>,
-  locale: string
+  locale: string = "en-GB"
 ): string => {
   const d = getTransactionDate(tx);
   return d.toLocaleDateString(locale);
@@ -42,7 +42,7 @@ export const getTransactionDateString = (
 
 export const getTransactionTimeString = (
   tx: Partial<Transaction>,
-  locale: string = undefined
+  locale: string = "en-GB"
 ): string => {
   const d = getTransactionDate(tx);
   return d.toLocaleTimeString(locale);
@@ -77,7 +77,7 @@ export function getClientsWithDebt(mergedTransaction: MergedTransaction[]) {
   // Filter clients with balance < 0 (i.e., they owe money)
   return Object.values(clientMap)
     .filter(({ client }) => client.balance < 0)
-    .map(({client, _id, createdAt}) => ({
+    .map(({ client, _id, createdAt }) => ({
       name: client.name,
       _id,
       balance: client.balance,
