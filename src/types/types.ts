@@ -85,6 +85,7 @@ export interface TransactionItem {
   description?: string;
   date: string;
   reference: string;
+  amountPaid?: number;
 }
 
 export interface Client {

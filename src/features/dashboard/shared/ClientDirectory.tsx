@@ -94,7 +94,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
   };
 
   return (
-    <div className="mt-7 mb-2  hidden lg:block">
+    <div className="mt-7 mb-2 hidden lg:block">
       <Card>
         <CardContent>
           <Table>
@@ -111,6 +111,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
             <TableBody>
               {currentClient.map((client) => {
                 const lastTransaction = getClientTransaction(client);
+                console.log("last transaction", lastTransaction);
 
                 const isOwing = client.balance < 0;
                 return (
@@ -161,7 +162,9 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                       <div>
                         <p className={`font-[400] text-[#444444] text-sm `}>
                           {lastTransaction
-                            ? formatCurrency(Math.abs(lastTransaction.amount))
+                            ? formatCurrency(
+                                Math.abs(lastTransaction?.amountPaid)
+                              )
                             : "₦0"}
                         </p>
                       </div>
@@ -191,7 +194,6 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
 
                     <TableCell>
                       {isStaffView ? (
-                        // isOwing ? (
                         <Button
                           variant="ghost"
                           className="w-40 border-[#3D80FF] border text-[#3D80FF] cursor-pointer hover:text-[#3D80FF] transition-colors duration-200 ease-in-out"
@@ -200,7 +202,6 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                           {isOwing ? "Add payment" : "Deposit"}
                         </Button>
                       ) : (
-                        // ) : null
                         <Button
                           variant="link"
                           size="icon"

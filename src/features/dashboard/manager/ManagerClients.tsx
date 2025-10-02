@@ -307,9 +307,9 @@ const ManagerClients = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-[#D9D9D9] text-[#444444]">
                   <SelectGroup>
-                    <SelectItem value="All Status">All Status</SelectItem>
-                    <SelectItem value="REGISTERED">Registered</SelectItem>
-                    <SelectItem value="UNREGISTERED">Unregistered</SelectItem>
+                    <SelectItem value="All status">All Status</SelectItem>
+                    <SelectItem value="registered">Registered</SelectItem>
+                    <SelectItem value="unregistered">Unregistered</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
