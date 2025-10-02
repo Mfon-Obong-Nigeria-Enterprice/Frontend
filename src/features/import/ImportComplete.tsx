@@ -24,11 +24,10 @@ const ImportComplete = () => {
   }, []);
 
   const importedData = [
-    // { title: "Product Updated", quantity: summary.updated },
-    { title: "Product Updated", quantity: data.length },
-    { title: "New Product", quantity: summary.new },
+    { title: "Products Updated", quantity: summary.updated },
+    { title: "New Products", quantity: summary.new },
     { title: "Errors", quantity: summary.errors },
-    { title: "Processing", quantity: 0.3 },
+    { title: "Processing Time", quantity: `${summary.processingTime.toFixed(1)}s` },
   ];
   return (
     <div>

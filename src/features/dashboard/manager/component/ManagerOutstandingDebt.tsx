@@ -64,19 +64,21 @@ const ManagerOutstandingDebt = () => {
             </Button>
           </div>
         ) : (
-          currentDebtors.map((client, index) => (
-            <div
-              key={`${client._id}-${index}`}
-              className={`border-b border-gray-300 flex justify-between items-center pt-4 `}
-            >
-              <p className="font-medium  text-[#444444] text-xs sm:text-base capitalize">
-                {client.name}
-              </p>
-              <p className="text-start text-[#F95353] text-xs sm:text-base ">
-                -{formatCurrency(Math.abs(client.balance))}
-              </p>
-            </div>
-          ))
+          currentDebtors.map((client, index) => {
+            return (
+              <div
+                key={`${client._id}-${index}`}
+                className={`border-b border-gray-300 flex justify-between items-center pt-4 `}
+              >
+                <p className="font-medium  text-[#444444] text-xs sm:text-base capitalize">
+                  {client.name}
+                </p>
+                <p className="text-start text-[#F95353] text-xs sm:text-base ">
+                  -{formatCurrency(Math.abs(client.balance))}
+                </p>
+              </div>
+            );
+          })
         )}
       </div>
 

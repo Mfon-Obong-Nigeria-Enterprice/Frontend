@@ -29,7 +29,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   onClose,
   onPaymentSuccess,
 }) => {
-  const { addPayment } = useClientStore();
+  const { updateClient } = useClientStore();
   const { addTransaction } = useTransactionsStore();
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
@@ -60,6 +60,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     }) => AddClientPayment(transactionData),
     onSuccess: (response) => {
       console.log("Payment response:", response);
+
+      // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["client", client._id] });
@@ -81,14 +83,19 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           amount: Number(amount),
           total: Number(amount),
           amountPaid: Number(amount),
+          subtotal: Number(amount),
+          discount: 0,
           paymentMethod: paymentMethod,
           clientId: {
             _id: client._id,
             phone: client.phone || "",
             name: client.name,
-            balance: "",
+            balance: newBalance, // Use the new balance after payment
           },
-          client: client,
+          client: {
+            ...client,
+            balance: newBalance, // Update the client object with new balance
+          },
           createdAt: response.createdAt || new Date().toISOString(),
           reference: reference || response.reference || `TXN${Date.now()}`,
           description:
@@ -98,8 +105,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         addTransaction(newTransaction);
 
         // Update client balance in local store
-        if (addPayment) {
-          addPayment(client._id, newBalance);
+        if (updateClient) {
+          updateClient(client._id, {
+            balance: newBalance,
+            lastTransactionDate: new Date().toISOString(),
+          });
         }
       }
 
@@ -168,7 +178,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-h-[90vh] overflow-y-auto px-6">
         <DialogHeader className=" border-b-2 pb-4 border-[#D9D9D9] text-start text-[#1E1E1E] font-medium font-Inter flex-shrink-0">
-          <DialogTitle>Process Debt Payment</DialogTitle>
+          <DialogTitle>
+            {client.balance < 0 ? "Process Debt Payment" : "Add Credit"}
+          </DialogTitle>
         </DialogHeader>
         <form
           onSubmit={handleSubmit}
@@ -189,7 +201,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="text-[#444444]">Client:</span>
+                  <span className="text-[#444444]">Client: </span>
                   <span className="text-[#444444] font-medium">
                     {client.name}
                   </span>

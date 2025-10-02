@@ -4,30 +4,73 @@ import { useEffect, useState } from "react";
 import { useImportStore } from "@/stores/useImportStore";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { bulkImportProducts } from "@/services/productService";
+import { toast } from "sonner";
 
 const ImportLoading = () => {
-  const { data, setStep } = useImportStore();
+  const { data, setStep, setSummary, setErrorRows } = useImportStore();
   const [processed, setProcessed] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
   const total = data.length || 0;
 
   useEffect(() => {
-    if (processed >= total) {
-      const timeout = setTimeout(() => {
-        setStep("complete");
-      }, 500);
-      return () => clearTimeout(timeout);
+    if (total === 0) {
+      setStep("error");
+      return;
     }
 
-    const interval = setInterval(() => {
-      setProcessed((prev) => {
-        if (prev < total) return prev + 1;
-        clearInterval(interval);
-        return prev;
-      });
-    }, 1000); // Adjust speed as needed (10ms per item = ~4.5s for 450)
+    const processImport = async () => {
+      if (isProcessing) return;
+      
+      setIsProcessing(true);
+      const startTime = Date.now();
 
-    return () => clearInterval(interval);
-  }, [processed, total, setStep]);
+      try {
+        const result = await bulkImportProducts(data, (processed, total) => {
+          setProcessed(processed);
+        });
+
+        const processingTime = (Date.now() - startTime) / 1000; // in seconds
+
+        // Update summary with real results
+        setSummary({
+          updated: 0, // We're only creating new products
+          new: result.success.length,
+          errors: result.errors.length,
+          processingTime: processingTime,
+        });
+
+        // Set error rows for display
+        setErrorRows(result.errors.map((error, index) => ({
+          row: index + 1,
+          message: error.error,
+        })));
+
+        // Show success message
+        if (result.success.length > 0) {
+          toast.success(`Successfully imported ${result.success.length} products!`);
+        }
+
+        if (result.errors.length > 0) {
+          toast.error(`${result.errors.length} products failed to import`);
+        }
+
+        // Move to complete step
+        setTimeout(() => {
+          setStep("complete");
+        }, 1000);
+
+      } catch (error) {
+        console.error("Import failed:", error);
+        toast.error("Import failed. Please try again.");
+        setStep("error");
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
+    processImport();
+  }, [data, setStep, setSummary, setErrorRows, isProcessing, total]);
 
   const progress = total > 0 ? Math.round((processed / total) * 100) : 0;
 
