@@ -27,19 +27,27 @@ import { useTransactionsStore } from "@/stores/useTransactionStore";
 // hooks
 import usePagination from "@/hooks/usePagination";
 
+// utils
+import { getTransactionDate } from "@/utils/transactions";
+
 const StaffSales = () => {
   const transactions = useTransactionsStore(
     (state) => state.transactions ?? []
   );
 
-  const [filter, setFilter] = useState<"today" | "week" | "month">("today");
+  const [filter, setFilter] = useState<"all" | "today" | "week" | "month">(
+    "all"
+  );
   const [isWaybillModalOpen, setIsWaybillModalOpen] = useState(false); // Add modal state
 
   // filter transaction
   const filteredTransactions = useMemo(() => {
     const now = new Date();
     return transactions?.filter((tx) => {
-      const txDate = new Date(tx.createdAt);
+      // const txDate = new Date(tx.createdAt);
+      const txDate = getTransactionDate(tx);
+
+      if (filter === "all") return true;
 
       if (filter === "today") {
         return (
@@ -123,17 +131,21 @@ const StaffSales = () => {
             Your Sales Activity
           </h4>
           <div className="flex gap-3 items-center">
-            {["today", "week", "month"].map((f) => (
+            {["all", "today", "week", "month"].map((f) => (
               <p
                 key={f}
-                onClick={() => setFilter(f as "today" | "week" | "month")}
+                onClick={() =>
+                  setFilter(f as "all" | "today" | "week" | "month")
+                }
                 className={`cursor-pointer px-5 py-3 rounded-[2px] text-sm font-Inter  hidden md:block ${
                   filter === f
                     ? "bg-[#D8E5FE] text-[#3D80FF]"
                     : "bg-transparent text-[#444444]"
                 }`}
               >
-                {f === "today"
+                {f === "all"
+                  ? "All"
+                  : f === "today"
                   ? "Today"
                   : f === "week"
                   ? "This Week"
@@ -144,7 +156,7 @@ const StaffSales = () => {
               <Tabs
                 value={filter}
                 onValueChange={(val) =>
-                  setFilter(val as "today" | "week" | "month")
+                  setFilter(val as "all" | "today" | "week" | "month")
                 }
               >
                 <TabsList className="grid grid-cols-3 w-full md:hidden">
