@@ -60,6 +60,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     const normalizedRole = user.role.toString().trim().toUpperCase();
     return normalizedRole === "SUPER_ADMIN";
   }, [user, isManagerView]);
+
   const { data: fetchedTransactions, isLoading: transactionsLoading } =
     useQuery({
       queryKey: ["transactions", user?.branchId],
@@ -316,7 +317,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     if (!transactions || !clients) return [];
     const merged = mergeTransactionsWithClients(transactions, clients);
 
-    console.log("merged det", merged);
     return merged;
   }, [transactions, clients]);
 

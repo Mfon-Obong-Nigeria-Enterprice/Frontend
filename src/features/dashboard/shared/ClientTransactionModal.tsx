@@ -61,23 +61,6 @@ const ClientTransactionModal = () => {
                   {getDaysSince(selectedTransaction.createdAt)} days overdue
                 </p>
               </div>
-              {/* {selectedTransaction?.createdAt &&
-                (() => {
-                  const createdAt = new Date(selectedTransaction.createdAt);
-                  const today = new Date();
-                  const diffInMs = today.getTime() - createdAt.getTime();
-                  const diffInDays = Math.floor(
-                    diffInMs / (1000 * 60 * 60 * 24)
-                  );
-
-                  return diffInDays > 10 ? (
-                    <div className="bg-[#FFE7A4] py-2 px-2.5 rounded mt-1">
-                      <p className="text-[#444444CC] text-[0.625rem]">
-                        {diffInDays} days overdue
-                      </p>
-                    </div>
-                  ) : null;
-                })()} */}
             </div>
           </div>
 
@@ -95,7 +78,9 @@ const ClientTransactionModal = () => {
                       className={`border text-xs rounded-3xl py-1 px-2 capitalize ${
                         selectedTransaction.type === "PURCHASE"
                           ? "border-[#F95353] bg-[#FFCACA] text-[#F95353]"
-                          : "border-[#FFA500] bg-[#FFE7A4] text-[#FFA500]"
+                          : selectedTransaction.type === "PICKUP"
+                          ? "border-[#FFA500] bg-[#FFE7A4] text-[#FFA500]"
+                          : " border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71]"
                       }`}
                     >
                       {typeof selectedTransaction?.type === "string"
@@ -129,12 +114,7 @@ const ClientTransactionModal = () => {
                             : "text-[#F95353]"
                         }`}
                       >
-                        {selectedTransaction.client?.balance < 0 ? "-" : ""}₦
-                        {Math.abs(
-                          selectedTransaction.client?.balance ?? 0
-                        ).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                        })}
+                        {formatCurrency(selectedTransaction.client.balance)}
                       </p>
                     )}
                 </div>
@@ -185,7 +165,15 @@ const ClientTransactionModal = () => {
                         <p className="font-medium text-[#444444] text-[13px]">
                           Amount:{" "}
                           <span className="font-normal">
-                            ₦{selectedTransaction?.total.toLocaleString()}
+                            {formatCurrency(selectedTransaction.total ?? 0)}
+                          </span>
+                        </p>
+                        <p className="font-medium text-[#444444] text-[13px]">
+                          Amount Paid:{" "}
+                          <span className="font-normal">
+                            {formatCurrency(
+                              selectedTransaction.amountPaid ?? 0
+                            )}
                           </span>
                         </p>
                         <p className="font-medium text-[#444444] text-[13px]">
@@ -212,10 +200,13 @@ const ClientTransactionModal = () => {
                         <span className="text-[#3D80FF] text-xs">
                           {selectedTransaction.invoiceNumber}
                         </span>
+                      </p>
+                      <p>
                         {selectedTransaction.waybillNumber !== null && (
-                          <p>
-                            <span>Way bill number:</span>
-                            <span>{selectedTransaction.waybillNumber}</span>
+                          <p className="rounded-[2px] bg-[#E2F3EB] p-0.5 text-center">
+                            <span className="text-[#3D80FF] text-xs">
+                              {selectedTransaction.waybillNumber}
+                            </span>
                           </p>
                         )}
                       </p>
@@ -229,38 +220,45 @@ const ClientTransactionModal = () => {
               <h6 className="font-normal text-base text-[#333333] mb-3">
                 Product Purchase:
               </h6>
-              <ul className="flex flex-wrap gap-4 items-start">
-                {selectedTransaction.items.map((item) => (
-                  <li
-                    key={item.productId}
-                    className="flex-1 min-w-full md:min-w-[150px] max-w-[200px] bg-[#F5F5F5] py-2.5 px-3 border-l-4 border-[#2ECC71] rounded-[8px]"
-                  >
-                    <p className="text-xs font-medium text-[#333333]">
-                      {item.unit} {item.productName}
-                    </p>
-                    <p className="flex items-center gap-1.5 text-[9px] text-[#7D7D7D]">
-                      {item.unit} <X size={10} /> {item.quantity}
-                    </p>
-                    <p className="text-[13px] font-medium text-[#2ECC71]">
-                      ₦{item.unitPrice.toLocaleString()}
-                    </p>
-                  </li>
-                ))}
-              </ul>
+              {(selectedTransaction.type === "PURCHASE" ||
+                selectedTransaction.type === "PICKUP") &&
+                selectedTransaction.items && (
+                  <ul className="flex flex-wrap gap-4 items-start">
+                    {selectedTransaction.items.map((item) => (
+                      <li
+                        key={item.productId}
+                        className="flex-1 min-w-full md:min-w-[150px] max-w-[200px] bg-[#F5F5F5] py-2.5 px-3 border-l-4 border-[#2ECC71] rounded-[8px]"
+                      >
+                        <p className="text-xs font-medium text-[#333333]">
+                          {item.unit} {item.productName}
+                        </p>
+                        <p className="flex items-center gap-1.5 text-[9px] text-[#7D7D7D]">
+                          {item.unit} <X size={10} /> {item.quantity}
+                        </p>
+                        <p className="text-[13px] font-medium text-[#2ECC71]">
+                          ₦{item.unitPrice.toLocaleString()}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
             </div>
 
             {/* discounts */}
-            <p className="bg-[#FFE7A4] mt-5 mb-10 px-3 py-3 rounded-[0.625rem] ">
-              <span className="mr-1 text-sm text-[#7d7d7d]">
-                Total Discount:
-              </span>
-              <span className="text-sm text-[#7D7D7D] font-medium">
-                {selectedTransaction?.discount
-                  ? `₦
-${selectedTransaction.discount.toLocaleString()}`
-                  : "No Discounts Applied..."}
-              </span>
-            </p>
+            {selectedTransaction.discount &&
+              (selectedTransaction.type === "PURCHASE" ||
+                selectedTransaction.type === "PICKUP") && (
+                <p className="bg-[#FFE7A4] mt-5 mb-10 px-3 py-3 rounded-[0.625rem] ">
+                  <span className="mr-1 text-sm text-[#7d7d7d]">
+                    Total Discount:
+                  </span>
+                  <span className="text-sm text-[#7D7D7D] font-medium">
+                    {selectedTransaction?.discount
+                      ? formatCurrency(selectedTransaction.discount)
+                      : "No Discounts Applied..."}
+                  </span>
+                </p>
+              )}
           </div>
           {/* buttons */}
           <div className="bg-[#F5F5F5] py-5 px-5 flex justify-end items-center gap-10">
