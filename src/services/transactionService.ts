@@ -40,18 +40,22 @@ export const AddTransaction = async (
   return response.data;
 };
 
-// Specific function for client debt payments
+//function for client debt payments
 export const AddClientPayment = async (
   data: ClientPaymentCreate
 ): Promise<Transaction> => {
   const { user } = useAuthStore.getState();
   if (!user?.branchId) throw new Error("Branch ID missing");
 
-  const response = await api.post(`/clients/${data.clientId}/transactions`, {
-    type: data.type,
-    amount: data.amount,
-    description: data.description || `Debt payment received`,
+  // Use the main transactions endpoint with type: "DEPOSIT"
+  const response = await api.post("/transactions", {
+    clientId: data.clientId,
+    type: "DEPOSIT",
+    items: [], // Empty items array for deposit transactions
+    amountPaid: data.amount,
+    discount: 0,
     paymentMethod: data.paymentMethod || "Cash",
+    notes: data.description || `Payment for debt reduction`,
     reference: data.reference,
     branchId: user.branchId,
   });

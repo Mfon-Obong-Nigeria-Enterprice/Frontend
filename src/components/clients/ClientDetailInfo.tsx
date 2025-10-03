@@ -15,6 +15,14 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
     return client.balance < 0 ? getDaysSince(client.lastTransactionDate) : 0;
   }, [client.balance, client.lastTransactionDate]);
 
+  // Count only PICKUP and PURCHASE transactions as orders
+  const totalOrders = useMemo(() => {
+    if (!client.transactions || client.transactions.length === 0) return 0;
+    return client.transactions.filter(
+      (txn) => txn.type === "PICKUP" || txn.type === "PURCHASE"
+    ).length;
+  }, [client.transactions]);
+
   const lifetimeValue = useMemo(() => {
     if (!client.transactions || client.transactions.length === 0) return "₦0";
     const total = client.transactions.reduce((sum, txn) => {
@@ -86,7 +94,6 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
             <div className="flex justify-between items-center py-2.5 border-b border-[#d9d9d9] text-[#7D7D7D] text-[0.6875rem]">
               <p>Account status</p>
               <p className={`capitalize ${accountStatus.class}`}>
-                {/* {client.balance && client.balance > 0 ? "credit" : "Overdue"} */}
                 {accountStatus.text}
               </p>
             </div>
@@ -106,7 +113,7 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
           <ul className="grid grid-cols-2 gap-5 mt-5">
             <li className="bg-[#F5F5F5] flex flex-col gap-0.5 justify-center items-center rounded-[8px] p-5">
               <span className="text-sm text-[#333333] font-semibold">
-                {client.transactions.length || 0}
+                {totalOrders}
               </span>
               <span className="text-xs text-[#444444] font-normal">
                 Total order
@@ -130,13 +137,6 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
                 Days overdue
               </span>
             </li>
-
-            {/* <li className="bg-[#F5F5F5] flex flex-col gap-0.5 justify-center items-center rounded-[8px] p-5">
-              <span className="text-sm text-[#333333] font-semibold">0</span>
-              <span className="text-xs text-[#444444] font-normal">
-                Pending invoices
-              </span>
-            </li> */}
           </ul>
         </div>
       )}
