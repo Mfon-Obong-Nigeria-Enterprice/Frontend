@@ -18,8 +18,9 @@ const RecentSales: React.FC = () => {
   const navigate = useNavigate();
   const { transactions } = useTransactionsStore();
 
-  // sort + slice for recent 5
+  // filter for purchase/pickup, then sort + slice for recent 5
   const recentTxns = [...(transactions || [])]
+    .filter((txn) => txn.type === "PURCHASE" || txn.type === "PICKUP")
     .sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()

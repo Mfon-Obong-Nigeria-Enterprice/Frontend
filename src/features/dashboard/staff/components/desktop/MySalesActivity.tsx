@@ -58,6 +58,9 @@ const MySalesActivity = ({
               Products
             </td>
             <td className="text-[#333333] font-Inter font-medium text-base">
+              Type
+            </td>
+            <td className="text-[#333333] font-Inter font-medium text-base">
               Amount
             </td>
             <td className="text-[#333333] font-Inter font-medium text-base">
@@ -114,13 +117,21 @@ const MySalesActivity = ({
                   )}
                 </td>
                 <td
-                  className={`${balanceTextClass(transaction.total)} min-w-32`}
+                  className={` text-sm  py-1 px-2 capitalize ${
+                    transaction.type === "PURCHASE"
+                      ? " text-[#F95353]"
+                      : transaction.type === "PICKUP"
+                      ? " text-[#FFA500]"
+                      : "  text-[#2ECC71]"
+                  }`}
                 >
+                  {transaction.type}
+                </td>
+                <td className={balanceTextClass(transaction.total)}>
                   {formatCurrency(transaction?.total)}
                 </td>
                 <td className={balanceTextClass(transaction.amountPaid)}>
-                  {/* {formatCurrency(transaction?.amountPaid)} */}₦{" "}
-                  {transaction.amountPaid?.toLocaleString()}
+                  ₦{transaction.amountPaid?.toLocaleString()}
                 </td>
                 <td className="uppercase text-[#444444] text-base text-right pr-5 md:pr-10">
                   {/* {getTransactionTimeString(transaction, "en-NG")} */}

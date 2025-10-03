@@ -51,16 +51,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     mutationFn: (transactionData: {
       type: "DEPOSIT";
       amount: number;
-      total: number;
       paymentMethod: string;
       reference: string;
       description: string;
       clientId: string;
-      amountPaid: number;
     }) => AddClientPayment(transactionData),
     onSuccess: (response) => {
-      console.log("Payment response:", response);
-
       // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
@@ -90,11 +86,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             _id: client._id,
             phone: client.phone || "",
             name: client.name,
-            balance: newBalance, // Use the new balance after payment
+            balance: newBalance,
           },
           client: {
             ...client,
-            balance: newBalance, // Update the client object with new balance
+            balance: newBalance,
           },
           createdAt: response.createdAt || new Date().toISOString(),
           reference: reference || response.reference || `TXN${Date.now()}`,
@@ -151,8 +147,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       const transactionData = {
         type: "DEPOSIT" as const,
         amount: Number(amount),
-        total: Number(amount),
-        amountPaid: Number(amount),
         paymentMethod,
         reference: reference || `TXN${Date.now()}`,
         description: description || `Payment for ${client.name}`,

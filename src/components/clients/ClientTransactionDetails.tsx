@@ -58,14 +58,16 @@ export const ClientTransactionDetails: React.FC<
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
                     <div>
-                      {txn.discount && (
-                        <p className="text-[#2ECC71] font-normal font-Inter text-lg">
-                          ₦{txn.discount?.toLocaleString()} saved
-                        </p>
-                      )}
+                      {txn.discount &&
+                        (txn.type === "PICKUP" || txn.type === "PURCHASE") && (
+                          <p className="text-[#2ECC71] font-normal font-Inter text-lg">
+                            {formatCurrency(txn.discount)} saved
+                          </p>
+                        )}
                     </div>
                     <div>
-                      {txn?.total > 0 ? (
+                      {(txn?.total >= 0 && txn.type === "PICKUP") ||
+                      txn.type === "PURCHASE" ? (
                         <p className="text-[#7D7D7D] text-sm font-Inter">
                           {(
                             ((txn?.discount ?? 0) / (txn?.subtotal ?? 0)) *
@@ -130,13 +132,13 @@ export const ClientTransactionDetails: React.FC<
                         <li className="font-medium text-[#444444] text-sm ">
                           Amount:{" "}
                           <span className="font-normal">
-                            ₦{(txn.total || 0).toLocaleString()}
+                            {formatCurrency(txn.subtotal || 0)}
                           </span>
                         </li>
                         <li className="font-medium text-[#444444] text-sm ">
                           Amount Paid:{" "}
                           <span className="font-normal">
-                            ₦{txn.amountPaid?.toLocaleString()}
+                            {formatCurrency(txn.amountPaid || 0)}
                           </span>
                         </li>
 
@@ -183,13 +185,15 @@ export const ClientTransactionDetails: React.FC<
 
                         {/* Invoice and Waybill numbers */}
                         <div className="flex flex-col gap-2">
-                          {txn.invoiceNumber && (
-                            <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center w-fit">
-                              <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
-                                {txn.invoiceNumber}
-                              </span>
-                            </div>
-                          )}
+                          {txn.invoiceNumber &&
+                            (txn.type === "PICKUP" ||
+                              txn.type === "PURCHASE") && (
+                              <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center w-fit">
+                                <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
+                                  {txn.invoiceNumber}
+                                </span>
+                              </div>
+                            )}
                           {txn.waybillNumber && (
                             <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center w-fit">
                               <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">

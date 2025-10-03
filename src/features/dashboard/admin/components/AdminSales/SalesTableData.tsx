@@ -36,6 +36,7 @@ import type { Transaction } from "@/types/transactions";
 //hooks
 import { useTransactionSearch } from "@/hooks/useTransactionSearch";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { useMemo } from "react";
 
 // Empty State Component
 function EmptySalesState() {
@@ -75,7 +76,16 @@ const SalesTableData = ({
     onPageChange: (page: number) => setCurrentPage(page),
   });
 
-  const hasTransactions = currentTransaction && currentTransaction.length > 0;
+  // Filter for only purchase and pickup transactions
+  const salesTransactions = useMemo(
+    () =>
+      currentTransaction.filter(
+        (txn) => txn.type === "PURCHASE" || txn.type === "PICKUP"
+      ),
+    [currentTransaction]
+  );
+
+  const hasTransactions = salesTransactions && salesTransactions.length > 0;
 
   return (
     <div className="bg-white px-3 md:px-6 py-3 md:py-6 rounded-lg font-Inter">
@@ -124,7 +134,7 @@ const SalesTableData = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentTransaction.map((transaction) => (
+                {salesTransactions.map((transaction) => (
                   <TableRow
                     key={transaction._id}
                     id={`invoice-${transaction.invoiceNumber}`}
