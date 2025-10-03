@@ -12,7 +12,7 @@ import AddCategory from "@/features/dashboard/shared/inventory/AddCategory";
 import { useInventoryStore } from "@/stores/useInventoryStore";
 
 import { IoIosArrowUp, IoIosSearch } from "react-icons/io";
-import { CiImport } from "react-icons/ci";
+// import { CiImport } from "react-icons/ci";
 import { Plus, ChevronRight, RotateCcw, MoreVertical } from "lucide-react";
 
 import type { Product } from "@/types/types";
@@ -163,7 +163,6 @@ const AdminInventory = () => {
     setAddCategoryModalOpen(false);
   };
 
-
   const handleMouseUp = () => setDragging(false);
 
   const handleExportExcel = () => {
@@ -304,14 +303,14 @@ const AdminInventory = () => {
                       Update Stock
                     </Button>
 
-                    <Button
+                    {/* <Button
                       variant="outline"
                       onClick={() => navigate("/import-stock")}
                       className="gap-2"
                     >
                       <CiImport size={20} />
                       Import Stock
-                    </Button>
+                    </Button> */}
                     <Button
                       onClick={() => navigate("/admin/dashboard/sale")}
                       className="gap-2"
@@ -362,14 +361,14 @@ const AdminInventory = () => {
                           <RotateCcw size={16} />
                           Update Stock
                         </Button>
-                        <Button
+                        {/* <Button
                           variant="ghost"
                           onClick={() => navigate("/import-stock")}
                           className="justify-start gap-2"
                         >
                           <CiImport size={16} />
                           Import Stock
-                        </Button>
+                        </Button> */}
                         <Button
                           variant="ghost"
                           onClick={() => navigate("/admin/dashboard/sale")}
@@ -459,23 +458,23 @@ const AdminInventory = () => {
 
             {/* Content */}
             <div className="p-4 sm:p-6" ref={containerRef}>
-  <InventoryTab
-    products={filteredProducts}
-    categories={categories}
-    stockStatus={stockStatus}
-    priceRange={priceRange}
-  />
+              <InventoryTab
+                products={filteredProducts}
+                categories={categories}
+                stockStatus={stockStatus}
+                priceRange={priceRange}
+              />
 
-  {/* Floating Add Button - Fixed */}
-  <div>
-    <button
-      onClick={() => setIsAddModalOpen(true)}
-      className="fixed bottom-6 right-6 z-50 flex justify-center items-center bg-green-600 hover:bg-green-700 w-14 h-14 sm:w-16 sm:h-16 rounded-full text-white shadow-xl transition-colors"
-    >
-      <Plus className="h-6 w-6 sm:h-8 sm:w-8" />
-    </button>
-  </div>
-</div>
+              {/* Floating Add Button - Fixed */}
+              <div>
+                <button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="fixed bottom-6 right-6 z-50 flex justify-center items-center bg-green-600 hover:bg-green-700 w-14 h-14 sm:w-16 sm:h-16 rounded-full text-white shadow-xl transition-colors"
+                >
+                  <Plus className="h-6 w-6 sm:h-8 sm:w-8" />
+                </button>
+              </div>
+            </div>
 
             <UpdateStock
               products={productsForUpdateStock}
