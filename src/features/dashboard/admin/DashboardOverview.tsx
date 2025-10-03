@@ -9,7 +9,6 @@ import RecentSales from "../shared/RecentSales";
 import { Button } from "@/components/ui/button";
 import { VscRefresh } from "react-icons/vsc";
 import { Plus } from "lucide-react";
-import { CiImport } from "react-icons/ci";
 import { useInventoryStore } from "@/stores/useInventoryStore";
 import { useClientStore } from "@/stores/useClientStore";
 import { type StatCard } from "@/types/stats";
@@ -103,15 +102,7 @@ const DashboardOverview: React.FC = () => {
             <VscRefresh />
             Refresh
           </Button>
-          <Link to="/import-stock">
-            <Button
-              variant="outline"
-              className="w-40 bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
-            >
-              <CiImport size={20} />
-              Import Stock
-            </Button>
-          </Link>
+
           <Link to="/add-prod">
             <Button className="w-40 bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)] transition-colors duration-200 ease-in-out [&_span]:text-5xl">
               <Plus className="w-10 h-10 text-white" />
