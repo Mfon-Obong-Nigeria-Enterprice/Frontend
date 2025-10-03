@@ -159,7 +159,15 @@ const StaffSales = () => {
                   setFilter(val as "all" | "today" | "week" | "month")
                 }
               >
-                <TabsList className="grid grid-cols-3 w-full md:hidden">
+                <TabsList className="grid grid-cols-4 w-full md:hidden">
+                  <TabsTrigger
+                    value="all"
+                    className="w-full px-5 py-3 text-sm font-Inter 
+                 data-[state=active]:bg-[#3D80FF] data-[state=active]:text-white 
+                 data-[state=inactive]:bg-transparent data-[state=inactive]:text-[#444444]"
+                  >
+                    All
+                  </TabsTrigger>
                   <TabsTrigger
                     value="today"
                     className="w-full px-5 py-3 text-sm font-Inter 
