@@ -11,7 +11,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { getTransactionTimeString } from "@/utils/transactions";
+import {
+  getTransactionDateString,
+  // getTransactionTimeString,
+} from "@/utils/transactions";
 
 //  icons
 import { ChevronDown, Receipt, TrendingUp } from "lucide-react";
@@ -48,8 +51,8 @@ const MySalesActivity = ({
       <table className="w-full">
         <thead>
           <tr className="bg-[#F5F5F5] h-[65px]">
-            <td className="text-[#333333] font-Inter font-medium text-base pl-5 md:pl-10">
-              Clients
+            <td className="min-w-36 text-[#333333] font-Inter font-medium text-base pl-5 md:pl-10">
+              Client Name
             </td>
             <td className="text-[#333333] font-Inter font-medium text-base">
               Products
@@ -61,7 +64,7 @@ const MySalesActivity = ({
               Amount Paid
             </td>
             <td className="text-[#333333] font-Inter font-medium text-base text-right pr-5 md:pr-16">
-              Time
+              {/* Time */} Date
             </td>
           </tr>
         </thead>
@@ -75,7 +78,7 @@ const MySalesActivity = ({
                 <td className="text-[#444444] text-base pl-5 md:pl-10 capitalize">
                   {transaction.clientId?.name || transaction.walkInClientName}
                 </td>
-                <td className="text-[#444444] text-base min-w-30">
+                <td className="text-[#444444] text-base min-w-36">
                   {transaction.items.length > 0 && (
                     <>
                       <span>
@@ -110,15 +113,18 @@ const MySalesActivity = ({
                     </>
                   )}
                 </td>
-                <td className={balanceTextClass(transaction.total)}>
+                <td
+                  className={`${balanceTextClass(transaction.total)} min-w-32`}
+                >
                   {formatCurrency(transaction?.total)}
                 </td>
                 <td className={balanceTextClass(transaction.amountPaid)}>
-                  {/* {formatCurrency(transaction?.amountPaid)} */}
+                  {/* {formatCurrency(transaction?.amountPaid)} */}₦{" "}
                   {transaction.amountPaid?.toLocaleString()}
                 </td>
                 <td className="uppercase text-[#444444] text-base text-right pr-5 md:pr-10">
-                  {getTransactionTimeString(transaction, "en-NG")}
+                  {/* {getTransactionTimeString(transaction, "en-NG")} */}
+                  {getTransactionDateString(transaction, "en-NG")}
                 </td>
               </tr>
             ))

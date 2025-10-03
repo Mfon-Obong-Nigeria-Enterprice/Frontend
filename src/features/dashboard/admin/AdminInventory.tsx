@@ -163,7 +163,6 @@ const AdminInventory = () => {
     setAddCategoryModalOpen(false);
   };
 
-
   const handleMouseUp = () => setDragging(false);
 
   const handleExportExcel = () => {
@@ -459,23 +458,23 @@ const AdminInventory = () => {
 
             {/* Content */}
             <div className="p-4 sm:p-6" ref={containerRef}>
-  <InventoryTab
-    products={filteredProducts}
-    categories={categories}
-    stockStatus={stockStatus}
-    priceRange={priceRange}
-  />
+              <InventoryTab
+                products={filteredProducts}
+                categories={categories}
+                stockStatus={stockStatus}
+                priceRange={priceRange}
+              />
 
-  {/* Floating Add Button - Fixed */}
-  <div>
-    <button
-      onClick={() => setIsAddModalOpen(true)}
-      className="fixed bottom-6 right-6 z-50 flex justify-center items-center bg-green-600 hover:bg-green-700 w-14 h-14 sm:w-16 sm:h-16 rounded-full text-white shadow-xl transition-colors"
-    >
-      <Plus className="h-6 w-6 sm:h-8 sm:w-8" />
-    </button>
-  </div>
-</div>
+              {/* Floating Add Button - Fixed */}
+              <div>
+                <button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="fixed bottom-6 right-6 z-50 flex justify-center items-center bg-green-600 hover:bg-green-700 w-14 h-14 sm:w-16 sm:h-16 rounded-full text-white shadow-xl transition-colors"
+                >
+                  <Plus className="h-6 w-6 sm:h-8 sm:w-8" />
+                </button>
+              </div>
+            </div>
 
             <UpdateStock
               products={productsForUpdateStock}
