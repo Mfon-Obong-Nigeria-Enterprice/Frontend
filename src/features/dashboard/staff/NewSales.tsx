@@ -124,6 +124,9 @@ const NewSales: React.FC = () => {
 
   // Payment state
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [purchaseType, setPurchaseType] = useState<"PURCHASE" | "PICKUP">(
+    "PURCHASE"
+  );
   const [subMethod, setSubMethod] = useState("");
   const [amountPaid, setAmountPaid] = useState(""); // Store raw digits
   const [notes, setNotes] = useState("");
@@ -366,6 +369,7 @@ const NewSales: React.FC = () => {
     setIsSubmitting(false);
     setGlobalDiscount(0);
     setDate(getTodayDateString());
+    setPurchaseType("PURCHASE");
   };
 
   const handleSubmit = async () => {
@@ -373,7 +377,7 @@ const NewSales: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const { discountTotal, total } = calculateTotals();
+      const { discountTotal } = calculateTotals();
       const effectiveAmountPaid = getAmountPaid() || 0;
 
       const apiItems = rows
@@ -388,13 +392,13 @@ const NewSales: React.FC = () => {
           };
         });
 
-      let saleType: "PURCHASE" | "PICKUP" = "PURCHASE";
-      if (!isWalkIn && selectedClient) {
-        const clientBalance = selectedClient.balance || 0;
-        const canCover = effectiveAmountPaid + clientBalance >= total;
+      // let saleType: "PURCHASE" | "PICKUP" = "PURCHASE";
+      // if (!isWalkIn && selectedClient) {
+      //   const clientBalance = selectedClient.balance || 0;
+      //   const canCover = effectiveAmountPaid + clientBalance >= total;
 
-        saleType = canCover ? "PURCHASE" : "PICKUP";
-      }
+      //   saleType = canCover ? "PURCHASE" : "PICKUP";
+      // }
 
       let paymentMethodForBackend = paymentMethod;
       if (subMethod) {
@@ -409,12 +413,12 @@ const NewSales: React.FC = () => {
         ...(selectedClient?._id
           ? { clientId: selectedClient._id }
           : { walkInClient: walkInData }),
-        type: saleType,
+        type: purchaseType,
         items: apiItems,
         amountPaid: effectiveAmountPaid,
         discount: discountTotal,
         paymentMethod:
-          saleType === "PICKUP" ? "Credit" : paymentMethodForBackend,
+          purchaseType === "PICKUP" ? "Credit" : paymentMethodForBackend,
         notes,
         date,
       };
@@ -625,6 +629,29 @@ const NewSales: React.FC = () => {
                   </Select>
                 </div>
               )}
+
+              <div>
+                <Label className="mb-1">Transaction Type</Label>
+                <Select
+                  value={purchaseType}
+                  onValueChange={(value: string) =>
+                    setPurchaseType(value as "PURCHASE" | "PICKUP")
+                  }
+                >
+                  <SelectTrigger className="w-full sm:w-[180px] bg-[#D9D9D9]">
+                    <SelectValue placeholder="Select option" />
+                  </SelectTrigger>
+                  <SelectContent
+                    side="top"
+                    className="max-h-[250px] overflow-y-auto"
+                  >
+                    <SelectItem value="PURCHASE">Purchase</SelectItem>
+                    {!isWalkIn && selectedClient && (
+                      <SelectItem value="PICKUP">Pickup</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
 
               <div className="w-full sm:w-auto">
                 <Label className="mb-1">Amount Paid</Label>
