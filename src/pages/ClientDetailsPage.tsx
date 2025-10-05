@@ -158,7 +158,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
     const transactionsWithBalance = calculateTransactionsWithBalance(
       clientTransactions,
-      0
+      client?.balance ? { balance: client.balance } : { balance: 0 }
     );
 
     // Define table columns for transactions
@@ -645,6 +645,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
               <ClientTransactionDetails
                 // client={client}
                 clientTransactions={clientTransactions}
+                client={{ balance: client.balance }}
               />
             </TabsContent>
             <TabsContent value="clientDiscount">
