@@ -141,15 +141,13 @@ const ClientDirectoryMobile: React.FC<ClientDirectoryProps> = ({
                   </span>
                 </div>
                 {isStaffView ? (
-                  client.balance < 0 ? (
-                    <Button
-                      variant="ghost"
-                      className="border-[#3D80FF] border text-[#3D80FF] cursor-pointer hover:text-[#3D80FF] transition-colors duration-200 ease-in-out"
-                      onClick={() => handleViewClient(client)}
-                    >
-                      Add payment
-                    </Button>
-                  ) : null
+                  <Button
+                    variant="ghost"
+                    className=" w-30 border-[#3D80FF] border text-[#3D80FF] cursor-pointer hover:text-[#3D80FF] transition-colors duration-200 ease-in-out"
+                    onClick={() => handleViewClient(client)}
+                  >
+                    {client.balance < 0 ? "Add payment" : "Deposit"}
+                  </Button>
                 ) : (
                   <Button
                     variant="link"
