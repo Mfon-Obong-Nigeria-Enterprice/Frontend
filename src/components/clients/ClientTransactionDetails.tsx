@@ -1,6 +1,5 @@
 import type { Transaction } from "@/types/transactions";
 import { calculateTransactionsWithBalance } from "@/utils/calculateOutstanding";
-// import type { Client } from "@/types/types";
 import { balanceTextClass } from "@/utils/format";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getTypeDisplay, getTypeStyles } from "@/utils/helpersfunction";
@@ -9,15 +8,20 @@ import { useMemo } from "react";
 
 interface clientTrasactionDetailsProps {
   clientTransactions: Transaction[];
+  client: { balance: number };
 }
 
 export const ClientTransactionDetails: React.FC<
   clientTrasactionDetailsProps
-> = ({ clientTransactions }) => {
+> = ({ clientTransactions, client }) => {
   //
   const transactionWithBalance = useMemo(() => {
-    return calculateTransactionsWithBalance(clientTransactions, 0).reverse();
-  }, [clientTransactions]);
+    // Use the client's balance from the client object
+    return calculateTransactionsWithBalance(
+      clientTransactions,
+      client
+    ).reverse();
+  }, [clientTransactions, client]);
 
   return (
     <div>
@@ -30,7 +34,7 @@ export const ClientTransactionDetails: React.FC<
         <ul className="space-y-10">
           {transactionWithBalance.map((txn, i) => (
             <li
-              key={`${txn._id}-${txn.createdAt}-${i}`} // More unique key
+              key={`${txn._id}-${txn.createdAt}-${i}`}
               className="border rounded-lg px-5 py-3 shadow"
             >
               {/* type, date and time, balance */}
@@ -80,9 +84,6 @@ export const ClientTransactionDetails: React.FC<
                   </div>
 
                   <p className={`${balanceTextClass(txn.balanceAfter)}`}>
-                    {/* {txn.balanceAfter < 0 ? "-" : ""} ₦
-                    {Math.abs(Number(txn.balanceAfter)).toLocaleString()} 
-                    */}
                     {formatCurrency(txn.balanceAfter)}
                   </p>
                 </div>
@@ -117,7 +118,6 @@ export const ClientTransactionDetails: React.FC<
                           </span>
                           <span className="text-[#444444] text-sm  font-medium flex-1 text-right truncate md:text-clip md:whitespace-normal ">
                             {formatCurrency(txn.balanceAfter)}
-                            {/* {txn.balanceAfter || 0} */}
                           </span>
                         </div>
                       </div>

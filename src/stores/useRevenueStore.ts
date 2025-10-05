@@ -540,22 +540,22 @@ export const useRevenueStore = create<RevenueState>((set, get) => ({
     const now = new Date();
     const currentYear = now.getFullYear();
     const previousYear = currentYear - 1;
-    const monthsToShow = 6; // Show last 6 months
+    const monthsToShow = 12; // Show all 12 months
 
     const yearOverYearData: Array<{
       month: string;
       [key: string]: string | number;
     }> = [];
 
-    for (let i = monthsToShow - 1; i >= 0; i--) {
-      const targetDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthName = getMonthName(targetDate.getMonth());
+    // Start from January and go through all 12 months
+    for (let monthIndex = 0; monthIndex < monthsToShow; monthIndex++) {
+      const monthName = getMonthName(monthIndex);
 
-      // Current year data
-      const currentYearStart = new Date(currentYear, targetDate.getMonth(), 1);
+      // Current year data for this month
+      const currentYearStart = new Date(currentYear, monthIndex, 1);
       const currentYearEnd = new Date(
         currentYear,
-        targetDate.getMonth() + 1,
+        monthIndex + 1,
         0,
         23,
         59,
@@ -563,15 +563,11 @@ export const useRevenueStore = create<RevenueState>((set, get) => ({
         999
       );
 
-      // Previous year data
-      const previousYearStart = new Date(
-        previousYear,
-        targetDate.getMonth(),
-        1
-      );
+      // Previous year data for this month
+      const previousYearStart = new Date(previousYear, monthIndex, 1);
       const previousYearEnd = new Date(
         previousYear,
-        targetDate.getMonth() + 1,
+        monthIndex + 1,
         0,
         23,
         59,
