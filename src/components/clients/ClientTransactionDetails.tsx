@@ -132,7 +132,7 @@ export const ClientTransactionDetails: React.FC<
                         <li className="font-medium text-[#444444] text-sm ">
                           Amount:{" "}
                           <span className="font-normal">
-                            {formatCurrency(txn.subtotal || 0)}
+                            {formatCurrency(txn.total || 0)}
                           </span>
                         </li>
                         <li className="font-medium text-[#444444] text-sm ">
