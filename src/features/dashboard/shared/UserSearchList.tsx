@@ -1,12 +1,13 @@
 // src/components/SearchAndFilter.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { 
   Select, 
   SelectTrigger, 
   SelectContent, 
   SelectGroup, 
-  SelectItem} from "@/components/ui/select";
+  SelectItem
+} from "@/components/ui/select";
 import { Search, MapPin, Users, CalendarDays, Zap } from "lucide-react";
 
 interface SearchAndFilterProps {
@@ -14,19 +15,31 @@ interface SearchAndFilterProps {
   onFilterChange: (filterName: string, value: string) => void;
   roles?: string[];
   locations?: string[];
+  showLocationFilter?: boolean;
 }
 
 const UserSearchList: React.FC<SearchAndFilterProps> = ({ 
   onSearch, 
   onFilterChange, 
-  roles = [], 
-  locations = [] 
+  roles = [],
+  locations = [],
+  showLocationFilter = false
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [selectedDateRange, setSelectedDateRange] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
+
+  
+useEffect(() => {
+  onFilterChange('role', selectedRole);
+  onFilterChange('dateRange', selectedDateRange);
+  onFilterChange('status', selectedStatus);
+  if (showLocationFilter) {
+    onFilterChange('location', selectedLocation);
+  }
+}, [onFilterChange, selectedRole, selectedDateRange, selectedStatus, selectedLocation, showLocationFilter]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
@@ -63,7 +76,7 @@ const UserSearchList: React.FC<SearchAndFilterProps> = ({
         </span>
         <Input
           type="text"
-          placeholder="Search"
+          placeholder="Search activities..."
           className="pl-10 pr-4 py-5 rounded-lg border border-[#E0E0E0] w-full text-sm bg-[#F9F9F9] text-[#444] placeholder:text-[#B0B0B0]"
           value={searchQuery}
           onChange={handleSearchChange}
@@ -89,31 +102,37 @@ const UserSearchList: React.FC<SearchAndFilterProps> = ({
             </SelectContent>
           </Select>
           
-          {/* Location Filter */}
-          <Select value={selectedLocation} onValueChange={(value) => handleFilterChange('location', value)}>
-            <SelectTrigger className="w-full md:w-40 flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-[#F9F9F9] text-[#444] text-sm font-medium">
-              <MapPin className="size-4 text-muted-foreground" />
-              <span>{selectedLocation === "all" ? "All Locations" : selectedLocation}</span>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="all">All Locations</SelectItem>
-                {locations.map((loc) => (
-                  <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          {/* Location Filter - Conditionally Rendered */}
+          {showLocationFilter && (
+            <Select value={selectedLocation} onValueChange={(value) => handleFilterChange('location', value)}>
+              <SelectTrigger className="w-full md:w-40 flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-[#F9F9F9] text-[#444] text-sm font-medium">
+                <MapPin className="size-4 text-muted-foreground" />
+                <span>{selectedLocation === "all" ? "All Locations" : selectedLocation}</span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  {locations.map((loc) => (
+                    <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          )}
           
           {/* Date Range Filter */}
           <Select value={selectedDateRange} onValueChange={(value) => handleFilterChange('dateRange', value)}>
             <SelectTrigger className="w-full md:w-40 flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-[#F9F9F9] text-[#444] text-sm font-medium">
               <CalendarDays className="size-4 text-muted-foreground" />
-              <span>{selectedDateRange === "all" ? "Date Range" : selectedDateRange}</span>
+              <span>
+                {selectedDateRange === "all" ? "Date Range" : 
+                 selectedDateRange === "custom" ? "Custom Range" : 
+                 selectedDateRange}
+              </span>
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="all">Date Range</SelectItem>
+                <SelectItem value="all">All Time</SelectItem>
                 <SelectItem value="today">Today</SelectItem>
                 <SelectItem value="week">This Week</SelectItem>
                 <SelectItem value="month">This Month</SelectItem>

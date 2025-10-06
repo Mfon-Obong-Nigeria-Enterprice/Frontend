@@ -553,10 +553,15 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                   </label>
                   <div className="relative sm:w-[230px] md:w-[210px] transition-all w-full  border rounded-lg p-[6px]">
                     <CustomDatePicker
-                      selected={dateFrom}
-                      onChange={setDateFrom}
-                      className=" "
-                    />
+  startDate={dateFrom}
+  endDate={dateTo}
+  onChange={(start, end) => {
+    setDateFrom(start);
+    setDateTo(end);
+  }}
+  className=" "
+/>
+
                     <svg
                       className="w-5 h-5 text-gray-400 absolute right-2 top-2 pointer-events-none"
                       fill="none"
@@ -580,10 +585,15 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                   </label>
                   <div className="relative sm:w-[230px] md:w-[210px] transition-all w-full border rounded-lg p-[6px] ">
                     <CustomDatePicker
-                      selected={dateTo}
-                      onChange={setDateTo}
-                      className=""
-                    />
+  startDate={dateFrom}
+  endDate={dateTo}
+  onChange={(start, end) => {
+    setDateFrom(start);
+    setDateTo(end);
+  }}
+  className=" "
+/>
+
                     <svg
                       className="w-5 h-5 text-gray-400 absolute right-2 top-2.5 pointer-events-none"
                       fill="none"

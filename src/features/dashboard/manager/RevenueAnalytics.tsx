@@ -10,6 +10,7 @@ import {
   Pie,
   Cell,
   CartesianGrid,
+  
 } from "recharts";
 import {
   // ChevronDown,
@@ -292,67 +293,72 @@ export default function RevenueAnalytics() {
                 )}
               </div>
 
-              {/* Year Over Year Comparison */}
-              <div className="bg-white rounded-xl border border-gray-200 p-4 sm:py-10 sm:px-6 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Year-Over-Year Comparison
-                  </h3>
-                  <div className="flex items-center gap-4 text-xs">
-                    {yearOverYearData.length > 0 && (
-                      <>
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-red-500"></div>
-                          <span>{new Date().getFullYear() - 1}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-blue-500"></div>
-                          <span>{new Date().getFullYear()}</span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
+{/* Year Over Year Comparison */}
+<div className="bg-white rounded-xl border border-gray-200 p-4 sm:py-10 sm:px-6 shadow-sm">
+  <div className="flex items-center justify-between mb-6">
+    <h3 className="text-lg font-semibold text-gray-900">
+      Year-Over-Year Comparison
+    </h3>
+    <div className="flex items-center gap-4 text-xs">
+      {yearOverYearData.length > 0 && (
+        <>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-red-500 rounded"></div>
+            <span>{new Date().getFullYear() - 1}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-blue-500 rounded"></div>
+            <span>{new Date().getFullYear()}</span>
+          </div>
+        </>
+      )}
+    </div>
+  </div>
 
-                {isLoading ? (
-                  <ChartLoadingSkeleton />
-                ) : (
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={yearOverYearData} barCategoryGap="20%">
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          className=" bg-gray-500"
-                        />
-                        <XAxis
-                          dataKey="month"
-                          axisLine={true}
-                          tickLine={false}
-                          className="text-xs text-gray-500"
-                        />
-                        <YAxis
-                          axisLine={true}
-                          tickLine={false}
-                          className="text-xs text-gray-500"
-                          tickFormatter={(value) => `${value}k`}
-                        />
-                        <Bar
-                          dataKey={`${new Date().getFullYear() - 1}`}
-                          fill="#EF4444"
-                          radius={[0, 0, 0, 0]}
-                        />
-                        <Bar
-                          dataKey={`${new Date().getFullYear()}`}
-                          fill="#3B82F6"
-                          radius={[0, 0, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </div>
-            </div>
-
+  {isLoading ? (
+    <ChartLoadingSkeleton />
+  ) : yearOverYearData.length > 0 ? (
+    <div className="h-64">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart 
+          data={yearOverYearData}
+          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <XAxis 
+            dataKey="month"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fontSize: 12, fill: '#6B7280' }}
+          />
+          <YAxis 
+            axisLine={false}
+            tickLine={false}
+            tick={{ fontSize: 12, fill: '#6B7280' }}
+            tickFormatter={(value) => `₦${value}k`}
+          />
+          <Bar 
+            dataKey={(new Date().getFullYear() - 1).toString()}
+            fill="#EF4444"
+            radius={[2, 2, 0, 0]}
+            name={`${new Date().getFullYear() - 1}`}
+          />
+          <Bar 
+            dataKey={new Date().getFullYear().toString()}
+            fill="#3B82F6"
+            radius={[2, 2, 0, 0]}
+            name={new Date().getFullYear().toString()}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  ) : (
+    <div className="h-64 flex items-center justify-center">
+      <div className="text-gray-500">No year-over-year data available</div>
+    </div>
+  )}
+</div>
+</div>
             <div className="w-full xl:col-span-2 lg:col-span-2 space-y-4 sm:space-y-6">
               <div className="grid md:grid-cols-2 lg:grid-cols-1 gap-4">
                 {/* Revenue by Payment Method */}

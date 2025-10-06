@@ -22,50 +22,31 @@ const SessionTimeout = () => {
   const logoutTimeout = useRef<NodeJS.Timeout | null>(null);
   const countdownInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // Add refs to prevent excessive timer resets
-  const lastActivityTime = useRef<number>(Date.now());
-  const isResettingTimers = useRef<boolean>(false);
-
   // Timing: warn at 14 minutes, logout at 15 minutes of inactivity
-  const WARNING_TIME = 14 * 60 * 1000;
-  const LOGOUT_TIME = 15 * 60 * 1000;
+  const WARNING_TIME = 14 * 60 * 1000; // 14 minutes
+  const LOGOUT_TIME =15 * 60 * 1000; // 15 minutes
 
-  // Use useCallback to prevent recreation on every render
-  const resetTimers = useCallback(() => {
-    if (!isAuthenticated || isResettingTimers.current) return;
-
-    // Remove the throttling logic that was causing the delay
-    isResettingTimers.current = true;
-    lastActivityTime.current = Date.now();
-
-    // Clear existing timers
+  const handleLogout = useCallback(async () => {
+    // Clear all timers first
+    if (countdownInterval.current) clearInterval(countdownInterval.current);
     if (warningTimeout.current) clearTimeout(warningTimeout.current);
     if (logoutTimeout.current) clearTimeout(logoutTimeout.current);
-    if (countdownInterval.current) clearInterval(countdownInterval.current);
 
-    setTimeLeft(60);
     setShowWarning(false);
-
-    // Set new timers
-    warningTimeout.current = setTimeout(() => {
-      setShowWarning(true);
-      startCountdown();
-    }, WARNING_TIME);
-
-    logoutTimeout.current = setTimeout(() => handleLogout(), LOGOUT_TIME);
-
-    // Reset the throttling flag after a short delay
-    setTimeout(() => {
-      isResettingTimers.current = false;
-    }, 100);
-  }, [isAuthenticated]);
+    await logout();
+    navigate("/");
+  }, [logout, navigate]);
 
   const startCountdown = useCallback(() => {
+    if (countdownInterval.current) clearInterval(countdownInterval.current);
+    
+    setTimeLeft(60); // Reset to 60 seconds for countdown
     countdownInterval.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          if (countdownInterval.current)
+          if (countdownInterval.current) {
             clearInterval(countdownInterval.current);
+          }
           return 0;
         }
         return prev - 1;
@@ -73,27 +54,48 @@ const SessionTimeout = () => {
     }, 1000);
   }, []);
 
- const handleLogout = useCallback(async () => {
-  if (countdownInterval.current) clearInterval(countdownInterval.current);
-  if (warningTimeout.current) clearTimeout(warningTimeout.current);
-  if (logoutTimeout.current) clearTimeout(logoutTimeout.current);
+  const resetTimers = useCallback(() => {
+    if (!isAuthenticated) return;
 
-  setShowWarning(false);
-  await logout();
-  navigate("/");
-}, [logout, navigate]);
+    // Clear existing timers
+    if (warningTimeout.current) clearTimeout(warningTimeout.current);
+    if (logoutTimeout.current) clearTimeout(logoutTimeout.current);
+    if (countdownInterval.current) clearInterval(countdownInterval.current);
 
+    setShowWarning(false);
+    setTimeLeft(60);
+
+    // Set new timers
+    warningTimeout.current = setTimeout(() => {
+      setShowWarning(true);
+      startCountdown();
+    }, WARNING_TIME);
+
+    logoutTimeout.current = setTimeout(() => {
+      handleLogout();
+    }, LOGOUT_TIME);
+  }, [isAuthenticated, handleLogout, startCountdown]);
 
   const handleStayLoggedIn = useCallback(() => {
     setShowWarning(false);
-    if (countdownInterval.current) clearInterval(countdownInterval.current);
+    if (countdownInterval.current) {
+      clearInterval(countdownInterval.current);
+    }
     resetTimers();
   }, [resetTimers]);
 
-  // Activity detection effect
+  // Main activity detection effect
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      // Clean up if not authenticated
+      if (warningTimeout.current) clearTimeout(warningTimeout.current);
+      if (logoutTimeout.current) clearTimeout(logoutTimeout.current);
+      if (countdownInterval.current) clearInterval(countdownInterval.current);
+      setShowWarning(false);
+      return;
+    }
 
+    // Initialize timers when authenticated
     resetTimers();
 
     const events = [
@@ -103,59 +105,65 @@ const SessionTimeout = () => {
       "scroll",
       "touchstart",
       "mousedown",
-      // Treat focus/visibility changes as activity
+      "keypress",
+      "wheel",
+      "contextmenu",
+      "drag",
+      "drop",
       "focus",
+      "blur"
     ];
 
-    // Throttled activity handler
-    let activityTimeout: NodeJS.Timeout | null = null;
-    const activityHandler = () => {
-      if (activityTimeout) clearTimeout(activityTimeout);
-      activityTimeout = setTimeout(() => {
-        resetTimers();
-      }, 1000); 
+    // Add event listeners directly without throttling
+    const handleActivity = () => {
+      resetTimers();
     };
 
-    events.forEach((event) =>
-      window.addEventListener(event, activityHandler, { passive: true })
-    );
-    const visibilityHandler = () => {
+    events.forEach((event) => {
+      window.addEventListener(event, handleActivity, { passive: true });
+    });
+
+    // Handle visibility changes
+    const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        activityHandler();
+        resetTimers();
       }
     };
-    document.addEventListener("visibilitychange", visibilityHandler, {
+
+    document.addEventListener("visibilitychange", handleVisibilityChange, {
       passive: true,
     });
 
+    // Cleanup function
     return () => {
-      events.forEach((event) =>
-        window.removeEventListener(event, activityHandler)
-      );
-      document.removeEventListener("visibilitychange", visibilityHandler);
-      if (activityTimeout) clearTimeout(activityTimeout);
+      events.forEach((event) => {
+        window.removeEventListener(event, handleActivity);
+      });
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      
       if (warningTimeout.current) clearTimeout(warningTimeout.current);
       if (logoutTimeout.current) clearTimeout(logoutTimeout.current);
       if (countdownInterval.current) clearInterval(countdownInterval.current);
     };
   }, [isAuthenticated, resetTimers]);
 
-  // React Query activity detection - FIXED to prevent render cycle issues
+  // Optional: React Query activity detection (simplified)
   useEffect(() => {
     if (!isAuthenticated) return;
 
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      if (event?.query?.state?.status === "success") {
-        // Use setTimeout to break out of the render cycle
-        setTimeout(() => {
+      if (event?.query && event.query.state.status === "success") {
+        // Use microtask to avoid render cycle issues
+        Promise.resolve().then(() => {
           resetTimers();
-        }, 0);
+        });
       }
     });
 
-    return () => unsubscribe?.();
+    return () => unsubscribe();
   }, [isAuthenticated, queryClient, resetTimers]);
 
+  // Don't render if not authenticated
   if (!isAuthenticated) return null;
 
   return (
@@ -164,11 +172,16 @@ const SessionTimeout = () => {
         <DialogHeader>
           <DialogTitle>Session Expiring Soon</DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-muted-foreground">
-          You will be logged out in {timeLeft} seconds due to inactivity.
-        </p>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            You will be logged out in <strong>{timeLeft} seconds</strong> due to inactivity.
+          </p>
+          {/* <p className="text-xs text-muted-foreground">
+            Click "Stay Logged In" to continue your session.
+          </p> */}
+        </div>
         <div className="flex justify-end gap-2 mt-4">
-          <Button variant="secondary" onClick={handleStayLoggedIn}>
+          <Button variant="outline" onClick={handleStayLoggedIn}>
             Stay Logged In
           </Button>
           <Button variant="destructive" onClick={handleLogout}>
