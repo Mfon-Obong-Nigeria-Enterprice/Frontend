@@ -8,7 +8,7 @@ import { getTypeStyles } from "@/utils/helpersfunction";
 import { formatCurrency, toSentenceCaseName } from "@/utils/styles";
 import {
   getTransactionDateString,
-  getTransactionTimeString,
+  // getTransactionTimeString,
 } from "@/utils/transactions";
 
 // types
@@ -96,7 +96,20 @@ const TransactionTable = ({
                     {/* {transaction.date} */}
                   </p>
                   <p className="text-[0.625rem] text-[#7D7D7D] text-start">
-                    {getTransactionTimeString(transaction)}
+                    {/* {getTransactionTimeString(transaction)} */}
+                    {/* {transaction.date
+                      ? new Date(transaction.date).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : new Date(transaction.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })} */}
+                    {new Date(transaction.createdAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </p>
                 </td>
                 <td className=" text-start pl-1 text-[#444444] text-sm font-normal py-3">
