@@ -10,7 +10,7 @@ const MaintainerDashboard = () => {
   const users = useUserStore((s) => s.users);
   const {
     getTotalActivityToday,
-    getFailedLoginAttempts,
+    // getFailedLoginAttempts,
     getDataModifications,
   } = useActivityLogsStore();
 
@@ -18,7 +18,7 @@ const MaintainerDashboard = () => {
     (user) => user.isActive && !user.isBlocked
   ).length;
   const totalActivityToday = getTotalActivityToday();
-  const failedLoginAttempts = getFailedLoginAttempts();
+  // const failedLoginAttempts = getFailedLoginAttempts();
   const dataModifications = getDataModifications();
 
   const stats: StatCard[] = [
@@ -27,11 +27,11 @@ const MaintainerDashboard = () => {
       heading: "Total Activity Today",
       icon: "/icons/total 1.svg",
     },
-    {
-      salesValue: failedLoginAttempts.toString(),
-      heading: "Failed Login Attempts",
-      icon: "/icons/failed 1.svg",
-    },
+    // {
+    //   salesValue: failedLoginAttempts.toString(),
+    //   heading: "Failed Login Attempts",
+    //   icon: "/icons/failed 1.svg",
+    // },
     {
       salesValue: activeUsers.toString(),
       heading: "Active Users",

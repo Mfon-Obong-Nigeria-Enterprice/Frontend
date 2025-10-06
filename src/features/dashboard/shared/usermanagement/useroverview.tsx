@@ -297,14 +297,14 @@ const cancelCustomDateRange = () => {
 
         {/* hold refresh and button for maintainer */}
         <div className="flex flex-col md:flex-row gap-5">
-          {/* Auto Refresh Toggle */}
           <div className="flex items-center gap-1">
-            <span className="text-sm text-muted-foreground">Auto Refresh</span>
-            <label className="relative inline-flex items-center cursor-pointer">
+          {/* Auto Refresh Toggle */}
+            {/* <span className="text-sm text-muted-foreground">Auto Refresh</span> */}
+            {/* <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" className="sr-only peer" defaultChecked />
               <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
               <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-5 transition-transform"></div>
-            </label>
+            </label> */}
             <Popover>
               <PopoverTrigger asChild>
                 <button

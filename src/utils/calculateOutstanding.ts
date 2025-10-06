@@ -1,58 +1,63 @@
+import type { Transaction } from "@/types/transactions";
 import type { Client } from "@/types/types";
 
-type OutstandingSummary = {
-  totalOutstanding: number;
-  debtorCount: number;
-  debtors: Client[];
-};
+export function calculateTransactionsWithBalance(
+  transactions: Transaction[],
+  client: Pick<Client, "balance">
+) {
+  if (!transactions?.length) {
+    // If no transactions, return empty array
+    return [];
+  }
 
-type OutstandingChange = OutstandingSummary & {
-  changePercent: number;
-  increase: boolean;
-};
-
-export function isValidBalance(balance: unknown): balance is number {
-  return typeof balance === "number" && !isNaN(balance);
-}
-
-export function calculateOutstandingBalance(
-  clients: Client[]
-): OutstandingSummary {
-  const debtors = clients.filter(
-    (client) => isValidBalance(client.balance) && client.balance < 0
+  // Ensure oldest → newest
+  const sorted = [...transactions].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
 
-  const totalOutstanding = debtors.reduce((sum, client) => {
-    return sum + (isValidBalance(client.balance) ? client.balance : 0);
-  }, 0);
+  // Calculate the initial balance by working backwards from current balance
+  // Current balance = initial balance + all transaction effects
+  let initialBalance = client.balance;
 
-  return {
-    totalOutstanding: Math.abs(totalOutstanding),
-    debtorCount: debtors.length,
-    debtors,
-  };
-}
+  // Work backwards through transactions to find the starting balance
+  for (let i = sorted.length - 1; i >= 0; i--) {
+    const txn = sorted[i];
 
-export function calculateOutstandingChange(
-  currentClients: Client[],
-  previousClients: Client[]
-): OutstandingChange {
-  const current = calculateOutstandingBalance(currentClients);
-  const previous = calculateOutstandingBalance(previousClients);
+    if (txn.type === "DEPOSIT") {
+      // If deposit increased balance, subtract it to go back
+      initialBalance -= txn.amount ?? txn.amountPaid ?? txn.total ?? 0;
+    } else {
+      // If purchase/pickup decreased balance, add it back
+      const total = txn.total ?? 0;
+      const paid = txn.amountPaid ?? 0;
+      const outstanding = total - paid;
+      initialBalance += outstanding;
+    }
+  }
 
-  const { totalOutstanding: currentTotal } = current;
-  const { totalOutstanding: previousTotal } = previous;
+  // Now calculate forward with the correct initial balance
+  let runningBalance = initialBalance;
 
-  const change =
-    previousTotal === 0
-      ? currentTotal === 0
-        ? 0
-        : 100
-      : ((currentTotal - previousTotal) / previousTotal) * 100;
+  return sorted.map((txn) => {
+    const balanceBefore = runningBalance;
 
-  return {
-    ...current,
-    changePercent: Math.round(change),
-    increase: change > 0,
-  };
+    if (txn.type === "DEPOSIT") {
+      // Deposits reduce debt (increase balance)
+      runningBalance =
+        balanceBefore + (txn.amount ?? txn.amountPaid ?? txn.total ?? 0);
+    } else {
+      // Purchases/Pickups increase debt (decrease balance)
+      const total = txn.total ?? 0;
+      const paid = txn.amountPaid ?? 0;
+      const outstanding = total - paid;
+
+      runningBalance = balanceBefore - outstanding;
+    }
+
+    return {
+      ...txn,
+      balanceBefore,
+      balanceAfter: runningBalance,
+    };
+  });
 }

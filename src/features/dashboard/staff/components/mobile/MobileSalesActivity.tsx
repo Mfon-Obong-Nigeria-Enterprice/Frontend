@@ -86,15 +86,43 @@ const MobileSalesActivity = ({
                 </div>
               </div>
 
-              {/* Total and Time */}
-              <div className="flex items-center justify-between">
-                <div
-                  className={`text-lg font-semibold ${balanceTextClass(
+              {/* Type */}
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[#666] text-sm">Type:</span>
+                <span
+                  className={`text-sm font-medium py-1 px-2 capitalize ${
+                    transaction.type === "PURCHASE"
+                      ? "text-[#F95353]"
+                      : transaction.type === "PICKUP"
+                      ? "text-[#FFA500]"
+                      : "text-[#2ECC71]"
+                  }`}
+                >
+                  {transaction.type}
+                </span>
+              </div>
+
+              {/* Amount and Amount Paid */}
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[#666] text-sm">Amount:</span>
+                <span
+                  className={`text-base font-semibold ${balanceTextClass(
                     transaction.total
                   )}`}
                 >
                   {formatCurrency(transaction.total)}
-                </div>
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-[#666] text-sm">Amount Paid:</span>
+                <span
+                  className={`text-base font-semibold ${balanceTextClass(
+                    transaction.amountPaid
+                  )}`}
+                >
+                  ₦{transaction.amountPaid?.toLocaleString()}
+                </span>
               </div>
             </CardContent>
           </Card>

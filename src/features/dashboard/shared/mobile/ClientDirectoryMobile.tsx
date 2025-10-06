@@ -119,7 +119,9 @@ const ClientDirectoryMobile: React.FC<ClientDirectoryProps> = ({
                 <div>
                   <p className={`font-[400] text-[#444444] text-sm `}>
                     {lastTransaction
-                      ? formatCurrency(Math.abs(lastTransaction.amount))
+                      ? formatCurrency(
+                          Math.abs(lastTransaction.amountPaid || 0)
+                        )
                       : "₦0"}
                   </p>
                 </div>
@@ -135,20 +137,17 @@ const ClientDirectoryMobile: React.FC<ClientDirectoryProps> = ({
                         : "text-gray-300"
                     } `}
                   >
-                    {client.balance < 0 ? "-" : client.balance > 0 ? "+" : ""}₦
-                    {Math.abs(client.balance).toLocaleString()}
+                    {formatCurrency(client.balance)}
                   </span>
                 </div>
                 {isStaffView ? (
-                  client.balance < 0 ? (
-                    <Button
-                      variant="ghost"
-                      className="border-[#3D80FF] border text-[#3D80FF] cursor-pointer hover:text-[#3D80FF] transition-colors duration-200 ease-in-out"
-                      onClick={() => handleViewClient(client)}
-                    >
-                      Add payment
-                    </Button>
-                  ) : null
+                  <Button
+                    variant="ghost"
+                    className=" w-30 border-[#3D80FF] border text-[#3D80FF] cursor-pointer hover:text-[#3D80FF] transition-colors duration-200 ease-in-out"
+                    onClick={() => handleViewClient(client)}
+                  >
+                    {client.balance < 0 ? "Add payment" : "Deposit"}
+                  </Button>
                 ) : (
                   <Button
                     variant="link"

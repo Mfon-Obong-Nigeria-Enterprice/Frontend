@@ -55,7 +55,7 @@ export default function RevenueAnalytics() {
   } = useQuery({
     queryKey: ["transactions"],
     queryFn: getAllTransactions,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 1 * 60 * 1000, // 1 minutes
     retry: 2,
   });
 

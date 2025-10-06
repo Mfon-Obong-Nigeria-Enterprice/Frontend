@@ -102,6 +102,7 @@ const DashboardOverview: React.FC = () => {
             <VscRefresh />
             Refresh
           </Button>
+
           <Link to="/add-prod">
             <Button className="w-40 bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)] transition-colors duration-200 ease-in-out [&_span]:text-5xl">
               <Plus className="w-10 h-10 text-white" />

@@ -165,8 +165,8 @@ const ManagerClients = () => {
           client.balance > 0
             ? "DEPOSIT"
             : client.balance < 0
-            ? "PURCHASE"
-            : "PICKUP",
+            ? "PICKUP"
+            : "PURCHASE",
         "Total Transaction": client.transactions
           ? client.transactions.length
           : 0,
@@ -239,8 +239,8 @@ const ManagerClients = () => {
           client.balance > 0
             ? "DEPOSIT"
             : client.balance < 0
-            ? "PURCHASE"
-            : "PICKUP",
+            ? "PICKUP"
+            : "PURCHASE",
         "Total Transaction": client.transactions
           ? client.transactions.length
           : 0,
@@ -307,9 +307,9 @@ const ManagerClients = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-[#D9D9D9] text-[#444444]">
                   <SelectGroup>
-                    <SelectItem value="All Status">All Status</SelectItem>
-                    <SelectItem value="REGISTERED">Registered</SelectItem>
-                    <SelectItem value="UNREGISTERED">Unregistered</SelectItem>
+                    <SelectItem value="All status">All Status</SelectItem>
+                    <SelectItem value="registered">Registered</SelectItem>
+                    <SelectItem value="unregistered">Unregistered</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>

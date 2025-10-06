@@ -74,7 +74,7 @@ export class WebSocketNotificationService {
     // If no API URL is provided, fall back to a local dev socket server or current origin
     if (import.meta.env.DEV) {
       return window.location.hostname === "localhost"
-        ? "http://localhost:3000"
+        ? "http://localhost:3001"
         : window.location.origin;
     }
 

@@ -1,5 +1,5 @@
 import type { Transaction } from "@/types/transactions";
-// import type { Client } from "@/types/types";
+import { calculateTransactionsWithBalance } from "@/utils/calculateOutstanding";
 import { balanceTextClass } from "@/utils/format";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getTypeDisplay, getTypeStyles } from "@/utils/helpersfunction";
@@ -8,51 +8,20 @@ import { useMemo } from "react";
 
 interface clientTrasactionDetailsProps {
   clientTransactions: Transaction[];
+  client: { balance: number };
 }
 
 export const ClientTransactionDetails: React.FC<
   clientTrasactionDetailsProps
-> = ({ clientTransactions }) => {
+> = ({ clientTransactions, client }) => {
+  //
   const transactionWithBalance = useMemo(() => {
-    if (!clientTransactions?.length) {
-      return [];
-    }
-
-    // Sort transactions by date (oldest first for proper balance calculation)
-    const sortedTransactions = [...clientTransactions].sort(
-      (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
-
-    // Start with initial balance of 0 (assuming clients start with no debt)
-    let runningBalance = 0;
-
-    const transactions = sortedTransactions.map((txn) => {
-      const balanceBefore = runningBalance;
-      let balanceAfter = balanceBefore;
-
-      if (txn.type === "DEPOSIT") {
-        // Deposit reduces the debt (increases the balance toward zero)
-        balanceAfter = balanceBefore + (txn.amountPaid || 0);
-      } else {
-        // Purchase/Pickup increases debt by the outstanding amount
-        const outstandingAmount = txn.total - (txn.amountPaid || 0);
-
-        balanceAfter = balanceBefore - outstandingAmount;
-      }
-
-      runningBalance = balanceAfter;
-
-      return {
-        ...txn,
-        balanceBefore,
-        balanceAfter,
-      };
-    });
-
-    // Return in reverse order (newest first for display)
-    return transactions.reverse();
-  }, [clientTransactions]);
+    // Use the client's balance from the client object
+    return calculateTransactionsWithBalance(
+      clientTransactions,
+      client
+    ).reverse();
+  }, [clientTransactions, client]);
 
   return (
     <div>
@@ -65,7 +34,7 @@ export const ClientTransactionDetails: React.FC<
         <ul className="space-y-10">
           {transactionWithBalance.map((txn, i) => (
             <li
-              key={`${txn._id}-${txn.createdAt}-${i}`} // More unique key
+              key={`${txn._id}-${txn.createdAt}-${i}`}
               className="border rounded-lg px-5 py-3 shadow"
             >
               {/* type, date and time, balance */}
@@ -93,14 +62,16 @@ export const ClientTransactionDetails: React.FC<
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
                     <div>
-                      {txn.discount && (
-                        <p className="text-[#2ECC71] font-normal font-Inter text-lg">
-                          ₦{txn.discount?.toLocaleString()} saved
-                        </p>
-                      )}
+                      {txn.discount &&
+                        (txn.type === "PICKUP" || txn.type === "PURCHASE") && (
+                          <p className="text-[#2ECC71] font-normal font-Inter text-lg">
+                            {formatCurrency(txn.discount)} saved
+                          </p>
+                        )}
                     </div>
                     <div>
-                      {txn?.total > 0 ? (
+                      {(txn?.total >= 0 && txn.type === "PICKUP") ||
+                      txn.type === "PURCHASE" ? (
                         <p className="text-[#7D7D7D] text-sm font-Inter">
                           {(
                             ((txn?.discount ?? 0) / (txn?.subtotal ?? 0)) *
@@ -113,8 +84,7 @@ export const ClientTransactionDetails: React.FC<
                   </div>
 
                   <p className={`${balanceTextClass(txn.balanceAfter)}`}>
-                    {txn.balanceAfter < 0 ? "-" : ""} ₦
-                    {Math.abs(Number(txn.balanceAfter)).toLocaleString()}
+                    {formatCurrency(txn.balanceAfter)}
                   </p>
                 </div>
               </header>
@@ -147,8 +117,7 @@ export const ClientTransactionDetails: React.FC<
                             <ArrowRight size={14} className="text-[#666]" />
                           </span>
                           <span className="text-[#444444] text-sm  font-medium flex-1 text-right truncate md:text-clip md:whitespace-normal ">
-                            {/* {formatCurrency(txn.balanceAfter)} */}
-                            {txn.balanceAfter || 0}
+                            {formatCurrency(txn.balanceAfter)}
                           </span>
                         </div>
                       </div>
@@ -163,13 +132,13 @@ export const ClientTransactionDetails: React.FC<
                         <li className="font-medium text-[#444444] text-sm ">
                           Amount:{" "}
                           <span className="font-normal">
-                            ₦{(txn.total || 0).toLocaleString()}
+                            {formatCurrency(txn.total || 0)}
                           </span>
                         </li>
                         <li className="font-medium text-[#444444] text-sm ">
                           Amount Paid:{" "}
                           <span className="font-normal">
-                            ₦{txn.amountPaid?.toLocaleString()}
+                            {formatCurrency(txn.amountPaid || 0)}
                           </span>
                         </li>
 
@@ -216,13 +185,15 @@ export const ClientTransactionDetails: React.FC<
 
                         {/* Invoice and Waybill numbers */}
                         <div className="flex flex-col gap-2">
-                          {txn.invoiceNumber && (
-                            <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center w-fit">
-                              <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
-                                {txn.invoiceNumber}
-                              </span>
-                            </div>
-                          )}
+                          {txn.invoiceNumber &&
+                            (txn.type === "PICKUP" ||
+                              txn.type === "PURCHASE") && (
+                              <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center w-fit">
+                                <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
+                                  {txn.invoiceNumber}
+                                </span>
+                              </div>
+                            )}
                           {txn.waybillNumber && (
                             <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center w-fit">
                               <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
