@@ -1,5 +1,3 @@
-/** @format */
-
 import Modal from "@/components/Modal";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { ArrowRight, MapPin, Phone, X } from "lucide-react";
@@ -7,11 +5,37 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getDaysSince } from "@/utils/helpersfunction";
 import { formatCurrency } from "@/utils/styles";
+import { useMemo } from "react";
+import { calculateTransactionsWithBalance } from "@/utils/calculateOutstanding";
 
 const ClientTransactionModal = () => {
   const navigate = useNavigate();
   const { open, selectedTransaction, closeModal, transactions } =
     useTransactionsStore();
+
+  // Calculate transactions with balance history
+  const transactionsWithBalance = useMemo(() => {
+    if (!transactions || !selectedTransaction?.clientId) return [];
+
+    // Filter transactions for the current client
+    const clientTransactions = transactions.filter(
+      (t) =>
+        t.clientId?._id === selectedTransaction.clientId?._id ||
+        t.clientId === selectedTransaction.clientId?._id
+    );
+
+    return calculateTransactionsWithBalance(clientTransactions, {
+      balance: selectedTransaction.client?.balance ?? 0,
+    });
+  }, [transactions, selectedTransaction]);
+
+  // Find the current transaction with balance data
+  const currentTransactionWithBalance = useMemo(() => {
+    if (!selectedTransaction) return null;
+    return transactionsWithBalance.find(
+      (t) => t._id === selectedTransaction._id
+    );
+  }, [transactionsWithBalance, selectedTransaction]);
 
   if (!transactions) return null;
 
@@ -56,11 +80,13 @@ const ClientTransactionModal = () => {
               <p className={`font-normal text-base`}>
                 {formatCurrency(Number(selectedTransaction.client?.balance))}
               </p>
-              <div className="bg-[#FFE7A4] py-2 px-2.5 rounded mt-1">
-                <p className="text-[#444444CC] text-[0.625rem]">
-                  {getDaysSince(selectedTransaction.createdAt)} days overdue
-                </p>
-              </div>
+              {(selectedTransaction.client?.balance ?? 0) < 0 ? (
+                <div className="bg-[#FFE7A4] py-2 px-2.5 rounded mt-1">
+                  <p className="text-[#444444CC] text-[0.625rem]">
+                    {getDaysSince(selectedTransaction.createdAt)} days overdue
+                  </p>
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -137,20 +163,29 @@ const ClientTransactionModal = () => {
 
                         <div className="flex justify-between items-center">
                           <span className="text-[#444444] text-[13px] flex-1 text-left truncate">
-                            {selectedTransaction.client?.balance &&
-                              formatCurrency(
-                                selectedTransaction.total +
-                                  selectedTransaction.client.balance
-                              )}
+                            {currentTransactionWithBalance
+                              ? formatCurrency(
+                                  currentTransactionWithBalance.balanceBefore ??
+                                    0
+                                )
+                              : formatCurrency(
+                                  selectedTransaction.total +
+                                    (selectedTransaction.client?.balance ?? 0)
+                                )}
                           </span>
 
                           <span className="mx-2 sm:mx-3 flex-shrink-0">
                             <ArrowRight size={13} className="text-[#666]" />
                           </span>
                           <span className="text-[#444444] text-[13px] flex-1 text-right truncate">
-                            {formatCurrency(
-                              selectedTransaction.client?.balance ?? 0
-                            )}
+                            {currentTransactionWithBalance
+                              ? formatCurrency(
+                                  currentTransactionWithBalance.balanceAfter ??
+                                    0
+                                )
+                              : formatCurrency(
+                                  selectedTransaction.client?.balance ?? 0
+                                )}
                           </span>
                         </div>
                       </div>
@@ -262,9 +297,6 @@ const ClientTransactionModal = () => {
           </div>
           {/* buttons */}
           <div className="bg-[#F5F5F5] py-5 px-5 flex justify-end items-center gap-10">
-            {/* <Button className="bg-[#FFC761] hover:bg-[#FFE7A4] text-[#444444]">
-              Send Payment Reminder
-            </Button> */}
             {selectedTransaction?.clientId &&
               selectedTransaction?.clientId?._id && (
                 <Button
