@@ -534,80 +534,80 @@ export const useRevenueStore = create<RevenueState>((set, get) => ({
   },
 
   getYearOverYearData: () => {
-    const { transactions } = get();
-    if (!transactions) return [];
+  const { transactions } = get();
+  if (!transactions) return [];
 
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const previousYear = currentYear - 1;
-    const monthsToShow = 12; // Show all 12 months
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const previousYear = currentYear - 1;
+  const monthsToShow = 6; // Show last 6 months
 
-    const yearOverYearData: Array<{
-      month: string;
-      [key: string]: string | number;
-    }> = [];
+  const yearOverYearData: Array<{
+    month: string;
+    [key: string]: string | number;
+  }> = [];
 
-    // Start from January and go through all 12 months
-    for (let monthIndex = 0; monthIndex < monthsToShow; monthIndex++) {
-      const monthName = getMonthName(monthIndex);
+  for (let i = monthsToShow - 1; i >= 0; i--) {
+    const targetDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthName = getMonthName(targetDate.getMonth());
 
-      // Current year data for this month
-      const currentYearStart = new Date(currentYear, monthIndex, 1);
-      const currentYearEnd = new Date(
-        currentYear,
-        monthIndex + 1,
-        0,
-        23,
-        59,
-        59,
-        999
-      );
+    // Current year data
+    const currentYearStart = new Date(currentYear, targetDate.getMonth(), 1);
+    const currentYearEnd = new Date(
+      currentYear,
+      targetDate.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999
+    );
 
-      // Previous year data for this month
-      const previousYearStart = new Date(previousYear, monthIndex, 1);
-      const previousYearEnd = new Date(
-        previousYear,
-        monthIndex + 1,
-        0,
-        23,
-        59,
-        59,
-        999
-      );
-
-      const currentYearTransactions = transactions.filter((t) => {
-        const transactionDate = new Date(t.createdAt);
-        return (
-          transactionDate >= currentYearStart &&
-          transactionDate <= currentYearEnd
-        );
-      });
-
-      const previousYearTransactions = transactions.filter((t) => {
-        const transactionDate = new Date(t.createdAt);
-        return (
-          transactionDate >= previousYearStart &&
-          transactionDate <= previousYearEnd
-        );
-      });
-
-      const currentYearRevenue = getRevenueFromTransactions(
-        currentYearTransactions
-      );
-      const previousYearRevenue = getRevenueFromTransactions(
-        previousYearTransactions
-      );
-
-      yearOverYearData.push({
-        month: monthName,
-        [currentYear.toString()]: Math.round(currentYearRevenue / 1000), // Convert to thousands for better display
-        [previousYear.toString()]: Math.round(previousYearRevenue / 1000),
-      });
+    // For current month, only include up to today
+    if (targetDate.getMonth() === now.getMonth() && targetDate.getFullYear() === now.getFullYear()) {
+      currentYearEnd.setTime(now.getTime());
     }
 
-    return yearOverYearData;
-  },
+    // Previous year data
+    const previousYearStart = new Date(previousYear, targetDate.getMonth(), 1);
+    const previousYearEnd = new Date(
+      previousYear,
+      targetDate.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999
+    );
 
+    const currentYearTransactions = transactions.filter((t) => {
+      const transactionDate = new Date(t.createdAt);
+      return (
+        transactionDate >= currentYearStart &&
+        transactionDate <= currentYearEnd
+      );
+    });
+
+    const previousYearTransactions = transactions.filter((t) => {
+      const transactionDate = new Date(t.createdAt);
+      return (
+        transactionDate >= previousYearStart &&
+        transactionDate <= previousYearEnd
+      );
+    });
+
+    const currentYearRevenue = getRevenueFromTransactions(currentYearTransactions);
+    const previousYearRevenue = getRevenueFromTransactions(previousYearTransactions);
+
+    yearOverYearData.push({
+      month: monthName,
+      [currentYear.toString()]: Math.round(currentYearRevenue / 1000), // Convert to thousands
+      [previousYear.toString()]: Math.round(previousYearRevenue / 1000), // Convert to thousands
+    });
+  }
+
+  return yearOverYearData;
+},
   getDailyRevenueData: () => {
     const { transactions } = get();
     if (!transactions) return [];

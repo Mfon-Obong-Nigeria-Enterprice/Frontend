@@ -1,4 +1,3 @@
-// components/ProtectedRoute.tsx
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -22,7 +21,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
+
   if (allowedRoles && !allowedRoles.includes(user.role)) {
+  
     switch (user.role) {
       case "SUPER_ADMIN":
         return <Navigate to="/manager/dashboard" replace />;

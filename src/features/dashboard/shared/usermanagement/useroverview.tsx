@@ -11,6 +11,7 @@ import CreateUserModal from "./modals/createusermodal";
 import EditUserModal from "./modals/EditUserModal";
 import UserSearchList from "../UserSearchList"; 
 import Modal from "@/components/Modal";
+import CustomDatePicker from "@/utils/CustomDatePicker";
 
 // ui components
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,7 @@ const UserOverview = () => {
   const [selectedUserData, setSelectedUserData] = useState<UserDataProps | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isBusinessModalOpen, setIsBusinessModalOpen] = useState(false);
+  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
 
   const [filters, setFilters] = useState({
     role: "all",
@@ -71,6 +73,45 @@ const UserOverview = () => {
     dateRange: "all",
     status: "all"
   });
+
+const [customDateRange, setCustomDateRange] = useState<{
+  startDate: Date | null;
+  endDate: Date | null;
+}>({
+  startDate: null,
+  endDate: null
+});
+
+// CORRECTED handler function - accepts separate parameters
+const handleCustomDateChange = (start: Date | null, end: Date | null) => {
+  // Handle null values safely
+  const safeStartDate = start || customDateRange.startDate || new Date();
+  const safeEndDate = end || customDateRange.endDate || new Date();
+  
+  setCustomDateRange({ 
+    startDate: safeStartDate, 
+    endDate: safeEndDate 
+  });
+};
+
+// Apply custom date range
+const applyCustomDateRange = () => {
+  if (customDateRange.startDate && customDateRange.endDate) {
+    setShowCustomDatePicker(false);
+    setFilters(prev => ({ ...prev, dateRange: 'custom' }));
+  } else {
+    alert("Please select both start and end dates");
+  }
+};
+
+const cancelCustomDateRange = () => {
+  setShowCustomDatePicker(false);
+  setFilters(prev => ({ ...prev, dateRange: 'all' }));
+  setCustomDateRange({
+    startDate: null,
+    endDate: null
+  });
+};
 
   const nonSuperAdminUsers = useMemo(() => filterUsers(users), [users]);
 
@@ -87,7 +128,7 @@ const UserOverview = () => {
 
   // Filter users based on search and filters (excluding SUPER_ADMIN)
   const filteredUsers = useMemo(() => {
-    return nonSuperAdminUsers.filter(user => { // Changed from users to nonSuperAdminUsers
+    return nonSuperAdminUsers.filter(user => {
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -129,31 +170,57 @@ const UserOverview = () => {
         }
       }
       
-      // Date range filter
+      // Date range filter with custom range support
       if (filters.dateRange !== "all") {
+        if (!user.createdAt) return false;
+        
         const createdDate = new Date(user.createdAt);
         const now = new Date();
-        const diffTime = now.getTime() - createdDate.getTime();
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        
+        let startDate: Date, endDate: Date;
+
         switch (filters.dateRange) {
           case "today":
-            if (diffDays > 0) return false;
+            startDate = new Date(now);
+            endDate = new Date(now);
             break;
           case "week":
-            if (diffDays > 7) return false;
+            startDate = new Date(now);
+            startDate.setDate(startDate.getDate() - 7);
+            endDate = new Date(now);
             break;
           case "month":
-            if (diffDays > 30) return false;
+            startDate = new Date(now);
+            startDate.setMonth(startDate.getMonth() - 1);
+            endDate = new Date(now);
+            break;
+          case "custom":
+            // Handle null dates in custom range
+            if (!customDateRange.startDate || !customDateRange.endDate) {
+              return false;
+            }
+            startDate = customDateRange.startDate;
+            endDate = customDateRange.endDate;
             break;
           default:
-            break;
+            return true;
         }
+
+        // Reset times for correct date comparison
+        const createdDateOnly = new Date(createdDate);
+        createdDateOnly.setHours(0, 0, 0, 0);
+        
+        const startDateOnly = new Date(startDate);
+        startDateOnly.setHours(0, 0, 0, 0);
+        
+        const endDateOnly = new Date(endDate);
+        endDateOnly.setHours(23, 59, 59, 999);
+
+        return createdDateOnly >= startDateOnly && createdDateOnly <= endDateOnly;
       }
       
       return true;
     });
-  }, [nonSuperAdminUsers, searchQuery, filters]); // Changed from users to nonSuperAdminUsers
+  }, [nonSuperAdminUsers, searchQuery, filters, customDateRange]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -161,7 +228,48 @@ const UserOverview = () => {
 
   const handleFilterChange = (filterName: string, value: string) => {
     setFilters(prev => ({ ...prev, [filterName]: value }));
+    
+    // Show custom date picker when custom range is selected
+    if (filterName === 'dateRange' && value === 'custom') {
+      setShowCustomDatePicker(true);
+    } else if (filterName === 'dateRange') {
+      setShowCustomDatePicker(false);
+    }
   };
+
+  // Updated handleCustomDateChange to handle array of dates from react-datepicker
+  // const handleCustomDateChange = (dates: [Date | null, Date | null]) => {
+  //   const [start, end] = dates;
+  //   setCustomDateRange({ 
+  //     startDate: start, 
+  //     endDate: end 
+  //   });
+  //   // Auto-apply the custom date filter only when both dates are selected
+  //   if (start && end) {
+  //     setFilters(prev => ({ ...prev, dateRange: 'custom' }));
+  //   }
+  // };
+
+  // const applyCustomDateRange = () => {
+  //   // Only apply if both dates are selected
+  //   if (customDateRange.startDate && customDateRange.endDate) {
+  //     setShowCustomDatePicker(false);
+  //   } else {
+  //     // Show error or prevent closing if dates aren't fully selected
+  //     alert("Please select both start and end dates");
+  //   }
+  // };
+
+  // const cancelCustomDateRange = () => {
+  //   setShowCustomDatePicker(false);
+  //   // Reset to previous date range or 'all'
+  //   setFilters(prev => ({ ...prev, dateRange: 'all' }));
+  //   // Reset custom date range
+  //   setCustomDateRange({
+  //     startDate: new Date(),
+  //     endDate: new Date()
+  //   });
+  // };
 
   const handleEditUser = (userData: UserDataProps) => {
     setSelectedUserData(userData);
@@ -171,6 +279,12 @@ const UserOverview = () => {
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
     setSelectedUserData(null);
+  };
+
+  // Format date for display
+  const formatDateForDisplay = (date: Date | null) => {
+    if (!date) return 'Not selected';
+    return date.toLocaleDateString();
   };
 
   return (
@@ -226,18 +340,18 @@ const UserOverview = () => {
                     </>
                   )}
                   <Button
-                    variant="ghost"
-                    className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium"
-                    onClick={() => {
-                      const url = user?.role === "SUPER_ADMIN" ? "manager" : "maintainer";
-                      navigate(`/${url}/dashboard/user-management/col-settings`);
-                    }}
-                  >
-                    <span className="flex-1 text-left py-5">
-                      Columns Settings
-                    </span>
-                    <ExternalLink className="size-4 text-muted-foreground" />
-                  </Button>
+  variant="ghost"
+  className="w-full flex items-center gap-2 px-4 py-4 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium min-w-0"
+  onClick={() => {
+    const url = user?.role === "SUPER_ADMIN" ? "manager" : "maintainer";
+    navigate(`/${url}/dashboard/user-management/col-settings`);
+  }}
+>
+  <span className="flex-1 text-left truncate min-w-0">
+    Columns Settings
+  </span>
+  <ExternalLink className="size-4 text-muted-foreground flex-shrink-0" />
+</Button>
 
                   {user?.role === "MAINTAINER" && (
                     <>
@@ -266,12 +380,64 @@ const UserOverview = () => {
       </div>
 
       {/* Use the UserSearchList component */}
-      <UserSearchList 
-        onSearch={handleSearch}
-        onFilterChange={handleFilterChange}
-        roles={roles}
-        locations={locations}
-      />
+      <div className="bg-white mt-8">
+        <h2 className="p-3 font-medium">Filter & Controls</h2>
+        <UserSearchList 
+          onSearch={handleSearch}
+          onFilterChange={handleFilterChange}
+          roles={roles}
+          locations={locations}
+          showLocationFilter={true}
+        />
+        
+        {/* Custom Date Range Picker */}
+        {showCustomDatePicker && (
+          <div className="px-4 py-4 border-t border-gray-200">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium">Select Custom Date Range</h3>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={cancelCustomDateRange}
+                  variant="outline"
+                  size="sm"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={applyCustomDateRange}
+                  size="sm"
+                >
+                  Apply Range
+                </Button>
+              </div>
+            </div>
+            <div className="mb-2">
+              <p className="text-sm text-gray-600">
+                Selected: {formatDateForDisplay(customDateRange.startDate)} - {formatDateForDisplay(customDateRange.endDate)}
+              </p>
+            </div>
+            <CustomDatePicker
+  startDate={customDateRange.startDate}
+  endDate={customDateRange.endDate}
+  onChange={handleCustomDateChange}
+  className="border border-gray-300 rounded-md"
+/>
+          </div>
+        )}
+      </div>
+
+      {/* User summary */}
+      <div className="mt-4 px-4">
+        <p className="text-sm text-gray-600">
+          Showing {filteredUsers.length} users 
+          {filters.dateRange !== 'all' && ` created in ${filters.dateRange}`}
+          {filters.role !== 'all' && ` with role: ${filters.role}`}
+          {filters.location !== 'all' && ` at location: ${filters.location}`}
+          {filters.status !== 'all' && ` with status: ${filters.status}`}
+          {filters.dateRange === 'custom' && customDateRange.startDate && customDateRange.endDate && 
+            ` (${formatDateForDisplay(customDateRange.startDate)} - ${formatDateForDisplay(customDateRange.endDate)})`}
+        </p>
+      </div>
 
       <UserTable users={filteredUsers} onEditUser={handleEditUser} />
 

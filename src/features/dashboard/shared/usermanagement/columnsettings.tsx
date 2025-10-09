@@ -427,7 +427,7 @@ export default function ColumnSettings() {
       columnOrder: localColumnOrder,
     };
 
-    console.log("Attempting to save:", newSettings);
+    // console.log("Attempting to save:", newSettings);
     // debugColumnSettings(newSettings, "Attempting to Save");
 
     // Make sure all columns are accounted for
@@ -445,7 +445,7 @@ export default function ColumnSettings() {
         columnOrder: localColumnOrder,
       };
 
-      console.log("Fixed settings:", fixedSettings);
+      // console.log("Fixed settings:", fixedSettings);
       setLocalVisibleColumns(fixedSettings.visibleColumns);
       saveSettings(fixedSettings);
     } else {
@@ -491,7 +491,7 @@ export default function ColumnSettings() {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="p-2 md:p-6 space-y-3 bg-gray-50">
+      <div className="p-4 lg:p-6 space-y-4 bg-gray-50 min-h-screen w-full">
         <div className="flex items-center justify-center py-8">
           <div className="text-muted-foreground">
             Loading column settings...
@@ -540,7 +540,7 @@ export default function ColumnSettings() {
       )}
 
       {/* MAIN PANELS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className=" grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6 w-full max-w-full">
         {/* LEFT: Visible Columns */}
         <Card className="py-5">
           <div className="flex flex-col gap-2 border-b-2 border-gray-200 px-4">
@@ -571,7 +571,7 @@ export default function ColumnSettings() {
         </Card>
 
         {/* RIGHT: Hidden Columns */}
-        <Card className="py-4">
+        <Card className="p-4 lg:p-5 w-full">
           <div className="flex flex-col gap-2 border-b-2 border-gray-200 px-4">
             <h3 className="font-semibold text-[#333333] text-[18px]">
               Hidden Columns
@@ -633,54 +633,54 @@ export default function ColumnSettings() {
           </div>
         </Card>
       </div>
+{/* TABLE PREVIEW */}
+<Card className="p-4 lg:p-5">
+  <h3 className="font-semibold mb-2">Table Preview</h3>
+  <p className="text-sm text-gray-500 mb-4">
+    Preview how your table will look with current settings (showing first 4 users)
+  </p>
 
-      {/* TABLE PREVIEW */}
-      <Card className="p-5">
-        <h3 className="font-semibold mb-2">Table Preview</h3>
-        <p className="text-sm text-gray-500 mb-4">
-          Preview how your table will look with current settings (showing first
-          4 users)
-        </p>
-
-        <div className="mt-5">
-          <Table className="w-full">
-            <TableHeader className="bg-gray-100">
-              <TableRow>
-                {orderedVisibleColumns.map((col) => (
-                  <TableHead
-                    key={col}
-                    className="px-4 py-3 text-left text-sm font-medium text-gray-700 uppercase"
-                  >
-                    {col}
-                  </TableHead>
-                ))}
-                <TableHead className="px-4 py-3 w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {previewData.map((user) => (
-                <TableRow key={user._id} className="border-t hover:bg-gray-50">
-                  {orderedVisibleColumns.map((col) => (
-                    <PreviewTableCell
-                      key={`${user._id}-${col}`}
-                      user={user}
-                      column={col}
-                    />
-                  ))}
-                  <TableCell className="px-4 py-3">
-                    <button className="p-1 rounded hover:bg-gray-200">
-                      <MoreVertical className="w-4 h-4 text-gray-500" />
-                    </button>
-                  </TableCell>
-                </TableRow>
+  <div className="mt-4 w-full overflow-hidden">
+    <div className="overflow-x-auto w-full border rounded-lg">
+      <Table className="w-full">
+        <TableHeader className="bg-gray-100">
+          <TableRow>
+            {orderedVisibleColumns.map((col) => (
+              <TableHead
+                key={col}
+                className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap"
+              >
+                {col}
+              </TableHead>
+            ))}
+            <TableHead className="px-3 py-2 w-12"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {previewData.map((user) => (
+            <TableRow key={user._id} className="border-t hover:bg-gray-50">
+              {orderedVisibleColumns.map((col) => (
+                <PreviewTableCell
+                  key={`${user._id}-${col}`}
+                  user={user}
+                  column={col}
+                />
               ))}
-            </TableBody>
-          </Table>
-        </div>
-      </Card>
+              <TableCell className="px-3 py-2">
+                <button className="p-1 rounded hover:bg-gray-200">
+                  <MoreVertical className="w-4 h-4 text-gray-500" />
+                </button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  </div>
+</Card>
 
       {/* ACTION BUTTONS */}
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-col sm:flex-row justify-end gap-3 w-full">
         <Button
           variant="outline"
           onClick={handleResetToDefault}
