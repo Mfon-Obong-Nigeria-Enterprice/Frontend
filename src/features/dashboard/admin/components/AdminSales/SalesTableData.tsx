@@ -3,7 +3,7 @@ import ClientTransactionModal from "@/features/dashboard/shared/ClientTransactio
 import WalkinTransactionModal from "@/features/dashboard/shared/WalkinTransactionModal";
 import SearchBar from "@/features/dashboard/shared/SearchBar";
 
-// ui@/components/ui/button
+// ui components
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,13 +77,18 @@ const SalesTableData = ({
   });
 
   // Filter for only purchase and pickup transactions
-  const salesTransactions = useMemo(
-    () =>
-      currentTransaction.filter(
-        (txn) => txn.type === "PURCHASE" || txn.type === "PICKUP"
-      ),
-    [currentTransaction]
-  );
+  const salesTransactions = useMemo(() => {
+    const filtered = currentTransaction.filter(
+      (txn) => txn.type === "PURCHASE" || txn.type === "PICKUP"
+    );
+
+    // Sort by date/time - newest first
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      return dateB - dateA; // Descending order (newest first)
+    });
+  }, [currentTransaction]);
 
   const hasTransactions = salesTransactions && salesTransactions.length > 0;
 
@@ -139,7 +144,7 @@ const SalesTableData = ({
                     key={transaction._id}
                     id={`invoice-${transaction.invoiceNumber}`}
                   >
-                    <TableCell className="text-sm text-gray-400">
+                    <TableCell className="text-sm text-gray-600">
                       {getTransactionTimeString(transaction)}
                     </TableCell>
                     <TableCell>

@@ -1001,7 +1001,7 @@ const NewSales: React.FC = () => {
         {(!selectedClient || !isClientBlocked || isWalkIn) && (
           <div className="p-5 my-7 border rounded-[8px]">
             <h5 className="text-xl font-medium mb-4">Payment Details</h5>
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+            <div className="flex flex-col sm:flex-wrap sm:flex-row gap-4 sm:gap-6">
               <div className="w-full sm:w-auto">
                 <Label className="mb-1">Payment Method</Label>
                 <Select
