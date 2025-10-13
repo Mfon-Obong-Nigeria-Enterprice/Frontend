@@ -179,29 +179,17 @@ export class WebSocketNotificationService {
 
     this.connectionStatus = "connecting";
 
-    const possibleTokens = {
-      localStorage_accessToken: localStorage.getItem("accessToken"),
-      localStorage_token: localStorage.getItem("token"),
-      sessionStorage_accessToken: sessionStorage.getItem("accessToken"),
-      sessionStorage_token: sessionStorage.getItem("token"),
-    };
-
-    const fallbackToken =
-      possibleTokens.localStorage_accessToken ||
-      possibleTokens.localStorage_token ||
-      possibleTokens.sessionStorage_accessToken ||
-      possibleTokens.sessionStorage_token;
-
+    // Socket.IO configuration for cookie-based authentication
+    // withCredentials: true automatically sends cookies (accessToken/refreshToken) with the connection
     const socketConfig: any = {
-      withCredentials: true,
+      withCredentials: true, // Sends cookies with WebSocket connection
       path: "/socket.io",
-      // Prefer websocket transport. Add 'polling' if you need HTTP fallback.
-      transports: ["websocket"],
+      transports: ["websocket", "polling"], // Try websocket first, fallback to polling
       reconnection: true,
       reconnectionAttempts: this.maxReconnectAttempts,
       reconnectionDelay: 2000,
       forceNew: true,
-      auth: fallbackToken ? { token: fallbackToken } : undefined,
+      // No auth token needed - cookies are sent automatically with withCredentials
     };
 
     const url = this.getServerUrl();
