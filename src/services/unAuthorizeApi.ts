@@ -4,12 +4,12 @@ import axios, { type AxiosInstance } from "axios";
 const resolvedPublicApiUrl = (() => {
   const envUrl = import.meta.env.VITE_API_URL as string | undefined;
   if (import.meta.env.PROD) {
-    if (!envUrl || envUrl === '/api' || envUrl === '/api/') {
-      return 'https://mfon-obong-enterprise.onrender.com/api';
+    if (!envUrl || envUrl === "/api" || envUrl === "/api/") {
+      return "https://mfon-obong-enterprise-project-8otx.onrender.com/api";
     }
     return envUrl;
   }
-  return envUrl ?? '/api';
+  return envUrl ?? "/api";
 })();
 
 const publicApi: AxiosInstance = axios.create({
@@ -32,9 +32,6 @@ publicApi.interceptors.request.use((config) => {
 
 publicApi.interceptors.response.use(
   (response) => {
-    console.log(
-      `Public API Response: ${response.status} ${response.config.url}`
-    );
     return response;
   },
   (error) => {
