@@ -6,7 +6,7 @@ import WalkinTransactionModal from "../WalkinTransactionModal";
 import { formatCurrency } from "@/utils/styles";
 import {
   getTransactionDateString,
-  getTransactionTimeString,
+  // getTransactionTimeString,
 } from "@/utils/transactions";
 
 // types
@@ -68,9 +68,9 @@ const TransactionsTableMobile = ({
                 <span className="text-xs">
                   {getTransactionDateString(transaction, "en-GB")}
                 </span>
-                <span className="text-xs ml-1">
+                {/* <span className="text-xs ml-1">
                   {getTransactionTimeString(transaction)}
-                </span>
+                </span> */}
               </p>
 
               {/* items and location */}

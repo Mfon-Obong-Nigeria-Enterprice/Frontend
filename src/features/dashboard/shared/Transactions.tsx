@@ -206,7 +206,6 @@ const Transactions = () => {
     mergedTransactions,
   ]);
 
-  console.log("txn",filteredTransactions);
   // Use filteredTransactions for pagination instead of filterByInvoice
   const {
     currentPage,

@@ -41,6 +41,8 @@ export class WebSocketNotificationService {
   private lastErrorTime = 0;
   private errorCount = 0;
   private readonly ERROR_THROTTLE_MS = 5000; // Only log errors every 5 seconds
+  private authFailureCount = 0;
+  private readonly MAX_AUTH_FAILURES = 3;
 
   static getInstance(): WebSocketNotificationService {
     if (!WebSocketNotificationService.instance) {
@@ -51,33 +53,26 @@ export class WebSocketNotificationService {
   }
 
   private getServerUrl(): string {
-    // Prefer deriving the real-time server URL from the API base URL when available.
-    // This allows dev setups where the API (and socket server) run on localhost:3001
-    // while the frontend runs on a different port.
-    const apiUrl = import.meta.env.VITE_API_URL;
+    // Prefer explicit socket URL override (set VITE_SOCKET_URL)
+    const socketUrl = import.meta.env.VITE_SOCKET_URL as string | undefined;
+    if (socketUrl && socketUrl.length) return socketUrl;
 
+    // Fallback to API URL base if provided
+    const apiUrl = import.meta.env.VITE_API_URL as string | undefined;
     if (apiUrl) {
       try {
-        const baseUrl = apiUrl.replace(/\/api\/?$/, "");
-        // Debug log to help diagnose wrong host issues in development
-        // eslint-disable-next-line no-console
-        console.debug(
-          "WebSocketNotificationService using server url derived from VITE_API_URL:",
-          baseUrl
-        );
-        return baseUrl;
+        return apiUrl.replace(/\/api\/?$/, "");
       } catch (e) {
         // ignore and fallback
       }
     }
 
-    // If no API URL is provided, fall back to a local dev socket server or current origin
+    // DEV fallback: use window origin (works if vite proxies /socket.io to backend)
     if (import.meta.env.DEV) {
-      return window.location.hostname === "localhost"
-        ? "http://localhost:3001"
-        : window.location.origin;
+      return window.location.origin;
     }
 
+    // Production fallback: current origin
     return window.location.origin;
   }
 
@@ -174,6 +169,7 @@ export class WebSocketNotificationService {
 
   connect(): void {
     const currentUser = useAuthStore.getState().user;
+
     if (!currentUser?.id) {
       console.warn(
         "WebSocketNotificationService: No authenticated user, cannot connect"
@@ -183,7 +179,6 @@ export class WebSocketNotificationService {
 
     this.connectionStatus = "connecting";
 
-    // Get any available token for fallback
     const possibleTokens = {
       localStorage_accessToken: localStorage.getItem("accessToken"),
       localStorage_token: localStorage.getItem("token"),
@@ -198,20 +193,20 @@ export class WebSocketNotificationService {
       possibleTokens.sessionStorage_token;
 
     const socketConfig: any = {
-      withCredentials: true, // Send cookies
-      transports: ["websocket", "polling"],
+      withCredentials: true,
+      path: "/socket.io",
+      // Prefer websocket transport. Add 'polling' if you need HTTP fallback.
+      transports: ["websocket"],
       reconnection: true,
       reconnectionAttempts: this.maxReconnectAttempts,
-      reconnectionDelay: 1000,
+      reconnectionDelay: 2000,
       forceNew: true,
+      auth: fallbackToken ? { token: fallbackToken } : undefined,
     };
 
-    // If we have a fallback token, send it in auth as backup
-    if (fallbackToken) {
-      socketConfig.auth = { token: fallbackToken };
-    }
-
-    this.socket = io(this.getServerUrl(), socketConfig);
+    const url = this.getServerUrl();
+    console.debug("Connecting socket to", url, socketConfig);
+    this.socket = io(url, socketConfig);
 
     this.setupEventListeners();
   }
@@ -226,6 +221,7 @@ export class WebSocketNotificationService {
       // Reset error tracking on successful connection
       this.errorCount = 0;
       this.lastErrorTime = 0;
+      this.authFailureCount = 0; // Reset auth failure counter
 
       // Test connection
       this.socket?.emit("ping", "test");
@@ -235,11 +231,47 @@ export class WebSocketNotificationService {
       this.connectionStatus = "disconnected";
 
       // Use throttled error logging to prevent console spam
-      if (error.message.includes("Authentication")) {
-        this.logThrottledError("❌ WebSocket authentication failed", error);
-        useAuthStore.getState().logout?.();
+      if (
+        error.message.includes("Authentication") ||
+        error.message.includes("unauthorized")
+      ) {
+        this.authFailureCount++;
+
+        // Only logout after multiple consecutive auth failures
+        if (this.authFailureCount >= this.MAX_AUTH_FAILURES) {
+          this.logThrottledError(
+            "❌ Multiple WebSocket auth failures - logging out",
+            error
+          );
+          useAuthStore.getState().logout?.();
+        } else {
+          this.logThrottledError(
+            `❌ WebSocket auth failed (attempt ${this.authFailureCount}/${this.MAX_AUTH_FAILURES})`,
+            error
+          );
+        }
       } else {
-        this.logThrottledError("❌ WebSocket connection failed", error);
+        // Reset auth failure counter on non-auth errors
+        this.authFailureCount = 0;
+        this.logThrottledError(
+          "❌ WebSocket connection failed (will retry)",
+          error
+        );
+      }
+    });
+
+    // Add explicit authentication error handler
+    this.socket.on("error", (error: any) => {
+      if (
+        error.type === "UnauthorizedError" ||
+        error.message?.includes("unauthorized")
+      ) {
+        this.authFailureCount++;
+
+        if (this.authFailureCount >= this.MAX_AUTH_FAILURES) {
+          console.error("❌ WebSocket authentication error - invalid token");
+          useAuthStore.getState().logout?.();
+        }
       }
     });
 

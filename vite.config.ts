@@ -15,7 +15,12 @@ export default defineConfig({
         target: "http://localhost:3000",
         changeOrigin: true,
         secure: false,
-        // Don't rewrite - keep the /api prefix since backend expects it
+      },
+      "/socket.io": {
+        target: "http://localhost:3000",
+        ws: true,
+        changeOrigin: true,
+        secure: false,
       },
     },
     hmr: {
