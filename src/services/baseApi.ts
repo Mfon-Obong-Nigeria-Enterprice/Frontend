@@ -12,13 +12,13 @@ const resolvedApiUrl = (() => {
   // If building for production and envUrl is missing or points to a relative /api,
   // fall back to the Render deployment URL so staged frontend can reach the backend.
   if (import.meta.env.PROD) {
-    if (!envUrl || envUrl === '/api' || envUrl === '/api/') {
-      return 'https://mfon-obong-enterprise.onrender.com/api';
+    if (!envUrl || envUrl === "/api" || envUrl === "/api/") {
+      return "https://mfon-obong-enterprise-project-8otx.onrender.com/api";
     }
     return envUrl;
   }
   // In dev, allow local relative API proxy
-  return envUrl ?? '/api';
+  return envUrl ?? "/api";
 })();
 
 const api: AxiosInstance = axios.create({
@@ -34,6 +34,7 @@ try {
     api.defaults.headers.common["Authorization"] = `Bearer ${localAccess}`;
   }
 } catch (e) {
+  console.warn(e);
   // ignore
 }
 
@@ -128,22 +129,23 @@ api.interceptors.response.use(
         // Call refresh endpoint; this will use cookie-based refresh when possible,
         // or body-based refresh if the client provided tokens in localStorage.
         // Use the authService refresh helper to persist tokens correctly.
-  await (await import("./authService")).refreshToken();
+        await (await import("./authService")).refreshToken();
 
         // ensure axios default Authorization header is up-to-date
         const access = localStorage.getItem("__mfon_access_token");
-        if (access) api.defaults.headers.common["Authorization"] = `Bearer ${access}`;
+        if (access)
+          api.defaults.headers.common["Authorization"] = `Bearer ${access}`;
 
         processQueue(null);
         return api(originalRequest); // retry original request
       } catch (refreshError) {
         processQueue(refreshError, null);
-        
+
         // Show user-friendly session expired message
         if (process.env.NODE_ENV === "development") {
           console.warn("Session expired - redirecting to login");
         }
-        
+
         // clear local auth state and any stored tokens
         useAuthStore.getState().logout(); // this will clear localStorage via authService.logout
         window.location.href = "/";

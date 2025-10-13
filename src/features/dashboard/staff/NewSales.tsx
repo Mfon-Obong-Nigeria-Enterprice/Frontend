@@ -1,14 +1,465 @@
+// import React, { useState, useEffect, useRef } from "react";
+// import { useQueryClient } from "@tanstack/react-query";
+// import { toast } from "react-toastify";
+// import { io } from "socket.io-client";
+
+// // components
+// import ClientSearch from "./components/ClientSearch";
+// import AddSaleProduct from "./components/AddSaleProduct";
+// import ClientDisplayBox from "./components/ClientDisplayBox";
+// import WalkinClientDetailBox from "./components/WalkinClientDetailBox";
+// import SalesReceipt from "./components/SalesReceipt";
+
+// // store
+// import { useInventoryStore } from "@/stores/useInventoryStore";
+// import { useClientStore } from "@/stores/useClientStore";
+// import { useAuthStore } from "@/stores/useAuthStore";
+
+// // services
+// import { AddTransaction } from "@/services/transactionService";
+
+// // types
+// import type { Client } from "@/types/types";
+// import type { Transaction } from "@/types/transactions";
+
+// // ui
+// import { Button } from "@/components/ui/button";
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from "@/components/ui/select";
+// import { Input } from "@/components/ui/input";
+// import { Label } from "@/components/ui/label";
+// import Modal from "@/components/Modal";
+// import ClientStatusBadge from "@/pages/ClientStatusBadge";
+
+// // utils
+// import {
+//   toSentenceCaseName,
+//   balanceTextClass,
+//   formatCurrency,
+// } from "@/utils/styles";
+// import { handleApiError } from "@/services/errorhandler";
+
+// // icons
+// import { AlertCircle } from "lucide-react";
+
+// // data
+// import { bankNames, posNames } from "@/data/banklist";
+
+// // Helper function to get the correct server URL
+// const getServerUrl = () => {
+//   const apiUrl = import.meta.env.VITE_API_URL;
+
+//   // For development with localhost
+//   if (
+//     apiUrl?.includes("localhost") ||
+//     apiUrl?.includes("127.0.0.1") ||
+//     window.location.hostname === "localhost" ||
+//     window.location.hostname === "127.0.0.1"
+//   ) {
+//     return "http://localhost:3000";
+//   }
+
+//   // For production with onrender
+//   if (apiUrl && apiUrl.includes("onrender.com")) {
+//     return apiUrl.replace("/api", ""); // Remove /api path for websocket
+//   }
+
+//   // Fallback to localhost for development
+//   return "http://localhost:3000";
+// };
+
+// // connect to socket with proper URL detection
+// const socket = io(getServerUrl());
+
+// export type Row = {
+//   productId: string;
+//   unitPrice: number;
+//   quantity: number;
+//   discount: number;
+//   discountType: "percent" | "amount";
+//   total: number;
+//   unit?: string;
+//   productName?: string;
+// };
+
+// // Define a simple type for the receipt data based on backend structure
+// type ReceiptData = Transaction;
+
+// const emptyRow: Row = {
+//   productId: "",
+//   unitPrice: 0,
+//   quantity: 1,
+//   discount: 0,
+//   discountType: "amount",
+//   total: 0,
+//   unit: "",
+//   productName: "",
+// };
+
+// // Returns today's date in local timezone formatted as YYYY-MM-DD for input[type="date"]
+// const getTodayDateString = () => {
+//   const now = new Date();
+//   const year = now.getFullYear();
+//   const month = String(now.getMonth() + 1).padStart(2, "0");
+//   const day = String(now.getDate()).padStart(2, "0");
+//   return `${year}-${month}-${day}`;
+// };
+
+// const NewSales: React.FC = () => {
+//   const queryClient = useQueryClient();
+//   // Store data
+//   const { products } = useInventoryStore();
+//   const clients = useClientStore((state) => state.clients);
+//   const { user } = useAuthStore();
+
+//   // Client state
+//   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+//   const [isWalkIn, setIsWalkIn] = useState(false);
+//   const [walkInData, setWalkInData] = useState({ name: "", phone: "" });
+
+//   // Payment state
+//   const [paymentMethod, setPaymentMethod] = useState("cash");
+//   const [purchaseType, setPurchaseType] = useState<"PURCHASE" | "PICKUP">(
+//     "PURCHASE"
+//   );
+//   const [subMethod, setSubMethod] = useState("");
+//   const [amountPaid, setAmountPaid] = useState(""); // Store raw digits
+//   const [notes, setNotes] = useState("");
+//   const [isSubmitting, setIsSubmitting] = useState(false);
+
+//   // Product state
+//   const [rows, setRows] = useState<Row[]>([emptyRow]);
+//   const amountPaidInputRef = useRef<HTMLInputElement>(null);
+
+//   // discount state
+//   const [discountReason, setDiscountReason] = useState("");
+//   const [globalDiscount, setGlobalDiscount] = useState(0);
+
+//   // receipt state
+//   const [showReceipt, setShowReceipt] = useState(false);
+//   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
+
+//   const [bankSearch, setBankSearch] = useState("");
+
+//   const [date, setDate] = useState<string>(() => getTodayDateString());
+
+//   // listen for socket event
+//   useEffect(() => {
+//     socket.on("transaction_created", (data: ReceiptData) => {
+//       setReceiptData(data);
+//       setShowReceipt(true);
+//     });
+//     //clean up function
+//     return () => {
+//       socket.off("transaction_created");
+//     };
+//   }, []);
+
+//   if (!user?.branchId) {
+//     toast.error("Branch ID is missing");
+//     return null;
+//   }
+
+//   const formatCurrencyDisplay = (value: string) => {
+//     if (!value) return "₦0";
+
+//     // Remove all non-digit characters except numbers
+//     const digitsOnly = value.replace(/\D/g, "");
+
+//     // Handle empty value
+//     if (digitsOnly === "") return "₦0";
+
+//     // Convert to number directly (no division by 100)
+//     const numericValue = parseFloat(digitsOnly);
+
+//     // Format with commas but NO decimal places
+//     return `₦${numericValue.toLocaleString("en-GB", {
+//       minimumFractionDigits: 0,
+//       maximumFractionDigits: 0,
+//     })}`;
+//   };
+
+//   const handleAmountPaidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     const input = e.target.value;
+
+//     // Extract only digits
+//     const newRawValue = input.replace(/\D/g, "");
+
+//     setAmountPaid(newRawValue);
+//   };
+
+//   const handleAmountPaidKeyDown = (
+//     e: React.KeyboardEvent<HTMLInputElement>
+//   ) => {
+//     // Allow navigation keys, backspace, delete, tab, etc.
+//     const allowedKeys = [
+//       "ArrowLeft",
+//       "ArrowRight",
+//       "ArrowUp",
+//       "ArrowDown",
+//       "Backspace",
+//       "Delete",
+//       "Tab",
+//       "Home",
+//       "End",
+//     ];
+
+//     if (!allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey) {
+//       // Allow only digits
+//       if (!/\d/.test(e.key)) {
+//         e.preventDefault();
+//       }
+//     }
+//   };
+
+//   const handleAmountPaidFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+//     // Select all text when focused for easy editing
+//     setTimeout(() => e.target.select(), 0);
+//   };
+
+//   // Helper to get numeric value safely
+//   const getAmountPaid = () => {
+//     if (!amountPaid) return 0;
+//     const value = parseFloat(amountPaid);
+//     return isNaN(value) ? 0 : value;
+//   };
+
+//   const canSubmit = () => {
+//     if (selectedClient && isClientBlocked) return false;
+//     if (!selectedClient && !isWalkIn) return false;
+//     if (isWalkIn && !walkInData.name.trim()) return false;
+//     if (!rows.some((row) => row.productId)) return false;
+//     // if (rows.some((row) => row.discount > 0) && !discountReason.trim())
+//     if (
+//       (rows.some((row) => row.discount > 0) || globalDiscount > 0) &&
+//       !discountReason.trim()
+//     )
+//       return false;
+//     if (!paymentMethod) return false;
+//     const paid = getAmountPaid();
+//     if (paid === null || paid < 0) return false;
+//     return true;
+//   };
+
+//   const validateSales = () => {
+//     if (selectedClient && isClientBlocked) {
+//       toast.error(
+//         "Cannot create transaction for suspended client. Please contact manager."
+//       );
+//       return false;
+//     }
+//     if (!canSubmit()) {
+//       toast.error("Please fill all required fields correctly");
+//       return false;
+//     }
+
+//     if (isWalkIn) {
+//       const { total } = calculateTotals();
+//       const paid = getAmountPaid() || 0;
+
+//       if (Math.abs(paid - total) > 0.01) {
+//         toast.error(
+//           `Walk-in clients must pay exactly ${formatCurrency(total)}`
+//         );
+//         return false;
+//       }
+//     }
+
+//     return true;
+//   };
+
+//   const calculateTotals = () => {
+//     const subtotal = rows.reduce(
+//       (acc, row) => acc + (Number(row.quantity) * Number(row.unitPrice) || 0),
+//       0
+//     );
+
+//     const rowDiscountTotal = rows.reduce((acc, row) => {
+//       const lineAmount = Number(row.quantity) * Number(row.unitPrice);
+//       if (!row.discount) return acc;
+
+//       let discountAmount = 0;
+//       if (row.discountType === "percent") {
+//         discountAmount = (lineAmount * Number(row.discount)) / 100;
+//       } else if (row.discountType === "amount") {
+//         discountAmount = Number(row.discount);
+//       }
+
+//       return acc + discountAmount;
+//     }, 0);
+
+//     // only apply global discount if no discount exists
+//     const discountTotal =
+//       rowDiscountTotal > 0 ? rowDiscountTotal : globalDiscount;
+
+//     const total = subtotal - discountTotal;
+//     return { subtotal, discountTotal, total };
+//   };
+
+//   const getBalanceInfo = () => {
+//     const { total } = calculateTotals();
+//     const paid = getAmountPaid();
+//     const clientBalance =
+//       clients.find((c) => c._id === selectedClient?._id)?.balance || 0;
+
+//     const availableBalance = selectedClient ? clientBalance : 0;
+//     const effectiveAmountPaid = paid + availableBalance;
+//     const balanceDue = Math.max(0, total - effectiveAmountPaid);
+//     const newBalance = effectiveAmountPaid - total;
+
+//     let statusMessage;
+//     if (isWalkIn) {
+//       if (paid === total) {
+//         statusMessage = "Payment complete";
+//       } else if (paid > total) {
+//         statusMessage = `Overpayment: ₦${(paid - total).toLocaleString(
+//           "en-US",
+//           {
+//             minimumFractionDigits: 0,
+//             maximumFractionDigits: 0,
+//           }
+//         )} (not allowed for walk-in)`;
+//       } else {
+//         statusMessage = `Amount due: ₦${(total - paid).toLocaleString("en-US", {
+//           minimumFractionDigits: 0,
+//           maximumFractionDigits: 0,
+//         })} (full payment required)`;
+//       }
+//     } else if (balanceDue === 0) {
+//       statusMessage = "No balance due";
+//     } else if (selectedClient && clientBalance > 0) {
+//       statusMessage = `Balance due: ₦${balanceDue.toLocaleString("en-US", {
+//         minimumFractionDigits: 0,
+//         maximumFractionDigits: 0,
+//       })} (Account balance: ₦${clientBalance.toLocaleString("en-US", {
+//         minimumFractionDigits: 0,
+//         maximumFractionDigits: 0,
+//       })})`;
+//     } else {
+//       statusMessage = `Balance due: ₦${balanceDue.toLocaleString("en-US", {
+//         minimumFractionDigits: 0,
+//         maximumFractionDigits: 0,
+//       })}`;
+//     }
+
+//     return { statusMessage, total, paid, clientBalance, newBalance };
+//   };
+
+//   const { statusMessage, total, paid, clientBalance, newBalance } =
+//     getBalanceInfo();
+
+//   const handleWalkInDataChange = (data: { name: string; phone: string }) => {
+//     setWalkInData(data);
+//   };
+
+//   const handleResetClient = () => {
+//     setSelectedClient(null);
+//     setIsWalkIn(false);
+//     setWalkInData({ name: "", phone: "" });
+//     setRows([{ ...emptyRow }]);
+//     setPaymentMethod("cash");
+//     setAmountPaid("");
+//     setDiscountReason("");
+//     setNotes("");
+//     setIsSubmitting(false);
+//     setGlobalDiscount(0);
+//     setDate(getTodayDateString());
+//     setPurchaseType("PURCHASE");
+//   };
+
+//   const handleSubmit = async () => {
+//     if (!validateSales()) return;
+
+//     setIsSubmitting(true);
+//     try {
+//       const { discountTotal } = calculateTotals();
+//       const effectiveAmountPaid = getAmountPaid() || 0;
+
+//       const apiItems = rows
+//         .filter((row) => row.productId)
+//         .map((row) => {
+//           const product = products.find((p) => p._id === row.productId);
+//           return {
+//             productId: row.productId,
+//             quantity: row.quantity,
+//             unit: product?.unit || "pcs",
+//             discount: 0,
+//           };
+//         });
+
+//       // let saleType: "PURCHASE" | "PICKUP" = "PURCHASE";
+//       // if (!isWalkIn && selectedClient) {
+//       //   const clientBalance = selectedClient.balance || 0;
+//       //   const canCover = effectiveAmountPaid + clientBalance >= total;
+
+//       //   saleType = canCover ? "PURCHASE" : "PICKUP";
+//       // }
+
+//       let paymentMethodForBackend = paymentMethod;
+//       if (subMethod) {
+//         if (paymentMethod === "bank" || paymentMethod === "transfer") {
+//           paymentMethodForBackend = `Transfer from ${subMethod}`;
+//         } else if (paymentMethod === "pos") {
+//           paymentMethodForBackend = `POS with ${subMethod}`;
+//         }
+//       }
+
+//       const payload = {
+//         ...(selectedClient?._id
+//           ? { clientId: selectedClient._id }
+//           : { walkInClient: walkInData }),
+//         type: purchaseType,
+//         items: apiItems,
+//         amountPaid: effectiveAmountPaid,
+//         discount: discountTotal,
+//         paymentMethod:
+//           purchaseType === "PICKUP" ? "Credit" : paymentMethodForBackend,
+//         notes,
+//         date,
+//       };
+
+//       await AddTransaction(payload);
+//       // console.log("payload", payload);
+//       toast.success("Transaction created successfully");
+
+//       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+
+//       handleResetClient();
+//     } catch (error) {
+//       handleApiError(error, "Transaction error");
+//     } finally {
+//       setIsSubmitting(false);
+//     }
+//   };
+
+//   // Helper function to get sub list based on payment method
+//   const getSubList = () => {
+//     if (paymentMethod === "bank" || paymentMethod === "transfer") {
+//       return bankNames;
+//     } else if (paymentMethod === "pos") {
+//       return posNames;
+//     }
+//     return [];
+//   };
+
+//   const isClientBlocked = selectedClient ? false : false;
+
 import React, { useState, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { io } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
 
 // components
 import ClientSearch from "./components/ClientSearch";
 import AddSaleProduct from "./components/AddSaleProduct";
 import ClientDisplayBox from "./components/ClientDisplayBox";
 import WalkinClientDetailBox from "./components/WalkinClientDetailBox";
-import SalesReceipt from "./components/SalesReceipt";
+// import SalesReceipt from "./components/SalesReceipt";
 
 // store
 import { useInventoryStore } from "@/stores/useInventoryStore";
@@ -20,7 +471,7 @@ import { AddTransaction } from "@/services/transactionService";
 
 // types
 import type { Client } from "@/types/types";
-import type { Transaction } from "@/types/transactions";
+// import type { Transaction } from "@/types/transactions";
 
 // ui
 import { Button } from "@/components/ui/button";
@@ -33,7 +484,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Modal from "@/components/Modal";
+// import Modal from "@/components/Modal";
 import ClientStatusBadge from "@/pages/ClientStatusBadge";
 
 // utils
@@ -52,7 +503,11 @@ import { bankNames, posNames } from "@/data/banklist";
 
 // Helper function to get the correct server URL
 const getServerUrl = () => {
-  const apiUrl = import.meta.env.VITE_API_URL;
+  // explicit override from env (recommended)
+  const socketUrl = import.meta.env.VITE_SOCKET_URL as string | undefined;
+  if (socketUrl && socketUrl.length) return socketUrl.replace(/\/$/, "");
+
+  const apiUrl = import.meta.env.VITE_API_URL as string | undefined;
 
   // For development with localhost
   if (
@@ -66,16 +521,14 @@ const getServerUrl = () => {
 
   // For production with onrender
   if (apiUrl && apiUrl.includes("onrender.com")) {
-    return apiUrl.replace("/api", ""); // Remove /api path for websocket
+    return apiUrl.replace("/api", "");
   }
 
-  // Fallback to localhost for development
-  return "http://localhost:3000";
+  // Fallback to current origin
+  return window.location.origin;
 };
 
-// connect to socket with proper URL detection
-const socket = io(getServerUrl());
-
+// socket-related types
 export type Row = {
   productId: string;
   unitPrice: number;
@@ -87,8 +540,7 @@ export type Row = {
   productName?: string;
 };
 
-// Define a simple type for the receipt data based on backend structure
-type ReceiptData = Transaction;
+// type ReceiptData = Transaction;
 
 const emptyRow: Row = {
   productId: "",
@@ -101,7 +553,6 @@ const emptyRow: Row = {
   productName: "",
 };
 
-// Returns today's date in local timezone formatted as YYYY-MM-DD for input[type="date"]
 const getTodayDateString = () => {
   const now = new Date();
   const year = now.getFullYear();
@@ -112,53 +563,84 @@ const getTodayDateString = () => {
 
 const NewSales: React.FC = () => {
   const queryClient = useQueryClient();
-  // Store data
   const { products } = useInventoryStore();
   const clients = useClientStore((state) => state.clients);
   const { user } = useAuthStore();
 
-  // Client state
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isWalkIn, setIsWalkIn] = useState(false);
   const [walkInData, setWalkInData] = useState({ name: "", phone: "" });
 
-  // Payment state
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [purchaseType, setPurchaseType] = useState<"PURCHASE" | "PICKUP">(
     "PURCHASE"
   );
   const [subMethod, setSubMethod] = useState("");
-  const [amountPaid, setAmountPaid] = useState(""); // Store raw digits
+  const [amountPaid, setAmountPaid] = useState("");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Product state
   const [rows, setRows] = useState<Row[]>([emptyRow]);
   const amountPaidInputRef = useRef<HTMLInputElement>(null);
 
-  // discount state
   const [discountReason, setDiscountReason] = useState("");
   const [globalDiscount, setGlobalDiscount] = useState(0);
 
-  // receipt state
-  const [showReceipt, setShowReceipt] = useState(false);
-  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
+  // const [showReceipt, setShowReceipt] = useState(false);
+  // const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
 
   const [bankSearch, setBankSearch] = useState("");
-
   const [date, setDate] = useState<string>(() => getTodayDateString());
 
-  // listen for socket event
+  // SOCKET: useRef to hold socket instance and control lifecycle
+  const socketRef = useRef<Socket | null>(null);
+
+  // Connect socket inside useEffect so it doesn't run at module import time
   useEffect(() => {
-    socket.on("transaction_created", (data: ReceiptData) => {
-      setReceiptData(data);
-      setShowReceipt(true);
+    // only connect when user branch is present
+    if (!user?.branchId) return;
+
+    const url = getServerUrl();
+    console.debug("[NewSales] connecting socket to:", url);
+
+    const s = io(url, {
+      path: "/socket.io",
+      withCredentials: true,
+      // force websocket to avoid polling/xhr fallback
+      transports: ["websocket"],
+      // optional reconnection settings
+      reconnection: true,
+      reconnectionAttempts: 5,
     });
-    //clean up function
+
+    // debug handlers
+    s.on("connect", () => {
+      console.debug("[NewSales][WS] connected, id:", s.id);
+    });
+
+    s.on("connect_error", (err: any) => {
+      console.error("[NewSales][WS] connect_error:", err);
+    });
+
+    s.on("error", (err: any) => {
+      console.error("[NewSales][WS] error:", err);
+    });
+
+    // s.on("transaction_created", (data: ReceiptData) => {
+    //   setReceiptData(data);
+    //   setShowReceipt(true);
+    // });
+
+    socketRef.current = s;
+
     return () => {
-      socket.off("transaction_created");
+      if (socketRef.current) {
+        socketRef.current.off("transaction_created");
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
     };
-  }, []);
+  }, [user?.branchId]);
 
   if (!user?.branchId) {
     toast.error("Branch ID is missing");
@@ -167,17 +649,9 @@ const NewSales: React.FC = () => {
 
   const formatCurrencyDisplay = (value: string) => {
     if (!value) return "₦0";
-
-    // Remove all non-digit characters except numbers
     const digitsOnly = value.replace(/\D/g, "");
-
-    // Handle empty value
     if (digitsOnly === "") return "₦0";
-
-    // Convert to number directly (no division by 100)
     const numericValue = parseFloat(digitsOnly);
-
-    // Format with commas but NO decimal places
     return `₦${numericValue.toLocaleString("en-GB", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
@@ -186,17 +660,13 @@ const NewSales: React.FC = () => {
 
   const handleAmountPaidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value;
-
-    // Extract only digits
     const newRawValue = input.replace(/\D/g, "");
-
     setAmountPaid(newRawValue);
   };
 
   const handleAmountPaidKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>
   ) => {
-    // Allow navigation keys, backspace, delete, tab, etc.
     const allowedKeys = [
       "ArrowLeft",
       "ArrowRight",
@@ -208,9 +678,7 @@ const NewSales: React.FC = () => {
       "Home",
       "End",
     ];
-
     if (!allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey) {
-      // Allow only digits
       if (!/\d/.test(e.key)) {
         e.preventDefault();
       }
@@ -218,11 +686,9 @@ const NewSales: React.FC = () => {
   };
 
   const handleAmountPaidFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    // Select all text when focused for easy editing
     setTimeout(() => e.target.select(), 0);
   };
 
-  // Helper to get numeric value safely
   const getAmountPaid = () => {
     if (!amountPaid) return 0;
     const value = parseFloat(amountPaid);
@@ -234,7 +700,6 @@ const NewSales: React.FC = () => {
     if (!selectedClient && !isWalkIn) return false;
     if (isWalkIn && !walkInData.name.trim()) return false;
     if (!rows.some((row) => row.productId)) return false;
-    // if (rows.some((row) => row.discount > 0) && !discountReason.trim())
     if (
       (rows.some((row) => row.discount > 0) || globalDiscount > 0) &&
       !discountReason.trim()
@@ -293,10 +758,8 @@ const NewSales: React.FC = () => {
       return acc + discountAmount;
     }, 0);
 
-    // only apply global discount if no discount exists
     const discountTotal =
       rowDiscountTotal > 0 ? rowDiscountTotal : globalDiscount;
-
     const total = subtotal - discountTotal;
     return { subtotal, discountTotal, total };
   };
@@ -392,14 +855,6 @@ const NewSales: React.FC = () => {
           };
         });
 
-      // let saleType: "PURCHASE" | "PICKUP" = "PURCHASE";
-      // if (!isWalkIn && selectedClient) {
-      //   const clientBalance = selectedClient.balance || 0;
-      //   const canCover = effectiveAmountPaid + clientBalance >= total;
-
-      //   saleType = canCover ? "PURCHASE" : "PICKUP";
-      // }
-
       let paymentMethodForBackend = paymentMethod;
       if (subMethod) {
         if (paymentMethod === "bank" || paymentMethod === "transfer") {
@@ -424,7 +879,6 @@ const NewSales: React.FC = () => {
       };
 
       await AddTransaction(payload);
-      // console.log("payload", payload);
       toast.success("Transaction created successfully");
 
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
@@ -437,7 +891,6 @@ const NewSales: React.FC = () => {
     }
   };
 
-  // Helper function to get sub list based on payment method
   const getSubList = () => {
     if (paymentMethod === "bank" || paymentMethod === "transfer") {
       return bankNames;
@@ -772,7 +1225,7 @@ const NewSales: React.FC = () => {
         </div>
       </section>
 
-      {showReceipt && receiptData && (
+      {/* {showReceipt && receiptData && (
         <Modal
           size="xxl"
           isOpen={showReceipt}
@@ -780,7 +1233,7 @@ const NewSales: React.FC = () => {
         >
           <SalesReceipt transaction={receiptData} />
         </Modal>
-      )}
+      )} */}
     </main>
   );
 };

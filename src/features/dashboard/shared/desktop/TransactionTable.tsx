@@ -46,7 +46,7 @@ const TransactionTable = ({
               Payment ID
             </th>
             <th className="py-3 text-base text-[#333333] font-normal pl-1 text-start">
-              Date/Time
+              Date
             </th>
             {user?.role === "SUPER_ADMIN" ? (
               <th className="py-3 text-base text-[#333333] font-normal pl-1 text-start">
@@ -91,30 +91,21 @@ const TransactionTable = ({
                   {transaction.invoiceNumber}
                 </td>
                 <td className=" py-3 pl-1  font-normal ">
-                  <p className="text-xs text-[#444444] text-start">
+                  <p className="text-sm text-[#444444] text-start">
                     {getTransactionDateString(transaction)}
                     {/* {transaction.date} */}
                   </p>
-                  <p className="text-[0.625rem] text-[#7D7D7D] text-start">
-                    {/* {getTransactionTimeString(transaction)} */}
-                    {/* {transaction.date
-                      ? new Date(transaction.date).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : new Date(transaction.createdAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })} */}
+                  {/* <p className="text-[0.625rem] text-[#7D7D7D] text-start">
+                   
                     {new Date(transaction.createdAt).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
-                  </p>
+                  </p> */}
                 </td>
                 <td className=" text-start pl-1 text-[#444444] text-sm font-normal py-3">
                   {user?.role === "SUPER_ADMIN" ? (
-                    <div className="flex items-center justify-start text-[#444444] text-xs font-normal py-3">
+                    <div className="flex items-center justify-start text-[#444444] text-sm font-normal py-3">
                       {transaction.items.length > 0 && (
                         <>
                           <span>
@@ -132,7 +123,7 @@ const TransactionTable = ({
                                   <ChevronDown className="w-4 h-4" />
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent className="text-sm max-w-30">
+                              <PopoverContent className="text-sm max-w-40">
                                 {transaction.items
                                   .slice(1)
                                   .map(

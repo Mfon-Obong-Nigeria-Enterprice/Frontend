@@ -61,9 +61,9 @@ const RecentTransactionsMobile = () => {
                         <span className="text-xs">
                           {new Date(transaction.createdAt).toLocaleDateString()}
                         </span>
-                        <span className="text-xs ml-1">
+                        {/* <span className="text-xs ml-1">
                           {new Date(transaction.createdAt).toLocaleTimeString()}
-                        </span>
+                        </span> */}
                       </p>
                       {/* list of items purchased */}
                       <p>
