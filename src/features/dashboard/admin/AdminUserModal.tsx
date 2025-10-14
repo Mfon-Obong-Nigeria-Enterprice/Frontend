@@ -80,8 +80,8 @@ export default function AdminUserModal({
 
   // Only call useUser if userId exists AND it matches the current logged-in user
   // This prevents unnecessary API calls that would result in 403 errors
-  const shouldFetchUser = userId && userId === currentUser?.id;
-  const { data: userProfile } = useUser(shouldFetchUser ? userId : "");
+  const shouldFetchUser = !!(userId && userId === currentUser?.id);
+  const { data: userProfile } = useUser(userId || "", shouldFetchUser);
 
   // Sync with auth store when userProfile is loaded
   const handleSyncUserWithProfile = useCallback(() => {

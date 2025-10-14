@@ -303,11 +303,11 @@ export const useUsers = () => {
 };
 
 // Get user by ID query
-export const useUser = (userId: string) => {
+export const useUser = (userId: string, enabled: boolean = true) => {
   return useQuery({
     queryKey: userKeys.detail(userId),
     queryFn: () => getUserById(userId),
-    enabled: !!userId,
+    enabled: enabled && !!userId, // Only fetch if both enabled flag and userId are truthy
     staleTime: 1 * 60 * 1000, // Reduced to 1 minute
     gcTime: 5 * 60 * 1000, // Keep cache for 5 minutes
     // Add retry configuration

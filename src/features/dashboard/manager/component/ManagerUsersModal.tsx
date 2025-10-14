@@ -45,9 +45,10 @@ export function ManagerUsersModal({
 
   // Only call useUser if userData._id matches the current logged-in user
   // This prevents unnecessary API calls that would result in 403 errors
-  const shouldFetchUser = userData._id && userData._id === currentUser?.id;
+  const shouldFetchUser = !!(userData._id && userData._id === currentUser?.id);
   const { data: userProfile, isLoading: isLoadingProfile } = useUser(
-    shouldFetchUser ? userData._id : ""
+    userData._id || "",
+    shouldFetchUser
   );
   const { updateProfile } = useUserMutations(); // Only use the combined mutation
 
