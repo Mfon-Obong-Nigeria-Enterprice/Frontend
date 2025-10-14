@@ -184,7 +184,7 @@ export class WebSocketNotificationService {
     const socketConfig: any = {
       withCredentials: true, // Sends cookies with WebSocket connection
       path: "/socket.io",
-      transports: ["websocket", "polling"], // Try websocket first, fallback to polling
+      transports: ["polling", "websocket"], // Use polling first for better cross-origin cookie handling
       reconnection: true,
       reconnectionAttempts: this.maxReconnectAttempts,
       reconnectionDelay: 2000,
