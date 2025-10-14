@@ -75,11 +75,13 @@ export default function AdminUserModal({
   // Use the user mutations hook - consistent naming
   const { updatePassword, updateProfilePicture } = useUserMutations();
 
-  // Only call useUser if userId exists
-  const { data: userProfile } = useUser(userId || "");
-
   // Add auth store hook
-  const { syncUserWithProfile, logout } = useAuthStore();
+  const { syncUserWithProfile, logout, user: currentUser } = useAuthStore();
+
+  // Only call useUser if userId exists AND it matches the current logged-in user
+  // This prevents unnecessary API calls that would result in 403 errors
+  const shouldFetchUser = userId && userId === currentUser?.id;
+  const { data: userProfile } = useUser(shouldFetchUser ? userId : "");
 
   // Sync with auth store when userProfile is loaded
   const handleSyncUserWithProfile = useCallback(() => {

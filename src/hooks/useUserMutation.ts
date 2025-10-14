@@ -312,9 +312,12 @@ export const useUser = (userId: string) => {
     gcTime: 5 * 60 * 1000, // Keep cache for 5 minutes
     // Add retry configuration
     retry: (failureCount, error) => {
-      // Only retry on network errors, not on 404s
-      if (isAxiosError(error) && error.response?.status === 404) {
-        return false;
+      // Don't retry on 403 Forbidden, 404 Not Found, or 401 Unauthorized
+      if (isAxiosError(error)) {
+        const status = error.response?.status;
+        if (status === 403 || status === 404 || status === 401) {
+          return false;
+        }
       }
       return failureCount < 2;
     },
