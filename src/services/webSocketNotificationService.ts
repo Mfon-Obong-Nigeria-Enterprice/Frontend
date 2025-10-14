@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { io, Socket } from "socket.io-client";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useNotificationStore } from "@/stores/useNotificationStore";
@@ -50,36 +51,6 @@ export class WebSocketNotificationService {
     return WebSocketNotificationService.instance;
   }
 
-  private getServerUrl(): string {
-    // Prefer deriving the real-time server URL from the API base URL when available.
-    // This allows dev setups where the API (and socket server) run on localhost:3001
-    // while the frontend runs on a different port.
-    const apiUrl = import.meta.env.VITE_API_URL;
-
-    if (apiUrl) {
-      try {
-        const baseUrl = apiUrl.replace(/\/api\/?$/, "");
-        // Debug log to help diagnose wrong host issues in development
-        // eslint-disable-next-line no-console
-        console.debug(
-          "WebSocketNotificationService using server url derived from VITE_API_URL:",
-          baseUrl
-        );
-        return baseUrl;
-      } catch (e) {
-        // ignore and fallback
-      }
-    }
-
-    // If no API URL is provided, fall back to a local dev socket server or current origin
-    if (import.meta.env.DEV) {
-      return window.location.hostname === "localhost"
-        ? "http://localhost:3001"
-        : window.location.origin;
-    }
-
-    return window.location.origin;
-  }
 
   // Cache invalidation helper methods
   private invalidateRelevantQueries(
@@ -211,9 +182,10 @@ export class WebSocketNotificationService {
       socketConfig.auth = { token: fallbackToken };
     }
 
- const socket = io("https://mfon-obong-enterprise-project-8otx.onrender.com", {
-  withCredentials: true, 
+ const _Socket = io("https://mfon-obong-enterprise-project-8otx.onrender.com", {
+  withCredentials: true,
 });
+    this.socket = _Socket;
 
 
     this.setupEventListeners();
