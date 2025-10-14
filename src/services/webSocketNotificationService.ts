@@ -172,16 +172,16 @@ export class WebSocketNotificationService {
     return false;
   }
 
-  connect(): void {
-    const currentUser = useAuthStore.getState().user;
-    if (!currentUser?.id) {
-      console.warn(
-        "WebSocketNotificationService: No authenticated user, cannot connect"
-      );
-      return;
-    }
+ connect(): void {
+  const currentUser = useAuthStore.getState().user;
+  if (!currentUser?.id) {
+    console.warn(
+      "WebSocketNotificationService: No authenticated user, cannot connect"
+    );
+    return;
+  }
 
-    this.connectionStatus = "connecting";
+  this.connectionStatus = "connecting";
 
     // Get any available token for fallback
     const possibleTokens = {
@@ -211,7 +211,10 @@ export class WebSocketNotificationService {
       socketConfig.auth = { token: fallbackToken };
     }
 
-    this.socket = io(this.getServerUrl(), socketConfig);
+ const socket = io("https://mfon-obong-enterprise-project-8otx.onrender.com", {
+  withCredentials: true, 
+});
+
 
     this.setupEventListeners();
   }

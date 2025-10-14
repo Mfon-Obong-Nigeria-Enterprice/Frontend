@@ -19,9 +19,13 @@ import {
 } from "@/stores/useHealthStore";
 
 const BAR_COLORS = {
-  normal: "#2ECC71",
-  high: "#FFA500",
+  healthy: "#2ECC71",
+  warning: "#FFA500", 
   critical: "#F95353",
+  degraded: "#FFA500",
+  unhealthy: "#F95353",
+  up: "#2ECC71",
+  down: "#F95353"
 };
 
 interface TooltipPayload {
@@ -36,7 +40,6 @@ interface CustomTooltipProps {
   active?: boolean;
   payload?: TooltipPayload[];
 }
-
 const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -45,15 +48,18 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
         <p className="font-medium text-gray-900 text-xs sm:text-sm">
           {data.name}
         </p>
+        {/* Fixed line: Always show value with percentage for this chart */}
         <p className="text-gray-700 text-xs sm:text-sm">
-          {data.name === "Database" ? `${data.value}ms` : `${data.value}%`}
+          {data.value}%
         </p>
         <p className="text-xs text-gray-500">
           Status:{" "}
           <span
             className={
-              data.status === "up" || data.status === "healthy"
-                ? "text-green-500"
+              data.status === "healthy" || data.status === "up" 
+                ? "text-green-500" 
+                : data.status === "warning" || data.status === "degraded"
+                ? "text-yellow-500"
                 : "text-red-500"
             }
           >
@@ -79,36 +85,53 @@ export const SystemHealth: React.FC = () => {
     return () => clearInterval(interval);
   }, [fetchHealth]);
 
-  const getBarColor = (value: number, status?: string) => {
-    if (status === "degraded") return "#FFA500";
-    if (value >= 90) return BAR_COLORS.critical;
-    if (value >= 80) return BAR_COLORS.high;
-    return BAR_COLORS.normal;
+  // Robust color mapping function
+  const getBarColor = (status: string) => {
+    const colorMap: Record<string, string> = {
+      healthy: BAR_COLORS.healthy,
+      up: BAR_COLORS.up,
+      warning: BAR_COLORS.warning,
+      degraded: BAR_COLORS.degraded,
+      critical: BAR_COLORS.critical,
+      unhealthy: BAR_COLORS.unhealthy,
+      down: BAR_COLORS.down,
+    };
+    
+    // Handle case sensitivity and provide fallback
+    const normalizedStatus = status.toLowerCase();
+    return colorMap[normalizedStatus] || BAR_COLORS.healthy;
   };
 
-  const barChartData = useMemo(() => {
-    if (!detailed) return [];
+ const barChartData = useMemo(() => {
+  if (!detailed) return [];
 
-    return [
-      {
-        name: "Database",
-        value: detailed.checks.database.responseTime,
-        status: detailed.checks.database.status,
-        threshold: 100,
-      },
-      {
-        name: "Memory",
-        value: detailed.checks.memory.percentage,
-        status: detailed.checks.memory.status,
-        threshold: 100,
-      },
-    ];
-  }, [detailed]);
 
-  const showMemoryAlert = useMemo(() => {
-    const memoryPercentage = detailed?.checks.memory?.percentage;
-    return typeof memoryPercentage === "number" && memoryPercentage >= 80;
-  }, [detailed]);
+  return [
+   {
+  name: "Database",
+  
+  value: Math.min((detailed.checks.database.responseTime / 300) * 100, 100),
+  status: detailed.checks.database.status,
+  threshold: 100,
+},
+    {
+      name: "Memory",
+      value: detailed.checks.memory.percentage,
+      status: detailed.checks.memory.status,
+      tooltipValue: `${detailed.checks.memory.percentage}%`,
+    },
+  ];
+}, [detailed]);
+
+
+ const showMemoryAlert = useMemo(() => {
+  const memoryStatus = detailed?.checks.memory?.status;
+
+  if (!memoryStatus) return false;
+  
+  const normalizedStatus = memoryStatus.toLowerCase();
+  return normalizedStatus === "critical" || normalizedStatus === "warning";
+}, [detailed]);
 
   const renderContent = useMemo(() => {
     if (loading && !basic) {
@@ -138,25 +161,26 @@ export const SystemHealth: React.FC = () => {
     return (
       <>
         {/* Header */}
-        <div className="mb-3 sm:mb-4">
-          <h2 className="text-base sm:text-lg font-normal pb-2 sm:pb-4">
-            System Health
-          </h2>
-          <div className="flex flex-wrap gap-2 sm:gap-3 lg:gap-4 text-xs sm:text-sm">
-            <div className="flex items-center">
-              <span className="h-2 w-2 sm:h-3 sm:w-3 rounded-full bg-[#2ECC71] mr-1 sm:mr-2"></span>
-              <span className="whitespace-nowrap">Normal (0-79%)</span>
-            </div>
-            <div className="flex items-center">
-              <span className="h-2 w-2 sm:h-3 sm:w-3 rounded-full bg-[#FFA500] mr-1 sm:mr-2"></span>
-              <span className="whitespace-nowrap">High (80-89%)</span>
-            </div>
-            <div className="flex items-center">
-              <span className="h-2 w-2 sm:h-3 sm:w-3 rounded-full bg-[#F95353] mr-1 sm:mr-2"></span>
-              <span className="whitespace-nowrap">Critical (90%+)</span>
-            </div>
-          </div>
-        </div>
+       {/* Header */}
+<div className="mb-3 sm:mb-4">
+  <h2 className="text-base sm:text-lg font-normal pb-2 sm:pb-4">
+    System Health
+  </h2>
+  <div className="flex flex-wrap gap-2 sm:gap-3 lg:gap-4 text-xs sm:text-sm">
+    <div className="flex items-center">
+      <span className="h-2 w-2 sm:h-3 sm:w-3 rounded-full bg-[#2ECC71] mr-1 sm:mr-2"></span>
+      <span className="whitespace-nowrap">Normal (0-79%)</span>
+    </div>
+    <div className="flex items-center">
+      <span className="h-2 w-2 sm:h-3 sm:w-3 rounded-full bg-[#FFA500] mr-1 sm:mr-2"></span>
+      <span className="whitespace-nowrap">High (80-89%)</span>
+    </div>
+    <div className="flex items-center">
+      <span className="h-2 w-2 sm:h-3 sm:w-3 rounded-full bg-[#F95353] mr-1 sm:mr-2"></span>
+      <span className="whitespace-nowrap">Critical (90%+)</span>
+    </div>
+  </div>
+</div>
 
         {/* Chart Container */}
         <div className="h-52 md:h-56 lg:h-64 xl:h-72 2xl:h-80">
@@ -178,34 +202,49 @@ export const SystemHealth: React.FC = () => {
                 tick={{ fontSize: 10 }}
                 className="text-xs sm:text-sm"
               />
-              <YAxis
-                domain={[0, 100]}
-                tickFormatter={(value) => `${value}`}
-                tickCount={5}
-                tick={{ fontSize: 9 }}
-                className="text-xs"
-                width={30}
-              />
+             <YAxis
+  domain={[0, 100]}
+  tickFormatter={(value) => `${value}%`}
+  tickCount={5}
+  tick={{ fontSize: 9 }}
+  className="text-xs"
+  width={65} 
+  label={{ 
+    value: 'Usage (%)', 
+    angle: -90, 
+    position: 'outsideLeft',
+    offset: 40,
+    style: { 
+      textAnchor: 'middle',
+      fontSize: '10px',
+      fill: '#6B7280'
+    }
+  }}
+/>
               <Tooltip
                 content={<CustomTooltip />}
                 cursor={{ fill: "rgba(0,0,0,0.05)" }}
               />
               <Bar dataKey="value" minPointSize={5}>
                 {barChartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={getBarColor(entry.value)} />
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={getBarColor(entry.status)} 
+                  />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Memory Alert */}
+        {/* Memory Alert - Only show if API says it's critical or warning */}
         {showMemoryAlert && (
           <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-2 sm:p-3 rounded-md mt-3 sm:mt-4 flex items-start sm:items-center text-xs sm:text-sm">
             <AlertTriangle className="mr-2 h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 mt-0.5 sm:mt-0" />
             <span className="font-semibold leading-tight">
-              High Usage: Memory at {detailed.checks.memory.percentage}% -
-              Monitor closely
+              {detailed.checks.memory.status === "critical" ? "Critical" : "Warning"}: 
+              Memory at {detailed.checks.memory.percentage}% - 
+              {detailed.checks.memory.status === "critical" ? " Immediate attention required" : " Monitor closely"}
             </span>
           </div>
         )}

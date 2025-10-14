@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import React from "react";
+import React, { useCallback, useRef } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -16,13 +16,25 @@ const CustomDatePicker: React.FC<DateRangePickerProps> = ({
   onChange,
   className,
 }) => {
+  const lastCallRef = useRef<number>(0);
+  
+  const handleDateChange = useCallback((dates: [Date | null, Date | null]) => {
+    const [start, end] = dates;
+    
+    // Throttle the onChange calls
+    const now = Date.now();
+    if (now - lastCallRef.current < 100) {
+      return;
+    }
+    lastCallRef.current = now;
+    
+    onChange(start, end);
+  }, [onChange]);
+
   return (
     <DatePicker
       selected={startDate}
-      onChange={(dates: [Date | null, Date | null]) => {
-        const [start, end] = dates;
-        onChange(start, end);
-      }}
+      onChange={handleDateChange}
       startDate={startDate}
       endDate={endDate}
       selectsRange

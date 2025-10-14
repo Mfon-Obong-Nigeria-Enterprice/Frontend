@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/components/UserOverview.tsx
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useUserStore } from "@/stores/useUserStore";
@@ -11,7 +11,6 @@ import CreateUserModal from "./modals/createusermodal";
 import EditUserModal from "./modals/EditUserModal";
 import UserSearchList from "../UserSearchList"; 
 import Modal from "@/components/Modal";
-import CustomDatePicker from "@/utils/CustomDatePicker";
 
 // ui components
 import { Button } from "@/components/ui/button";
@@ -65,7 +64,6 @@ const UserOverview = () => {
   const [selectedUserData, setSelectedUserData] = useState<UserDataProps | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isBusinessModalOpen, setIsBusinessModalOpen] = useState(false);
-  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
 
   const [filters, setFilters] = useState({
     role: "all",
@@ -73,45 +71,6 @@ const UserOverview = () => {
     dateRange: "all",
     status: "all"
   });
-
-const [customDateRange, setCustomDateRange] = useState<{
-  startDate: Date | null;
-  endDate: Date | null;
-}>({
-  startDate: null,
-  endDate: null
-});
-
-// CORRECTED handler function - accepts separate parameters
-const handleCustomDateChange = (start: Date | null, end: Date | null) => {
-  // Handle null values safely
-  const safeStartDate = start || customDateRange.startDate || new Date();
-  const safeEndDate = end || customDateRange.endDate || new Date();
-  
-  setCustomDateRange({ 
-    startDate: safeStartDate, 
-    endDate: safeEndDate 
-  });
-};
-
-// Apply custom date range
-const applyCustomDateRange = () => {
-  if (customDateRange.startDate && customDateRange.endDate) {
-    setShowCustomDatePicker(false);
-    setFilters(prev => ({ ...prev, dateRange: 'custom' }));
-  } else {
-    alert("Please select both start and end dates");
-  }
-};
-
-const cancelCustomDateRange = () => {
-  setShowCustomDatePicker(false);
-  setFilters(prev => ({ ...prev, dateRange: 'all' }));
-  setCustomDateRange({
-    startDate: null,
-    endDate: null
-  });
-};
 
   const nonSuperAdminUsers = useMemo(() => filterUsers(users), [users]);
 
@@ -170,7 +129,7 @@ const cancelCustomDateRange = () => {
         }
       }
       
-      // Date range filter with custom range support
+      // Date range filter - REMOVED CUSTOM RANGE SUPPORT
       if (filters.dateRange !== "all") {
         if (!user.createdAt) return false;
         
@@ -193,14 +152,6 @@ const cancelCustomDateRange = () => {
             startDate.setMonth(startDate.getMonth() - 1);
             endDate = new Date(now);
             break;
-          case "custom":
-            // Handle null dates in custom range
-            if (!customDateRange.startDate || !customDateRange.endDate) {
-              return false;
-            }
-            startDate = customDateRange.startDate;
-            endDate = customDateRange.endDate;
-            break;
           default:
             return true;
         }
@@ -220,56 +171,16 @@ const cancelCustomDateRange = () => {
       
       return true;
     });
-  }, [nonSuperAdminUsers, searchQuery, filters, customDateRange]);
+  }, [nonSuperAdminUsers, searchQuery, filters]); // REMOVED customDateRange dependency
 
-  const handleSearch = (query: string) => {
+  const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-  };
+  }, []);
 
-  const handleFilterChange = (filterName: string, value: string) => {
+  const handleFilterChange = useCallback((filterName: string, value: string) => {
     setFilters(prev => ({ ...prev, [filterName]: value }));
-    
-    // Show custom date picker when custom range is selected
-    if (filterName === 'dateRange' && value === 'custom') {
-      setShowCustomDatePicker(true);
-    } else if (filterName === 'dateRange') {
-      setShowCustomDatePicker(false);
-    }
-  };
-
-  // Updated handleCustomDateChange to handle array of dates from react-datepicker
-  // const handleCustomDateChange = (dates: [Date | null, Date | null]) => {
-  //   const [start, end] = dates;
-  //   setCustomDateRange({ 
-  //     startDate: start, 
-  //     endDate: end 
-  //   });
-  //   // Auto-apply the custom date filter only when both dates are selected
-  //   if (start && end) {
-  //     setFilters(prev => ({ ...prev, dateRange: 'custom' }));
-  //   }
-  // };
-
-  // const applyCustomDateRange = () => {
-  //   // Only apply if both dates are selected
-  //   if (customDateRange.startDate && customDateRange.endDate) {
-  //     setShowCustomDatePicker(false);
-  //   } else {
-  //     // Show error or prevent closing if dates aren't fully selected
-  //     alert("Please select both start and end dates");
-  //   }
-  // };
-
-  // const cancelCustomDateRange = () => {
-  //   setShowCustomDatePicker(false);
-  //   // Reset to previous date range or 'all'
-  //   setFilters(prev => ({ ...prev, dateRange: 'all' }));
-  //   // Reset custom date range
-  //   setCustomDateRange({
-  //     startDate: new Date(),
-  //     endDate: new Date()
-  //   });
-  // };
+    // REMOVED custom date picker logic
+  }, []);
 
   const handleEditUser = (userData: UserDataProps) => {
     setSelectedUserData(userData);
@@ -279,12 +190,6 @@ const cancelCustomDateRange = () => {
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
     setSelectedUserData(null);
-  };
-
-  // Format date for display
-  const formatDateForDisplay = (date: Date | null) => {
-    if (!date) return 'Not selected';
-    return date.toLocaleDateString();
   };
 
   return (
@@ -298,13 +203,6 @@ const cancelCustomDateRange = () => {
         {/* hold refresh and button for maintainer */}
         <div className="flex flex-col md:flex-row gap-5">
           <div className="flex items-center gap-1">
-          {/* Auto Refresh Toggle */}
-            {/* <span className="text-sm text-muted-foreground">Auto Refresh</span> */}
-            {/* <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" defaultChecked />
-              <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
-              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-5 transition-transform"></div>
-            </label> */}
             <Popover>
               <PopoverTrigger asChild>
                 <button
@@ -340,18 +238,18 @@ const cancelCustomDateRange = () => {
                     </>
                   )}
                   <Button
-  variant="ghost"
-  className="w-full flex items-center gap-2 px-4 py-4 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium min-w-0"
-  onClick={() => {
-    const url = user?.role === "SUPER_ADMIN" ? "manager" : "maintainer";
-    navigate(`/${url}/dashboard/user-management/col-settings`);
-  }}
->
-  <span className="flex-1 text-left truncate min-w-0">
-    Columns Settings
-  </span>
-  <ExternalLink className="size-4 text-muted-foreground flex-shrink-0" />
-</Button>
+                    variant="ghost"
+                    className="w-full flex items-center gap-2 px-4 py-4 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium min-w-0"
+                    onClick={() => {
+                      const url = user?.role === "SUPER_ADMIN" ? "manager" : "maintainer";
+                      navigate(`/${url}/dashboard/user-management/col-settings`);
+                    }}
+                  >
+                    <span className="flex-1 text-left truncate min-w-0">
+                      Columns Settings
+                    </span>
+                    <ExternalLink className="size-4 text-muted-foreground flex-shrink-0" />
+                  </Button>
 
                   {user?.role === "MAINTAINER" && (
                     <>
@@ -390,40 +288,7 @@ const cancelCustomDateRange = () => {
           showLocationFilter={true}
         />
         
-        {/* Custom Date Range Picker */}
-        {showCustomDatePicker && (
-          <div className="px-4 py-4 border-t border-gray-200">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium">Select Custom Date Range</h3>
-              <div className="flex gap-2">
-                <Button 
-                  onClick={cancelCustomDateRange}
-                  variant="outline"
-                  size="sm"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={applyCustomDateRange}
-                  size="sm"
-                >
-                  Apply Range
-                </Button>
-              </div>
-            </div>
-            <div className="mb-2">
-              <p className="text-sm text-gray-600">
-                Selected: {formatDateForDisplay(customDateRange.startDate)} - {formatDateForDisplay(customDateRange.endDate)}
-              </p>
-            </div>
-            <CustomDatePicker
-  startDate={customDateRange.startDate}
-  endDate={customDateRange.endDate}
-  onChange={handleCustomDateChange}
-  className="border border-gray-300 rounded-md"
-/>
-          </div>
-        )}
+        {/* REMOVED Custom Date Range Picker entirely */}
       </div>
 
       {/* User summary */}
@@ -434,8 +299,7 @@ const cancelCustomDateRange = () => {
           {filters.role !== 'all' && ` with role: ${filters.role}`}
           {filters.location !== 'all' && ` at location: ${filters.location}`}
           {filters.status !== 'all' && ` with status: ${filters.status}`}
-          {filters.dateRange === 'custom' && customDateRange.startDate && customDateRange.endDate && 
-            ` (${formatDateForDisplay(customDateRange.startDate)} - ${formatDateForDisplay(customDateRange.endDate)})`}
+          {/* REMOVED custom date range display */}
         </p>
       </div>
 

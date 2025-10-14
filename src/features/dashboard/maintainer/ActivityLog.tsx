@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 
 // components
 import DashboardTitle from "../shared/DashboardTitle";
@@ -34,9 +34,6 @@ import { useUserStore } from "@/stores/useUserStore";
 import type { CompanyUser } from "@/stores/useUserStore";
 import type { ActivityLogs } from "@/stores/useActivityLogsStore";
 
-// Import your custom date range component
-import CustomDatePicker from "@/utils/CustomDatePicker";
-
 type ActivityWithUser = ActivityLogs & {
   user?: {
     name: string;
@@ -50,24 +47,17 @@ const ActivityLog = () => {
   const { users } = useUserStore();
   const [expandedRows, setExpandedRows] = useState<{ [key: number]: boolean }>({});
   const [searchQuery, setSearchQuery] = useState("");
-  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
 
-  // Updated filters state to include status
+  // Updated filters state - removed custom date range
   const [filters, setFilters] = useState({
     role: "all",
     dateRange: "all",
     status: "all"
   });
-  
-  // State for custom date range
-  const [customDateRange, setCustomDateRange] = useState({
-    startDate: new Date(),
-    endDate: new Date()
-  });
 
-  const toggleRow = (i: number) => {
+  const toggleRow = useCallback((i: number) => {
     setExpandedRows((prev) => ({ ...prev, [i]: !prev[i] }));
-  };
+  }, []);
 
   const mergeActivitiesWithUsers = (
     activities: ActivityLogs[],
@@ -153,7 +143,7 @@ const ActivityLog = () => {
       }
     }
 
-    // Apply date range filter with custom range support
+    // Apply date range filter - REMOVED CUSTOM RANGE
     if (filters.dateRange !== "all") {
       const now = new Date();
       result = result.filter(activity => {
@@ -175,10 +165,6 @@ const ActivityLog = () => {
             startDate.setMonth(startDate.getMonth() - 1);
             endDate = new Date(now);
             break;
-          case "custom":
-            startDate = customDateRange.startDate;
-            endDate = customDateRange.endDate;
-            break;
           default:
             return true;
         }
@@ -198,7 +184,7 @@ const ActivityLog = () => {
     }
 
     return result;
-  }, [activities, users, searchQuery, filters, customDateRange]);
+  }, [activities, users, searchQuery, filters]); // REMOVED customDateRange dependency
 
   const {
     currentPage,
@@ -215,43 +201,14 @@ const ActivityLog = () => {
     return filteredActivities.slice(startIndex, endIndex);
   }, [filteredActivities, currentPage]);
 
-  const handleSearch = (query: string) => {
+  const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-  };
+  }, []);
 
-  const handleFilterChange = (filterName: string, value: string) => {
+  const handleFilterChange = useCallback((filterName: string, value: string) => {
     setFilters(prev => ({ ...prev, [filterName]: value }));
-    
-    // Show custom date picker when custom range is selected
-    if (filterName === 'dateRange' && value === 'custom') {
-      setShowCustomDatePicker(true);
-    } else if (filterName === 'dateRange') {
-      setShowCustomDatePicker(false);
-    }
-  };
-
- const handleCustomDateChange = (startDate: Date | null, endDate: Date | null) => {
-  // Handle null values by falling back to current date
-  const safeStartDate = startDate || new Date();
-  const safeEndDate = endDate || new Date();
-  
-  setCustomDateRange({ 
-    startDate: safeStartDate, 
-    endDate: safeEndDate 
-  });
-};
-  
-
-const applyCustomDateRange = () => {
-  setShowCustomDatePicker(false);
-  setFilters(prev => ({ ...prev, dateRange: 'custom' }));
-};
-
-  const cancelCustomDateRange = () => {
-    setShowCustomDatePicker(false);
-    // Reset to previous date range or 'all'
-    setFilters(prev => ({ ...prev, dateRange: 'all' }));
-  };
+    // REMOVED custom date picker logic
+  }, []);
 
   // Extract unique roles for filter dropdown
   const roles = useMemo(() => {
@@ -270,41 +227,14 @@ const applyCustomDateRange = () => {
       <div className="bg-white mt-8 ">
         <h2 className="p-3 font-medium"> Filter & Controls </h2>
       
-<UserSearchList 
-  onSearch={handleSearch}
-  onFilterChange={handleFilterChange}
-  roles={roles}
-  showLocationFilter={false} 
-/>
+        <UserSearchList 
+          onSearch={handleSearch}
+          onFilterChange={handleFilterChange}
+          roles={roles}
+          showLocationFilter={false} 
+        />
         
-        {/* Custom Date Range Picker */}
-        {showCustomDatePicker && (
-          <div className="px-4 py-4 border-t border-gray-200">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium">Select Custom Date Range</h3>
-              <div className="flex gap-2">
-                <Button 
-                  onClick={cancelCustomDateRange}
-                  variant="outline"
-                  size="sm"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={applyCustomDateRange}
-                  size="sm"
-                >
-                  Apply Range
-                </Button>
-              </div>
-            </div>
-            <CustomDatePicker
-              startDate={customDateRange.startDate}
-              endDate={customDateRange.endDate}
-              onChange={handleCustomDateChange}
-            />
-          </div>
-        )}
+        {/* REMOVED Custom Date Range Picker entirely */}
       </div>
 
       {/* Activity summary */}
@@ -314,7 +244,7 @@ const applyCustomDateRange = () => {
           {filters.dateRange !== 'all' && ` for ${filters.dateRange}`}
           {filters.role !== 'all' && ` with role: ${filters.role}`}
           {filters.status !== 'all' && ` with status: ${filters.status}`}
-          {filters.dateRange === 'custom' && ` (${customDateRange.startDate.toLocaleDateString()} - ${customDateRange.endDate.toLocaleDateString()})`}
+          {/* REMOVED custom date range display */}
         </p>
       </div>
 
