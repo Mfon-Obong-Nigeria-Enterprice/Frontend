@@ -35,16 +35,15 @@ const StaffSales = () => {
     (state) => state.transactions ?? []
   );
 
-  const [filter, setFilter] = useState<"all" | "today" | "week" | "month">(
-    "all"
+  const [filter, setFilter] = useState<"today" | "week" | "month" | "all">(
+    "today"
   );
   const [isWaybillModalOpen, setIsWaybillModalOpen] = useState(false); // Add modal state
 
-  // filter transaction
+  // Filter and sort transactions
   const filteredTransactions = useMemo(() => {
     const now = new Date();
-    return transactions?.filter((tx) => {
-      // const txDate = new Date(tx.createdAt);
+    const filtered = transactions?.filter((tx) => {
       const txDate = getTransactionDate(tx);
 
       if (filter === "all") return true;
@@ -77,6 +76,13 @@ const StaffSales = () => {
       }
 
       return true;
+    });
+
+    // Sort by date - NEWEST FIRST
+    return filtered.sort((a, b) => {
+      const dateA = getTransactionDate(a).getTime();
+      const dateB = getTransactionDate(b).getTime();
+      return dateB - dateA; // Descending order (newest first)
     });
   }, [transactions, filter]);
 
@@ -131,11 +137,11 @@ const StaffSales = () => {
             Your Sales Activity
           </h4>
           <div className="flex gap-3 items-center">
-            {["all", "today", "week", "month"].map((f) => (
+            {["today", "week", "month", "all"].map((f) => (
               <p
                 key={f}
                 onClick={() =>
-                  setFilter(f as "all" | "today" | "week" | "month")
+                  setFilter(f as "today" | "week" | "month" | "all")
                 }
                 className={`cursor-pointer px-5 py-3 rounded-[2px] text-sm font-Inter  hidden md:block ${
                   filter === f
@@ -143,31 +149,23 @@ const StaffSales = () => {
                     : "bg-transparent text-[#444444]"
                 }`}
               >
-                {f === "all"
-                  ? "All"
-                  : f === "today"
+                {f === "today"
                   ? "Today"
                   : f === "week"
-                  ? "This Week"
-                  : "This Month"}
+                  ? "This week"
+                  : f === "month"
+                  ? "This Month"
+                  : "All"}
               </p>
             ))}
             <div className="md:hidden w-full">
               <Tabs
                 value={filter}
                 onValueChange={(val) =>
-                  setFilter(val as "all" | "today" | "week" | "month")
+                  setFilter(val as "today" | "week" | "month" | "all")
                 }
               >
                 <TabsList className="grid grid-cols-4 w-full md:hidden">
-                  <TabsTrigger
-                    value="all"
-                    className="w-full px-5 py-3 text-sm font-Inter 
-                 data-[state=active]:bg-[#3D80FF] data-[state=active]:text-white 
-                 data-[state=inactive]:bg-transparent data-[state=inactive]:text-[#444444]"
-                  >
-                    All
-                  </TabsTrigger>
                   <TabsTrigger
                     value="today"
                     className="w-full px-5 py-3 text-sm font-Inter 
@@ -191,6 +189,14 @@ const StaffSales = () => {
                  data-[state=inactive]:bg-transparent data-[state=inactive]:text-[#444444]"
                   >
                     This Month
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="all"
+                    className="w-full px-5 py-3 text-sm font-Inter 
+                 data-[state=active]:bg-[#3D80FF] data-[state=active]:text-white 
+                 data-[state=inactive]:bg-transparent data-[state=inactive]:text-[#444444]"
+                  >
+                    All
                   </TabsTrigger>
                 </TabsList>
               </Tabs>

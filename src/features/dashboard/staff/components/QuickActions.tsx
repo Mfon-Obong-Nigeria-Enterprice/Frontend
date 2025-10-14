@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 
 const QuickActions: React.FC = () => {
   return (
-    <div className="hidden md:block bg-white rounded-2xl mb-8 ">
+    <div className="hidden lg:block bg-white rounded-2xl mb-8 ">
       <h4 className="text-lg text-[var(--cl-text-dark)] pl-4 pt-3 font-medium mb-3">
         Quick Actions
       </h4>

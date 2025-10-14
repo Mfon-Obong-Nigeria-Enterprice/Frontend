@@ -6,6 +6,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Loader2, Camera } from "lucide-react";
 import { toast } from "react-toastify";
 import { useUser, useUserMutations } from "@/hooks/useUserMutation";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 type ManagerData = {
   _id: string;
@@ -39,9 +40,15 @@ export function ManagerUsersModal({
     profilePicture: "",
   });
 
-  // React Query hooks
+  // Get current logged-in user from auth store
+  const { user: currentUser } = useAuthStore();
+
+  // Only call useUser if userData._id matches the current logged-in user
+  // This prevents unnecessary API calls that would result in 403 errors
+  const shouldFetchUser = !!(userData._id && userData._id === currentUser?.id);
   const { data: userProfile, isLoading: isLoadingProfile } = useUser(
-    userData._id
+    userData._id || "",
+    shouldFetchUser
   );
   const { updateProfile } = useUserMutations(); // Only use the combined mutation
 

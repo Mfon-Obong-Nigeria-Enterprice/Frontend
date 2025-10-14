@@ -13,7 +13,10 @@ import { useMergedTransactions } from "@/hooks/useMergedTransactions";
 
 // utils
 import { balanceClassT, formatCurrency } from "@/utils/styles";
-import { getTransactionDate, getTransactionDateString, getTransactionTimeString } from "@/utils/transactions";
+import {
+  getTransactionDate,
+  getTransactionDateString,
+} from "@/utils/transactions";
 
 const RecentTransactions = () => {
   const { transactions } = useTransactionsStore();
@@ -29,7 +32,7 @@ const RecentTransactions = () => {
                 Invoice
               </th>
               <th className="py-3 text-base text-[#333333] font-normal text-start pl-1">
-                Date/Time
+                Date
               </th>
               <th className="py-3 text-base text-[#333333] font-normal text-start pl-1">
                 Items
@@ -51,7 +54,11 @@ const RecentTransactions = () => {
 
           <tbody>
             {[...(mergedTransactions || [])]
-              .sort((a, b) => getTransactionDate(b).getTime() - getTransactionDate(a).getTime())
+              .sort(
+                (a, b) =>
+                  getTransactionDate(b).getTime() -
+                  getTransactionDate(a).getTime()
+              )
               .slice(0, 5)
               .map((transaction) => (
                 <tr key={transaction._id} className="border-b border-[#d9d9d9]">
@@ -62,7 +69,7 @@ const RecentTransactions = () => {
                   <td className="text-start pl-1 text-[#444444] text-sm font-normal py-3 ">
                     <div className="flex flex-col">
                       <span>{getTransactionDateString(transaction)}</span>
-                      <span className="text-sm text-[#7D7D7D]">{getTransactionTimeString(transaction)}</span>
+                      {/* <span className="text-sm text-[#7D7D7D]">{getTransactionTimeString(transaction)}</span> */}
                     </div>
                   </td>
 

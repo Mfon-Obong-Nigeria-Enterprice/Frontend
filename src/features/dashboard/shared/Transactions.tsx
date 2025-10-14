@@ -197,7 +197,12 @@ const Transactions = () => {
         return txDate >= dateRangeFilter.from! && txDate <= dateRangeFilter.to!;
       });
     }
-    return filtered;
+    // Sort by date - NEWEST FIRST
+    return filtered.sort((a, b) => {
+      const dateA = getTransactionDate(a).getTime();
+      const dateB = getTransactionDate(b).getTime();
+      return dateB - dateA; // Descending order (newest first)
+    });
   }, [
     clientFilter,
     transactionTypeFilter,
@@ -206,7 +211,6 @@ const Transactions = () => {
     mergedTransactions,
   ]);
 
-  console.log("txn",filteredTransactions);
   // Use filteredTransactions for pagination instead of filterByInvoice
   const {
     currentPage,

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { PersistStorage, StorageValue } from "zustand/middleware";
 import type { Role } from "@/types/types";
 import { useAuthStore } from "./useAuthStore";
 
@@ -56,8 +57,6 @@ type NotificationStore = {
   clearUserNotifications: (userId: string) => void;
   setLastSyncTime: (time: number) => void;
 };
-
-import type { PersistStorage, StorageValue } from "zustand/middleware";
 
 const customStorage: PersistStorage<NotificationStore> = {
   getItem: (name: string): StorageValue<NotificationStore> | null => {

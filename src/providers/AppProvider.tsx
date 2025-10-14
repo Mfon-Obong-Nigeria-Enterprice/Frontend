@@ -1,4 +1,3 @@
-// @/providers/AppProvider.tsx
 import { useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -152,7 +151,6 @@ const AppDataProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (transactionsQuery.data && transactionsQuery.isSuccess) {
       setTransactions(transactionsQuery.data);
-      console.log("transaction", transactionsQuery.data);
     }
   }, [
     transactionsQuery.data,

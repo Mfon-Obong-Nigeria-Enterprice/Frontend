@@ -4,7 +4,12 @@ import type { DragEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -18,6 +23,7 @@ import { Loader2, Eye, EyeOff, Camera } from "lucide-react";
 import { useUser, useUserMutations } from "@/hooks/useUserMutation";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const passwordSchema = z
   .object({
@@ -28,6 +34,10 @@ const passwordSchema = z
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
+  })
+  .refine((data) => data.previousPassword !== data.newPassword, {
+    message: "New password cannot be the same as the current password",
+    path: ["newPassword"],
   });
 
 type AdminData = {
@@ -53,6 +63,7 @@ export default function AdminUserModal({
   adminData,
   onProfileUpdate,
 }: AdminUserModalProps) {
+  const navigate = useNavigate();
   const [isDragging, setIsDragging] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -64,11 +75,13 @@ export default function AdminUserModal({
   // Use the user mutations hook - consistent naming
   const { updatePassword, updateProfilePicture } = useUserMutations();
 
-  // Only call useUser if userId exists
-  const { data: userProfile } = useUser(userId || "");
-
   // Add auth store hook
-  const { syncUserWithProfile } = useAuthStore();
+  const { syncUserWithProfile, logout, user: currentUser } = useAuthStore();
+
+  // Only call useUser if userId exists AND it matches the current logged-in user
+  // This prevents unnecessary API calls that would result in 403 errors
+  const shouldFetchUser = !!(userId && userId === currentUser?.id);
+  const { data: userProfile } = useUser(userId || "", shouldFetchUser);
 
   // Sync with auth store when userProfile is loaded
   const handleSyncUserWithProfile = useCallback(() => {
@@ -123,8 +136,32 @@ export default function AdminUserModal({
       onProfileUpdate(adminData);
       passwordForm.reset();
       onOpenChange(false);
-    } catch (error) {
-      toast.error("Password update failed:" + error);
+
+      // Show success message
+      toast.success(
+        "Password updated successfully! Please log in with your new password."
+      );
+
+      // Wait a moment for the toast to be visible
+      setTimeout(() => {
+        // Invalidate session and logout
+        logout();
+
+        // Redirect to login page
+        navigate("/login", { replace: true });
+      }, 1500);
+    } catch (error: any) {
+      // Check if error is about password reuse from backend
+      if (
+        error?.response?.data?.message?.toLowerCase().includes("same") ||
+        error?.message?.toLowerCase().includes("same")
+      ) {
+        toast.error("New password cannot be the same as the current password");
+      } else {
+        toast.error(
+          "Password update failed: " + (error?.message || "Unknown error")
+        );
+      }
     }
   };
 
@@ -281,7 +318,6 @@ export default function AdminUserModal({
               <h3 className="text-xl font-semibold text-gray-800">
                 {adminData.adminName || "Admin User"}
               </h3>
-              {/* <p className="text-sm text-gray-600">ID: {userId || "No ID"}</p> */}
               <p className="hidden md:block text-sm text-gray-600">
                 {adminData.userRole || "Admin"}
               </p>
@@ -428,6 +464,14 @@ export default function AdminUserModal({
                   </FormItem>
                 )}
               />
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                <p className="text-xs text-yellow-800">
+                  <strong>Note:</strong> After updating your password, you will
+                  be logged out and redirected to the login page for security
+                  purposes.
+                </p>
+              </div>
 
               <Button
                 type="submit"
