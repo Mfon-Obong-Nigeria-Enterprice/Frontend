@@ -1,4 +1,9 @@
 import type { Transaction } from "@/types/transactions";
+import { formatCurrency } from "@/utils/formatCurrency";
+import {
+  getTransactionDate,
+  getTransactionDateString,
+} from "@/utils/transactions";
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -19,7 +24,11 @@ const ClientDiscountDetails: React.FC<ClientDiscountDetailsProps> = ({
       if (existingIndex === -1) {
         acc.push(current);
       }
-      return acc;
+      return acc.sort((a, b) => {
+        const dateA = getTransactionDate(a).getTime();
+        const dateB = getTransactionDate(b).getTime();
+        return dateB - dateA; // Descending order (newest first)
+      });
     }, [] as Transaction[]);
 
     // Then filter for discount transactions and search term
@@ -72,14 +81,11 @@ const ClientDiscountDetails: React.FC<ClientDiscountDetailsProps> = ({
               <div className="flex items-center justify-between ">
                 <p>{txn.invoiceNumber || `TXN-${txn._id.slice(-6)}`}</p>
                 <p className="text-[#2ECC71] font-normal font-Inter text-lg">
-                  ₦{txn.discount?.toLocaleString()} saved
+                  {formatCurrency(txn.discount ?? 0)} saved
                 </p>
               </div>
               <div className="flex items-center justify-between ">
-                <p>
-                  {txn.createdAt &&
-                    new Date(txn.createdAt).toLocaleDateString()}
-                </p>
+                <p>{txn.createdAt && getTransactionDateString(txn)}</p>
                 {txn?.total ? (
                   <p className="text-[#7D7D7D] text-sm font-Inter">
                     {(
@@ -100,11 +106,11 @@ const ClientDiscountDetails: React.FC<ClientDiscountDetailsProps> = ({
                     <li key={`${item.productId}-${itemIndex}`}>
                       <div className="flex items-center sm:justify-between justify-start py-2 gap-4">
                         <p>
-                          {item.productName}({item.quantity}X): ₦
-                          {item.unitPrice.toLocaleString()}
+                          {item.productName}({item.quantity}X):
+                          {formatCurrency(item.unitPrice)}
                         </p>
                         {item.discount ? (
-                          <p>₦{item.discount.toLocaleString()}</p>
+                          <p>{formatCurrency(item.discount)}</p>
                         ) : (
                           <p>(No item discount)</p>
                         )}
@@ -120,15 +126,15 @@ const ClientDiscountDetails: React.FC<ClientDiscountDetailsProps> = ({
                 </p>
                 <div className="flex items-center justify-between py-2">
                   <p>Original Total:</p>
-                  <p>₦{txn.subtotal?.toLocaleString()}</p>
+                  <p>{formatCurrency(txn.subtotal ?? 0)}</p>
                 </div>
                 <div className="flex items-center justify-between py-2">
                   <p>Final Total:</p>
-                  <p>₦{txn.total.toLocaleString()}</p>
+                  <p>{formatCurrency(txn.total)}</p>
                 </div>
                 <div className="flex items-center justify-between py-2 text-[#2ECC71]">
                   <p>Total Save:</p>
-                  <p>₦{txn.discount?.toLocaleString()}</p>
+                  <p>{formatCurrency(txn.discount ?? 0)}</p>
                 </div>
               </div>
 

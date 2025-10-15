@@ -303,18 +303,21 @@ export const useUsers = () => {
 };
 
 // Get user by ID query
-export const useUser = (userId: string) => {
+export const useUser = (userId: string, enabled: boolean = true) => {
   return useQuery({
     queryKey: userKeys.detail(userId),
     queryFn: () => getUserById(userId),
-    enabled: !!userId,
+    enabled: enabled && !!userId, // Only fetch if both enabled flag and userId are truthy
     staleTime: 1 * 60 * 1000, // Reduced to 1 minute
     gcTime: 5 * 60 * 1000, // Keep cache for 5 minutes
     // Add retry configuration
     retry: (failureCount, error) => {
-      // Only retry on network errors, not on 404s
-      if (isAxiosError(error) && error.response?.status === 404) {
-        return false;
+      // Don't retry on 403 Forbidden, 404 Not Found, or 401 Unauthorized
+      if (isAxiosError(error)) {
+        const status = error.response?.status;
+        if (status === 403 || status === 404 || status === 401) {
+          return false;
+        }
       }
       return failureCount < 2;
     },

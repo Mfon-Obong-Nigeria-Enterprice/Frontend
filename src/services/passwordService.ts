@@ -145,20 +145,9 @@ export const getSupportNotifications = async (): Promise<
       return [];
     }
 
-    // Ensure we have a valid token
-    const token =
-      localStorage.getItem("accessToken") || localStorage.getItem("token");
-    if (!token) {
-      console.error("getSupportNotifications: No authentication token found");
-      return [];
-    }
-
-    const response = await api.get("/maintenance-mode/notifications", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+    // No need to check for tokens in localStorage - cookies are sent automatically
+    // The baseApi already has withCredentials: true configured
+    const response = await api.get("/maintenance-mode/notifications");
 
     return response.data || [];
   } catch (error) {
@@ -190,16 +179,8 @@ export const syncSupportNotifications = async (): Promise<void> => {
       return; // Only maintainers should sync these notifications
     }
 
-    // Check for valid authentication
-    const token =
-      localStorage.getItem("accessToken") || localStorage.getItem("token");
-    if (!token) {
-      console.warn(
-        "syncSupportNotifications: No authentication token available"
-      );
-      return;
-    }
-
+    // No need to check for tokens in localStorage - cookies are sent automatically
+    // The baseApi already has withCredentials: true configured
     const supportNotifications = await getSupportNotifications();
 
     if (!supportNotifications || supportNotifications.length === 0) {

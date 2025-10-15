@@ -395,7 +395,7 @@ const Transactions = () => {
         <DateRangePicker
           value={dateRangeFilter}
           onChange={(range) => setDateRangeFilter(range)}
-          className=" h-9 w-full md:w-46"
+          className=" h-9 w-full md:w-46 !bg-[#d9d9d9] !border-[#7D7D7D]"
         />
 
         {/* filter by transaction type */}

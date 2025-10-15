@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import type { Client } from "@/types/types";
 import { toSentenceCaseName } from "@/utils/styles";
 import { getAllClients, getClientDebtors } from "@/services/clientService";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 interface clientStore {
   clients: Client[];
@@ -107,7 +108,12 @@ export const useClientStore = create<clientStore>()(
       // ADD THIS FUNCTION:
       refreshClients: async () => {
         await get().fetchClients();
-        await get().fetchDebtors();
+
+        // Only fetch debtors if user has permission (not STAFF)
+        const user = useAuthStore.getState().user;
+        if (user?.role && user.role !== "STAFF") {
+          await get().fetchDebtors();
+        }
       },
 
       // Data fetching methods

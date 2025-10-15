@@ -234,8 +234,8 @@ const Header = ({ userRole }: HeaderProps) => {
         </div>
       </header>
 
-      {/* Role-based modal rendering */}
-      {capabilities.modalType === "admin" ? (
+      {/* Role-based modal rendering - Only render when modal is open to prevent unnecessary API calls */}
+      {isUserModalOpen && capabilities.modalType === "admin" && (
         <AdminUserModal
           open={isUserModalOpen}
           onOpenChange={setIsUserModalOpen}
@@ -249,7 +249,8 @@ const Header = ({ userRole }: HeaderProps) => {
           }}
           onProfileUpdate={handleProfileUpdate}
         />
-      ) : (
+      )}
+      {isUserModalOpen && capabilities.modalType !== "admin" && (
         <ManagerUsersModal
           open={isUserModalOpen}
           onOpenChange={setIsUserModalOpen}

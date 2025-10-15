@@ -52,7 +52,7 @@ const DateRangePicker: React.FC<Props> = ({
           id="date-range"
           variant="outline"
           className={cn(
-            "relative w-40 justify-between text-left font-normal !bg-[#d9d9d9] !border-[#7D7D7D] h-10 text-[#444444] overflow-hidden",
+            "relative w-40 justify-between text-left font-normal  text-[#444444] overflow-hidden",
             !value.from && "text-muted-foreground",
             className
           )}
