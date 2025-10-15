@@ -183,12 +183,12 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
         const userId = `U-${((currentPage - 1) * 10 + index + 1)
           .toString()
           .padStart(3, "0")}`;
-        return <TableCell className="pl-5">{userId}</TableCell>;
+        return <TableCell className="pl-5 whitespace-nowrap">{userId}</TableCell>;
       }
 
       case "User Details":
         return (
-          <TableCell className="flex items-center gap-2">
+          <TableCell className="flex items-center gap-2 whitespace-nowrap">
             <div className="w-9 h-9 rounded-full overflow-hidden">
               {user.profilePicture ? (
                 <img
@@ -211,17 +211,20 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
               )}
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="text-[#444444] font-medium text-sm">
-                {user.name}
-              </span>
-              <span className="text-[#7D7D7D] text-xs">{user.email}</span>
+              <span className="text-[#444444] font-medium text-sm truncate max-w-[220px]">
+  {user.name}
+</span>
+<span className="text-[#7D7D7D] text-xs truncate max-w-[220px]">
+  {user.email}
+</span>
+
             </div>
           </TableCell>
         );
 
       case "Roles":
         return (
-          <TableCell>
+          <TableCell className="whitespace-nowrap">
             <span
               className={`min-w-16 mx-auto text-center py-2 px-2.5 rounded ${
                 user.role === "STAFF"
@@ -238,7 +241,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
 
       case "Permission":
         return (
-          <TableCell className="font-normal text-xs">
+          <TableCell className="font-normal text-xs whitespace-nowrap">
             {user.role === "STAFF"
               ? "Record Sales"
               : user.role === "ADMIN"
@@ -250,7 +253,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
       case "Status":
         return (
           <TableCell
-            className={`text-xs ${
+            className={`text-xs whitespace-nowrap ${
               user.isBlocked
                 ? "text-[#F95353]"
                 : user.isActive
@@ -267,36 +270,37 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
         );
 
       case "Last Login":
-        return <TableCell>{formatRelativeDate(user.lastLogin)}</TableCell>;
+        return <TableCell className="whitespace-nowrap">{formatRelativeDate(user.lastLogin)}</TableCell>;
 
       case "Location":
         return (
-          <TableCell className="text-[#444444] font-normal">
+          <TableCell className="text-[#444444] font-normal whitespace-nowrap">
             {user.branch || user.location || "N/A"}
           </TableCell>
         );
 
       case "Created":
         return (
-          <TableCell className="text-[#444444] font-normal">
+          <TableCell className="text-[#444444] font-normal whitespace-nowrap">
             {new Date(user.createdAt).toDateString()}
           </TableCell>
         );
 
       default:
-        return <TableCell>-</TableCell>;
+        return <TableCell className="whitespace-nowrap">-</TableCell>;
     }
   };
 
   return (
-    <div className="mt-5">
-      <Table>
+   <div className="mt-5 w-full overflow-x-auto">
+  <div className="min-w-[780px]"> 
+    <Table className="w-full">
         <TableHeader>
           <TableRow className="w-full bg-[#F5F5F5]">
             {visibleColumns.map((column) => (
               <TableHead
                 key={column}
-                className="text-[#333] text-sm font-medium xl:font-semibold py-5 px-4 uppercase font-Inter"
+                className="text-[#333] text-sm font-medium xl:font-semibold py-4 px-3 uppercase font-Inter whitespace-nowrap"
               >
                 {column === "Roles"
                   ? "ROLE"
@@ -305,7 +309,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                   : column.toUpperCase()}
               </TableHead>
             ))}
-            <TableHead></TableHead>
+            <TableHead className="whitespace-nowrap"></TableHead>
           </TableRow>
         </TableHeader>
 
@@ -314,7 +318,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
             <TableRow>
               <TableCell
                 colSpan={visibleColumns.length + 1}
-                className="text-center py-8 text-muted-foreground"
+                className="text-center py-6 text-muted-foreground"
               >
                 No users found
               </TableCell>
@@ -323,7 +327,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
             currentUserList.map((user) => (
               <TableRow
                 key={user._id}
-                className="relative px-5 font-Inter font-medium text-sm"
+                className="relative px-4 font-Inter font-medium text-sm whitespace-nowrap"
               >
                 {visibleColumns.map((column) => (
                   <React.Fragment key={column}>
@@ -331,7 +335,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                   </React.Fragment>
                 ))}
 
-                <TableCell>
+                <TableCell className="whitespace-nowrap">
                   <Popover
                     open={popoverOpen === user._id}
                     onOpenChange={(open) =>
@@ -340,19 +344,19 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                   >
                     <PopoverTrigger asChild>
                       <button
-                        className="ml-2 p-1 rounded hover:bg-muted border border-[#E0E0E0]"
+                        className="ml-12 p-1 rounded hover:bg-muted border border-[#E0E0E0]"
                         aria-label="User actions"
                       >
-                        <MoreVertical className="size-5 text-muted-foreground" />
+                        <MoreVertical className="size-4 text-muted-foreground" />
                       </button>
                     </PopoverTrigger>
                     <PopoverContent 
                       align="end"
-                      className="w-64 p-0 rounded-lg shadow-lg border border-[#F0F0F0]"
+                      className="w-56 p-0 rounded-lg shadow-lg border border-[#F0F0F0]"
                     >
                     
                         <button
-                          className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
+                          className="w-full flex items-center gap-2 px-4 py-3 text-xs hover:bg-[#F5F5F5] font-medium"
                           onClick={() => {
                             const userWithActivities = usersWithActivities.find(
                               (u) => u._id === user._id
@@ -381,10 +385,10 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                           <span className="flex-1 text-left">
                             View User Data
                           </span>
-                          <ExternalLink className="size-4 text-muted-foreground" />
+                          <ExternalLink className="size-3 text-muted-foreground" />
                         </button>
                         <button
-                          className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
+                          className="w-full flex items-center gap-2 px-4 py-3 text-xs hover:bg-[#F5F5F5] font-medium"
                           onClick={() => {
                             if (onEditUser) {
                               onEditUser(user);
@@ -398,7 +402,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
 
                     {user.isBlocked ? (
                       <button
-                        className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
+                        className="w-full flex items-center gap-2 px-4 py-3 text-xs hover:bg-[#F5F5F5] font-medium"
                         onClick={() => {
                           openStatus(user._id, user.name, "enable");
                           setPopoverOpen(null);
@@ -408,7 +412,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                       </button>
                     ) : (
                       <button
-                        className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium"
+                        className="w-full flex items-center gap-2 px-4 py-3 text-xs hover:bg-[#F5F5F5] font-medium"
                         onClick={() => {
                           openStatus(user._id, user.name, "suspend");
                           setPopoverOpen(null);
@@ -419,7 +423,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                     )}
 
                     <button
-                      className="w-full flex items-center gap-2 px-5 py-4 text-sm hover:bg-[#F5F5F5] font-medium text-red-600"
+                      className="w-full flex items-center gap-2 px-4 py-3 text-xs hover:bg-[#F5F5F5] font-medium text-red-600"
                       onClick={() => {
                         openDelete(user._id, user.name);
                         setPopoverOpen(null);
@@ -437,10 +441,10 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
 
       {/* Pagination */}
       {usersWithActivities.length > 0 && (
-        <div className="h-14 border-y border-[#D9D9D9] text-sm text-[#7D7D7D] flex justify-center items-center gap-3">
+        <div className="h-12 border-t border-[#D9D9D9] text-sm text-[#7D7D7D] flex justify-center items-center gap-3">
           <Pagination>
-            <PaginationContent className="!flex !justify-between w-full px-5">
-              <PaginationItem>
+            <PaginationContent className="!flex !justify-between w-full px-4">
+              <PaginationItem className="whitespace-nowrap">
                 {(() => {
                   const start = (currentPage - 1) * 10 + 1;
                   const end = Math.min(
@@ -450,7 +454,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                   return `Showing ${start}-${end} of ${usersWithActivities.length} users (Page ${currentPage} of ${totalPages})`;
                 })()}
               </PaginationItem>
-              <div className="flex justify-center gap-[18px]">
+              <div className="flex justify-center gap-2 ">
                 <PaginationItem>
                   <PaginationPrevious
                     onClick={canGoPrevious ? goToPreviousPage : undefined}
@@ -462,7 +466,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                     aria-label="Go to previous page"
                   />
                 </PaginationItem>
-                <PaginationItem className="flex items-center justify-center bg-[#8C1C1380] w-[34px] h-[34px] rounded px-4 text-lg text-white">
+                <PaginationItem className="flex items-center justify-center bg-[#8C1C1380] w-[30px] h-[30px] rounded px-4 text-lg text-white">
                   {currentPage}
                 </PaginationItem>
                 <PaginationNext
@@ -479,6 +483,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
           </Pagination>
         </div>
       )}
+      </div>
     </div>
   );
 };

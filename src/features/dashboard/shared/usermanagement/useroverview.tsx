@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/components/UserOverview.tsx
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useUserStore } from "@/stores/useUserStore";
@@ -87,7 +87,7 @@ const UserOverview = () => {
 
   // Filter users based on search and filters (excluding SUPER_ADMIN)
   const filteredUsers = useMemo(() => {
-    return nonSuperAdminUsers.filter(user => { // Changed from users to nonSuperAdminUsers
+    return nonSuperAdminUsers.filter(user => {
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -129,39 +129,57 @@ const UserOverview = () => {
         }
       }
       
-      // Date range filter
+      // Date range filter - REMOVED CUSTOM RANGE SUPPORT
       if (filters.dateRange !== "all") {
+        if (!user.createdAt) return false;
+        
         const createdDate = new Date(user.createdAt);
         const now = new Date();
-        const diffTime = now.getTime() - createdDate.getTime();
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        
+        let startDate: Date, endDate: Date;
+
         switch (filters.dateRange) {
           case "today":
-            if (diffDays > 0) return false;
+            startDate = new Date(now);
+            endDate = new Date(now);
             break;
           case "week":
-            if (diffDays > 7) return false;
+            startDate = new Date(now);
+            startDate.setDate(startDate.getDate() - 7);
+            endDate = new Date(now);
             break;
           case "month":
-            if (diffDays > 30) return false;
+            startDate = new Date(now);
+            startDate.setMonth(startDate.getMonth() - 1);
+            endDate = new Date(now);
             break;
           default:
-            break;
+            return true;
         }
+
+        // Reset times for correct date comparison
+        const createdDateOnly = new Date(createdDate);
+        createdDateOnly.setHours(0, 0, 0, 0);
+        
+        const startDateOnly = new Date(startDate);
+        startDateOnly.setHours(0, 0, 0, 0);
+        
+        const endDateOnly = new Date(endDate);
+        endDateOnly.setHours(23, 59, 59, 999);
+
+        return createdDateOnly >= startDateOnly && createdDateOnly <= endDateOnly;
       }
       
       return true;
     });
-  }, [nonSuperAdminUsers, searchQuery, filters]); // Changed from users to nonSuperAdminUsers
+  }, [nonSuperAdminUsers, searchQuery, filters]);
 
-  const handleSearch = (query: string) => {
+  const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-  };
+  }, []);
 
-  const handleFilterChange = (filterName: string, value: string) => {
+  const handleFilterChange = useCallback((filterName: string, value: string) => {
     setFilters(prev => ({ ...prev, [filterName]: value }));
-  };
+  }, []);
 
   const handleEditUser = (userData: UserDataProps) => {
     setSelectedUserData(userData);
@@ -174,7 +192,7 @@ const UserOverview = () => {
   };
 
   return (
-    <main className="">
+    <main className="w-full max-w-full overflow-x-auto">
       {/* heading */}
       <div className="flex items-center justify-between mt-[30px] md:mt-[39px] xl:mt-[47px] mx-5 md:mx-8 xl:mx-6">
         <h2 className="text-xl md:text-2xl lg:text-[1.75rem] font-bold font-Arial text-[#333333]">
@@ -184,13 +202,6 @@ const UserOverview = () => {
         {/* hold refresh and button for maintainer */}
         <div className="flex flex-col md:flex-row gap-5">
           <div className="flex items-center gap-1">
-          {/* Auto Refresh Toggle */}
-            {/* <span className="text-sm text-muted-foreground">Auto Refresh</span> */}
-            {/* <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" defaultChecked />
-              <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
-              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-5 transition-transform"></div>
-            </label> */}
             <Popover>
               <PopoverTrigger asChild>
                 <button
@@ -227,16 +238,16 @@ const UserOverview = () => {
                   )}
                   <Button
                     variant="ghost"
-                    className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium"
+                    className="w-full flex items-center gap-2 px-4 py-4 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium min-w-0"
                     onClick={() => {
                       const url = user?.role === "SUPER_ADMIN" ? "manager" : "maintainer";
                       navigate(`/${url}/dashboard/user-management/col-settings`);
                     }}
                   >
-                    <span className="flex-1 text-left py-5">
+                    <span className="flex-1 text-left truncate min-w-0">
                       Columns Settings
                     </span>
-                    <ExternalLink className="size-4 text-muted-foreground" />
+                    <ExternalLink className="size-4 text-muted-foreground flex-shrink-0" />
                   </Button>
 
                   {user?.role === "MAINTAINER" && (
@@ -266,14 +277,35 @@ const UserOverview = () => {
       </div>
 
       {/* Use the UserSearchList component */}
-      <UserSearchList 
-        onSearch={handleSearch}
-        onFilterChange={handleFilterChange}
-        roles={roles}
-        locations={locations}
-      />
+      <div className="bg-white mt-8 mx-5 md:mx-8 xl:mx-6">
+        <h2 className="p-3 font-medium">Filter & Controls</h2>
+        <UserSearchList 
+          onSearch={handleSearch}
+          onFilterChange={handleFilterChange}
+          roles={roles}
+          locations={locations}
+          showLocationFilter={true}
+        />
+      </div>
 
-      <UserTable users={filteredUsers} onEditUser={handleEditUser} />
+      {/* User summary */}
+      <div className="mt-4 px-5 md:px-8 xl:px-6">
+        <p className="text-sm text-gray-600">
+          Showing {filteredUsers.length} users 
+          {filters.dateRange !== 'all' && ` created in ${filters.dateRange}`}
+          {filters.role !== 'all' && ` with role: ${filters.role}`}
+          {filters.location !== 'all' && ` at location: ${filters.location}`}
+          {filters.status !== 'all' && ` with status: ${filters.status}`}
+        </p>
+      </div>
+      
+<div className="w-full px-5 md:px-8 xl:px-6 mt-4">
+  <div className="w-full max-w-full overflow-x-auto">
+  
+    <UserTable users={filteredUsers} onEditUser={handleEditUser} />
+  </div>
+</div>
+
 
       {/* create new user modal */}
       {isCreateModalOpen && (

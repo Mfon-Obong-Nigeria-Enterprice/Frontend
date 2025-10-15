@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // @/services/productService.ts
 import api from "./baseApi";
 import type { Product, NewProduct } from "@/types/types";

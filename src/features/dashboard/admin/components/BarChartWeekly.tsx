@@ -15,12 +15,13 @@ import type { WeeklySales } from "@/types/types";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-const BarChartWeekly = () => {
+interface BarChartWeeklyProps {
+  yAxisRange?: [number, number];
+}
+
+const BarChartWeekly = ({ yAxisRange = [500000, 10000000] }: BarChartWeeklyProps) => {
   const { transactions } = useTransactionsStore();
   const salesData: WeeklySales[] = getWeeklySales(transactions ?? []);
-
-  const maxValue = Math.max(0, ...salesData.map((item) => item.sales));
-  const step = Math.ceil(maxValue / 6); // about 6 ticks
 
   const data: ChartData<"bar", number[], string> = {
     labels: salesData.map((item) => item.week),
@@ -47,25 +48,24 @@ const BarChartWeekly = () => {
       x: {
         grid: {
           display: false,
-          // drawBorder: false,
         },
       },
       y: {
+        min: yAxisRange[0],
+        max: yAxisRange[1],
         ticks: {
-          callback: (value) => `₦${value.toLocaleString()}`,
-          stepSize: step,
+          callback: (value) => `₦${Number(value).toLocaleString()}`,
         },
-        beginAtZero: true,
+        beginAtZero: false,
         grid: {
           display: false,
-          // drawBorder: false,
         },
       },
     },
   };
 
   return (
-    <div className="bg-[#F5F5F5] p-2 sm:p-6 rounded-lg shadow-md ">
+    <div className="bg-[#F5F5F5] p-2 sm:p-6 rounded-lg shadow-md">
       <Bar data={data} options={options} />
     </div>
   );

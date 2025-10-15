@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { io, Socket } from "socket.io-client";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useNotificationStore } from "@/stores/useNotificationStore";
@@ -177,7 +178,7 @@ export class WebSocketNotificationService {
       return;
     }
 
-    this.connectionStatus = "connecting";
+  this.connectionStatus = "connecting";
 
     // Socket.IO configuration for cookie-based authentication
     // withCredentials: true automatically sends cookies (accessToken/refreshToken) with the connection
