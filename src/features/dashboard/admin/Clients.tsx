@@ -32,6 +32,7 @@ import {
   SelectItem,
   SelectGroup,
 } from "@/components/ui/select";
+import { getTransactionDate } from "@/utils/transactions";
 
 interface ClientProps {
   showExportButtons?: boolean;
@@ -91,7 +92,8 @@ export const Clients: React.FC<ClientProps> = ({
           return null;
 
         const sortedTransactions = [...client.transactions].sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+          (a, b) =>
+            getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
         );
         return sortedTransactions[0] || null;
       };
@@ -151,7 +153,8 @@ export const Clients: React.FC<ClientProps> = ({
           return null;
 
         const sortedTransactions = [...client.transactions].sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+          (a, b) =>
+            getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
         );
         return sortedTransactions[0] || null;
       };

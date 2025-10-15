@@ -3,6 +3,11 @@ import { calculateTransactionsWithBalance } from "@/utils/calculateOutstanding";
 import { balanceTextClass } from "@/utils/format";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getTypeDisplay, getTypeStyles } from "@/utils/helpersfunction";
+import {
+  getTransactionDate,
+  getTransactionDateString,
+  getTransactionTimeString,
+} from "@/utils/transactions";
 import { ArrowRight, X } from "lucide-react";
 import { useMemo } from "react";
 
@@ -17,10 +22,17 @@ export const ClientTransactionDetails: React.FC<
   //
   const transactionWithBalance = useMemo(() => {
     // Use the client's balance from the client object
-    return calculateTransactionsWithBalance(
+    const transactionsWithBalance = calculateTransactionsWithBalance(
       clientTransactions,
       client
-    ).reverse();
+    );
+
+    // Sort by date - NEWEST FIRST
+    return transactionsWithBalance.sort((a, b) => {
+      const dateA = getTransactionDate(a).getTime();
+      const dateB = getTransactionDate(b).getTime();
+      return dateB - dateA; // Descending order (newest first)
+    });
   }, [clientTransactions, client]);
 
   return (
@@ -34,7 +46,7 @@ export const ClientTransactionDetails: React.FC<
         <ul className="space-y-10">
           {transactionWithBalance.map((txn, i) => (
             <li
-              key={`${txn._id}-${txn.createdAt}-${i}`}
+              key={`${txn._id}-${getTransactionDateString(txn)}-${i}`}
               className="border rounded-lg px-5 py-3 shadow"
             >
               {/* type, date and time, balance */}
@@ -52,10 +64,10 @@ export const ClientTransactionDetails: React.FC<
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs">
-                      {new Date(txn.createdAt).toLocaleDateString()}
+                      {getTransactionDateString(txn)}
                     </span>
                     <span className="text-xs">
-                      {new Date(txn.createdAt).toLocaleTimeString()}
+                      {getTransactionTimeString(txn)}
                     </span>
                   </div>
                 </div>
@@ -92,117 +104,122 @@ export const ClientTransactionDetails: React.FC<
               <div className="w-full max-w-7xl mx-auto py-4">
                 {/* Single card containing all transaction details sections */}
                 <section className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 px-4 sm:px-3 py-5 sm:py-6">
-                    {/* Balance Change Section */}
-                    <div className="space-y-3 sm:space-y-4">
-                      <h6 className="text-[#333333] font-medium text-base ">
-                        Balance Change
-                      </h6>
+                  <div className="px-4 sm:px-3 py-5 sm:py-6">
+                    {/* Balance Change / Transaction Details / Processed By container
+          - stack on small screens, 40% / 30% / 30% on md+ screens */}
+                    <div className="flex flex-wrap gap-4">
+                      {/* 1) Balance Change (40% on md+) */}
+                      <div className="basis-full md:basis-[40%]">
+                        <h6 className="text-[#333333] font-medium text-base mb-3">
+                          Balance Change
+                        </h6>
 
-                      <div className="bg-[#F5F5F5] rounded-lg py-3 sm:py-4 px-3 sm:px-4">
-                        <div className="flex justify-between items-center mb-2">
-                          <p className="text-xs  text-[#7D7D7D] font-medium">
-                            Previous
-                          </p>
-                          <p className="text-xs sm:text-sm text-[#7D7D7D] font-medium">
-                            New
-                          </p>
-                        </div>
+                        <div className="bg-[#F5F5F5] rounded-lg py-3 sm:py-4 px-3 sm:px-4">
+                          <div className="flex justify-between items-center mb-2">
+                            <p className="text-xs text-[#7D7D7D] font-medium">
+                              Previous
+                            </p>
+                            <p className="text-xs sm:text-sm text-[#7D7D7D] font-medium">
+                              New
+                            </p>
+                          </div>
 
-                        <div className="flex justify-between items-center">
-                          <span className="text-[#444444] text-sm font-medium flex-1 text-left truncate md:text-clip md:whitespace-normal">
-                            {formatCurrency(txn.balanceBefore)}
-                          </span>
-                          <span className="mx-2 sm:mx-3 flex-shrink-0">
-                            <ArrowRight size={14} className="text-[#666]" />
-                          </span>
-                          <span className="text-[#444444] text-sm  font-medium flex-1 text-right truncate md:text-clip md:whitespace-normal ">
-                            {formatCurrency(txn.balanceAfter)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Transaction Details Section */}
-                    <div className="space-y-3 sm:space-y-4">
-                      <h6 className="text-[#333333] font-medium text-base ">
-                        Transaction Details
-                      </h6>
-                      <ul className="space-y-2 sm:space-y-3">
-                        <li className="font-medium text-[#444444] text-sm ">
-                          Amount:{" "}
-                          <span className="font-normal">
-                            {formatCurrency(txn.total || 0)}
-                          </span>
-                        </li>
-                        <li className="font-medium text-[#444444] text-sm ">
-                          Amount Paid:{" "}
-                          <span className="font-normal">
-                            {formatCurrency(txn.amountPaid || 0)}
-                          </span>
-                        </li>
-
-                        <li className="font-medium text-[#444444] text-sm ">
-                          Method:{" "}
-                          <span className="font-normal">
-                            {txn.paymentMethod || "N/A"}
-                          </span>
-                        </li>
-                        {txn.reference && (
-                          <li className="font-medium text-[#444444] text-sm ">
-                            Reference:{" "}
-                            <span className="font-normal text-xs bg-gray-100 px-2 py-1 rounded">
-                              {txn.reference}
+                          <div className="flex justify-between items-center">
+                            <span className="text-[#444444] text-sm font-medium flex-1 text-left truncate md:text-clip md:whitespace-normal">
+                              {formatCurrency(txn.balanceBefore)}
                             </span>
-                          </li>
-                        )}
-
-                        {/* Show item count for PICKUP/PURCHASE transactions */}
-                        {(txn.type === "PICKUP" || txn.type === "PURCHASE") && (
-                          <li className="font-medium text-[#444444] text-sm">
-                            Items:{" "}
-                            <span className="font-normal">
-                              {txn.items?.length || 0} item(s)
+                            <span className="mx-2 sm:mx-3 flex-shrink-0">
+                              <ArrowRight size={14} className="text-[#666]" />
                             </span>
-                          </li>
-                        )}
-                      </ul>
-                    </div>
-
-                    {/* Process By Section - Enhanced to show staff details */}
-                    <div className="space-y-3 sm:space-y-4">
-                      <h6 className="text-[#333333] font-medium text-base">
-                        Processed By
-                      </h6>
-                      <ul className="space-y-2 sm:space-y-3">
-                        <li className="flex items-center gap-2">
-                          <div className="flex flex-col">
-                            <span className="font-medium text-[#444444] text-sm">
-                              {txn.userId?.name || "Unknown Staff"}
+                            <span className="text-[#444444] text-sm font-medium flex-1 text-right truncate md:text-clip md:whitespace-normal">
+                              {formatCurrency(txn.balanceAfter)}
                             </span>
                           </div>
-                        </li>
+                        </div>
+                      </div>
 
-                        {/* Invoice and Waybill numbers */}
-                        <div className="flex flex-col gap-2">
-                          {txn.invoiceNumber &&
-                            (txn.type === "PICKUP" ||
-                              txn.type === "PURCHASE") && (
+                      {/* 2) Transaction Details (30% on md+) */}
+                      <div className="basis-full md:basis-[27%]">
+                        <h6 className="text-[#333333] font-medium text-base mb-3">
+                          Transaction Details
+                        </h6>
+                        <ul className="space-y-2 sm:space-y-3 bg-white">
+                          <li className="font-medium text-[#444444] text-sm ">
+                            Amount:{" "}
+                            <span className="font-normal">
+                              {formatCurrency(txn.total || 0)}
+                            </span>
+                          </li>
+                          <li className="font-medium text-[#444444] text-sm ">
+                            Amount Paid:{" "}
+                            <span className="font-normal">
+                              {formatCurrency(txn.amountPaid || 0)}
+                            </span>
+                          </li>
+
+                          <li className="font-medium text-[#444444] text-sm ">
+                            Method:{" "}
+                            <span className="font-normal">
+                              {txn.paymentMethod || "N/A"}
+                            </span>
+                          </li>
+                          {txn.reference && (
+                            <li className="font-medium text-[#444444] text-sm ">
+                              Reference:{" "}
+                              <span className="font-normal text-xs bg-gray-100 px-2 py-1 rounded">
+                                {txn.reference}
+                              </span>
+                            </li>
+                          )}
+
+                          {/* Show item count for PICKUP/PURCHASE transactions */}
+                          {(txn.type === "PICKUP" ||
+                            txn.type === "PURCHASE") && (
+                            <li className="font-medium text-[#444444] text-sm">
+                              Items:{" "}
+                              <span className="font-normal">
+                                {txn.items?.length || 0} item(s)
+                              </span>
+                            </li>
+                          )}
+                        </ul>
+                      </div>
+
+                      {/* 3) Processed By (30% on md+) */}
+                      <div className="basis-full md:basis-[27%]">
+                        <h6 className="text-[#333333] font-medium text-base mb-3">
+                          Processed By
+                        </h6>
+                        <ul className="space-y-2 sm:space-y-3">
+                          <li className="flex items-center gap-2">
+                            <div className="flex flex-col">
+                              <span className="font-medium text-[#444444] text-sm">
+                                {txn.userId?.name || "Unknown Staff"}
+                              </span>
+                            </div>
+                          </li>
+
+                          {/* Invoice and Waybill numbers */}
+                          <div className="flex flex-col gap-2 mt-1">
+                            {txn.invoiceNumber &&
+                              (txn.type === "PICKUP" ||
+                                txn.type === "PURCHASE") && (
+                                <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center w-fit">
+                                  <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
+                                    {txn.invoiceNumber}
+                                  </span>
+                                </div>
+                              )}
+                            {txn.waybillNumber && (
                               <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center w-fit">
                                 <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
-                                  {txn.invoiceNumber}
+                                  {txn.waybillNumber}
                                 </span>
                               </div>
                             )}
-                          {txn.waybillNumber && (
-                            <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center w-fit">
-                              <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
-                                {txn.waybillNumber}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </ul>
+                          </div>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </section>

@@ -24,7 +24,9 @@ import { mergeTransactionsWithClients } from "@/utils/mergeTransactionsWithClien
 import { ClientTransactionDetails } from "@/components/clients/ClientTransactionDetails";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ClientDiscountDetails from "@/components/clients/ClientDiscountDetails";
-import CustomDatePicker from "@/utils/CustomDatePicker";
+// removed CustomDatePicker import
+import DateRangePicker from "@/components/DateRangePicker";
+
 import { useAuthStore } from "@/stores/useAuthStore";
 import DeleteClientDialog from "@/features/dashboard/manager/component/DeleteClientDialog";
 import EditClientDialog from "@/features/dashboard/manager/component/EditClientDialog";
@@ -36,6 +38,13 @@ import { formatCurrency } from "@/utils/formatCurrency";
 import { getAllTransactions } from "@/services/transactionService";
 import { useQuery } from "@tanstack/react-query";
 import { calculateTransactionsWithBalance } from "@/utils/calculateOutstanding";
+import {
+  getTransactionDate,
+  getTransactionDateString,
+  getTransactionTimeString,
+} from "@/utils/transactions";
+
+import type { DateRange } from "react-day-picker";
 
 interface ClientDetailsPageProps {
   isManagerView?: boolean;
@@ -76,12 +85,16 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       setTransactions(fetchedTransactions);
     }
   }, [fetchedTransactions, setTransactions]);
+
   // Filter states
   const [transactionTypeFilter, setTransactionTypeFilter] =
     useState<string>("all");
   const [staffFilter, setStaffFilter] = useState<string>("all-staff");
-  const [dateFrom, setDateFrom] = useState<Date | null>(null);
-  const [dateTo, setDateTo] = useState<Date | null>(null);
+  // Use a DateRange like in Transactions component
+  const [dateRangeFilter, setDateRangeFilter] = useState<DateRange>({
+    from: undefined,
+    to: undefined,
+  });
   const [showDialog, setShowDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showBlockUnblockDialog, setShowBlockUnblockDialog] = useState(false);
@@ -128,7 +141,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     const filterY = 70;
-    const filters = [];
+    const filters: string[] = [];
 
     if (transactionTypeFilter !== "all") {
       filters.push(`Type: ${transactionTypeFilter}`);
@@ -136,11 +149,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     if (staffFilter !== "all-staff") {
       filters.push(`Staff: ${staffFilter}`);
     }
-    if (dateFrom) {
-      filters.push(`From: ${dateFrom.toLocaleDateString()}`);
+    if (dateRangeFilter.from) {
+      filters.push(`From: ${dateRangeFilter.from.toLocaleDateString()}`);
     }
-    if (dateTo) {
-      filters.push(`To: ${dateTo.toLocaleDateString()}`);
+    if (dateRangeFilter.to) {
+      filters.push(`To: ${dateRangeFilter.to.toLocaleDateString()}`);
     }
 
     const filterText = filters.length > 0 ? filters.join(", ") : "None";
@@ -155,11 +168,17 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     );
 
     // Calculate balance progression for transactions
-
     const transactionsWithBalance = calculateTransactionsWithBalance(
       clientTransactions,
-      client?.balance ? { balance: client.balance } : { balance: 0 }
+      { balance: client?.balance || 0 }
     );
+
+    // Sort by date - NEWEST FIRST (for display in PDF)
+    const sortedTransactions = transactionsWithBalance.sort((a, b) => {
+      const dateA = getTransactionDate(a).getTime();
+      const dateB = getTransactionDate(b).getTime();
+      return dateB - dateA; // Descending order (newest first)
+    });
 
     // Define table columns for transactions
     const columns = [
@@ -176,12 +195,13 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     ];
 
     // Prepare transaction data for the table
-    const transactionRows = transactionsWithBalance.map((txn) => {
-      const transactionDate = new Date(txn.createdAt);
+    const transactionRows = sortedTransactions.map((txn) => {
+      const transactionDate = getTransactionDateString(txn);
+      const transactionTime = getTransactionTimeString(txn);
 
       return {
-        date: transactionDate.toLocaleDateString(),
-        time: transactionDate.toLocaleTimeString(),
+        date: transactionDate,
+        time: transactionTime,
         type: txn.type,
         amount: `${formatCurrency(txn.total || 0).replace(/^\s+/, "")}`,
         method: txn.paymentMethod || "N/A",
@@ -216,7 +236,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         cellPadding: 3,
         lineColor: [200, 200, 200],
         lineWidth: 0.1,
-        // valign: "middle",
         halign: "left",
         textColor: [0, 0, 0], // Black text for table content
       },
@@ -231,14 +250,14 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         fillColor: [248, 249, 250],
       },
       columnStyles: {
-        0: { cellWidth: 14, halign: "left" }, // Date
+        0: { cellWidth: 17, halign: "left" }, // Date
         1: { cellWidth: 18, halign: "left" }, // Time
         2: { cellWidth: 18, halign: "left" }, // Type
-        3: { cellWidth: 25, halign: "left" }, // Amount
-        4: { cellWidth: 18, halign: "left" }, // Method
-        5: { cellWidth: 22, halign: "left" }, // Staff
-        6: { cellWidth: 24, halign: "left" }, // Balance Before
-        7: { cellWidth: 24, halign: "left" }, // Balance After
+        3: { cellWidth: 15, halign: "left" }, // Method
+        4: { cellWidth: 25, halign: "left" }, // Staff
+        5: { cellWidth: 22, halign: "left" }, // Balance Before
+        6: { cellWidth: 24, halign: "left" }, // Balance After
+        7: { cellWidth: 24, halign: "left" }, // Amount
         8: { cellWidth: 20, halign: "left" }, // Invoice
         9: { cellWidth: 26, halign: "left" }, // Items
       },
@@ -368,11 +387,22 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     if (staffFilter !== "all-staff") {
       filtered = filtered.filter((t) => t.userId?.name === staffFilter);
     }
-    if (dateFrom) {
-      filtered = filtered.filter((t) => new Date(t.createdAt) >= dateFrom);
-    }
-    if (dateTo) {
-      filtered = filtered.filter((t) => new Date(t.createdAt) <= dateTo);
+
+    // dateRangeFilter logic (copied from Transactions)
+    if (dateRangeFilter.from && dateRangeFilter.to) {
+      filtered = filtered.filter((t) => {
+        const txDate = new Date(t.createdAt);
+        // keep transactions within range inclusive
+        return txDate >= dateRangeFilter.from! && txDate <= dateRangeFilter.to!;
+      });
+    } else if (dateRangeFilter.from) {
+      filtered = filtered.filter(
+        (t) => new Date(t.createdAt) >= dateRangeFilter.from!
+      );
+    } else if (dateRangeFilter.to) {
+      filtered = filtered.filter(
+        (t) => new Date(t.createdAt) <= dateRangeFilter.to!
+      );
     }
 
     return filtered.sort(
@@ -381,8 +411,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     );
   }, [
     clientId,
-    dateFrom,
-    dateTo,
+    dateRangeFilter,
     mergedTransactions,
     transactionTypeFilter,
     staffFilter,
@@ -433,12 +462,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
   const handleApplyFilters = () => {
     // Filters are applied automatically via useMemo
-    // console.log("Filters applied:", {
-    //   transactionTypeFilter,
-    //   staffFilter,
-    //   dateFrom,
-    //   dateTo,
-    // });
   };
 
   // Loading states
@@ -530,55 +553,14 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
               <div className=" flex justify-start items-center flex-wrap w-full gap-4 md:gap-1  lg:gap-4 mb-10">
                 <div className="flex flex-col sm:w-[230px] md:w-[210px] transition-all w-full ">
                   <label className="text-xs font-medium text-gray-600 ">
-                    Date from
+                    Date range
                   </label>
-                  <div className="relative sm:w-[230px] md:w-[210px] transition-all w-full  border rounded-lg p-[6px]">
-                    <CustomDatePicker
-                      selected={dateFrom}
-                      onChange={setDateFrom}
-                      className=" "
+                  <div className="">
+                    <DateRangePicker
+                      value={dateRangeFilter}
+                      onChange={(range) => setDateRangeFilter(range)}
+                      className="relative w-full border rounded-lg p-2 text-sm !bg-[#faf6f6] !border-[#cacacaef] text-black h-9"
                     />
-                    <svg
-                      className="w-5 h-5 text-gray-400 absolute right-2 top-2 pointer-events-none"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:w-[230px] md:w-[210px] transition-all w-full   ">
-                  <label className="text-xs font-medium text-gray-600">
-                    Date to
-                  </label>
-                  <div className="relative sm:w-[230px] md:w-[210px] transition-all w-full border rounded-lg p-[6px] ">
-                    <CustomDatePicker
-                      selected={dateTo}
-                      onChange={setDateTo}
-                      className=""
-                    />
-                    <svg
-                      className="w-5 h-5 text-gray-400 absolute right-2 top-2.5 pointer-events-none"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
                   </div>
                 </div>
 
@@ -643,7 +625,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
               </div>
 
               <ClientTransactionDetails
-                // client={client}
                 clientTransactions={clientTransactions}
                 client={{ balance: client.balance }}
               />
@@ -660,7 +641,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         client={client}
         onDeleteSuccess={handleDeleteSuccess}
       />
-      {/* Edit Client Dialog can be implemented similarly */}
       <EditClientDialog
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
