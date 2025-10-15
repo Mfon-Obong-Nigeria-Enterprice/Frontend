@@ -171,7 +171,7 @@ const UserOverview = () => {
       
       return true;
     });
-  }, [nonSuperAdminUsers, searchQuery, filters]); // REMOVED customDateRange dependency
+  }, [nonSuperAdminUsers, searchQuery, filters]);
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
@@ -179,7 +179,6 @@ const UserOverview = () => {
 
   const handleFilterChange = useCallback((filterName: string, value: string) => {
     setFilters(prev => ({ ...prev, [filterName]: value }));
-    // REMOVED custom date picker logic
   }, []);
 
   const handleEditUser = (userData: UserDataProps) => {
@@ -193,7 +192,7 @@ const UserOverview = () => {
   };
 
   return (
-    <main className="">
+    <main className="w-full max-w-full overflow-x-auto">
       {/* heading */}
       <div className="flex items-center justify-between mt-[30px] md:mt-[39px] xl:mt-[47px] mx-5 md:mx-8 xl:mx-6">
         <h2 className="text-xl md:text-2xl lg:text-[1.75rem] font-bold font-Arial text-[#333333]">
@@ -278,7 +277,7 @@ const UserOverview = () => {
       </div>
 
       {/* Use the UserSearchList component */}
-      <div className="bg-white mt-8">
+      <div className="bg-white mt-8 mx-5 md:mx-8 xl:mx-6">
         <h2 className="p-3 font-medium">Filter & Controls</h2>
         <UserSearchList 
           onSearch={handleSearch}
@@ -287,23 +286,26 @@ const UserOverview = () => {
           locations={locations}
           showLocationFilter={true}
         />
-        
-        {/* REMOVED Custom Date Range Picker entirely */}
       </div>
 
       {/* User summary */}
-      <div className="mt-4 px-4">
+      <div className="mt-4 px-5 md:px-8 xl:px-6">
         <p className="text-sm text-gray-600">
           Showing {filteredUsers.length} users 
           {filters.dateRange !== 'all' && ` created in ${filters.dateRange}`}
           {filters.role !== 'all' && ` with role: ${filters.role}`}
           {filters.location !== 'all' && ` at location: ${filters.location}`}
           {filters.status !== 'all' && ` with status: ${filters.status}`}
-          {/* REMOVED custom date range display */}
         </p>
       </div>
+      
+<div className="w-full px-5 md:px-8 xl:px-6 mt-4">
+  <div className="w-full max-w-full overflow-x-auto">
+  
+    <UserTable users={filteredUsers} onEditUser={handleEditUser} />
+  </div>
+</div>
 
-      <UserTable users={filteredUsers} onEditUser={handleEditUser} />
 
       {/* create new user modal */}
       {isCreateModalOpen && (
