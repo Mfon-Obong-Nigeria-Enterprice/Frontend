@@ -78,21 +78,21 @@ const SalesOverview = () => {
 
         <TabsContent value="daily">
           {hasSalesData ? (
-            <BarChartDaily yAxisRange={[0, 4000000]} />
+            <BarChartDaily yAxisRange={[0, 5000000]} />
           ) : (
             <EmptyOverviewState period="Daily" />
           )}
         </TabsContent>
         <TabsContent value="weekly">
           {hasSalesData ? (
-            <BarChartWeekly yAxisRange={[500000, 10000000]} />
+            <BarChartWeekly yAxisRange={[0, 10000000]} />
           ) : (
             <EmptyOverviewState period="Weekly" />
           )}
         </TabsContent>
         <TabsContent value="monthly">
           {hasSalesData ? (
-            <BarChartMonthly yAxisRange={[1000000, 15000000]} />
+            <BarChartMonthly yAxisRange={[0, 50000000]} />
           ) : (
             <EmptyOverviewState period="Monthly" />
           )}

@@ -19,7 +19,7 @@ interface BarChartMonthlyProps {
   yAxisRange?: [number, number];
 }
 
-const BarChartMonthly = ({ yAxisRange = [1000000, 15000000] }: BarChartMonthlyProps) => {
+const BarChartMonthly = ({ yAxisRange = [0, 50000000] }: BarChartMonthlyProps) => {
   const { transactions } = useTransactionsStore();
   const salesData: MonthlySales[] = getMonthlySales(transactions ?? []);
 
@@ -56,7 +56,7 @@ const BarChartMonthly = ({ yAxisRange = [1000000, 15000000] }: BarChartMonthlyPr
         ticks: {
           callback: (value) => `₦${Number(value).toLocaleString()}`,
         },
-        beginAtZero: false,
+        beginAtZero: true,
         grid: {
           display: false,
         },
