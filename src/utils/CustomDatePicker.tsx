@@ -1,26 +1,47 @@
 import { cn } from "@/lib/utils";
-import React from "react";
+import React, { useCallback, useRef } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-interface DatePickerProps {
-  selected: Date | null;
-  onChange: (date: Date | null) => void;
+interface DateRangePickerProps {
+  startDate: Date | null;
+  endDate: Date | null;
+  onChange: (start: Date | null, end: Date | null) => void;
   className?: string;
 }
 
-const CustomDatePicker: React.FC<DatePickerProps> = ({
-  selected,
+const CustomDatePicker: React.FC<DateRangePickerProps> = ({
+  startDate,
+  endDate,
   onChange,
   className,
 }) => {
+  const lastCallRef = useRef<number>(0);
+  
+  const handleDateChange = useCallback((dates: [Date | null, Date | null]) => {
+    const [start, end] = dates;
+    
+    // Throttle the onChange calls
+    const now = Date.now();
+    if (now - lastCallRef.current < 100) {
+      return;
+    }
+    lastCallRef.current = now;
+    
+    onChange(start, end);
+  }, [onChange]);
+
   return (
     <DatePicker
-      selected={selected}
-      onChange={onChange}
+      selected={startDate}
+      onChange={handleDateChange}
+      startDate={startDate}
+      endDate={endDate}
+      selectsRange
       dateFormat="MM/dd/yyyy"
-      placeholderText="MM/dd/yyyy"
-      className={cn(className)}
+      placeholderText="Select date range"
+      className={cn("w-full px-3 py-2 border rounded-md", className)}
+      isClearable
     />
   );
 };

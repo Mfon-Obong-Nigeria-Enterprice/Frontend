@@ -1,6 +1,5 @@
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { getDailySales } from "@/utils/getDailySales";
-
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -16,12 +15,13 @@ import type { DailySales } from "@/types/types";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-const BarChartDaily = () => {
+interface BarChartDailyProps {
+  yAxisRange?: [number, number];
+}
+
+const BarChartDaily = ({ yAxisRange = [0, 4000000] }: BarChartDailyProps) => {
   const { transactions } = useTransactionsStore();
   const salesData: DailySales[] = getDailySales(transactions ?? []);
-
-  const maxValue = Math.max(0, ...salesData.map((item) => item.sales));
-  const step = Math.ceil(maxValue / 6); // about 6 ticks
 
   const data: ChartData<"bar", number[], string> = {
     labels: salesData.map((item) => item.day),
@@ -51,9 +51,10 @@ const BarChartDaily = () => {
         },
       },
       y: {
+        min: yAxisRange[0],
+        max: yAxisRange[1],
         ticks: {
-          callback: (value) => `₦${value.toLocaleString()}`,
-          stepSize: step,
+          callback: (value) => `₦${Number(value).toLocaleString()}`,
         },
         beginAtZero: true,
         grid: {

@@ -15,11 +15,13 @@ import type { MonthlySales } from "@/types/types";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-const BarChartMonthly = () => {
+interface BarChartMonthlyProps {
+  yAxisRange?: [number, number];
+}
+
+const BarChartMonthly = ({ yAxisRange = [1000000, 15000000] }: BarChartMonthlyProps) => {
   const { transactions } = useTransactionsStore();
   const salesData: MonthlySales[] = getMonthlySales(transactions ?? []);
-  const maxValue = Math.max(0, ...salesData.map((item) => item.sales));
-  const step = Math.ceil(maxValue / 6); // about 6 ticks
 
   const data: ChartData<"bar", number[], string> = {
     labels: salesData.map((item) => item.month),
@@ -38,7 +40,7 @@ const BarChartMonthly = () => {
       legend: { display: false },
       tooltip: {
         callbacks: {
-          label: (context) => `${context.parsed.y.toLocaleString()} m`,
+          label: (context) => `₦${context.parsed.y.toLocaleString()}`,
         },
       },
     },
@@ -46,25 +48,24 @@ const BarChartMonthly = () => {
       x: {
         grid: {
           display: false,
-          // drawBorder: false,
         },
       },
       y: {
+        min: yAxisRange[0],
+        max: yAxisRange[1],
         ticks: {
-          callback: (value) => `${value.toLocaleString()} million`,
-          stepSize: step,
+          callback: (value) => `₦${Number(value).toLocaleString()}`,
         },
         beginAtZero: false,
         grid: {
           display: false,
-          // drawBorder: false,
         },
       },
     },
   };
 
   return (
-    <div className="bg-[#F5F5F5] p-2 sm:p-6 rounded-lg shadow-md ">
+    <div className="bg-[#F5F5F5] p-2 sm:p-6 rounded-lg shadow-md">
       <Bar data={data} options={options} />
     </div>
   );
