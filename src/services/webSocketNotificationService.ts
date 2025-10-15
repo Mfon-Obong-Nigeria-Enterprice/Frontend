@@ -222,7 +222,8 @@ export class WebSocketNotificationService {
       // Use throttled error logging to prevent console spam
       if (
         error.message.includes("Authentication") ||
-        error.message.includes("unauthorized")
+        error.message.includes("unauthorized") ||
+        error.message.includes("Token expired")
       ) {
         this.authFailureCount++;
 
@@ -235,9 +236,11 @@ export class WebSocketNotificationService {
           useAuthStore.getState().logout?.();
         } else {
           this.logThrottledError(
-            `❌ WebSocket auth failed (attempt ${this.authFailureCount}/${this.MAX_AUTH_FAILURES})`,
+            `❌ WebSocket auth failed (attempt ${this.authFailureCount}/${this.MAX_AUTH_FAILURES}) - will retry`,
             error
           );
+          // Don't try to refresh here, let the socket reconnect naturally
+          // The baseApi interceptor will handle token refresh for HTTP requests
         }
       } else {
         // Reset auth failure counter on non-auth errors
@@ -261,6 +264,24 @@ export class WebSocketNotificationService {
           console.error("❌ WebSocket authentication error - invalid token");
           useAuthStore.getState().logout?.();
         }
+      }
+    });
+
+    // Handle auth_error events from server (token expiration, etc.)
+    this.socket.on("auth_error", (data: any) => {
+      this.logThrottledError(
+        `❌ Server auth error: ${data.message} (${data.code || "UNKNOWN"})`,
+        data
+      );
+
+      // If token expired, let Socket.IO reconnect naturally
+      // The server will get the refreshed cookie on next connection attempt
+      if (data.code === "TOKEN_EXPIRED") {
+        // Don't logout immediately - allow reconnection with refreshed token
+        this.authFailureCount++;
+      } else {
+        // For other auth errors, increment counter more aggressively
+        this.authFailureCount += 2;
       }
     });
 

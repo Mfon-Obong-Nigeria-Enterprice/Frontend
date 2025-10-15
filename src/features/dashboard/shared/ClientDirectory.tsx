@@ -26,6 +26,10 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { useNavigate } from "react-router-dom";
 import { getTypeDisplay } from "@/utils/helpersfunction";
+import {
+  getTransactionDate,
+  getTransactionDateString,
+} from "@/utils/transactions";
 
 interface ClientDirectoryProps {
   searchTerm: string;
@@ -64,7 +68,8 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
     }
 
     const sortedTransaction = [...client.transactions].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      (a, b) =>
+        getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
     );
     return sortedTransaction[0] || null;
   };
@@ -121,7 +126,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                             ? new Date(
                                 lastTransaction.date
                               ).toLocaleDateString()
-                            : new Date(client.createdAt).toLocaleDateString()}
+                            : getTransactionDateString(client)}
                         </p>
                       </div>
                     </TableCell>
