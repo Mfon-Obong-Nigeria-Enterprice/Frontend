@@ -24,7 +24,6 @@ import { mergeTransactionsWithClients } from "@/utils/mergeTransactionsWithClien
 import { ClientTransactionDetails } from "@/components/clients/ClientTransactionDetails";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ClientDiscountDetails from "@/components/clients/ClientDiscountDetails";
-// removed CustomDatePicker import
 import DateRangePicker from "@/components/DateRangePicker";
 
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -388,26 +387,32 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       filtered = filtered.filter((t) => t.userId?.name === staffFilter);
     }
 
-    // dateRangeFilter logic (copied from Transactions)
+    // dateRangeFilter logic using getTransactionDate for backdated transactions
     if (dateRangeFilter.from && dateRangeFilter.to) {
       filtered = filtered.filter((t) => {
-        const txDate = new Date(t.createdAt);
-        // keep transactions within range inclusive
-        return txDate >= dateRangeFilter.from! && txDate <= dateRangeFilter.to!;
+        const txDate = getTransactionDate(t);
+        const fromDate = new Date(dateRangeFilter.from!);
+        const toDate = new Date(dateRangeFilter.to!);
+
+        // Set time to start/end of day for accurate comparison
+        fromDate.setHours(0, 0, 0, 0);
+        toDate.setHours(23, 59, 59, 999);
+
+        return txDate >= fromDate && txDate <= toDate;
       });
     } else if (dateRangeFilter.from) {
-      filtered = filtered.filter(
-        (t) => new Date(t.createdAt) >= dateRangeFilter.from!
-      );
+      const fromDate = new Date(dateRangeFilter.from);
+      fromDate.setHours(0, 0, 0, 0);
+      filtered = filtered.filter((t) => getTransactionDate(t) >= fromDate);
     } else if (dateRangeFilter.to) {
-      filtered = filtered.filter(
-        (t) => new Date(t.createdAt) <= dateRangeFilter.to!
-      );
+      const toDate = new Date(dateRangeFilter.to);
+      toDate.setHours(23, 59, 59, 999);
+      filtered = filtered.filter((t) => getTransactionDate(t) <= toDate);
     }
 
     return filtered.sort(
       (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
     );
   }, [
     clientId,
