@@ -20,71 +20,57 @@ export const mergeTransactionsWithClients = (
   });
 };
 
-// Prefer backend-provided date over createdAt when present
-// export const getTransactionDate = (tx: Partial<Transaction>): Date => {
-//   const raw = (tx as any)?.date ?? tx.createdAt;
-//   // if (!raw) return new Date(); // fallback to now
-//   // return new Date(raw);
-//   try {
-//     return new Date(raw as string);
-//   } catch {
-//     return new Date();
-//   }
-// };
-// Prefer backend-provided date over createdAt when present
-// export const getTransactionDate = (tx: Partial<Transaction>): Date => {
-//   const raw = (tx as any)?.date ?? tx.createdAt;
-
-//   if (!raw) {
-//     return new Date(); // fallback if no date
-//   }
-
-//   const d = new Date(raw as string);
-
-//   // Check if the parsed date is valid
-//   if (isNaN(d.getTime())) {
-//     return new Date(); // fallback to now
-//   }
-
-//   return d;
-// };
-
-// export const getTransactionDateString = (
-//   tx: Partial<Transaction>,
-//   locale: string = "en-GB"
-// ): string => {
-//   const d = getTransactionDate(tx);
-//   return d.toLocaleDateString(locale);
-// };
-
-// export const getTransactionTimeString = (
-//   tx: Partial<Transaction>,
-//   locale: string = "en-GB"
-// ): string => {
-//   const d = getTransactionDate(tx);
-//   return d.toLocaleTimeString(locale);
-// };
-
-// Enhanced transaction time utilities
-
-// Get transaction date from either createdAt or saleDate
+//Prefer backend-provided date over createdAt when present
 export const getTransactionDate = (tx: Partial<Transaction>): Date => {
-  // Priority: saleDate > createdAt > current date
-  const dateString = tx.createdAt;
+  const raw = (tx as any)?.date ?? tx.createdAt;
 
-  if (dateString) {
-    return new Date(dateString);
+  if (!raw) {
+    return new Date(); // fallback if no date
   }
 
-  return new Date(); // Fallback to current date
+  const d = new Date(raw as string);
+
+  // Check if the parsed date is valid
+  if (isNaN(d.getTime())) {
+    return new Date(); // fallback to now
+  }
+
+  return d;
 };
 
-// Format time with date context for better clarity
+export const getTransactionDateString = (
+  tx: Partial<Transaction>,
+  locale: string = "en-GB"
+): string => {
+  const d = getTransactionDate(tx);
+  return d.toLocaleDateString(locale);
+};
+
 export const getTransactionTimeString = (
   tx: Partial<Transaction>,
   locale: string = "en-GB"
 ): string => {
-  const date = getTransactionDate(tx);
+  // Always use createdAt for the time to get the actual creation timestamp
+  const raw = tx.createdAt;
+
+  if (!raw) {
+    return new Date().toLocaleTimeString(locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  }
+
+  const date = new Date(raw as string);
+
+  // Check if the parsed date is valid
+  if (isNaN(date.getTime())) {
+    return new Date().toLocaleTimeString(locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  }
 
   // Format time
   const timeString = date.toLocaleTimeString(locale, {
@@ -93,17 +79,7 @@ export const getTransactionTimeString = (
     hour12: true,
   });
 
-  return ` ${timeString}`;
-};
-
-// Alternative: Simple date + time format
-export const getTransactionDateString = (
-  tx: Partial<Transaction>,
-  locale: string = "en-GB"
-): string => {
-  const date = getTransactionDate(tx);
-
-  return date.toLocaleDateString(locale);
+  return timeString;
 };
 
 export function getClientsWithDebt(mergedTransaction: MergedTransaction[]) {
