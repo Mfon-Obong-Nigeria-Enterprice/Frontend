@@ -36,7 +36,7 @@ const TopSellingProducts = () => {
   const hasProducts = lastFive.length > 0;
 
   return (
-    <div className="bg-white p-7 border border-[#d9d9d9] rounded-md">
+    <div className="bg-white h-full p-7 border border-[#d9d9d9] rounded-md">
       <h4 className="text-xl font-medium text-[#1E1E1E] mb-4">
         Top-selling products
       </h4>

@@ -9,7 +9,7 @@ import { useUserStore } from "@/stores/useUserStore";
 import UserTable from "../usertable";
 import CreateUserModal from "./modals/createusermodal";
 import EditUserModal from "./modals/EditUserModal";
-import UserSearchList from "../UserSearchList"; 
+import UserSearchList from "../UserSearchList";
 import Modal from "@/components/Modal";
 
 // ui components
@@ -21,11 +21,7 @@ import {
 } from "@/components/ui/popover";
 
 // icons
-import {
-  ExternalLink,
-  MoreVertical,
-  Plus,
-} from "lucide-react";
+import { ExternalLink, MoreVertical, Plus } from "lucide-react";
 import { MdOutlineHome } from "react-icons/md";
 import BusinessLocationModal from "./modals/BusinessLocationModal";
 
@@ -52,7 +48,7 @@ type UserDataProps = {
 
 // Add the filterUsers function
 const filterUsers = (users: any[]) => {
-  return users.filter(user => user.role !== "SUPER_ADMIN");
+  return users.filter((user) => user.role !== "SUPER_ADMIN");
 };
 
 const UserOverview = () => {
@@ -61,7 +57,8 @@ const UserOverview = () => {
   const { users } = useUserStore();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedUserData, setSelectedUserData] = useState<UserDataProps | null>(null);
+  const [selectedUserData, setSelectedUserData] =
+    useState<UserDataProps | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isBusinessModalOpen, setIsBusinessModalOpen] = useState(false);
 
@@ -69,41 +66,49 @@ const UserOverview = () => {
     role: "all",
     location: "all",
     dateRange: "all",
-    status: "all"
+    status: "all",
   });
 
   const nonSuperAdminUsers = useMemo(() => filterUsers(users), [users]);
 
   // Get unique roles and locations from actual user data
   const roles = useMemo(() => {
-    const uniqueRoles = Array.from(new Set(nonSuperAdminUsers.map(user => user.role)));
+    const uniqueRoles = Array.from(
+      new Set(nonSuperAdminUsers.map((user) => user.role))
+    );
     return uniqueRoles;
   }, [nonSuperAdminUsers]);
 
   const locations = useMemo(() => {
-    const uniqueLocations = Array.from(new Set(nonSuperAdminUsers.map(user => user.location || user.branch || "")));
-    return uniqueLocations.filter(loc => loc !== "");
+    const uniqueLocations = Array.from(
+      new Set(
+        nonSuperAdminUsers.map((user) => user.location || user.branch || "")
+      )
+    );
+    return uniqueLocations.filter((loc) => loc !== "");
   }, [nonSuperAdminUsers]);
 
   // Filter users based on search and filters (excluding SUPER_ADMIN)
   const filteredUsers = useMemo(() => {
-    return nonSuperAdminUsers.filter(user => {
+    return nonSuperAdminUsers.filter((user) => {
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        if (!user.name.toLowerCase().includes(query) &&
-            !user.email.toLowerCase().includes(query) &&
-            !user.role.toLowerCase().includes(query) &&
-            !(user.branch && user.branch.toLowerCase().includes(query))) {
+        if (
+          !user.name.toLowerCase().includes(query) &&
+          !user.email.toLowerCase().includes(query) &&
+          !user.role.toLowerCase().includes(query) &&
+          !(user.branch && user.branch.toLowerCase().includes(query))
+        ) {
           return false;
         }
       }
-      
+
       // Role filter
       if (filters.role !== "all" && user.role !== filters.role) {
         return false;
       }
-      
+
       // Location filter - check both location and branch fields
       if (filters.location !== "all") {
         const userLocation = user.location || user.branch || "";
@@ -111,13 +116,16 @@ const UserOverview = () => {
           return false;
         }
       }
-      
+
       // Status filter
       if (filters.status !== "all") {
         if (filters.status === "active" && (!user.isActive || user.isBlocked)) {
           return false;
         }
-        if (filters.status === "inactive" && (user.isActive || user.isBlocked)) {
+        if (
+          filters.status === "inactive" &&
+          (user.isActive || user.isBlocked)
+        ) {
           return false;
         }
         if (filters.status === "suspended" && !user.isBlocked) {
@@ -128,11 +136,11 @@ const UserOverview = () => {
           if (user.isActive || user.isBlocked) return false;
         }
       }
-      
+
       // Date range filter - REMOVED CUSTOM RANGE SUPPORT
       if (filters.dateRange !== "all") {
         if (!user.createdAt) return false;
-        
+
         const createdDate = new Date(user.createdAt);
         const now = new Date();
         let startDate: Date, endDate: Date;
@@ -159,16 +167,18 @@ const UserOverview = () => {
         // Reset times for correct date comparison
         const createdDateOnly = new Date(createdDate);
         createdDateOnly.setHours(0, 0, 0, 0);
-        
+
         const startDateOnly = new Date(startDate);
         startDateOnly.setHours(0, 0, 0, 0);
-        
+
         const endDateOnly = new Date(endDate);
         endDateOnly.setHours(23, 59, 59, 999);
 
-        return createdDateOnly >= startDateOnly && createdDateOnly <= endDateOnly;
+        return (
+          createdDateOnly >= startDateOnly && createdDateOnly <= endDateOnly
+        );
       }
-      
+
       return true;
     });
   }, [nonSuperAdminUsers, searchQuery, filters]);
@@ -177,9 +187,12 @@ const UserOverview = () => {
     setSearchQuery(query);
   }, []);
 
-  const handleFilterChange = useCallback((filterName: string, value: string) => {
-    setFilters(prev => ({ ...prev, [filterName]: value }));
-  }, []);
+  const handleFilterChange = useCallback(
+    (filterName: string, value: string) => {
+      setFilters((prev) => ({ ...prev, [filterName]: value }));
+    },
+    []
+  );
 
   const handleEditUser = (userData: UserDataProps) => {
     setSelectedUserData(userData);
@@ -192,7 +205,7 @@ const UserOverview = () => {
   };
 
   return (
-    <main className="w-full max-w-full overflow-x-auto">
+    <main className="w-full">
       {/* heading */}
       <div className="flex items-center justify-between mt-[30px] md:mt-[39px] xl:mt-[47px] mx-5 md:mx-8 xl:mx-6">
         <h2 className="text-xl md:text-2xl lg:text-[1.75rem] font-bold font-Arial text-[#333333]">
@@ -216,9 +229,7 @@ const UserOverview = () => {
                 className="w-64 p-0 rounded-lg shadow-lg border border-[#F0F0F0] cursor-pointer"
               >
                 <>
-                  <button
-                    className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-t-lg font-medium"
-                  >
+                  <button className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-t-lg font-medium">
                     <span className="flex-1 text-left">
                       {">  "} Export All Users
                     </span>
@@ -240,8 +251,11 @@ const UserOverview = () => {
                     variant="ghost"
                     className="w-full flex items-center gap-2 px-4 py-4 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium min-w-0"
                     onClick={() => {
-                      const url = user?.role === "SUPER_ADMIN" ? "manager" : "maintainer";
-                      navigate(`/${url}/dashboard/user-management/col-settings`);
+                      const url =
+                        user?.role === "SUPER_ADMIN" ? "manager" : "maintainer";
+                      navigate(
+                        `/${url}/dashboard/user-management/col-settings`
+                      );
                     }}
                   >
                     <span className="flex-1 text-left truncate min-w-0">
@@ -277,9 +291,9 @@ const UserOverview = () => {
       </div>
 
       {/* Use the UserSearchList component */}
-      <div className="bg-white mt-8 mx-5 md:mx-8 xl:mx-6">
+      <div className="bg-white mt-8 mx-5 md:mx-8 xl:mx-3">
         <h2 className="p-3 font-medium">Filter & Controls</h2>
-        <UserSearchList 
+        <UserSearchList
           onSearch={handleSearch}
           onFilterChange={handleFilterChange}
           roles={roles}
@@ -291,21 +305,19 @@ const UserOverview = () => {
       {/* User summary */}
       <div className="mt-4 px-5 md:px-8 xl:px-6">
         <p className="text-sm text-gray-600">
-          Showing {filteredUsers.length} users 
-          {filters.dateRange !== 'all' && ` created in ${filters.dateRange}`}
-          {filters.role !== 'all' && ` with role: ${filters.role}`}
-          {filters.location !== 'all' && ` at location: ${filters.location}`}
-          {filters.status !== 'all' && ` with status: ${filters.status}`}
+          Showing {filteredUsers.length} users
+          {filters.dateRange !== "all" && ` created in ${filters.dateRange}`}
+          {filters.role !== "all" && ` with role: ${filters.role}`}
+          {filters.location !== "all" && ` at location: ${filters.location}`}
+          {filters.status !== "all" && ` with status: ${filters.status}`}
         </p>
       </div>
-      
-<div className="w-full px-5 md:px-8 xl:px-6 mt-4">
-  <div className="w-full max-w-full overflow-x-auto">
-  
-    <UserTable users={filteredUsers} onEditUser={handleEditUser} />
-  </div>
-</div>
 
+      <div className="w-full px-5 md:px-8 xl:px-6 mt-4">
+        <div className="w-full max-w-full overflow-x-auto">
+          <UserTable users={filteredUsers} onEditUser={handleEditUser} />
+        </div>
+      </div>
 
       {/* create new user modal */}
       {isCreateModalOpen && (
@@ -339,7 +351,9 @@ const UserOverview = () => {
           isOpen={isBusinessModalOpen}
           onClose={() => setIsBusinessModalOpen(false)}
         >
-          <BusinessLocationModal closeModal={() => setIsBusinessModalOpen(false)} />
+          <BusinessLocationModal
+            closeModal={() => setIsBusinessModalOpen(false)}
+          />
         </Modal>
       )}
     </main>

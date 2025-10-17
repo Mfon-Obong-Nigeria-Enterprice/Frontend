@@ -19,7 +19,7 @@ interface BarChartWeeklyProps {
   yAxisRange?: [number, number];
 }
 
-const BarChartWeekly = ({ yAxisRange = [500000, 10000000] }: BarChartWeeklyProps) => {
+const BarChartWeekly = ({ yAxisRange = [0, 10000000] }: BarChartWeeklyProps) => {
   const { transactions } = useTransactionsStore();
   const salesData: WeeklySales[] = getWeeklySales(transactions ?? []);
 
@@ -56,7 +56,7 @@ const BarChartWeekly = ({ yAxisRange = [500000, 10000000] }: BarChartWeeklyProps
         ticks: {
           callback: (value) => `₦${Number(value).toLocaleString()}`,
         },
-        beginAtZero: false,
+        beginAtZero: true,
         grid: {
           display: false,
         },
