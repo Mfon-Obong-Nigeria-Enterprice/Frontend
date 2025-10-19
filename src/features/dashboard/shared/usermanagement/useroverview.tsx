@@ -207,7 +207,7 @@ const UserOverview = () => {
   return (
     <main className="w-full">
       {/* heading */}
-      <div className="flex items-center justify-between mt-[30px] md:mt-[39px] xl:mt-[47px] mx-5 md:mx-8 xl:mx-6">
+      <div className="flex items-center justify-between mt-[30px] md:mt-[39px] xl:mt-[47px] mx-5 md:mx-5">
         <h2 className="text-xl md:text-2xl lg:text-[1.75rem] font-bold font-Arial text-[#333333]">
           User List
         </h2>
