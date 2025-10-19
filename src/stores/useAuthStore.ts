@@ -20,11 +20,11 @@ type AuthState = {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-  user: null,
-  userProfile: null,
-  isAuthenticated: false,
-  // Start in loading state so the app can attempt a silent auth refresh on boot
-  loading: true,
+      user: null,
+      userProfile: null,
+      isAuthenticated: false,
+      // Start in loading state so the app can attempt a silent auth refresh on boot
+      loading: true,
 
       setUser: (user) => {
         set({
@@ -215,6 +215,7 @@ export const useAuthStore = create<AuthState>()(
 
       logout: async () => {
         try {
+          localStorage.removeItem("__mfon_access_token");
           await authService.logout();
         } catch {
           console.warn("Logout request failed, clearing store anyway.");
