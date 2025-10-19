@@ -19,11 +19,13 @@ interface AddClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
 interface FormData {
   name: string;
   phone: string;
   description: string;
   balance: number;
+  balanceDisplay: string; // For formatted display
   address: string;
 }
 
@@ -37,8 +39,41 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
     phone: "",
     description: "",
     balance: 0,
+    balanceDisplay: "₦0",
     address: "",
   });
+
+  // Format currency display with Naira symbol and commas
+  const formatCurrencyDisplay = (value: string) => {
+    if (!value) return "₦0";
+    const digitsOnly = value.replace(/\D/g, "");
+    if (digitsOnly === "") return "₦0";
+    const numericValue = parseFloat(digitsOnly);
+    return `₦${numericValue.toLocaleString("en-GB", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })}`;
+  };
+
+  // Handle balance input change
+  const handleBalanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+
+    // Remove all non-digit characters
+    const digitsOnly = inputValue.replace(/\D/g, "");
+
+    // Convert to number
+    const numericValue = digitsOnly === "" ? 0 : parseFloat(digitsOnly);
+
+    // Format for display
+    const formattedDisplay = formatCurrencyDisplay(digitsOnly);
+
+    setFormData((prev) => ({
+      ...prev,
+      balance: numericValue,
+      balanceDisplay: formattedDisplay,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +93,12 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
       return;
     }
 
+    if (!formData.address.trim()) {
+      setError("Client address is required");
+      setIsLoading(false);
+      return;
+    }
+
     // Basic phone number validation (adjust regex as needed for your format)
     const phoneRegex = /^[0-9+\-\s()]+$/;
     if (!phoneRegex.test(formData.phone)) {
@@ -70,24 +111,29 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
       const clientData = {
         name: formData.name.trim(),
         phone: formData.phone.trim(),
-        description: formData.description.trim(),
-        balance: Number(formData.balance),
+        // Only include description if it's not empty
+        ...(formData.description.trim() && {
+          description: formData.description.trim(),
+        }),
+        balance: Number(formData.balance) || 0,
         address: formData.address.trim(),
       };
+
       await createMutate.mutateAsync(clientData);
 
       onOpenChange(false);
+
       // Reset form
       setFormData({
         name: "",
         phone: "",
         description: "",
         balance: 0,
+        balanceDisplay: "₦0",
         address: "",
       });
+      setError(null);
     } catch (err) {
-      // console.error("Failed to add client:", err);
-
       if (isAxiosError(err)) {
         const axiosError = err as AxiosError<{ message: string }>;
 
@@ -101,15 +147,34 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
         } else {
           setError("Failed to add client. Please try again.");
         }
+      } else {
+        setError("An unexpected error occurred. Please try again.");
       }
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Reset form when dialog closes
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen && !isLoading) {
+      // Reset form when closing
+      setFormData({
+        name: "",
+        phone: "",
+        description: "",
+        balance: 0,
+        balanceDisplay: "₦0",
+        address: "",
+      });
+      setError(null);
+    }
+    onOpenChange(newOpen);
+  };
+
   return (
     <div className="">
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogOverlay className="bg-[#ffffff] fixed inset-0 z-50" />
         <DialogContent aria-describedby="add-client-dialog z-50">
           <DialogHeader>
@@ -124,13 +189,14 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                 {error}
               </div>
             )}
+
             <div className="flex items-center gap-3 flex-wrap ">
               <div className="sm:w-[225px] w-full ">
                 <Label
                   htmlFor="name"
                   className="text-sm text-[#333333] font-[400]"
                 >
-                  Client Name{" "}
+                  Client Name
                 </Label>
                 <Input
                   className="w-full mt-2 font-[400] text-sm border-[#444444] border "
@@ -150,7 +216,7 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                   htmlFor="phone"
                   className="text-sm text-[#333333] font-[400]"
                 >
-                  Phone Number{" "}
+                  Phone Number
                 </Label>
                 <Input
                   className="w-full mt-2 font-[400] text-sm border border-[#444444] "
@@ -177,7 +243,7 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                 <Input
                   className="mt-2 font-[400] text-sm border border-[#444444] "
                   id="address"
-                  placeholder="Enter Client address"
+                  placeholder="Enter client address"
                   required
                   disabled={isLoading}
                   value={formData.address}
@@ -190,43 +256,35 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                 />
               </div>
 
-              {/*  */}
               <div className="sm:w-[225px] w-full">
                 <Label
-                  htmlFor="number"
+                  htmlFor="balance"
                   className="text-sm text-[#333333] font-[400]"
                 >
-                  Initial Balance(optional)
+                  Initial Balance (optional)
                 </Label>
                 <Input
                   className="mt-2 font-[400] text-sm border border-[#444444] "
-                  id="number"
-                  type="number"
-                  step="1"
-                  placeholder="0.00"
-                  required
+                  id="balance"
+                  type="text"
+                  placeholder="₦0"
                   disabled={isLoading}
-                  value={formData.balance}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      balance: Number.parseFloat(e.target.value),
-                    }))
-                  }
+                  value={formData.balanceDisplay}
+                  onChange={handleBalanceChange}
                 />
               </div>
             </div>
 
             <div>
               <Label
-                htmlFor="Description"
+                htmlFor="description"
                 className="text-sm text-[#444444] font-[400] "
               >
-                Description(optional)
+                Description (optional)
               </Label>
               <Textarea
                 className="mt-2 font-[400] text-sm border border-[#444444]"
-                id="notes"
+                id="description"
                 value={formData.description}
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -234,6 +292,7 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                     description: e.target.value,
                   }))
                 }
+                placeholder="Add any additional notes about this client..."
                 rows={5}
                 disabled={isLoading}
               />
@@ -243,12 +302,17 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => onOpenChange(false)}
+                onClick={() => handleOpenChange(false)}
                 className="border-[#444444] border p-5"
+                disabled={isLoading}
               >
                 Cancel
               </Button>
-              <Button type="submit" className="bg-[#2ECC71] p-5">
+              <Button
+                type="submit"
+                className="bg-[#2ECC71] p-5 hover:bg-[#27AE60]"
+                disabled={isLoading}
+              >
                 {isLoading ? "Adding..." : "Add Client"}
               </Button>
             </div>
