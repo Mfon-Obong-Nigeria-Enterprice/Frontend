@@ -1,6 +1,14 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* * {
+  outline: 1px solid rgba(255, 0, 0, 0.2);
+} */
+/* html,
+body {
+  overflow-x: hidden;
+} */
+
 @theme {
   --color-primary: #1a3c7e;
   --color-secondary: #7d7d7d;
