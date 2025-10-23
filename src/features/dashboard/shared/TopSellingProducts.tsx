@@ -1,5 +1,6 @@
 import useTransactionWithCategories from "@/hooks/useTransactionWithCategories";
 import { isCategoryObject } from "@/utils/helpers";
+import { getTransactionDate } from "@/utils/transactions";
 import { Package, TrendingUp } from "lucide-react";
 
 // Empty State Component
@@ -29,9 +30,9 @@ const TopSellingProducts = () => {
   const lastFive = allItems
     .sort(
       (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
     )
-    .slice(0, 5);
+    .slice(0, 7);
 
   const hasProducts = lastFive.length > 0;
 
@@ -44,20 +45,20 @@ const TopSellingProducts = () => {
       {!hasProducts ? (
         <EmptyProductsState />
       ) : (
-        <table className="w-full">
+        <table className="w-full h-[300px] lg:h-[250px]">
           <thead className="border-b md:border-0 border-[#d9d9d9]">
             <tr>
-              <th className="text-xs md:text-sm text-[#333333] font-medium md:font-normal pb-2 text-left">
+              <th className="text-xs md:text-sm text-[#333333] font-medium md:font-normal pb-2 pl-1 text-start">
                 Product
               </th>
-              <th className="text-xs md:text-sm text-[#333333] font-medium md:font-normal pb-2 text-center">
+              <th className="text-xs md:text-sm text-[#333333] font-medium md:font-normal pb-2 pl-1 text-start">
                 Units Sold
               </th>
-              <th className="flex items-center justify-center gap-1 text-xs md:text-sm text-[#333333] font-medium md:font-normal px-2 pb-2 text-center">
+              <th className="flex items-center justify-start pl-1 gap-1 text-xs md:text-sm text-[#333333] font-medium md:font-normal  pb-2 text-start">
                 Revenue
                 <span className="hidden md:block">Generated</span>
               </th>
-              <th className="text-xs md:text-sm text-[#333333] font-medium md:font-normal pb-2 text-center">
+              <th className="text-xs md:text-sm text-[#333333] font-medium md:font-normal pl-1 pb-2 text-start">
                 Category
               </th>
             </tr>
@@ -68,16 +69,16 @@ const TopSellingProducts = () => {
                 key={index}
                 className="border-b md:border-b-0 last:border-0 border-[#d9d9d9]"
               >
-                <td className="text-xs md:text-sm text-[#333333] font-normal p-2 text-left md:border-r md:border-[#d9d9d9]">
+                <td className="text-xs md:text-sm text-[#333333] font-normal p-2 text-start md:border-r md:border-[#d9d9d9]">
                   {product.productName}
                 </td>
-                <td className="text-xs md:text-sm text-[#333333] font-normal p-2 text-left md:border-r md:border-[#d9d9d9]">
+                <td className="text-xs md:text-sm text-[#333333] font-normal p-2 text-start md:border-r md:border-[#d9d9d9]">
                   {product.quantity} {product.unit}
                 </td>
-                <td className="text-xs md:text-sm text-[#333333] font-normal p-2 text-center md:border-r md:border-[#d9d9d9]">
+                <td className="text-xs md:text-sm text-[#333333] font-normal p-2 text-start md:border-r md:border-[#d9d9d9]">
                   ₦{(product.subtotal ?? 0).toLocaleString()}
                 </td>
-                <td className="text-xs md:text-sm text-[#333333] font-normal p-2 text-center">
+                <td className="text-xs md:text-sm text-[#333333] font-normal p-2 text-start">
                   {isCategoryObject(product.category)
                     ? product.category.name
                     : product.category}

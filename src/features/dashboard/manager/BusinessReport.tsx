@@ -94,10 +94,7 @@ const BusinessReport = () => {
         <div className="lg:col-span-3">
           <TopSellingProducts />
         </div>
-        <div className="bg-white w-full h-full p-7 border border-[#d9d9d9] rounded-xl  lg:col-span-2">
-          <h4 className="text-xl font-medium text-[#1E1E1E] ">
-            Sales by Category
-          </h4>
+        <div className="bg-white border border-[#d9d9d9] rounded-xl  lg:col-span-2">
           <SalesByCategoryChart />
         </div>
       </div>
