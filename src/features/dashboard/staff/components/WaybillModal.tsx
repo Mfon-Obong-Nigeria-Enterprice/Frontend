@@ -41,10 +41,13 @@ const WaybillModal = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Get recent transactions (last 20)
-  const recentTransactions = transactions.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  const recentTransactions = transactions
+    .filter((t) => !t.waybillNumber) // Only show transactions without waybill
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+    .slice(0, 50); // Limit to 50 most recent
 
   // Reset state when modal opens/closes
   useEffect(() => {

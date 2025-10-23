@@ -42,7 +42,7 @@ const TransactionTable = ({
       <table className=" w-full overflow-x-scroll">
         <thead className="bg-[#F5F5F5] border border-[#d9d9d9]">
           <tr>
-            <th className="py-3 pl-1 text-base text-[#333333] font-normal text-start">
+            <th className="py-3 pl-3 text-base text-[#333333] font-normal text-start">
               Payment ID
             </th>
             <th className="py-3 text-base text-[#333333] font-normal pl-1 text-start">
@@ -87,7 +87,7 @@ const TransactionTable = ({
                 id={`invoice-${transaction.invoiceNumber}`}
                 className="border-b border-[#d9d9d9]"
               >
-                <td className=" text-start pl-1 text-[#444444] text-sm font-normal py-3">
+                <td className=" text-start pl-3 text-[#444444] text-sm font-normal py-3">
                   {transaction.invoiceNumber}
                 </td>
                 <td className=" py-3 pl-1  font-normal ">
@@ -95,13 +95,6 @@ const TransactionTable = ({
                     {getTransactionDateString(transaction)}
                     {/* {transaction.date} */}
                   </p>
-                  {/* <p className="text-[0.625rem] text-[#7D7D7D] text-start">
-                   
-                    {new Date(transaction.createdAt).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p> */}
                 </td>
                 <td className=" text-start pl-1 text-[#444444] text-sm font-normal py-3">
                   {user?.role === "SUPER_ADMIN" ? (

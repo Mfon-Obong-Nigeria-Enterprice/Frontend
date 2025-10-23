@@ -38,7 +38,7 @@ const StaffSales = () => {
   const [filter, setFilter] = useState<"today" | "week" | "month" | "all">(
     "today"
   );
-  const [isWaybillModalOpen, setIsWaybillModalOpen] = useState(false); // Add modal state
+  const [isWaybillModalOpen, setIsWaybillModalOpen] = useState(false);
 
   // Filter and sort transactions
   const filteredTransactions = useMemo(() => {

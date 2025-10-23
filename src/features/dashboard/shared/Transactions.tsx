@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { useClientStore } from "@/stores/useClientStore";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { useBranchStore } from "@/stores/useBranchStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 // types
 import type { StatCard } from "@/types/stats";
@@ -54,6 +55,7 @@ import { getChangeText } from "@/utils/helpersfunction";
 import { formatCurrency } from "@/utils/formatCurrency";
 
 const Transactions = () => {
+  const { user } = useAuthStore();
   const { getOutStandingBalanceData, getClientById } = useClientStore();
   const {
     transactions,
@@ -62,13 +64,14 @@ const Transactions = () => {
     getMonthlyPaymentsPercentageChange,
     getTodaysTransactionCount,
     getTodaysTransactionCountPercentageChange,
-    // getWeeklySalesPercentageChange,
   } = useTransactionsStore();
   const { branches } = useBranchStore();
+
   const [clientFilter, setClientFilter] = useState<string | undefined>();
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<
     string | undefined
   >();
+  const [branchFilter, setBranchFilter] = useState<string>("all");
   const [dateRangeFilter, setDateRangeFilter] = useState<DateRange>({
     from: undefined,
     to: undefined,
@@ -82,7 +85,6 @@ const Transactions = () => {
   const transactionCountChange = getTodaysTransactionCountPercentageChange();
   const todaysSales = getTodaysSales();
   const monthlyPayments = getThisMonthPayments();
-  // const weeklyChange = getWeeklySalesPercentageChange();
   const monthlyChange = getMonthlyPaymentsPercentageChange();
 
   // Format change text helper
@@ -132,15 +134,15 @@ const Transactions = () => {
     },
     {
       heading: "Total transactions (Today)",
-      salesValue: `${todaysTransactionCount}`, // Updated to use today's count
-      statValue: formatChangeText(transactionCountChange), // Add percentage change
+      salesValue: `${todaysTransactionCount}`,
+      statValue: formatChangeText(transactionCountChange),
       color:
         transactionCountChange.direction === "increase"
           ? "green"
           : transactionCountChange.direction === "decrease"
           ? "red"
           : "blue",
-      hideArrow: false, // Show arrow since we now have percentage change
+      hideArrow: false,
     },
   ];
 
@@ -190,28 +192,39 @@ const Transactions = () => {
       filtered = filtered.filter((tx) => tx.type === "PICKUP");
     }
 
-    //date filter
+    // Branch filter (only for SUPER_ADMIN/manager)
+    if (user?.role === "SUPER_ADMIN" && branchFilter !== "all") {
+      filtered = filtered.filter((tx) => {
+        const txBranchId =
+          typeof tx.branchId === "string" ? tx.branchId : tx.branchId;
+        return txBranchId === branchFilter;
+      });
+    }
+
+    // Date filter
     if (dateRangeFilter.from && dateRangeFilter.to) {
       filtered = filtered.filter((tx) => {
         const txDate = getTransactionDate(tx);
         return txDate >= dateRangeFilter.from! && txDate <= dateRangeFilter.to!;
       });
     }
+
     // Sort by date - NEWEST FIRST
     return filtered.sort((a, b) => {
       const dateA = getTransactionDate(a).getTime();
       const dateB = getTransactionDate(b).getTime();
-      return dateB - dateA; // Descending order (newest first)
+      return dateB - dateA;
     });
   }, [
     clientFilter,
     transactionTypeFilter,
+    branchFilter,
     dateRangeFilter,
-    // debouncedSearchTerm,
     mergedTransactions,
+    user?.role,
   ]);
 
-  // Use filteredTransactions for pagination instead of filterByInvoice
+  // Use filteredTransactions for pagination
   const {
     currentPage,
     setCurrentPage,
@@ -228,7 +241,6 @@ const Transactions = () => {
     return filteredTransactions?.slice(startIndex, endIndex);
   }, [filteredTransactions, currentPage]);
 
-  //
   const handleExportExcel = () => {
     const data =
       filteredTransactions &&
@@ -240,11 +252,12 @@ const Transactions = () => {
         Status: txn.status,
         Amount: txn.total,
         Balance: txn?.client != null ? txn?.client?.balance : "0.00",
+        ...(user?.role === "SUPER_ADMIN" && { Location: txn.branchName }),
       }));
 
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
     XLSX.writeFile(workbook, "transaction_export.xlsx");
     toast.success("Downloaded Successfully!");
   };
@@ -260,20 +273,31 @@ const Transactions = () => {
       { header: "Status", dataKey: "status" },
       { header: "Amount", dataKey: "total" },
       { header: "Balance", dataKey: "balance" },
+      ...(user?.role === "SUPER_ADMIN"
+        ? [{ header: "Location", dataKey: "location" }]
+        : []),
     ];
 
-    const rows = (filteredTransactions ?? []).map((t) => [
-      t.invoiceNumber ?? "N/A",
-      format(getTransactionDate(t), "dd/MM/yyyy"),
-      t.clientName ?? "N/A",
-      t.type ?? "N/A",
-      t.status ?? "N/A",
-      t.total?.toLocaleString() ?? "0.00",
-      (t.client?.balance != null
-        ? t.client.balance
-        : t.clientId?.balance ?? 0
-      ).toLocaleString(),
-    ]);
+    const rows = (filteredTransactions ?? []).map((t) => {
+      const baseRow = [
+        t.invoiceNumber ?? "N/A",
+        format(getTransactionDate(t), "dd/MM/yyyy"),
+        t.clientName ?? "N/A",
+        t.type ?? "N/A",
+        t.status ?? "N/A",
+        t.total?.toLocaleString() ?? "0.00",
+        (t.client?.balance != null
+          ? t.client.balance
+          : t.clientId?.balance ?? 0
+        ).toLocaleString(),
+      ];
+
+      if (user?.role === "SUPER_ADMIN") {
+        baseRow.push(t.branchName);
+      }
+
+      return baseRow;
+    });
 
     doc.text("Transaction Export", 14, 16);
     autoTable(doc, {
@@ -303,7 +327,6 @@ const Transactions = () => {
     [transactions]
   );
 
-  // 2. Handle selection of a transaction
   const onSelect = useCallback(
     (selected: { id: string; label: string }) => {
       const index = filteredTransactions.findIndex(
@@ -318,7 +341,6 @@ const Transactions = () => {
       if (targetPage !== currentPage) {
         setCurrentPage(targetPage);
 
-        // Wait for page to update, then scroll
         setTimeout(() => {
           const target = document.getElementById(`invoice-${selected.label}`);
           if (target) {
@@ -348,7 +370,7 @@ const Transactions = () => {
       <Stats data={stats} />
 
       {/* Search bar for invoice number */}
-      <div className="flex justify-between gap-2 items-center  sm:py-5 mt-5 mb-4 sm:mb-0 flex-wrap-reverse md:flex-nowrap">
+      <div className="flex justify-between gap-2 items-center sm:py-5 mt-5 mb-4 sm:mb-0 flex-wrap-reverse md:flex-nowrap">
         <div className="bg-[#F5F5F5] flex items-center gap-1 rounded-md w-full md:w-1/2">
           <SearchBar
             type="invoice"
@@ -372,8 +394,8 @@ const Transactions = () => {
       </div>
 
       {/* filter buttons */}
-      <div className="flex gap-2 flex-wrap md:gap-4 ">
-        {/* filter by registered or unregisterd clients */}
+      <div className="flex gap-2 flex-wrap md:gap-4">
+        {/* filter by registered or unregistered clients */}
         <Select value={clientFilter} onValueChange={setClientFilter}>
           <SelectTrigger className="bg-[#d9d9d9]! h-10 w-full md:w-46 text-[#444444] border-[#7D7D7D]">
             <SelectValue placeholder="Clients Filter" />
@@ -395,7 +417,7 @@ const Transactions = () => {
         <DateRangePicker
           value={dateRangeFilter}
           onChange={(range) => setDateRangeFilter(range)}
-          className=" h-9 w-full md:w-46 !bg-[#d9d9d9] !border-[#7D7D7D]"
+          className="h-9 w-full md:w-46 !bg-[#d9d9d9] !border-[#7D7D7D]"
         />
 
         {/* filter by transaction type */}
@@ -419,9 +441,29 @@ const Transactions = () => {
       {/* Transaction table */}
       <div className="my-4 xl:shadow-lg rounded-xl overflow-hidden">
         <div className="xl:bg-white xl:border">
-          <h5 className="bg-white text-[#1E1E1E] text-xl font-medium py-3 my-4 pl-8 rounded-xl">
-            All Transactions
-          </h5>
+          <div className="flex gap-3 justify-between items-center px-8 bg-white md:bg-transparent rounded-xl md:rounded-none py-3 my-4 ">
+            <h5 className=" text-[#1E1E1E] text-xl font-medium   ">
+              All Transactions
+            </h5>
+            {/* filter by branch (only for SUPER_ADMIN) */}
+            {user?.role === "SUPER_ADMIN" && (
+              <Select value={branchFilter} onValueChange={setBranchFilter}>
+                <SelectTrigger className=" h-10 w-46 text-[#444444] border-[#7D7D7D]">
+                  <SelectValue placeholder="Branch Location" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="all">All Branches</SelectItem>
+                    {branches.map((branch) => (
+                      <SelectItem key={branch._id} value={branch._id}>
+                        {branch.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
           <TransactionTable currentTransaction={currentTransaction} />
           <TransactionsTableMobile currentTransaction={currentTransaction} />
         </div>
