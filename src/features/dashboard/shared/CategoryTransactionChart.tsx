@@ -1,16 +1,9 @@
 import { useMemo } from "react";
 import useTransactionWithCategories from "@/hooks/useTransactionWithCategories";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { isCategoryObject } from "@/utils/helpers";
 import { TrendingUp, BarChart3 } from "lucide-react";
 
-// The colors correspond to the image: Blue, Orange, Red
 const COLORS = ["#4285F4", "#FBBC05", "#EA4335", "#2ECC71", "#8C1C1380"];
 
 function useCategoryChartData() {
@@ -84,10 +77,12 @@ export default function SalesByCategoryChart() {
 
   return (
     // Main container uses flex to arrange chart and legend side-by-side on large screens
-    <div className="w-full h-full min-h-[300px] flex flex-col lg:flex-row items-center justify-center gap-4 p-4">
-      
+    <div className="py-7 px-2">
+      <h4 className="text-xl font-medium text-[#1E1E1E] px-5 ">
+        Sales by Category
+      </h4>
       {/* Pie Chart Container: Takes up more space (lg:w-3/5) to be larger */}
-      <div className="w-full lg:w-3/5 h-[300px] lg:h-[350px] flex items-center justify-center">
+      <div className="w-full  h-[300px] lg:h-[250px] flex items-center justify-center">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -96,7 +91,7 @@ export default function SalesByCategoryChart() {
               dataKey="value"
               cx="50%" // Center the pie chart within its container
               cy="50%"
-              outerRadius="90%" // Make the pie chart even bigger
+              outerRadius="80%" // Make the pie chart even bigger
             >
               {chartData.map((_, index) => (
                 <Cell
@@ -105,34 +100,40 @@ export default function SalesByCategoryChart() {
                 />
               ))}
             </Pie>
-            <Tooltip formatter={(_value, name, props) => [`${(props.payload.percent).toFixed(2)}%`, name]} />
+            <Tooltip
+              formatter={(_value, name, props) => [
+                `${props.payload.percent.toFixed(2)}%`,
+                name,
+              ]}
+            />
           </PieChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Custom Legend/List: Takes up less space (lg:w-2/5) and is styled to look like the image */}
-      <div className="w-full lg:w-2/5 flex flex-col items-start justify-center p-2 lg:h-[350px]">
+      <div className=" ">
         {/* ul list box container - adjusted max-width for containment */}
-        <ul className="space-y-3 w-full max-w-sm mx-auto lg:mx-0">
+        <ul className=" flex flex-wrap justify-start items-center gap-2">
           {chartData.map((entry, index) => {
             // Format the category name (45%)
-            const legendText = `${entry.name} (${entry.percent?.toFixed(0) ?? 0}%)`;
+            const legendText = `${entry.name} (${
+              entry.percent?.toFixed(0) ?? 0
+            }%)`;
             return (
               <li
                 key={`item-${index}`}
                 // Use smaller font size (text-sm) for the legend
-                className="flex items-center text-sm" 
+                className="flex items-center text-sm"
               >
                 {/* Color Box: Increased size (w-5 h-5) for better prominence */}
                 <span
-                  className="w-5 h-5 rounded-sm flex-shrink-0" 
+                  className="w-3 h-3"
                   style={{
                     backgroundColor: COLORS[index % COLORS.length],
-                    marginRight: '10px', // Adjusted space
+                    marginRight: "0px", // Adjusted space
                   }}
                 />
-               
-                <span className="text-gray-800 font-normal">
+
+                <span className="text-gray-800 font-normal pl-1">
                   {legendText}
                 </span>
               </li>
