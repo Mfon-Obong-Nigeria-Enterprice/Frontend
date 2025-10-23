@@ -2,7 +2,14 @@ import api from "./baseApi";
 import { type AxiosError } from "axios";
 import type { Client } from "@/types/types";
 
-type CreateClientPayload = Pick<Client, "name" | "phone" | "email" | "address">;
+export type CreateClientPayload = {
+  name: string;
+  phone: string;
+  address: string;
+  email?: string;
+  description?: string;
+  balance?: number;
+};
 
 export const getAllClients = async (): Promise<Client[]> => {
   try {
