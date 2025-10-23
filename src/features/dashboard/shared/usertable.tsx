@@ -294,7 +294,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
   };
 
   return (
-    <div className="mt-5 w-full overflow-x-auto">
+    <div className="mt-5 w-full ">
       <div className="">
         <Table className="w-full">
           <TableHeader>

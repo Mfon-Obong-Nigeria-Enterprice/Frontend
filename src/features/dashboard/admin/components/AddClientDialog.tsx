@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useClientMutations } from "@/hooks/useClientMutations";
 import { isAxiosError, type AxiosError } from "axios";
+import type { CreateClientPayload } from "@/services/clientService";
 
 interface AddClientDialogProps {
   open: boolean;
@@ -25,7 +26,7 @@ interface FormData {
   phone: string;
   description: string;
   balance: number;
-  balanceDisplay: string; // For formatted display
+  balanceDisplay: string;
   address: string;
 }
 
@@ -43,7 +44,6 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
     address: "",
   });
 
-  // Format currency display with Naira symbol and commas
   const formatCurrencyDisplay = (value: string) => {
     if (!value) return "₦0";
     const digitsOnly = value.replace(/\D/g, "");
@@ -55,17 +55,21 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
     })}`;
   };
 
-  // Handle balance input change
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    const digitsOnly = inputValue.replace(/\D/g, "");
+    const limitedDigits = digitsOnly.slice(0, 11);
+
+    setFormData((prev) => ({
+      ...prev,
+      phone: limitedDigits,
+    }));
+  };
+
   const handleBalanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-
-    // Remove all non-digit characters
     const digitsOnly = inputValue.replace(/\D/g, "");
-
-    // Convert to number
     const numericValue = digitsOnly === "" ? 0 : parseFloat(digitsOnly);
-
-    // Format for display
     const formattedDisplay = formatCurrencyDisplay(digitsOnly);
 
     setFormData((prev) => ({
@@ -80,7 +84,6 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
     setIsLoading(true);
     setError(null);
 
-    // Client-side validation
     if (!formData.name.trim()) {
       setError("Client name is required");
       setIsLoading(false);
@@ -99,25 +102,34 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
       return;
     }
 
-    // Basic phone number validation (adjust regex as needed for your format)
-    const phoneRegex = /^[0-9+\-\s()]+$/;
-    if (!phoneRegex.test(formData.phone)) {
-      setError("Please enter a valid phone number");
+    const digitsOnly = formData.phone.replace(/\D/g, "");
+    if (digitsOnly.length !== 11) {
+      setError("Phone number must be exactly 11 digits");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!/^[0-9]+$/.test(digitsOnly)) {
+      setError("Phone number must contain only digits");
       setIsLoading(false);
       return;
     }
 
     try {
-      const clientData = {
+      // Build the client data object matching backend requirements
+      const clientData: CreateClientPayload = {
         name: formData.name.trim(),
         phone: formData.phone.trim(),
-        // Only include description if it's not empty
-        ...(formData.description.trim() && {
-          description: formData.description.trim(),
-        }),
-        balance: Number(formData.balance) || 0,
         address: formData.address.trim(),
       };
+
+      if (formData.description.trim()) {
+        clientData.description = formData.description.trim();
+      }
+
+      if (formData.balance > 0) {
+        clientData.balance = Number(formData.balance);
+      }
 
       await createMutate.mutateAsync(clientData);
 
@@ -137,7 +149,6 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
       if (isAxiosError(err)) {
         const axiosError = err as AxiosError<{ message: string }>;
 
-        // Handle specific error cases
         if (axiosError.response?.status === 409) {
           setError(
             "A client with this name or phone number already exists. Please use different details."
@@ -155,10 +166,8 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
     }
   };
 
-  // Reset form when dialog closes
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen && !isLoading) {
-      // Reset form when closing
       setFormData({
         name: "",
         phone: "",
@@ -224,9 +233,7 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                   value={formData.phone}
                   disabled={isLoading}
                   placeholder="080 XXX XXX XX"
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, phone: e.target.value }))
-                  }
+                  onChange={handlePhoneChange}
                   required
                 />
               </div>
@@ -255,7 +262,6 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                   }
                 />
               </div>
-
               <div className="sm:w-[225px] w-full">
                 <Label
                   htmlFor="balance"

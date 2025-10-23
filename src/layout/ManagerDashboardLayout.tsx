@@ -16,7 +16,7 @@ const ManagerDashboardLayout = () => {
     <SidebarProvider>
       <ManagerSidebarWithModal />
 
-      <div className="">
+      <div className="w-full">
         <Header userRole="manager" />
         <SidebarTrigger className="fixed z-50" />
         <div
