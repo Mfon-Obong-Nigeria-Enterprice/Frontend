@@ -40,7 +40,7 @@ const WalkinTransactionModal = () => {
     // Client Information
     doc.setFontSize(12);
     doc.text("Client Information", 14, 40);
-    
+
     const clientData = [
       ["Client Type", "Walk-in client"],
       ["Client Name", selectedTransaction.walkInClientName || "N/A"],
@@ -99,8 +99,20 @@ const WalkinTransactionModal = () => {
     // Summary
     const summaryY = 200;
     doc.setFontSize(10);
-    doc.text(`Total Discount: ${selectedTransaction?.discount ? formatCurrency(selectedTransaction.discount) : "₦0.00"}`, 14, summaryY);
-    doc.text(`Total Amount: ${formatCurrency(selectedTransaction.total)}`, 14, summaryY + 10);
+    doc.text(
+      `Total Discount: ${
+        selectedTransaction?.discount
+          ? formatCurrency(selectedTransaction.discount)
+          : "₦0.00"
+      }`,
+      14,
+      summaryY
+    );
+    doc.text(
+      `Total Amount: ${formatCurrency(selectedTransaction.total)}`,
+      14,
+      summaryY + 10
+    );
 
     doc.save(`walkin_transaction_${selectedTransaction.invoiceNumber}.pdf`);
     toast.success("PDF downloaded successfully!");
@@ -112,14 +124,14 @@ const WalkinTransactionModal = () => {
 
     const data = {
       "Invoice Number": selectedTransaction.invoiceNumber || "N/A",
-      "Date": new Date(selectedTransaction.createdAt).toLocaleDateString(),
-      "Time": new Date(selectedTransaction.createdAt).toLocaleTimeString(),
+      Date: new Date(selectedTransaction.createdAt).toLocaleDateString(),
+      Time: new Date(selectedTransaction.createdAt).toLocaleTimeString(),
       "Client Type": "Walk-in client",
       "Client Name": selectedTransaction.walkInClientName || "N/A",
-      "Phone": selectedTransaction.walkInClient?.phone || "Not provided",
+      Phone: selectedTransaction.walkInClient?.phone || "Not provided",
       "Registration Status": "Unregistered",
       "Transaction Type": selectedTransaction.type || "N/A",
-      "Amount": selectedTransaction.total,
+      Amount: selectedTransaction.total,
       "Processed By": selectedTransaction.userId?.name || "N/A",
       "Total Discount": selectedTransaction?.discount || 0,
       "Items Count": selectedTransaction.items?.length || 0,
@@ -139,7 +151,10 @@ const WalkinTransactionModal = () => {
     const worksheet = XLSX.utils.json_to_sheet([finalData]);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Walk-in Transaction");
-    XLSX.writeFile(workbook, `walkin_transaction_${selectedTransaction.invoiceNumber}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `walkin_transaction_${selectedTransaction.invoiceNumber}.xlsx`
+    );
     toast.success("Excel file downloaded successfully!");
   };
 
@@ -341,7 +356,7 @@ const WalkinTransactionModal = () => {
                 {/* total */}
                 <p className="font-medium text-sm">
                   <span className="text-[#333333]">Total Amount:</span>
-                  <span className="text-[#F95353] ml-3">
+                  <span className="text-[#1c1818] ml-3">
                     {formatCurrency(selectedTransaction.total)}
                   </span>
                 </p>
