@@ -313,7 +313,7 @@ const UserOverview = () => {
         </p>
       </div>
 
-      <div className="w-full pl-3 pr-5 md:pr-8 xl:pr-6 mt-4">
+      <div className="w-full pl-3 pr-0 mt-4">
         <div className="w-full max-w-full">
           <UserTable users={filteredUsers} onEditUser={handleEditUser} />
         </div>
