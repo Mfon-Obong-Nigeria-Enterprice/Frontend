@@ -337,7 +337,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                     </React.Fragment>
                   ))}
 
-                  <TableCell className="whitespace-nowrap">
+                  <TableCell className="whitespace-nowrap pl-2">
                     <Popover
                       open={popoverOpen === user._id}
                       onOpenChange={(open) =>
@@ -346,7 +346,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                     >
                       <PopoverTrigger asChild>
                         <button
-                          className="ml-12 p-1 rounded hover:bg-muted border border-[#E0E0E0]"
+                          className="p-1 rounded hover:bg-muted border border-[#E0E0E0]"
                           aria-label="User actions"
                         >
                           <MoreVertical className="size-4 text-muted-foreground" />
