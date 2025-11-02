@@ -153,7 +153,7 @@ const Header = ({ userRole }: HeaderProps) => {
     <>
       <header className="h-14 sm:h-16 fixed top-0 right-0 left-0 z-50 flex justify-between items-center py-3 bg-white border border-[#F5F5F5] px-3">
         <div>
-          <div className="hidden md:flex ">
+          <div className="hidden md:flex max-[883px]:pl-8 ">
             <Logo />
           </div>
         </div>

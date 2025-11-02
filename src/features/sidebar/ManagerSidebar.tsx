@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 
 // icons
 import {
@@ -102,10 +102,10 @@ const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
                             : "bg-[#F4E8E7] text-[#333333] "
                         }`}
                     >
-                      <Link to={item.url}>
+                      <NavLink to={item.url}>
                         <item.icon />
                         <span>{item.title}</span>
-                      </Link>
+                      </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
