@@ -447,9 +447,11 @@ const AdminInventory = () => {
                   <SelectContent>
                     <SelectItem value="all">All prices</SelectItem>
                     <SelectItem value="under-1000">Under ₦1,000</SelectItem>
-                    <SelectItem value="1000-5000">₦1,000-₦5,000</SelectItem>
-                    <SelectItem value="5000-10000">₦5,000-₦10,000</SelectItem>
-                    <SelectItem value="10000-50000">₦10,000-₦50,000</SelectItem>
+                    <SelectItem value="1000-5000">₦1,000 - ₦5,000</SelectItem>
+                    <SelectItem value="5000-10000">₦5,000 - ₦10,000</SelectItem>
+                    <SelectItem value="10000-50000">
+                      ₦10,000 - ₦50,000
+                    </SelectItem>
                     <SelectItem value="above-50000">Above ₦50,000</SelectItem>
                   </SelectContent>
                 </Select>
