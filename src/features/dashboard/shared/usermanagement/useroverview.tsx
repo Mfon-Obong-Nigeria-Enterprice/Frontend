@@ -207,18 +207,18 @@ const UserOverview = () => {
   return (
     <main className="w-full">
       {/* heading */}
-      <div className="flex items-center justify-between mt-[30px] md:mt-[39px] xl:mt-[47px] mx-5 md:mx-5">
+      <div className="flex items-center justify-between mt-[30px] md:mt-[39px] xl:mt-[47px] ml-0 mr-5 md:mr-8 xl:mr-3 pl-3">
         <h2 className="text-xl md:text-2xl lg:text-[1.75rem] font-bold font-Arial text-[#333333]">
           User List
         </h2>
 
         {/* hold refresh and button for maintainer */}
-        <div className="flex flex-col md:flex-row gap-5">
+        <div className="flex flex-col md:flex-row gap-5 mr-3">
           <div className="flex items-center gap-1">
             <Popover>
               <PopoverTrigger asChild>
                 <button
-                  className="ml-1 p-1 rounded hover:bg-muted border border-[#E0E0E0]"
+                  className="p-1 rounded hover:bg-muted border border-[#E0E0E0]"
                   aria-label="More options"
                 >
                   <MoreVertical className="size-5 text-muted-foreground" />
@@ -291,7 +291,7 @@ const UserOverview = () => {
       </div>
 
       {/* Use the UserSearchList component */}
-      <div className="bg-white mt-8 mx-5 md:mx-8 xl:mx-3">
+      <div className="bg-white mt-8 ml-0 mr-5 md:mr-8 xl:mr-3">
         <h2 className="p-3 font-medium">Filter & Controls</h2>
         <UserSearchList
           onSearch={handleSearch}
@@ -303,7 +303,7 @@ const UserOverview = () => {
       </div>
 
       {/* User summary */}
-      <div className="mt-4 px-5 md:px-8 xl:px-6">
+      <div className="mt-4 pl-3 pr-5 md:pr-8 xl:pr-6">
         <p className="text-sm text-gray-600">
           Showing {filteredUsers.length} users
           {filters.dateRange !== "all" && ` created in ${filters.dateRange}`}
@@ -313,8 +313,8 @@ const UserOverview = () => {
         </p>
       </div>
 
-      <div className="w-full px-5 md:px-8 xl:px-6 mt-4">
-        <div className="w-full max-w-full overflow-x-auto">
+      <div className="w-full pl-3 pr-0 mt-4">
+        <div className="w-full max-w-full">
           <UserTable users={filteredUsers} onEditUser={handleEditUser} />
         </div>
       </div>
