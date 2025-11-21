@@ -26,7 +26,7 @@ export function DateFromToPicker({
     field: "from" | "to",
     selectedDate: Date | undefined
   ) => {
-    onDateChange({ ...date, [field]: selectedDate });
+    onDateChange({ from: undefined, ...date, [field]: selectedDate });
   };
 
   return (
@@ -82,7 +82,7 @@ export function DateFromToPicker({
               mode="single"
               selected={date?.to}
               onSelect={(d) => handleDateSelect("to", d)}
-              disabled={{ before: date?.from }}
+              disabled={date?.from ? { before: date.from } : undefined}
               initialFocus
             />
           </PopoverContent>

@@ -6,7 +6,7 @@ import {
   getTransactionDateString,
   getTransactionTimeString,
 } from "@/utils/transactions";
-import { ArrowRight, Calendar, ChevronDown } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useMemo } from "react";
 
 interface clientTrasactionDetailsProps {
@@ -69,26 +69,26 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
         <h2 className="text-[#333333] font-normal text-base mb-4">Returned Products</h2>
         <div className="bg-[#F9FAFB] rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[800px]">
+            <table className="w-full text-left ">
               <thead>
-                <tr className="bg-[#F9FAFB]">
-                  <th className="px-6 py-4 text-sm font-normal text-[#333333]">Quantity</th>
-                  <th className="px-6 py-4 text-sm font-normal text-[#333333]">Unit Price</th>
-                  <th className="px-6 py-4 text-sm font-normal text-[#333333]">Amount Return</th>
-                  <th className="px-6 py-4 text-sm font-normal text-[#333333]">Product</th>
-                  <th className="px-6 py-4 text-sm font-normal text-[#333333]">Reason</th>
-                  <th className="px-6 py-4 text-sm font-normal text-[#333333]">Date</th>
+                <tr className="bg-[#F5F5F5]">
+                  <th className="px-2 py-4 text-sm font-normal text-[#333333]">Quantity</th>
+                  <th className="px-2 py-4 text-sm font-normal text-[#333333]">Unit Price</th>
+                  <th className="px-2 py-4 text-sm font-normal text-[#333333]">Amount Return</th>
+                  <th className="px-2 py-4 text-sm font-normal text-[#333333]">Product</th>
+                  <th className="px-2 py-4 text-sm font-normal text-[#333333]">Reason</th>
+                  <th className="px-2 py-4 text-sm font-normal text-[#333333]">Date</th>
                 </tr>
               </thead>
               <tbody>
                 {/* Static Row from Screenshot - Data not available in API response yet */}
                 <tr className="bg-[#FFE9E9]">
-                  <td className="px-6 py-4 text-sm text-[#666666]">10 units</td>
-                  <td className="px-6 py-4 text-sm text-[#666666]">₦8600/bags</td>
-                  <td className="px-6 py-4 text-sm text-[#666666]">₦28,000</td>
-                  <td className="px-6 py-4 text-sm text-[#666666]">Roofing Sheet</td>
-                  <td className="px-6 py-4 text-sm text-[#666666]">Damaged</td>
-                  <td className="px-6 py-4 text-sm text-[#666666]">May 27, 2025</td>
+                  <td className="px-2 py-4 text-sm text-[#666666]">10 units</td>
+                  <td className="px-2 py-4 text-sm text-[#666666]">₦8600/bags</td>
+                  <td className="px-2 py-4 text-sm text-[#666666]">₦28,000</td>
+                  <td className="px-2 py-4 text-sm text-[#666666]">Roofing Sheet</td>
+                  <td className="px-2 py-4 text-sm text-[#666666]">Damaged</td>
+                  <td className="px-2 py-4 text-sm text-[#666666]">May 27, 2025</td>
                 </tr>
               </tbody>
             </table>

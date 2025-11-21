@@ -590,7 +590,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                     Staff member
                   </label>
                   <Select value={staffFilter} onValueChange={setStaffFilter}>
-                    <SelectTrigger className="  sm:w-[126px] md:w-[126px] transition-all w-full">
+                    <SelectTrigger className="sm:w-[126px] md:w-[126px] transition-all w-full">
                       <SelectValue placeholder="All Staff" />
                     </SelectTrigger>
                     <SelectContent>
