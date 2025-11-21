@@ -24,7 +24,7 @@ import { mergeTransactionsWithClients } from "@/utils/mergeTransactionsWithClien
 import { ClientTransactionDetails } from "@/components/clients/ClientTransactionDetails";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ClientDiscountDetails from "@/components/clients/ClientDiscountDetails";
-import DateRangePicker from "@/components/DateRangePicker";
+import { DateFromToPicker } from "@/components/DateFromToPicker";
 
 import { useAuthStore } from "@/stores/useAuthStore";
 import DeleteClientDialog from "@/features/dashboard/manager/component/DeleteClientDialog";
@@ -546,7 +546,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         </div>
 
         {/* section by the right */}
-        <section className=" bg-white py-8 px-5 rounded lg:col-span-3">
+        <section className="lg:-translate-x-28 max-w-[793px] bg-white py-8 px-5 rounded lg:col-span-3">
           <Tabs className="space-y-4" defaultValue="clientTransaction">
             <TabsList className="flex gap-2 lg:justify-start justify-evenly ">
               <TabsTrigger value="clientTransaction">Transaction</TabsTrigger>
@@ -555,32 +555,28 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
             <TabsContent value="clientTransaction">
               {/* data */}
-              <div className=" flex justify-start items-center flex-wrap w-full gap-4 md:gap-1  lg:gap-4 mb-10">
-                <div className="flex flex-col sm:w-[230px] md:w-[210px] transition-all w-full ">
-                  <label className="text-xs font-medium text-gray-600 ">
-                    Date range
-                  </label>
-                  <div className="">
-                    <DateRangePicker
-                      value={dateRangeFilter}
-                      onChange={(range) => setDateRangeFilter(range)}
-                      className="relative w-full border rounded-lg p-2 text-sm !bg-[#faf6f6] !border-[#cacacaef] text-black h-9"
-                    />
-                  </div>
+              <div className="md:flex justify-start items-center w-full gap-4 md:gap-1  lg:gap-2 mb-10">
+                <div className="flex flex-col justify-end transition-all w-full h-full">
+                  <DateFromToPicker
+                    date={dateRangeFilter}
+                    onDateChange={(range) =>
+                      setDateRangeFilter(range || { from: undefined, to: undefined })
+                    }
+                  />
                 </div>
 
-                <div className="flex flex-col  sm:w-[230px] md:w-[210px] transition-all w-full ">
-                  <label className="text-xs font-medium text-gray-600">
+                <div className="flex flex-col  sm:w-[179px] md:w-[179px] transition-all w-full ">
+                  <label className="mb-2 text-xs font-medium text-[#7D7D7D]">
                     Transaction type
                   </label>
                   <Select
                     value={transactionTypeFilter}
                     onValueChange={setTransactionTypeFilter}
                   >
-                    <SelectTrigger className="  sm:w-[240px] md:w-[210px] transition-all w-full">
+                    <SelectTrigger className="sm:w-[179px] md:w-[179px] transition-all w-full">
                       <SelectValue placeholder="All Transactions" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="text-[#444444]">
                       <SelectItem value="all">All transactions</SelectItem>
                       <SelectItem value="purchase">Purchase</SelectItem>
                       <SelectItem value="pick-up">Pick-up</SelectItem>
@@ -590,11 +586,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                 </div>
 
                 <div className="flex flex-col  sm:w-[230px] md:w-[210px] transition-all w-full">
-                  <label className="text-xs font-medium text-gray-600">
+                  <label className="mb-2 text-xs font-medium text-[#7D7D7D]">
                     Staff member
                   </label>
                   <Select value={staffFilter} onValueChange={setStaffFilter}>
-                    <SelectTrigger className="  sm:w-[230px] md:w-[210px] transition-all w-full">
+                    <SelectTrigger className="  sm:w-[126px] md:w-[126px] transition-all w-full">
                       <SelectValue placeholder="All Staff" />
                     </SelectTrigger>
                     <SelectContent>
@@ -608,9 +604,9 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                   </Select>
                 </div>
 
-                <div className="flex flex-col pt-0 sm:pt-4 items-center sm:w-[230px] md:w-[210px] transition-all w-full">
+                <div className="flex flex-col md:items-center sm:w-[101px] md:w-[101px] lg:w-[101px] transition-all w-full">
                   <Button
-                    className="  bg-[#2ECC71] hover:bg-[#27ae60] text-white font-medium  sm:w-[230px] md:w-[210px] transition-all w-full "
+                    className="mt-6 max-w-[101px]  bg-[#2ECC71] hover:bg-[#27ae60] text-white font-medium  sm:w-[230px] md:w-[210px] transition-all w-full "
                     onClick={handleApplyFilters}
                   >
                     Apply filters
@@ -619,7 +615,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
               </div>
 
               {/* Transaction summary */}
-              <div className="mb-6 p-4 bg-[#F5F5F5] rounded-lg">
+              {/* <div className="mb-6 p-4 bg-[#F5F5F5] rounded-lg">
                 <p className="text-sm text-[#7D7D7D]">
                   Showing {clientTransactions.length} transaction
                   {clientTransactions.length !== 1 ? "s" : ""}
@@ -627,7 +623,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                     ` (${transactionTypeFilter})`}
                   {staffFilter !== "all-staff" && ` by ${staffFilter}`}
                 </p>
-              </div>
+              </div> */}
 
               <ClientTransactionDetails
                 clientTransactions={clientTransactions}

@@ -1,14 +1,12 @@
 import type { Transaction } from "@/types/transactions";
 import { calculateTransactionsWithBalance } from "@/utils/calculateOutstanding";
-import { balanceTextClass } from "@/utils/format";
 import { formatCurrency } from "@/utils/formatCurrency";
-import { getTypeDisplay, getTypeStyles } from "@/utils/helpersfunction";
 import {
   getTransactionDate,
   getTransactionDateString,
   getTransactionTimeString,
 } from "@/utils/transactions";
-import { ArrowRight, X } from "lucide-react";
+import { ArrowRight, Calendar, ChevronDown } from "lucide-react";
 import { useMemo } from "react";
 
 interface clientTrasactionDetailsProps {
@@ -16,12 +14,37 @@ interface clientTrasactionDetailsProps {
   client: { balance: number };
 }
 
-export const ClientTransactionDetails: React.FC<
-  clientTrasactionDetailsProps
-> = ({ clientTransactions, client }) => {
-  //
+// Helper to get styles based on transaction type matching the screenshots
+const getTypeStyles = (type: string) => {
+  switch (type) {
+    case "PURCHASE":
+      return {
+        badge: "bg-[#FFECEC] text-[#F95353]",
+        amount: "text-[#333333]", // Standard
+      };
+    case "DEPOSIT":
+      return {
+        badge: "bg-[#E2F3EB] text-[#2ECC71]",
+        amount: "text-[#2ECC71]", // Green text for positive impact
+      };
+    case "PICKUP":
+      return {
+        badge: "bg-[#FFF8E1] text-[#FFA500]",
+        amount: "text-[#333333]",
+      };
+    default:
+      return {
+        badge: "bg-gray-100 text-gray-600",
+        amount: "text-[#333333]",
+      };
+  }
+};
+
+export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = ({
+  clientTransactions,
+  client,
+}) => {
   const transactionWithBalance = useMemo(() => {
-    // Use the client's balance from the client object
     const transactionsWithBalance = calculateTransactionsWithBalance(
       clientTransactions,
       client
@@ -31,262 +54,302 @@ export const ClientTransactionDetails: React.FC<
     return transactionsWithBalance.sort((a, b) => {
       const dateA = getTransactionDate(a).getTime();
       const dateB = getTransactionDate(b).getTime();
-      return dateB - dateA; // Descending order (newest first)
+      return dateB - dateA;
     });
   }, [clientTransactions, client]);
 
   return (
-    <div>
-      {/* display data */}
+    <div className="font-sans text-[#333333]">
+      
+      {/* --- 1. FILTERS SECTION (New) --- */}
+      
+
+      {/* --- 2. RETURNED PRODUCTS SECTION (New) --- */}
+      <div className="mb-10">
+        <h2 className="text-[#333333] font-normal text-base mb-4">Returned Products</h2>
+        <div className="bg-[#F9FAFB] rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left min-w-[800px]">
+              <thead>
+                <tr className="bg-[#F9FAFB]">
+                  <th className="px-6 py-4 text-sm font-normal text-[#333333]">Quantity</th>
+                  <th className="px-6 py-4 text-sm font-normal text-[#333333]">Unit Price</th>
+                  <th className="px-6 py-4 text-sm font-normal text-[#333333]">Amount Return</th>
+                  <th className="px-6 py-4 text-sm font-normal text-[#333333]">Product</th>
+                  <th className="px-6 py-4 text-sm font-normal text-[#333333]">Reason</th>
+                  <th className="px-6 py-4 text-sm font-normal text-[#333333]">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* Static Row from Screenshot - Data not available in API response yet */}
+                <tr className="bg-[#FFE9E9]">
+                  <td className="px-6 py-4 text-sm text-[#666666]">10 units</td>
+                  <td className="px-6 py-4 text-sm text-[#666666]">₦8600/bags</td>
+                  <td className="px-6 py-4 text-sm text-[#666666]">₦28,000</td>
+                  <td className="px-6 py-4 text-sm text-[#666666]">Roofing Sheet</td>
+                  <td className="px-6 py-4 text-sm text-[#666666]">Damaged</td>
+                  <td className="px-6 py-4 text-sm text-[#666666]">May 27, 2025</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* --- 3. TRANSACTION LIST (Existing Logic) --- */}
       {transactionWithBalance.length === 0 ? (
         <p className="text-center text-sm text-[#7D7D7D] py-10">
           No transactions found for this client
         </p>
       ) : (
-        <ul className="space-y-10">
-          {transactionWithBalance.map((txn, i) => (
-            <li
-              key={`${txn._id}-${getTransactionDateString(txn)}-${i}`}
-              className="border rounded-lg px-5 py-3 shadow"
-            >
-              {/* type, date and time, balance */}
-              <header className="py-4 border-b border-[#d7d7d7] flex justify-between flex-wrap">
-                <div className="flex gap-3 items-center mb-2 sm:mb-0">
-                  <div>
-                    {" "}
+        <div className="flex flex-col gap-6">
+          {transactionWithBalance.map((txn, i) => {
+            const styles = getTypeStyles(txn.type);
+            const isCredit = txn.type === "DEPOSIT";
+
+            return (
+              <div
+                key={`${txn._id}-${getTransactionDateString(txn)}-${i}`}
+                className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 md:p-6"
+              >
+                {/* --- HEADER --- */}
+                <div className="flex flex-wrap justify-between items-start md:items-center mb-6 gap-4">
+                  <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                    {/* Type Badge */}
                     <span
-                      className={`text-xs p-[6px] rounded-lg ${getTypeStyles(
-                        txn.type
-                      )}`}
+                      className={`${styles.badge} px-3 py-1 rounded-full text-xs font-medium w-fit uppercase`}
                     >
-                      {getTypeDisplay(txn.type)}
+                      {txn.type}
                     </span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-xs">
-                      {getTransactionDateString(txn)}
-                    </span>
-                    <span className="text-xs">
-                      {getTransactionTimeString(txn)}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <div>
-                      {txn.discount &&
-                        (txn.type === "PICKUP" || txn.type === "PURCHASE") && (
-                          <p className="text-[#2ECC71] font-normal font-Inter text-lg">
-                            {formatCurrency(txn.discount)} saved
-                          </p>
-                        )}
+
+                    {/* Date & Time */}
+                    <div className="flex flex-col">
+                      <span className="text-[#333333] text-sm font-medium">
+                        {getTransactionDateString(txn)}
+                      </span>
+                      <span className="text-[#7D7D7D] text-[10px] md:text-xs">
+                        {getTransactionTimeString(txn)}
+                      </span>
                     </div>
-                    <div>
-                      {(txn?.total >= 0 && txn.type === "PICKUP") ||
-                      txn.type === "PURCHASE" ? (
-                        <p className="text-[#7D7D7D] text-sm font-Inter">
-                          {(
-                            ((txn?.discount ?? 0) / (txn?.subtotal ?? 0)) *
-                            100
-                          ).toFixed(1)}
+
+                    {/* Discount Label (Desktop only) */}
+                    {txn.discount && txn.discount > 0 && (
+                      <span className="hidden md:inline text-[#2ECC71] text-sm font-medium">
+                        {formatCurrency(txn.discount)} saved{" "}
+                        <span className="text-[#666666] font-normal">
+                          {txn.subtotal
+                            ? ((txn.discount / txn.subtotal) * 100).toFixed(1)
+                            : 0}
                           % discount
-                        </p>
-                      ) : null}
+                        </span>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Total & Actions */}
+                  <div className="flex items-center gap-4 md:gap-6 ml-auto md:ml-0">
+                    <div className="text-right">
+                      <span className="text-[#7D7D7D] text-xs block">
+                        Total:
+                      </span>
+                      <span
+                        className={`text-lg md:text-xl font-bold ${styles.amount}`}
+                      >
+                        {isCredit ? "+" : ""}
+                        {formatCurrency(txn.total || 0)}
+                      </span>
+                    </div>
+                    {/* Only show Return button for tangible transactions */}
+                    {(txn.type === "PURCHASE" || txn.type === "PICKUP") && (
+                      <button className="border border-gray-300 text-[#444444] px-4 py-1.5 rounded-md text-sm font-medium hover:bg-gray-50 bg-white">
+                        Return
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* --- MAIN GRID (Balance, Details, Process) --- */}
+                <div className="grid grid-cols-1 md:grid-cols-[40%_30%_30%] gap-6 mb-6">
+                  {/* 1. Balance Change */}
+                  <div>
+                    <h3 className="text-[#333333] text-sm font-medium mb-3">
+                      Balance Change
+                    </h3>
+                    <div className="bg-[#F9FAFB] rounded-lg p-4 flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-[#7D7D7D] text-[10px] font-medium mb-1">
+                          Previous
+                        </span>
+                        <span className="text-[#444444] text-sm font-medium">
+                          {formatCurrency(txn.balanceBefore)}
+                        </span>
+                      </div>
+                      <ArrowRight className="text-[#9CA3AF]" size={16} />
+                      <div className="flex flex-col text-right">
+                        <span className="text-[#7D7D7D] text-[10px] font-medium mb-1">
+                          New
+                        </span>
+                        <span className="text-[#444444] text-sm font-medium">
+                          {formatCurrency(txn.balanceAfter)}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <p className={`${balanceTextClass(txn.balanceAfter)}`}>
-                    {formatCurrency(txn.balanceAfter)}
-                  </p>
+                  {/* 2. Transaction Details */}
+                  <div>
+                    <h3 className="text-[#333333] text-sm font-medium mb-3">
+                      Transaction Details
+                    </h3>
+                    <ul className="space-y-1.5">
+                      <li className="text-sm text-[#666666]">
+                        <span className="font-medium text-[#333333]">
+                          Amount:{" "}
+                        </span>
+                        {formatCurrency(txn.total || 0)}
+                      </li>
+                      <li className="text-sm text-[#666666]">
+                        <span className="font-medium text-[#333333]">
+                          Method:{" "}
+                        </span>
+                        {txn.paymentMethod || "N/A"}
+                      </li>
+                      {txn.transportFare > 0 && (
+                        <li className="text-sm text-[#666666]">
+                          <span className="font-medium text-[#333333]">
+                            Transport:{" "}
+                          </span>
+                          {formatCurrency(txn.transportFare)}
+                        </li>
+                      )}
+                      {txn.loadingAndOffloading > 0 && (
+                        <li className="text-sm text-[#666666]">
+                          <span className="font-medium text-[#333333]">
+                            Loading/Offloading:{" "}
+                          </span>
+                          {formatCurrency(txn.loadingAndOffloading)}
+                        </li>
+                      )}
+                      {txn.loading > 0 && (
+                        <li className="text-sm text-[#666666]">
+                          <span className="font-medium text-[#333333]">
+                            Loading:{" "}
+                          </span>
+                          {formatCurrency(txn.loading)}
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+
+                  {/* 3. Process By */}
+                  <div>
+                    <h3 className="text-[#333333] text-sm font-medium mb-3">
+                      Process By
+                    </h3>
+                    <ul className="space-y-2">
+                      <li className="text-sm text-[#666666]">
+                        <span className="font-medium text-[#333333]">
+                          Staff:{" "}
+                        </span>
+                        {txn.userId?.name || "Unknown"}
+                      </li>
+                      {txn.invoiceNumber && (
+                        <li>
+                          <span className="bg-[#E0F2FE] text-[#0EA5E9] px-2 py-0.5 rounded text-xs font-medium">
+                            {txn.invoiceNumber}
+                          </span>
+                        </li>
+                      )}
+                      {txn.waybillNumber && (
+                        <li>
+                          <span className="bg-[#E0F2FE] text-[#0EA5E9] px-2 py-0.5 rounded text-xs font-medium">
+                            {txn.waybillNumber}
+                          </span>
+                        </li>
+                      )}
+                      {txn.reference && (
+                        <li className="text-xs text-[#7D7D7D]">
+                          Ref: {txn.reference}
+                        </li>
+                      )}
+                    </ul>
+                  </div>
                 </div>
-              </header>
 
-              <div className="w-full max-w-7xl mx-auto py-4">
-                {/* Single card containing all transaction details sections */}
-                <section className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="px-4 sm:px-3 py-5 sm:py-6">
-                    {/* Balance Change / Transaction Details / Processed By container
-          - stack on small screens, 40% / 30% / 30% on md+ screens */}
-                    <div className="flex flex-wrap gap-4">
-                      {/* 1) Balance Change (40% on md+) */}
-                      <div className="basis-full md:basis-[40%]">
-                        <h6 className="text-[#333333] font-medium text-base mb-3">
-                          Balance Change
-                        </h6>
+                {/* --- FOOTER SECTIONS (Conditional) --- */}
 
-                        <div className="bg-[#F5F5F5] rounded-lg py-3 sm:py-4 px-3 sm:px-4">
-                          <div className="flex justify-between items-center mb-2">
-                            <p className="text-xs text-[#7D7D7D] font-medium">
-                              Previous
-                            </p>
-                            <p className="text-xs sm:text-sm text-[#7D7D7D] font-medium">
-                              New
-                            </p>
-                          </div>
-
-                          <div className="flex justify-between items-center">
-                            <span className="text-[#444444] text-sm font-medium flex-1 text-left truncate md:text-clip md:whitespace-normal">
-                              {formatCurrency(txn.balanceBefore)}
-                            </span>
-                            <span className="mx-2 sm:mx-3 flex-shrink-0">
-                              <ArrowRight size={14} className="text-[#666]" />
-                            </span>
-                            <span className="text-[#444444] text-sm font-medium flex-1 text-right truncate md:text-clip md:whitespace-normal">
-                              {formatCurrency(txn.balanceAfter)}
-                            </span>
-                          </div>
+                {/* A. Product Purchase Table */}
+                {(txn.type === "PURCHASE" || txn.type === "PICKUP") &&
+                  txn.items &&
+                  txn.items.length > 0 && (
+                    <div className="border-t border-gray-100 pt-6">
+                      <h3 className="text-[#333333] text-sm font-medium mb-4">
+                        Product {txn.type === "PICKUP" ? "Pickup" : "Purchase"}:
+                      </h3>
+                      <div className="bg-[#F9FAFB] rounded-lg overflow-hidden">
+                        {/* Table Header */}
+                        <div className="grid grid-cols-[1fr_1fr_1fr_auto] md:grid-cols-4 gap-4 p-4 bg-[#F5F5F5] border-b border-gray-100">
+                          <span className="text-xs md:text-sm font-medium text-[#333333]">
+                            Quantity
+                          </span>
+                          <span className="text-xs md:text-sm font-medium text-[#333333]">
+                            Unit Price
+                          </span>
+                          <span className="text-xs md:text-sm font-medium text-[#333333]">
+                            Product
+                          </span>
+                          <span className="text-xs md:text-sm font-medium text-[#333333] text-right">
+                            Subtotal
+                          </span>
                         </div>
-                      </div>
-
-                      {/* 2) Transaction Details (30% on md+) */}
-                      <div className="basis-full md:basis-[27%]">
-                        <h6 className="text-[#333333] font-medium text-base mb-3">
-                          Transaction Details
-                        </h6>
-                        <ul className="space-y-2 sm:space-y-3 bg-white">
-                          <li className="font-medium text-[#444444] text-sm ">
-                            Amount:{" "}
-                            <span className="font-normal">
-                              {formatCurrency(txn.total || 0)}
-                            </span>
-                          </li>
-                          <li className="font-medium text-[#444444] text-sm ">
-                            Amount Paid:{" "}
-                            <span className="font-normal">
-                              {formatCurrency(txn.amountPaid || 0)}
-                            </span>
-                          </li>
-
-                          <li className="font-medium text-[#444444] text-sm ">
-                            Method:{" "}
-                            <span className="font-normal">
-                              {txn.paymentMethod || "N/A"}
-                            </span>
-                          </li>
-                          {txn.reference && (
-                            <li className="font-medium text-[#444444] text-sm ">
-                              Reference:{" "}
-                              <span className="font-normal text-xs bg-gray-100 px-2 py-1 rounded">
-                                {txn.reference}
-                              </span>
-                            </li>
-                          )}
-
-                          {/* Show item count for PICKUP/PURCHASE transactions */}
-                          {(txn.type === "PICKUP" ||
-                            txn.type === "PURCHASE") && (
-                            <li className="font-medium text-[#444444] text-sm">
-                              Items:{" "}
-                              <span className="font-normal">
-                                {txn.items?.length || 0} item(s)
-                              </span>
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-
-                      {/* 3) Processed By (30% on md+) */}
-                      <div className="basis-full md:basis-[27%]">
-                        <h6 className="text-[#333333] font-medium text-base mb-3">
-                          Processed By
-                        </h6>
-                        <ul className="space-y-2 sm:space-y-3">
-                          <li className="flex items-center gap-2">
-                            <div className="flex flex-col">
-                              <span className="font-medium text-[#444444] text-sm">
-                                {txn.userId?.name || "Unknown Staff"}
-                              </span>
-                            </div>
-                          </li>
-
-                          {/* Invoice and Waybill numbers */}
-                          <div className="flex flex-col gap-2 mt-1">
-                            {txn.invoiceNumber &&
-                              (txn.type === "PICKUP" ||
-                                txn.type === "PURCHASE") && (
-                                <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center w-fit">
-                                  <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
-                                    {txn.invoiceNumber}
-                                  </span>
-                                </div>
-                              )}
-                            {txn.waybillNumber && (
-                              <div className="inline-block rounded-sm bg-[#E2F3EB] px-2 py-1 text-center w-fit">
-                                <span className="text-[#3D80FF] text-xs sm:text-sm font-medium">
-                                  {txn.waybillNumber}
+                        {/* Table Body */}
+                        <div className="p-4 grid grid-cols-1 gap-2">
+                          {txn.items.map((item, index) => (
+                            <div key={`${item.productId}-${index}`}>
+                              <div className="grid grid-cols-[1fr_1fr_1fr_auto] md:grid-cols-4 gap-4 items-center">
+                                <span className="text-xs md:text-sm text-[#444444]">
+                                  {item.quantity}{" "}
+                                  {item.unit?.split(" ")[0]?.toLowerCase() ||
+                                    "units"}
+                                </span>
+                                <span className="text-xs md:text-sm text-[#444444] font-medium">
+                                  {formatCurrency(item.unitPrice)}/
+                                  {item.unit?.split(" ")[0]?.toLowerCase() ||
+                                    "unit"}
+                                </span>
+                                <span className="text-xs md:text-sm text-[#444444]">
+                                  {item.productName}
+                                </span>
+                                <span className="text-xs md:text-sm text-[#444444] text-right">
+                                  Subtotal: {formatCurrency(item.subtotal)}
                                 </span>
                               </div>
-                            )}
-                          </div>
-                        </ul>
+                              {index < txn.items.length - 1 && (
+                                <div className="h-[1px] bg-gray-100 my-2"></div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </section>
-              </div>
+                  )}
 
-              {/* Footer section - conditional rendering based on transaction type */}
-              {txn.type === "DEPOSIT" ? (
-                <footer className="bg-[#F5F5F5] py-4 px-6 rounded-[8px] ">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h6 className="text-base text-[#333333] font-medium mb-2">
-                        Payment Details
-                      </h6>
-                      <p className="text-sm text-[#666666]">
-                        {txn.description || "Debt Payment Received"}
+                {/* B. Description/Note Banner */}
+                {(txn.type === "DEPOSIT" || txn.description) &&
+                  !txn.items?.length && (
+                    <div className="bg-[#F5F5F5] rounded-md p-4 mt-4">
+                      <p className="text-[#444444] text-sm font-medium">
+                        {txn.type === "DEPOSIT" ? "Deposit Details" : "Note"}
                       </p>
-                      {txn.reference && (
-                        <p className="text-xs text-[#7D7D7D] mt-1">
-                          Reference: {txn.reference}
-                        </p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-[#7D7D7D]">Processed by:</p>
-                      <p className="text-sm font-medium text-[#333333]">
-                        {txn.userId?.name || "Unknown"}
+                      <p className="text-[#7D7D7D] text-xs mt-1">
+                        {txn.description || "Customer deposit"}
                       </p>
                     </div>
-                  </div>
-                </footer>
-              ) : (txn.type === "PICKUP" || txn.type === "PURCHASE") &&
-                txn.items?.length > 0 ? (
-                <footer className="space-y-3 border-t-[1px] border-[#d7d7d7] ">
-                  <div className="flex justify-between items-center px-3 pt-8">
-                    <h6 className="text-base text-[#333333] font-normal">
-                      Product{" "}
-                      {txn.type === "PICKUP" ? "Picked Up" : "Purchased"}:
-                    </h6>
-                  </div>
-                  <ul className="flex flex-wrap gap-4 items-start ">
-                    {txn.items.map((item, itemIndex) => (
-                      <li
-                        key={item.productId || itemIndex}
-                        className="flex-1 min-w-full md:min-w-[150px] max-w-[200px] bg-[#F5F5F5] py-2.5 px-3 border-l-4 border-[#2ECC71] rounded-[8px]"
-                      >
-                        <p className="text-xs font-medium text-[#333333]">
-                          {item.unit} {item.productName}
-                        </p>
-                        <p className="flex items-center gap-1.5 text-[9px] text-[#7D7D7D]">
-                          {item.unit} <X size={10} /> {item.quantity}
-                        </p>
-                        <p className="text-[13px] font-medium text-[#2ECC71]">
-                          {formatCurrency(item.unitPrice)}
-                        </p>
-                        {item.subtotal && (
-                          <p className="text-[11px] text-[#666666]">
-                            Subtotal: {formatCurrency(item.subtotal)}
-                          </p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </footer>
-              ) : null}
-            </li>
-          ))}
-        </ul>
+                  )}
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
