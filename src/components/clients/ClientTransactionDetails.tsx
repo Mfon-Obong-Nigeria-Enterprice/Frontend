@@ -19,17 +19,17 @@ const getTypeStyles = (type: string) => {
   switch (type) {
     case "PURCHASE":
       return {
-        badge: "bg-[#FFECEC] text-[#F95353]",
+        badge: "bg-[#FFCACA] text-[#F95353] border border-[#F95353]",
         amount: "text-[#333333]", // Standard
       };
     case "DEPOSIT":
       return {
-        badge: "bg-[#E2F3EB] text-[#2ECC71]",
+        badge: "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]",
         amount: "text-[#2ECC71]", // Green text for positive impact
       };
     case "PICKUP":
       return {
-        badge: "bg-[#FFF8E1] text-[#FFA500]",
+        badge: "bg-[#FFF8E1] text-[#FFA500] border border-[#FFA500]",
         amount: "text-[#333333]",
       };
     default:
@@ -65,7 +65,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
       
 
       {/* --- 2. RETURNED PRODUCTS SECTION (New) --- */}
-      <div className="mb-10">
+      <div className="mb-10 border-b border-[#D9D9D9] pb-4 rounded-lg">
         <h2 className="text-[#333333] font-normal text-base mb-4">Returned Products</h2>
         <div className="bg-[#F9FAFB] rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
@@ -110,10 +110,10 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
             return (
               <div
                 key={`${txn._id}-${getTransactionDateString(txn)}-${i}`}
-                className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 md:p-6"
+                className="bg-white p-4 md:p-6"
               >
                 {/* --- HEADER --- */}
-                <div className="flex flex-wrap justify-between items-start md:items-center mb-6 gap-4">
+                <div className="border-b border-[#D9D9D9] pb-4 flex flex-wrap justify-between items-start md:items-center mb-6 gap-4">
                   <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
                     {/* Type Badge */}
                     <span
@@ -133,7 +133,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                     </div>
 
                     {/* Discount Label (Desktop only) */}
-                    {txn.discount && txn.discount > 0 && (
+                    {/* {txn.discount && txn.discount > 0 && (
                       <span className="hidden md:inline text-[#2ECC71] text-sm font-medium">
                         {formatCurrency(txn.discount)} saved{" "}
                         <span className="text-[#666666] font-normal">
@@ -143,7 +143,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                           % discount
                         </span>
                       </span>
-                    )}
+                    )} */}
                   </div>
 
                   {/* Total & Actions */}
@@ -153,7 +153,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                         Total:
                       </span>
                       <span
-                        className={`text-lg md:text-xl font-bold ${styles.amount}`}
+                        className={`text-lg text-[#444444] md:text-xl font-bold ${styles.amount}`}
                       >
                         {isCredit ? "+" : ""}
                         {formatCurrency(txn.total || 0)}
@@ -169,27 +169,27 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                 </div>
 
                 {/* --- MAIN GRID (Balance, Details, Process) --- */}
-                <div className="grid grid-cols-1 md:grid-cols-[40%_30%_30%] gap-6 mb-6">
+                <div className=" pb-4 grid grid-cols-1 md:grid-cols-[40%_30%_30%] gap-6 mb-6">
                   {/* 1. Balance Change */}
-                  <div>
-                    <h3 className="text-[#333333] text-sm font-medium mb-3">
+                  <div className="md:w-[204px]">
+                    <h3 className="text-[#333333] text-[16px] mb-3">
                       Balance Change
                     </h3>
-                    <div className="bg-[#F9FAFB] rounded-lg p-4 flex items-center justify-between">
+                    <div className="md:h-[49px] bg-[#F5F5F5] rounded-[8px] p-4 flex items-center justify-between">
                       <div className="flex flex-col">
-                        <span className="text-[#7D7D7D] text-[10px] font-medium mb-1">
+                        <span className="text-[#7D7D7D] text-[9px] mb-1">
                           Previous
                         </span>
-                        <span className="text-[#444444] text-sm font-medium">
+                        <span className="text-[#444444] text-[13px] font-medium">
                           {formatCurrency(txn.balanceBefore)}
                         </span>
                       </div>
-                      <ArrowRight className="text-[#9CA3AF]" size={16} />
+                      <img src="/icons/forward-arrow.svg" alt="arrow right" className="mt-4 w-[13px] h-[9px]"/>
                       <div className="flex flex-col text-right">
-                        <span className="text-[#7D7D7D] text-[10px] font-medium mb-1">
+                        <span className="text-[#7D7D7D] text-[9px] font-medium mb-1">
                           New
                         </span>
-                        <span className="text-[#444444] text-sm font-medium">
+                        <span className="text-[#444444] text-[13px] font-medium">
                           {formatCurrency(txn.balanceAfter)}
                         </span>
                       </div>
@@ -198,41 +198,41 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
 
                   {/* 2. Transaction Details */}
                   <div>
-                    <h3 className="text-[#333333] text-sm font-medium mb-3">
+                    <h3 className="text-[#444444] text-[16px] mb-3">
                       Transaction Details
                     </h3>
                     <ul className="space-y-1.5">
-                      <li className="text-sm text-[#666666]">
-                        <span className="font-medium text-[#333333]">
+                      <li className="text-sm text-[#444444]">
+                        <span className="font-medium text-[#444444]">
                           Amount:{" "}
                         </span>
                         {formatCurrency(txn.total || 0)}
                       </li>
-                      <li className="text-sm text-[#666666]">
-                        <span className="font-medium text-[#333333]">
+                      <li className="text-sm text-[#444444]">
+                        <span className="font-medium text-[#444444]">
                           Method:{" "}
                         </span>
                         {txn.paymentMethod || "N/A"}
                       </li>
                       {txn.transportFare > 0 && (
-                        <li className="text-sm text-[#666666]">
-                          <span className="font-medium text-[#333333]">
+                        <li className="text-sm text-[#444444]">
+                          <span className="font-medium text-[#444444]">
                             Transport:{" "}
                           </span>
                           {formatCurrency(txn.transportFare)}
                         </li>
                       )}
                       {txn.loadingAndOffloading > 0 && (
-                        <li className="text-sm text-[#666666]">
-                          <span className="font-medium text-[#333333]">
+                        <li className="text-sm text-[#444444]">
+                          <span className="font-medium text-[#444444]">
                             Loading/Offloading:{" "}
                           </span>
                           {formatCurrency(txn.loadingAndOffloading)}
                         </li>
                       )}
                       {txn.loading > 0 && (
-                        <li className="text-sm text-[#666666]">
-                          <span className="font-medium text-[#333333]">
+                        <li className="text-sm text-[#444444]">
+                          <span className="font-medium text-[#444444]">
                             Loading:{" "}
                           </span>
                           {formatCurrency(txn.loading)}
@@ -243,26 +243,26 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
 
                   {/* 3. Process By */}
                   <div>
-                    <h3 className="text-[#333333] text-sm font-medium mb-3">
+                    <h3 className="text-[#333333] text-[13px] mb-3">
                       Process By
                     </h3>
                     <ul className="space-y-2">
-                      <li className="text-sm text-[#666666]">
-                        <span className="font-medium text-[#333333]">
+                      <li className="text-sm text-[#444444]">
+                        <span className="font-medium text-[#444444]">
                           Staff:{" "}
                         </span>
                         {txn.userId?.name || "Unknown"}
                       </li>
                       {txn.invoiceNumber && (
                         <li>
-                          <span className="bg-[#E0F2FE] text-[#0EA5E9] px-2 py-0.5 rounded text-xs font-medium">
+                          <span className="bg-[#E2F3EB] text-[#3D80FF] px-2 py-0.5 rounded text-xs font-medium">
                             {txn.invoiceNumber}
                           </span>
                         </li>
                       )}
                       {txn.waybillNumber && (
                         <li>
-                          <span className="bg-[#E0F2FE] text-[#0EA5E9] px-2 py-0.5 rounded text-xs font-medium">
+                          <span className="bg-[#E2F3EB] text-[#3D80FF] px-2 py-0.5 rounded text-xs font-medium">
                             {txn.waybillNumber}
                           </span>
                         </li>
@@ -283,30 +283,30 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                   txn.items &&
                   txn.items.length > 0 && (
                     <div className="border-t border-gray-100 pt-6">
-                      <h3 className="text-[#333333] text-sm font-medium mb-4">
+                      <h3 className="text-[#333333] text-[16px] mb-4">
                         Product {txn.type === "PICKUP" ? "Pickup" : "Purchase"}:
                       </h3>
-                      <div className="bg-[#F9FAFB] rounded-lg overflow-hidden">
+                      <div className="bg-[#F9FAFB] overflow-hidden">
                         {/* Table Header */}
                         <div className="grid grid-cols-[1fr_1fr_1fr_auto] md:grid-cols-4 gap-4 p-4 bg-[#F5F5F5] border-b border-gray-100">
-                          <span className="text-xs md:text-sm font-medium text-[#333333]">
+                          <span className="text-xs md:text-[16px] text-[#333333]">
                             Quantity
                           </span>
-                          <span className="text-xs md:text-sm font-medium text-[#333333]">
+                          <span className="text-xs md:text-[16px] text-[#333333]">
                             Unit Price
                           </span>
-                          <span className="text-xs md:text-sm font-medium text-[#333333]">
+                          <span className="text-xs md:text-[16px] text-[#333333]">
                             Product
                           </span>
-                          <span className="text-xs md:text-sm font-medium text-[#333333] text-right">
+                          <span className="text-xs md:text-[16px] text-[#333333] text-right">
                             Subtotal
                           </span>
                         </div>
                         {/* Table Body */}
-                        <div className="p-4 grid grid-cols-1 gap-2">
+                        <div className="bg-white border-b border-[#F5F5F5] border-[1px] pt-4  grid grid-cols-1 gap-2">
                           {txn.items.map((item, index) => (
                             <div key={`${item.productId}-${index}`}>
-                              <div className="grid grid-cols-[1fr_1fr_1fr_auto] md:grid-cols-4 gap-4 items-center">
+                              <div className="grid grid-cols-[1fr_1fr_1fr_auto] md:grid-cols-4 px-4 gap-4 items-center">
                                 <span className="text-xs md:text-sm text-[#444444]">
                                   {item.quantity}{" "}
                                   {item.unit?.split(" ")[0]?.toLowerCase() ||
