@@ -22,6 +22,7 @@ export interface Product {
   stock: number;
   unit: string;
   unitPrice: number;
+  wholesalePrice?: number;
   priceHistory?: PriceHistoryItem[];
   isActive: boolean;
   createdAt?: string;
@@ -94,6 +95,7 @@ export interface Client {
   name: string;
   phone?: string;
   email?: string;
+  salesType?: "Retail" | "Wholesale";
   address?: string;
   balance: number;
   description?: string;
@@ -122,6 +124,7 @@ export interface PaymentTransactionPayload extends BaseTransactionPayload {
 
 export interface ProductTransactionPayload extends BaseTransactionPayload {
   type: "PURCHASE" | "PICKUP";
+  salesType?: "Retail" | "Wholesale";
   items: {
     productId: string;
     quantity: number;

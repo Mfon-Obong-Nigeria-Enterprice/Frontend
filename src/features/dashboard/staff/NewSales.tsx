@@ -456,6 +456,7 @@ import { io, Socket } from "socket.io-client";
 
 // components
 import ClientSearch from "./components/ClientSearch";
+import ClientSalesTypes from "./components/ClientSalesTypes";
 import AddSaleProduct from "./components/AddSaleProduct";
 import ClientDisplayBox from "./components/ClientDisplayBox";
 import WalkinClientDetailBox from "./components/WalkinClientDetailBox";
@@ -496,7 +497,7 @@ import {
 import { handleApiError } from "@/services/errorhandler";
 
 // icons
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ChevronDown } from "lucide-react";
 
 // data
 import { bankNames, posNames } from "@/data/banklist";
@@ -571,10 +572,11 @@ const NewSales: React.FC = () => {
   const [isWalkIn, setIsWalkIn] = useState(false);
   const [walkInData, setWalkInData] = useState({ name: "", phone: "" });
 
+  const [salesType, setSalesType] = useState("Retail");
   const [paymentMethod, setPaymentMethod] = useState("cash");
-  const [purchaseType, setPurchaseType] = useState<"PURCHASE" | "PICKUP">(
-    "PURCHASE"
-  );
+  const [transactionType, setTransactionType] = useState<
+    "PURCHASE" | "PICKUP" | "WHOLESALE" | "RETURN"
+  >("PURCHASE");
   const [subMethod, setSubMethod] = useState("");
   const [amountPaid, setAmountPaid] = useState("");
   const [notes, setNotes] = useState("");
@@ -594,6 +596,17 @@ const NewSales: React.FC = () => {
 
   // SOCKET: useRef to hold socket instance and control lifecycle
   const socketRef = useRef<Socket | null>(null);
+
+  // Update sales type when a client is selected
+  useEffect(() => {
+    if (selectedClient && selectedClient.salesType) {
+      // If client has a salesType, use it
+      setSalesType(selectedClient.salesType);
+    } else {
+      // Otherwise, default to "Retail"
+      setSalesType("Retail");
+    }
+  }, [selectedClient]);
 
   // Connect socket inside useEffect so it doesn't run at module import time
   useEffect(() => {
@@ -794,7 +807,7 @@ const NewSales: React.FC = () => {
         })} (full payment required)`;
       }
     } else if (balanceDue === 0) {
-      statusMessage = "No balance due";
+      statusMessage = "Status: No balance due";
     } else if (selectedClient && clientBalance > 0) {
       statusMessage = `Balance due: ₦${balanceDue.toLocaleString("en-US", {
         minimumFractionDigits: 0,
@@ -832,7 +845,7 @@ const NewSales: React.FC = () => {
     setIsSubmitting(false);
     setGlobalDiscount(0);
     setDate(getTodayDateString());
-    setPurchaseType("PURCHASE");
+    setTransactionType("PURCHASE");
   };
 
   const handleSubmit = async () => {
@@ -846,10 +859,15 @@ const NewSales: React.FC = () => {
       const apiItems = rows
         .filter((row) => row.productId)
         .map((row) => {
-          const product = products.find((p) => p._id === row.productId);
+          const product = products.find((p) => p._id === row.productId)!;
+          const isWholesale = transactionType === "WHOLESALE";
+          const price = isWholesale
+            ? product.wholesalePrice || product.unitPrice
+            : product.unitPrice;
           return {
             productId: row.productId,
             quantity: row.quantity,
+            ...(isWholesale ? { wholesalePrice: price } : { unitPrice: price }),
             unit: product?.unit || "pcs",
             discount: 0,
           };
@@ -868,12 +886,13 @@ const NewSales: React.FC = () => {
         ...(selectedClient?._id
           ? { clientId: selectedClient._id }
           : { walkInClient: walkInData }),
-        type: purchaseType,
+        salesType: salesType,
+        type: transactionType,
         items: apiItems,
         amountPaid: effectiveAmountPaid,
         discount: discountTotal,
         paymentMethod:
-          purchaseType === "PICKUP" ? "Credit" : paymentMethodForBackend,
+          transactionType === "PICKUP" ? "Credit" : paymentMethodForBackend,
         notes,
         date,
       };
@@ -913,12 +932,18 @@ const NewSales: React.FC = () => {
         <div className="md:p-5 md:rounded-[8px] md:border md:border-[#D9D9D9]">
           {!isWalkIn ? (
             <div>
-              <h6 className="hidden md:block">Select Client</h6>
-              <div className="flex flex-col md:flex-row gap-4 md:gap-10 md:mt-2">
+              {/* <h6 className="hidden md:block">Select Client</h6> */}
+              <div className="flex flex-col md:flex-row gap-4 md:gap-10 md:mt-2 md:items-end ">
                 <ClientSearch
                   selectedClient={selectedClient}
                   onClientSelect={setSelectedClient}
                 />
+                <ClientSalesTypes
+                  salesType={salesType}
+                  onSalesTypeChange={setSalesType}
+                />
+
+                {/* should I include the Sales types button here? */}
                 <Button
                   onClick={() => {
                     setIsWalkIn(true);
@@ -1086,19 +1111,20 @@ const NewSales: React.FC = () => {
               <div>
                 <Label className="mb-1">Transaction Type</Label>
                 <Select
-                  value={purchaseType}
+                  value={transactionType}
                   onValueChange={(value: string) =>
-                    setPurchaseType(value as "PURCHASE" | "PICKUP")
+                    setTransactionType(
+                      value as "PURCHASE" | "PICKUP" | "WHOLESALE" | "RETURN"
+                    )
                   }
                 >
                   <SelectTrigger className="w-full sm:w-[180px] bg-[#D9D9D9]">
                     <SelectValue placeholder="Select option" />
                   </SelectTrigger>
-                  <SelectContent
-                    side="top"
-                    className="max-h-[250px] overflow-y-auto"
-                  >
+                  <SelectContent side="top">
                     <SelectItem value="PURCHASE">Purchase</SelectItem>
+                    <SelectItem value="WHOLESALE">Wholesale</SelectItem>
+                    <SelectItem value="RETURN">Return</SelectItem>
                     {!isWalkIn && selectedClient && (
                       <SelectItem value="PICKUP">Pickup</SelectItem>
                     )}

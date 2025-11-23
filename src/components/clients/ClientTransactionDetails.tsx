@@ -6,7 +6,6 @@ import {
   getTransactionDateString,
   getTransactionTimeString,
 } from "@/utils/transactions";
-import { ArrowRight } from "lucide-react";
 import { useMemo } from "react";
 
 interface clientTrasactionDetailsProps {
@@ -62,7 +61,6 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
     <div className="font-sans text-[#333333]">
       
       {/* --- 1. FILTERS SECTION (New) --- */}
-      
 
       {/* --- 2. RETURNED PRODUCTS SECTION (New) --- */}
       <div className="mb-10 border-b border-[#D9D9D9] pb-4 rounded-lg">
@@ -106,6 +104,13 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
           {transactionWithBalance.map((txn, i) => {
             const styles = getTypeStyles(txn.type);
             const isCredit = txn.type === "DEPOSIT";
+            const isPartialPayment =
+              (txn.type === "PURCHASE" || txn.type === "PICKUP") &&
+              (txn.amountPaid ?? 0) > 0 &&
+              (txn.amountPaid ?? 0) < (txn.total ?? 0);
+
+
+
 
             return (
               <div
@@ -276,6 +281,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                   </div>
                 </div>
 
+                
                 {/* --- FOOTER SECTIONS (Conditional) --- */}
 
                 {/* A. Product Purchase Table */}
@@ -335,7 +341,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                   )}
 
                 {/* B. Description/Note Banner */}
-                {(txn.type === "DEPOSIT" || txn.description) &&
+                {/* {(txn.type === "DEPOSIT" || txn.description) &&
                   !txn.items?.length && (
                     <div className="bg-[#F5F5F5] rounded-md p-4 mt-4">
                       <p className="text-[#444444] text-sm font-medium">
@@ -345,7 +351,23 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                         {txn.description || "Customer deposit"}
                       </p>
                     </div>
-                  )}
+                  )} */}
+
+                  {/* --- FOOTER: DEPOSIT NOTE --- */}
+                {/* {(!txn.items?.length && (txn.type === "DEPOSIT" || txn.description)) && !isPartialPayment && (
+                   <div className="bg-[#F5F5F5] rounded-md p-4 mt-4">
+                      <p className="text-[#444] text-sm font-medium">{txn.type === "DEPOSIT" ? "Deposit Details" : "Note"}</p>
+                      <p className="text-[#7D7D7D] text-xs mt-1">{txn.description || "Customer deposit"}</p>
+                   </div>
+                )} */}
+
+                {/* --- FOOTER: PARTIAL PAYMENT BANNER --- */}
+                {isPartialPayment && (
+                   <div className="bg-[#F5F5F5] rounded-md p-4 mb-4 mt-8">
+                      <p className="text-[#444444] text-[16px] font-medium">Partial Payment Received</p>
+                      <p className="text-[#444444] text-[10px] mt-1">Payment towards outstanding balance</p>
+                   </div>
+                )}
               </div>
             );
           })}
