@@ -109,13 +109,12 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       format: "a4",
     });
 
-    // Custom currency formatter for PDF to ensure 'NGN' is used instead of symbols
-    // that are not supported by the PDF's default font.
+    // Custom currency formatter for PDF
     const formatCurrencyForPDF = (amount: number) => {
       return new Intl.NumberFormat("en-NG", {
         style: "currency",
         currency: "NGN",
-        currencyDisplay: "code", // Use 'NGN' instead of a symbol
+        currencyDisplay: "code", 
       }).format(amount);
     };
 
@@ -139,10 +138,10 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       day: "numeric",
       year: "numeric",
     });
-    // Assuming Period based on filter or current month if not selected, mimicking screenshot
+    
     const periodText = dateRangeFilter.from 
       ? `${dateRangeFilter.from.toLocaleDateString()} - ${dateRangeFilter.to?.toLocaleDateString() || 'Now'}`
-      : "May 2025"; // Using screenshot static for fallback/demo match
+      : "May 2025"; 
 
     doc.setTextColor(125, 125, 125);
     doc.setFontSize(10);
@@ -164,13 +163,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     doc.text(`Transaction History - ${periodText}`, margin, 50);
 
     // --- DATA PREPARATION ---
-    // Calculate balance progression for transactions
     const transactionsWithBalance = calculateTransactionsWithBalance(
         clientTransactions,
         { balance: client?.balance || 0 }
     );
 
-    // Sort by date - NEWEST FIRST (matching visual)
     const sortedTransactions = transactionsWithBalance.sort((a, b) => {
         const dateA = getTransactionDate(a).getTime();
         const dateB = getTransactionDate(b).getTime();
@@ -191,24 +188,19 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
     // Map Data
     const tableData = sortedTransactions.map(txn => {
-        // Format Products list
         const productList = txn.items && txn.items.length > 0 
             ? txn.items.flatMap(item => [
                 `•  ${item.quantity} ${item.unit || 'units'} @ ${formatCurrencyForPDF(item.unitPrice)}`,
-                `BOLD::  ${item.productName}` // Prefix to identify bold line
+                `BOLD::  ${item.productName}` 
               ])
             : (txn.description ? [txn.description] : ["---"]);
 
-        // Calculate Charges text
         const chargesList = [];
         if(txn.transportFare && txn.transportFare > 0) chargesList.push(`Transport: ${formatCurrencyForPDF(txn.transportFare)}`);
         if(txn.loadingAndOffloading && txn.loadingAndOffloading > 0) chargesList.push(`Loading/Off: ${formatCurrencyForPDF(txn.loadingAndOffloading)}`);
         if(txn.loading && txn.loading > 0) chargesList.push(`Loading: ${formatCurrencyForPDF(txn.loading)}`);
         
-        // Format Amount Color logic handled in didDrawCell, just passing raw or string here
         const amountStr = formatCurrencyForPDF(txn.total || 0);
-        
-        // Format Balance Change "+250,000 -> +200,000"
         const balBefore = formatCurrencyForPDF(txn.balanceBefore || 0);
         const balAfter = formatCurrencyForPDF(txn.balanceAfter || 0);
 
@@ -218,14 +210,14 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
               day: "numeric",
               year: "numeric",
             }),
-            status: txn.type, // PURCHASE, DEPOSIT, PICKUP
+            status: txn.type, 
             products: productList,
             subtotal: txn.subtotal ? `Subtotal: ${formatCurrencyForPDF(txn.subtotal)}` : "---",
             amount: txn.type === 'DEPOSIT' ? `+${amountStr}` : `-${amountStr}`,
             balanceChange: `${balBefore} -> \n${balAfter}`,
             method: txn.paymentMethod || "Cash",
             charges: chargesList.length > 0 ? chargesList.join("\n") : "---",
-            rawType: txn.type // Hidden key for logic
+            rawType: txn.type 
         };
     });
 
@@ -234,20 +226,18 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         startY: 55,
         head: [columns.map(c => c.header)],
         body: tableData.map(row => columns.map(c => row[c.dataKey as keyof typeof row])),
-        
-        // Styles
         theme: 'grid',
         styles: {
             fontSize: 6,
             font: "helvetica",
             cellPadding: 2,
-            textColor: [68, 68, 68], // #444444
+            textColor: [68, 68, 68], 
             lineColor: [230, 230, 230],
             lineWidth: 0.1,
             valign: 'top'
         },
         headStyles: {
-            fillColor: [68, 68, 68], // #444444
+            fillColor: [68, 68, 68],
             textColor: [255, 255, 255],
             fontSize: 7,
             fontStyle: 'normal',
@@ -256,35 +246,28 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
             lineWidth: { top: 0.1, right: 0, bottom: 0.1, left: 0 }
         },
         columnStyles: {
-            0: { cellWidth: 20 }, // Date
-            1: { cellWidth: 18 }, // Status (Badge)
-            2: { cellWidth: 45 }, // Products
-            3: { cellWidth: 22 }, // Subtotal
-            4: { cellWidth: 22, fontStyle: 'bold' }, // Amount
-            5: { cellWidth: 20 }, // Balance Change
-            6: { cellWidth: 16 }, // Method
-            7: { cellWidth: 'auto' }, // Charges
+            0: { cellWidth: 20 }, 
+            1: { cellWidth: 18 }, 
+            2: { cellWidth: 45 }, 
+            3: { cellWidth: 22 }, 
+            4: { cellWidth: 22, fontStyle: 'bold' }, 
+            5: { cellWidth: 20 }, 
+            6: { cellWidth: 16 }, 
+            7: { cellWidth: 'auto' }, 
         },
-        
-        // Hooks for Custom Rendering
         didDrawCell: (data) => {
-            // Custom drawing for Products column to handle bolding
-            if (data.section === 'body' && data.column.index === 2) {
+            // ... (Same Product bolding logic as before)
+             if (data.section === 'body' && data.column.index === 2) {
                 const cellText = data.cell.raw;
                 if (Array.isArray(cellText)) {
                     const { x, y, width, height } = data.cell;
                     const leftPadding = data.cell.padding('left');
                     const topPadding = data.cell.padding('top');
                     let currentY = y + topPadding;
-
-                    // Erase the default content autotable would have drawn
-                    // We draw a white rectangle slightly smaller than the cell to avoid covering the borders
                     const lineWidth = doc.getLineWidth();
                     doc.setFillColor(255, 255, 255);
-                    // 'F' fills the rectangle. We offset by lineWidth to avoid painting over the cell borders.
                     doc.rect(x + lineWidth, y + lineWidth, width - (lineWidth * 2), height - (lineWidth * 2), 'F');
 
-                    // Manually draw each line, checking for our BOLD prefix
                     cellText.forEach((line: string) => {
                         if (line.startsWith('BOLD::')) {
                             doc.setFontSize(6);
@@ -295,72 +278,45 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                             doc.setFont("helvetica", "normal");
                             doc.text(line, x + leftPadding, currentY);
                         }
-                        // Move Y down for the next line. The value '4' is based on font size and line spacing. Adjust if needed.
                         currentY += 4;
                     });
-                    // Reset font to normal for other cells
                     doc.setFont("helvetica", "normal");
                 }
             }
-
+            // ... (Same Status Badge logic as before)
             if (data.section === 'body' && data.column.index === 1) {
-                // --- STATUS BADGE ---
                 const type = tableData[data.row.index].rawType;
-                let badgeColor = [230, 230, 230]; // Default Gray
+                let badgeColor = [230, 230, 230]; 
                 let borderColor = [200, 200, 200];
                 let textColor = [80, 80, 80];
                 let badgeText = type.toLowerCase();
 
                 if (type === 'DEPOSIT') {
-                    badgeColor = [200, 249, 221]; // #C8F9DD
-                    textColor = [46, 204, 113]; // Green Text
-                    borderColor = [46, 204, 113]; // #2ECC71
+                    badgeColor = [200, 249, 221]; 
+                    textColor = [46, 204, 113]; 
+                    borderColor = [46, 204, 113]; 
                     badgeText = "Deposit";
                 } else if (type === 'PICKUP') {
-                    badgeColor = [255, 231, 164]; // #FFE7A4
-                    textColor = [255, 165, 0]; // Orange Text
-                    borderColor = [255, 165, 0]; // #FFA500
+                    badgeColor = [255, 231, 164]; 
+                    textColor = [255, 165, 0]; 
+                    borderColor = [255, 165, 0]; 
                     badgeText = "Pickup";
                 } else if (type === 'PURCHASE') {
-                    badgeColor = [255, 202, 202]; // #FFCACA
-                    textColor = [249, 83, 83]; // Red Text
-                    borderColor = [249, 83, 83]; // #F95353
+                    badgeColor = [255, 202, 202]; 
+                    textColor = [249, 83, 83]; 
+                    borderColor = [249, 83, 83]; 
                     badgeText = "Purchase";
                 }
 
                 const { x, y, width, height } = data.cell;
-                
-                // Draw White rect to cover default text
                 doc.setFillColor(255, 255, 255);
                 doc.rect(x + 1, y + 1, width - 2, height - 2, 'F');
-
-                // Draw Badge
                 doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
                 doc.setFillColor(badgeColor[0], badgeColor[1], badgeColor[2]);
-                doc.roundedRect(x + 2, y + 6, width - 4, 4, 2, 2, 'FD'); // FD for Fill and Stroke (border)
-
-                // Draw Text
+                doc.roundedRect(x + 2, y + 6, width - 4, 4, 2, 2, 'FD'); 
                 doc.setTextColor(textColor[0], textColor[1], textColor[2]);
                 doc.setFontSize(6);
                 doc.text(badgeText, x + width / 2, y + 8.5, { align: 'center' });
-            }
-
-            if (data.section === 'body' && data.column.index === 4) {
-                // --- COLORED AMOUNT ---
-                const text = data.cell.raw as string;
-                if (text.startsWith('+')) {
-                    doc.setTextColor(46, 204, 113); // Green
-                } else {
-                    doc.setTextColor(249, 83, 83); // Red
-                }
-                // We have to redraw text because autoTable draws it black by default
-                // This is a hacky override: draw white box then colored text
-                // Ideally use `willDrawCell` to set color, but `didDraw` allows overlay
-                const { x, y, width, height } = data.cell;
-                doc.setFontSize(6);
-                doc.setFont("helvetica", "bold");
-                // Note: re-rendering text perfectly over existing text is hard, 
-                // but setting textColor in willDrawCell is cleaner. See below.
             }
         },
         willDrawCell: (data) => {
@@ -376,166 +332,205 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     });
 
     // --- SUMMARY SECTION ---
-    // Calculate Y position after table
     let finalY = (doc as any).lastAutoTable.finalY + 10;
     
     // Summary Calculation
     const summarySales = clientTransactions
         .filter(t => t.type === 'PURCHASE' || t.type === 'PICKUP')
         .reduce((acc, curr) => acc + (curr.total || 0), 0);
+    const countSales = clientTransactions.filter(t => t.type === 'PURCHASE' || t.type === 'PICKUP').length;
         
     const summaryDeposits = clientTransactions
         .filter(t => t.type === 'DEPOSIT')
         .reduce((acc, curr) => acc + (curr.total || 0), 0);
+    const countDeposits = clientTransactions.filter(t => t.type === 'DEPOSIT').length;
 
-    const summaryReturns = 0; // Assuming 0 for now based on data structure
-    
-    const netGrandTotal = summaryDeposits - summarySales; // Simplified logic
+    const summaryReturns = 0; 
+    const countReturns = 0;
+    const netGrandTotal = summaryDeposits - summarySales; 
     
     const totalTransport = clientTransactions.reduce((acc, curr) => acc + (curr.transportFare || 0), 0);
     const totalLoadingOff = clientTransactions.reduce((acc, curr) => acc + (curr.loadingAndOffloading || 0), 0);
     const totalLoading = clientTransactions.reduce((acc, curr) => acc + (curr.loading || 0), 0);
     const totalAddCharges = totalTransport + totalLoadingOff + totalLoading;
 
-    // 1. Gray Container
-    doc.setFillColor(248, 248, 248); // #F8F8F8
-    doc.setDrawColor(230, 230, 230);
-    doc.roundedRect(margin, finalY, pageWidth - (margin * 2), 95, 3, 3, 'FD');
 
-    // Title
-    doc.setFontSize(11);
+    // --- 0. Background Container for Summary ---
+    // Dimensions
+    const summaryBoxX = margin - 2;
+    const summaryBoxY = finalY - 5;
+    const summaryBoxW = pageWidth - (margin * 2) + 4;
+    const summaryBoxH = 100; // Fixed height covering title to bottom
+    const cornerRadius = 2; // Subtle rounding
+    const accentWidth = 2; // Thickness of the black accent line (in mm)
+
+    // A. Draw the Accent Background (Layer 1)
+    // This draws a dark rectangle. The left side of this will become the visible border.
+    doc.setFillColor(51, 51, 51); // Dark Grey/Black (Matches the Total Box)
+    doc.roundedRect(summaryBoxX, summaryBoxY, summaryBoxW, summaryBoxH, cornerRadius, cornerRadius, 'F');
+
+    // B. Draw the Main Background (Layer 2)
+    // Shifted right by 'accentWidth'. This covers the dark rectangle except for the left strip.
+    doc.setFillColor(249, 249, 249); // Light Gray Background
+    doc.roundedRect(summaryBoxX + accentWidth, summaryBoxY, summaryBoxW - accentWidth, summaryBoxH, cornerRadius, cornerRadius, 'F');
+
+    // C. Square off the Left Corners of the Light Gray Box (Layer 3)
+    // Since roundedRect curves the corners, the top-left and bottom-left of the gray box would curve away 
+    // from the black line, creating a weird gap. We draw small squares to fill those curves.
+    doc.rect(summaryBoxX + accentWidth, summaryBoxY, cornerRadius, cornerRadius, 'F'); // Top-Left corner fix
+    doc.rect(summaryBoxX + accentWidth, summaryBoxY + summaryBoxH - cornerRadius, cornerRadius, cornerRadius, 'F'); // Bottom-Left corner fix
+
+
+    // --- 1. Summary Title ---
+    doc.setFontSize(12);
     doc.setTextColor(33, 33, 33);
-    doc.text("May 2025 Summary", margin + 5, finalY + 10);
-
-    // 2. Three Stats Cards
-    const cardWidth = 55;
-    const cardHeight = 25;
-    const gap = 6;
-    const startX = margin + 5;
-    const cardY = finalY + 15;
-
-    // Card 1: Sales
-    doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(230, 230, 230);
-    doc.roundedRect(startX, cardY, cardWidth, cardHeight, 1, 1, 'FD');
-    
-    doc.setFontSize(7);
-    doc.setTextColor(100, 100, 100);
-    doc.text("Total Sales", startX + (cardWidth/2), cardY + 6, { align: 'center' });
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(249, 83, 83); // Red
-    doc.text(`-${formatCurrencyForPDF(summarySales)}`, startX + (cardWidth/2), cardY + 13, { align: 'center' });
-    
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(6);
-    doc.setTextColor(150, 150, 150);
-    doc.text(`${clientTransactions.filter(t => t.type !== 'DEPOSIT').length} transactions`, startX + (cardWidth/2), cardY + 19, { align: 'center' });
+    doc.text(`${periodText} Summary`, margin + accentWidth + 2, finalY + 2); // Shift text slightly right
 
-    // Card 2: Deposits
-    const card2X = startX + cardWidth + gap;
-    doc.setFillColor(255, 255, 255);
-    doc.roundedRect(card2X, cardY, cardWidth, cardHeight, 1, 1, 'FD');
-    
+    // --- 2. The Three White Cards ---
+    const cardsY = finalY + 8;
+    const cardGap = 5;
+    const availableWidth = pageWidth - (margin * 2) - accentWidth; // Adjust available width
+    const cardWidth = (availableWidth - (cardGap * 2)) / 3;
+    const cardHeight = 32;
+    const cardStartX = margin + accentWidth + 1; // Start after the line
+
+    // Helper to draw card
+    const drawSummaryCard = (x: number, title: string, amount: string, count: string, amountColor: [number, number, number]) => {
+        // Card Box
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(220, 220, 220); // Light border
+        doc.roundedRect(x, cardsY, cardWidth, cardHeight, 1.5, 1.5, 'FD');
+
+        // Title
+        doc.setFontSize(8);
+        doc.setTextColor(120, 120, 120); // Gray text
+        doc.setFont("helvetica", "normal");
+        doc.text(title, x + (cardWidth/2), cardsY + 8, { align: 'center' });
+
+        // Amount
+        doc.setFontSize(11);
+        doc.setTextColor(amountColor[0], amountColor[1], amountColor[2]); 
+        doc.setFont("helvetica", "bold");
+        doc.text(amount, x + (cardWidth/2), cardsY + 16, { align: 'center' });
+
+        // Count
+        doc.setFontSize(7);
+        doc.setTextColor(150, 150, 150); // Lighter gray
+        doc.setFont("helvetica", "normal");
+        doc.text(count, x + (cardWidth/2), cardsY + 24, { align: 'center' });
+    };
+
+    // Draw Card 1: Sales
+    drawSummaryCard(
+        cardStartX, 
+        "Total Sales", 
+        `-${formatCurrencyForPDF(summarySales)}`, 
+        `${countSales} transactions`, 
+        [249, 83, 83] // Red
+    );
+
+    // Draw Card 2: Deposits
+    drawSummaryCard(
+        cardStartX + cardWidth + cardGap, 
+        "Total Deposits", 
+        `+${formatCurrencyForPDF(summaryDeposits)}`, 
+        `${countDeposits} payments`, 
+        [46, 204, 113] // Green
+    );
+
+    // Draw Card 3: Returns
+    drawSummaryCard(
+        cardStartX + (cardWidth * 2) + (cardGap * 2), 
+        "Total Returns", 
+        `${formatCurrencyForPDF(summaryReturns)}`, 
+        `${countReturns} return`, 
+        [51, 51, 51] // Black/Dark Gray
+    );
+
+
+    // --- 3. Dark Grand Total Box ---
+    // Position it below the cards
+    const boxY = cardsY + cardHeight + 8;
+    const boxHeight = 30; 
+    const boxWidth = availableWidth; // Match width of card area
+
+    doc.setFillColor(51, 51, 51); // Dark Grey (#333333)
+    doc.setDrawColor(51, 51, 51);
+    doc.roundedRect(cardStartX, boxY, boxWidth, boxHeight, 1, 1, 'FD');
+
+    // Title: NET GRAND TOTAL
     doc.setFontSize(7);
-    doc.setTextColor(100, 100, 100);
-    doc.text("Total Deposits", card2X + (cardWidth/2), cardY + 6, { align: 'center' });
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(46, 204, 113); // Green
-    doc.text(`+${formatCurrencyForPDF(summaryDeposits)}`, card2X + (cardWidth/2), cardY + 13, { align: 'center' });
-    
+    doc.setTextColor(200, 200, 200); 
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(6);
-    doc.setTextColor(150, 150, 150);
-    doc.text(`${clientTransactions.filter(t => t.type === 'DEPOSIT').length} payments`, card2X + (cardWidth/2), cardY + 19, { align: 'center' });
+    doc.text(`NET GRAND TOTAL (${periodText.toUpperCase()})`, cardStartX + (boxWidth / 2), boxY + 8, { align: 'center' });
 
-    // Card 3: Returns
-    const card3X = card2X + cardWidth + gap;
-    doc.setFillColor(255, 255, 255);
-    doc.roundedRect(card3X, cardY, cardWidth, cardHeight, 1, 1, 'FD');
-    
-    doc.setFontSize(7);
-    doc.setTextColor(100, 100, 100);
-    doc.text("Total Returns", card3X + (cardWidth/2), cardY + 6, { align: 'center' });
-    
-    doc.setFontSize(10);
+    // Value: Big Bold Amount
+    doc.setFontSize(18);
+    doc.setTextColor(255, 255, 255); 
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(33, 33, 33); // Black
-    doc.text(`${formatCurrencyForPDF(summaryReturns)}`, card3X + (cardWidth/2), cardY + 13, { align: 'center' });
-    
-    doc.setFont("helvetica", "normal");
+    doc.text(formatCurrencyForPDF(netGrandTotal), cardStartX + (boxWidth / 2), boxY + 17, { align: 'center' });
+
+    // Breakdown text
     doc.setFontSize(6);
-    doc.setTextColor(150, 150, 150);
-    doc.text(`0 return`, card3X + (cardWidth/2), cardY + 19, { align: 'center' });
-
-    // 3. Dark Grand Total Box
-    const darkBoxY = cardY + cardHeight + 8;
-    doc.setFillColor(60, 60, 60); // Dark Grey
-    doc.roundedRect(startX, darkBoxY, (cardWidth * 3) + (gap * 2), 30, 1, 1, 'F');
-
-    doc.setFontSize(7);
-    doc.setTextColor(200, 200, 200);
-    doc.text("NET GRAND TOTAL (MAY 2025)", pageWidth / 2, darkBoxY + 8, { align: 'center' });
-
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(255, 255, 255);
-    doc.text(formatCurrencyForPDF(netGrandTotal), pageWidth / 2, darkBoxY + 16, { align: 'center' });
-
-    doc.setFontSize(6);
+    doc.setTextColor(170, 170, 170); 
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(180, 180, 180);
     doc.text(
         `Sales (${formatCurrencyForPDF(summarySales)}) - Deposits (${formatCurrencyForPDF(summaryDeposits)}) - Returns (${formatCurrencyForPDF(summaryReturns)})`, 
-        pageWidth / 2, 
-        darkBoxY + 23, 
+        cardStartX + (boxWidth / 2), 
+        boxY + 24, 
         { align: 'center' }
     );
 
-    // 4. Additional Charges Box (White bottom)
-    const chargesY = darkBoxY + 35;
-    doc.setFillColor(255, 255, 255);
-    doc.roundedRect(startX, chargesY, (cardWidth * 3) + (gap * 2), 30, 1, 1, 'F');
+    // --- 4. Additional Charges Section ---
+    const chargesStartY = boxY + boxHeight + 8;
 
+    // Header
     doc.setFontSize(9);
     doc.setTextColor(33, 33, 33);
     doc.setFont("helvetica", "bold");
-    doc.text("Additional Charges Summary", startX + 5, chargesY + 8);
+    doc.text("Additional Charges Summary", cardStartX, chargesStartY);
 
+    // Row of Charges
     doc.setFontSize(7);
+    doc.setTextColor(100, 100, 100); 
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(100, 100, 100);
+
+    const chargesRowY = chargesStartY + 7;
+    doc.text(`Total Transport: ${formatCurrencyForPDF(totalTransport)}`, cardStartX, chargesRowY);
     
-    // Charges Grid (Approx)
-    doc.text(`Total Transport: ${formatCurrencyForPDF(totalTransport)}`, startX + 5, chargesY + 16);
-    doc.text(`Total Loading/Offloading: ${formatCurrencyForPDF(totalLoadingOff)}`, startX + 60, chargesY + 16);
-    doc.text(`Total Loading: ${formatCurrencyForPDF(totalLoading)}`, startX + 130, chargesY + 16);
+    // Adjust centers for shifted layout
+    const sectionCenter = cardStartX + (boxWidth / 2);
+    const sectionRight = cardStartX + boxWidth;
 
-    // Charges Line
-    doc.setDrawColor(240, 240, 240);
-    doc.line(startX + 5, chargesY + 20, startX + (cardWidth * 3) + (gap * 2) - 5, chargesY + 20);
+    doc.text(`Total Loading/Offloading: ${formatCurrencyForPDF(totalLoadingOff)}`, sectionCenter, chargesRowY, {align: 'center'});
 
-    // Total Charges Text
+    // Right align the last item
+    doc.text(`Total Loading: ${formatCurrencyForPDF(totalLoading)}`, sectionRight, chargesRowY, {align: 'right'});
+
+    // Divider Line
+    const lineY = chargesRowY + 4;
+    doc.setDrawColor(230, 230, 230);
+    doc.line(cardStartX, lineY, sectionRight, lineY);
+
+    // Total Additional Charges (Bold)
     doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
     doc.setTextColor(33, 33, 33);
-    doc.text(`Total Additional Charges: ${formatCurrencyForPDF(totalAddCharges)}`, startX + 5, chargesY + 26);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Total Additional Charges: ${formatCurrencyForPDF(totalAddCharges)}`, cardStartX, lineY + 6);
 
 
     // --- FOOTER ---
-    const footerY = pageHeight - 20;
+    const footerY = pageHeight - 15;
     doc.setDrawColor(200, 200, 200);
     doc.line(margin, footerY, pageWidth - margin, footerY);
 
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(100, 100, 100);
-    doc.text("This is a system-generated statement", pageWidth / 2, footerY + 6, { align: 'center' });
-    doc.text("For inquiries, please contact your account manager", pageWidth / 2, footerY + 10, { align: 'center' });
-    doc.text(`Statement Date: ${new Date().toLocaleDateString()}`, pageWidth / 2, footerY + 14, { align: 'center' });
+    doc.setTextColor(150, 150, 150);
+    doc.text("This is a system-generated statement", pageWidth / 2, footerY + 5, { align: 'center' });
+    doc.text("For inquiries, please contact your account manager", pageWidth / 2, footerY + 9, { align: 'center' });
+    doc.text(`Statement Date: ${new Date().toLocaleDateString()}`, pageWidth / 2, footerY + 13, { align: 'center' });
 
     // Save
     doc.save(`Statement_${client?.name || 'Client'}_${periodText}.pdf`);
@@ -641,7 +636,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
           .filter((t) => t.client?._id === clientId)
           .map((t) => t.userId?.name)
           .filter(Boolean)
-      )
+        )
     );
     return uniqueStaff;
   }, [mergedTransactions, clientId]);
