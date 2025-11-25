@@ -8,9 +8,11 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
+type SalesType = "Retail" | "Wholesale";
+
 interface ClientSalesTypesProps {
-  salesType: string;
-  onSalesTypeChange: (value: string) => void;
+  salesType: SalesType;
+  onSalesTypeChange: (value: SalesType) => void;
 }
 
 const ClientSalesTypes: React.FC<ClientSalesTypesProps> = ({

@@ -497,7 +497,7 @@ import {
 import { handleApiError } from "@/services/errorhandler";
 
 // icons
-import { AlertCircle, ChevronDown } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 // data
 import { bankNames, posNames } from "@/data/banklist";
@@ -572,7 +572,7 @@ const NewSales: React.FC = () => {
   const [isWalkIn, setIsWalkIn] = useState(false);
   const [walkInData, setWalkInData] = useState({ name: "", phone: "" });
 
-  const [salesType, setSalesType] = useState("Retail");
+  const [salesType, setSalesType] = useState<"Retail" | "Wholesale">("Retail");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [transactionType, setTransactionType] = useState<
     "PURCHASE" | "PICKUP" | "WHOLESALE" | "RETURN"

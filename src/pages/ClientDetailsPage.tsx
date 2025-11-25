@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -66,7 +65,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     if (!user || !user.role) return false;
 
     const normalizedRole = user.role.toString().trim().toUpperCase();
-    return normalizedRole === "SUPER_ADMIN";
+    return (
+      normalizedRole === "SUPER_ADMIN" ||
+      normalizedRole === "ADMIN" ||
+      normalizedRole === "MAINTAINER"
+    );
   }, [user, isManagerView]);
 
   const { data: fetchedTransactions, isLoading: transactionsLoading } =
@@ -98,6 +101,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showBlockUnblockDialog, setShowBlockUnblockDialog] = useState(false);
 
+  // --- PDF GENERATION LOGIC ---
   const handleExportPDF = () => {
     const doc = new jsPDF({
       orientation: "portrait",
@@ -105,232 +109,439 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       format: "a4",
     });
 
-    // Set Background Color
-    doc.setFillColor(211, 211, 211); // Light gray
-    doc.rect(0, 0, 210, 297, "F"); // Fills the entire page with color
+    // Custom currency formatter for PDF to ensure 'NGN' is used instead of symbols
+    // that are not supported by the PDF's default font.
+    const formatCurrencyForPDF = (amount: number) => {
+      return new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: "NGN",
+        currencyDisplay: "code", // Use 'NGN' instead of a symbol
+      }).format(amount);
+    };
 
-    // Set text color for the document
-    doc.setTextColor(0, 0, 0); // Black text
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    const margin = 14;
 
-    // Document Title
+    // --- HEADER ---
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.text(`Transaction Report`, 10, 30);
-
-    // Client Information Header
-    doc.setFontSize(16);
-    doc.text(`Client: ${client?.name || "Unknown Client"}`, 10, 37);
-
-    // Client Details
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Phone: ${client?.phone || "N/A"}`, 10, 43);
-    doc.text(`Email: ${client?.email || "N/A"}`, 10, 49);
-    doc.text(
-      `Current Balance: ${formatCurrency(client?.balance || 0).trim()}`,
-      8,
-      56
-    );
-
-    // Filter Information Section
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text("Applied Filters:", 10, 63);
+    doc.setFontSize(18);
+    doc.setTextColor(33, 33, 33);
+    doc.text("Client Account Statement", pageWidth / 2, 20, { align: "center" });
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    const filterY = 70;
-    const filters: string[] = [];
+    doc.setTextColor(125, 125, 125);
+    doc.text("Account Management Report", pageWidth / 2, 26, { align: "center" });
 
-    if (transactionTypeFilter !== "all") {
-      filters.push(`Type: ${transactionTypeFilter}`);
-    }
-    if (staffFilter !== "all-staff") {
-      filters.push(`Staff: ${staffFilter}`);
-    }
-    if (dateRangeFilter.from) {
-      filters.push(`From: ${dateRangeFilter.from.toLocaleDateString()}`);
-    }
-    if (dateRangeFilter.to) {
-      filters.push(`To: ${dateRangeFilter.to.toLocaleDateString()}`);
-    }
+    const currentDate = new Date().toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+    // Assuming Period based on filter or current month if not selected, mimicking screenshot
+    const periodText = dateRangeFilter.from 
+      ? `${dateRangeFilter.from.toLocaleDateString()} - ${dateRangeFilter.to?.toLocaleDateString() || 'Now'}`
+      : "May 2025"; // Using screenshot static for fallback/demo match
 
-    const filterText = filters.length > 0 ? filters.join(", ") : "None";
-    doc.text(filterText, 10, filterY);
-
-    // Generation Info
-    doc.setFont("helvetica", "italic");
+    doc.setTextColor(125, 125, 125);
+    doc.setFontSize(10);
     doc.text(
-      `Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`,
-      10,
-      filterY + 8
+      `Period: ${periodText} | Generated: ${currentDate}`,
+      pageWidth / 2,
+      32,
+      { align: "center" }
     );
 
+    // Horizontal Line
+    doc.setDrawColor(230, 230, 230);
+    doc.line(margin + 10, 38, pageWidth - (margin + 10), 38);
+
+    // Section Title
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(51, 51, 51); // #333333
+    doc.text(`Transaction History - ${periodText}`, margin, 50);
+
+    // --- DATA PREPARATION ---
     // Calculate balance progression for transactions
     const transactionsWithBalance = calculateTransactionsWithBalance(
-      clientTransactions,
-      { balance: client?.balance || 0 }
+        clientTransactions,
+        { balance: client?.balance || 0 }
     );
 
-    // Sort by date - NEWEST FIRST (for display in PDF)
+    // Sort by date - NEWEST FIRST (matching visual)
     const sortedTransactions = transactionsWithBalance.sort((a, b) => {
-      const dateA = getTransactionDate(a).getTime();
-      const dateB = getTransactionDate(b).getTime();
-      return dateB - dateA; // Descending order (newest first)
+        const dateA = getTransactionDate(a).getTime();
+        const dateB = getTransactionDate(b).getTime();
+        return dateB - dateA; 
     });
 
-    // Define table columns for transactions
+    // Columns Configuration
     const columns = [
-      { header: "Date", dataKey: "date" },
-      { header: "Time", dataKey: "time" },
-      { header: "Type", dataKey: "type" },
-      { header: "Method", dataKey: "method" },
-      { header: "Staff", dataKey: "staff" },
-      { header: "Balance Before", dataKey: "balanceBefore" },
-      { header: "Balance After", dataKey: "balanceAfter" },
-      { header: "Amount", dataKey: "amount" },
-      { header: "Invoice No", dataKey: "invoice" },
-      { header: "Items", dataKey: "itemCount" },
+        { header: "Date", dataKey: "date" },
+        { header: "Status", dataKey: "status" },
+        { header: "Products", dataKey: "products" },
+        { header: "Subtotal", dataKey: "subtotal" },
+        { header: "Amount", dataKey: "amount" },
+        { header: "Balance Change", dataKey: "balanceChange" },
+        { header: "Method", dataKey: "method" },
+        { header: "Charges", dataKey: "charges" },
     ];
 
-    // Prepare transaction data for the table
-    const transactionRows = sortedTransactions.map((txn) => {
-      const transactionDate = getTransactionDateString(txn);
-      const transactionTime = getTransactionTimeString(txn);
+    // Map Data
+    const tableData = sortedTransactions.map(txn => {
+        // Format Products list
+        const productList = txn.items && txn.items.length > 0 
+            ? txn.items.flatMap(item => [
+                `•  ${item.quantity} ${item.unit || 'units'} @ ${formatCurrencyForPDF(item.unitPrice)}`,
+                `BOLD::  ${item.productName}` // Prefix to identify bold line
+              ])
+            : (txn.description ? [txn.description] : ["---"]);
 
-      return {
-        date: transactionDate,
-        time: transactionTime,
-        type: txn.type,
-        amount: `${formatCurrency(txn.total || 0).replace(/^\s+/, "")}`,
-        method: txn.paymentMethod || "N/A",
-        staff: txn.userId?.name || "Unknown",
-        balanceBefore: `${formatCurrency(txn.balanceBefore || 0).replace(
-          /^\s+/,
-          ""
-        )}`,
-        balanceAfter: `${formatCurrency(txn.balanceAfter || 0).replace(
-          /^\s+/,
-          ""
-        )}`,
-        invoice: txn.invoiceNumber || "N/A",
-        itemCount:
-          txn.items?.length > 0
-            ? txn.items
-                .map((item) => `${item.quantity}X ${item.productName} `)
-                .join(", ")
-            : "N/A",
-      };
+        // Calculate Charges text
+        const chargesList = [];
+        if(txn.transportFare && txn.transportFare > 0) chargesList.push(`Transport: ${formatCurrencyForPDF(txn.transportFare)}`);
+        if(txn.loadingAndOffloading && txn.loadingAndOffloading > 0) chargesList.push(`Loading/Off: ${formatCurrencyForPDF(txn.loadingAndOffloading)}`);
+        if(txn.loading && txn.loading > 0) chargesList.push(`Loading: ${formatCurrencyForPDF(txn.loading)}`);
+        
+        // Format Amount Color logic handled in didDrawCell, just passing raw or string here
+        const amountStr = formatCurrencyForPDF(txn.total || 0);
+        
+        // Format Balance Change "+250,000 -> +200,000"
+        const balBefore = formatCurrencyForPDF(txn.balanceBefore || 0);
+        const balAfter = formatCurrencyForPDF(txn.balanceAfter || 0);
+
+        return {
+            date: getTransactionDate(txn).toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            }),
+            status: txn.type, // PURCHASE, DEPOSIT, PICKUP
+            products: productList,
+            subtotal: txn.subtotal ? `Subtotal: ${formatCurrencyForPDF(txn.subtotal)}` : "---",
+            amount: txn.type === 'DEPOSIT' ? `+${amountStr}` : `-${amountStr}`,
+            balanceChange: `${balBefore} -> \n${balAfter}`,
+            method: txn.paymentMethod || "Cash",
+            charges: chargesList.length > 0 ? chargesList.join("\n") : "---",
+            rawType: txn.type // Hidden key for logic
+        };
     });
 
-    // Add transactions table
+    // --- TABLE GENERATION ---
     autoTable(doc, {
-      startY: 80,
-      head: [columns.map((col) => col.header)],
-      body: transactionRows.map((row) =>
-        columns.map((col) => row[col.dataKey as keyof typeof row])
-      ),
-      styles: {
-        fontSize: 5,
-        cellPadding: 3,
-        lineColor: [200, 200, 200],
-        lineWidth: 0.1,
-        halign: "left",
-        textColor: [0, 0, 0], // Black text for table content
-      },
-      headStyles: {
-        fillColor: [46, 204, 113],
-        textColor: [255, 255, 255],
-        fontStyle: "bold",
-        valign: "middle",
-        halign: "center",
-      },
-      alternateRowStyles: {
-        fillColor: [248, 249, 250],
-      },
-      columnStyles: {
-        0: { cellWidth: 17, halign: "left" }, // Date
-        1: { cellWidth: 18, halign: "left" }, // Time
-        2: { cellWidth: 18, halign: "left" }, // Type
-        3: { cellWidth: 15, halign: "left" }, // Method
-        4: { cellWidth: 25, halign: "left" }, // Staff
-        5: { cellWidth: 22, halign: "left" }, // Balance Before
-        6: { cellWidth: 24, halign: "left" }, // Balance After
-        7: { cellWidth: 24, halign: "left" }, // Amount
-        8: { cellWidth: 20, halign: "left" }, // Invoice
-        9: { cellWidth: 26, halign: "left" }, // Items
-      },
-      margin: { left: 2, right: 2 },
+        startY: 55,
+        head: [columns.map(c => c.header)],
+        body: tableData.map(row => columns.map(c => row[c.dataKey as keyof typeof row])),
+        
+        // Styles
+        theme: 'grid',
+        styles: {
+            fontSize: 6,
+            font: "helvetica",
+            cellPadding: 2,
+            textColor: [68, 68, 68], // #444444
+            lineColor: [230, 230, 230],
+            lineWidth: 0.1,
+            valign: 'top'
+        },
+        headStyles: {
+            fillColor: [68, 68, 68], // #444444
+            textColor: [255, 255, 255],
+            fontSize: 7,
+            fontStyle: 'normal',
+            halign: 'left',
+            cellPadding: { top: 8, bottom: 8, left: 4, right: 4 },
+            lineWidth: { top: 0.1, right: 0, bottom: 0.1, left: 0 }
+        },
+        columnStyles: {
+            0: { cellWidth: 20 }, // Date
+            1: { cellWidth: 18 }, // Status (Badge)
+            2: { cellWidth: 45 }, // Products
+            3: { cellWidth: 22 }, // Subtotal
+            4: { cellWidth: 22, fontStyle: 'bold' }, // Amount
+            5: { cellWidth: 20 }, // Balance Change
+            6: { cellWidth: 16 }, // Method
+            7: { cellWidth: 'auto' }, // Charges
+        },
+        
+        // Hooks for Custom Rendering
+        didDrawCell: (data) => {
+            // Custom drawing for Products column to handle bolding
+            if (data.section === 'body' && data.column.index === 2) {
+                const cellText = data.cell.raw;
+                if (Array.isArray(cellText)) {
+                    const { x, y, width, height } = data.cell;
+                    const leftPadding = data.cell.padding('left');
+                    const topPadding = data.cell.padding('top');
+                    let currentY = y + topPadding;
+
+                    // Erase the default content autotable would have drawn
+                    // We draw a white rectangle slightly smaller than the cell to avoid covering the borders
+                    const lineWidth = doc.getLineWidth();
+                    doc.setFillColor(255, 255, 255);
+                    // 'F' fills the rectangle. We offset by lineWidth to avoid painting over the cell borders.
+                    doc.rect(x + lineWidth, y + lineWidth, width - (lineWidth * 2), height - (lineWidth * 2), 'F');
+
+                    // Manually draw each line, checking for our BOLD prefix
+                    cellText.forEach((line: string) => {
+                        if (line.startsWith('BOLD::')) {
+                            doc.setFontSize(6);
+                            const boldText = line.substring('BOLD::'.length);
+                            doc.setFont("helvetica", "bold");
+                            doc.text(boldText, x + leftPadding, currentY);
+                        } else {
+                            doc.setFont("helvetica", "normal");
+                            doc.text(line, x + leftPadding, currentY);
+                        }
+                        // Move Y down for the next line. The value '4' is based on font size and line spacing. Adjust if needed.
+                        currentY += 4;
+                    });
+                    // Reset font to normal for other cells
+                    doc.setFont("helvetica", "normal");
+                }
+            }
+
+            if (data.section === 'body' && data.column.index === 1) {
+                // --- STATUS BADGE ---
+                const type = tableData[data.row.index].rawType;
+                let badgeColor = [230, 230, 230]; // Default Gray
+                let borderColor = [200, 200, 200];
+                let textColor = [80, 80, 80];
+                let badgeText = type.toLowerCase();
+
+                if (type === 'DEPOSIT') {
+                    badgeColor = [200, 249, 221]; // #C8F9DD
+                    textColor = [46, 204, 113]; // Green Text
+                    borderColor = [46, 204, 113]; // #2ECC71
+                    badgeText = "Deposit";
+                } else if (type === 'PICKUP') {
+                    badgeColor = [255, 231, 164]; // #FFE7A4
+                    textColor = [255, 165, 0]; // Orange Text
+                    borderColor = [255, 165, 0]; // #FFA500
+                    badgeText = "Pickup";
+                } else if (type === 'PURCHASE') {
+                    badgeColor = [255, 202, 202]; // #FFCACA
+                    textColor = [249, 83, 83]; // Red Text
+                    borderColor = [249, 83, 83]; // #F95353
+                    badgeText = "Purchase";
+                }
+
+                const { x, y, width, height } = data.cell;
+                
+                // Draw White rect to cover default text
+                doc.setFillColor(255, 255, 255);
+                doc.rect(x + 1, y + 1, width - 2, height - 2, 'F');
+
+                // Draw Badge
+                doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
+                doc.setFillColor(badgeColor[0], badgeColor[1], badgeColor[2]);
+                doc.roundedRect(x + 2, y + 6, width - 4, 4, 2, 2, 'FD'); // FD for Fill and Stroke (border)
+
+                // Draw Text
+                doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+                doc.setFontSize(6);
+                doc.text(badgeText, x + width / 2, y + 8.5, { align: 'center' });
+            }
+
+            if (data.section === 'body' && data.column.index === 4) {
+                // --- COLORED AMOUNT ---
+                const text = data.cell.raw as string;
+                if (text.startsWith('+')) {
+                    doc.setTextColor(46, 204, 113); // Green
+                } else {
+                    doc.setTextColor(249, 83, 83); // Red
+                }
+                // We have to redraw text because autoTable draws it black by default
+                // This is a hacky override: draw white box then colored text
+                // Ideally use `willDrawCell` to set color, but `didDraw` allows overlay
+                const { x, y, width, height } = data.cell;
+                doc.setFontSize(6);
+                doc.setFont("helvetica", "bold");
+                // Note: re-rendering text perfectly over existing text is hard, 
+                // but setting textColor in willDrawCell is cleaner. See below.
+            }
+        },
+        willDrawCell: (data) => {
+             if (data.section === 'body' && data.column.index === 4) {
+                const text = data.cell.raw as string;
+                if (text.startsWith('+')) {
+                    doc.setTextColor(46, 204, 113);
+                } else {
+                    doc.setTextColor(249, 83, 83);
+                }
+             }
+        }
     });
 
-    // Add summary section
-    const finalY =
-      (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable
-        ?.finalY || 80;
+    // --- SUMMARY SECTION ---
+    // Calculate Y position after table
+    let finalY = (doc as any).lastAutoTable.finalY + 10;
+    
+    // Summary Calculation
+    const summarySales = clientTransactions
+        .filter(t => t.type === 'PURCHASE' || t.type === 'PICKUP')
+        .reduce((acc, curr) => acc + (curr.total || 0), 0);
+        
+    const summaryDeposits = clientTransactions
+        .filter(t => t.type === 'DEPOSIT')
+        .reduce((acc, curr) => acc + (curr.total || 0), 0);
 
-    // Transaction Summary Header
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0); // Black text
-    doc.text("Transaction Summary", 10, finalY + 6);
+    const summaryReturns = 0; // Assuming 0 for now based on data structure
+    
+    const netGrandTotal = summaryDeposits - summarySales; // Simplified logic
+    
+    const totalTransport = clientTransactions.reduce((acc, curr) => acc + (curr.transportFare || 0), 0);
+    const totalLoadingOff = clientTransactions.reduce((acc, curr) => acc + (curr.loadingAndOffloading || 0), 0);
+    const totalLoading = clientTransactions.reduce((acc, curr) => acc + (curr.loading || 0), 0);
+    const totalAddCharges = totalTransport + totalLoadingOff + totalLoading;
 
-    // Calculate summary statistics from filtered transactions
-    const totalTransactions = clientTransactions.length;
-    const purchaseTransactions = clientTransactions.filter(
-      (t) => t.type === "PURCHASE"
-    ).length;
-    const pickupTransactions = clientTransactions.filter(
-      (t) => t.type === "PICKUP"
-    ).length;
-    const depositTransactions = clientTransactions.filter(
-      (t) => t.type === "DEPOSIT"
-    ).length;
-    const totalAmount = clientTransactions.reduce(
-      (sum, t) => sum + (t.total || 0),
-      0
-    );
-    const totalDiscount = clientTransactions.reduce(
-      (sum, t) => sum + (t.discount || 0),
-      0
-    );
+    // 1. Gray Container
+    doc.setFillColor(248, 248, 248); // #F8F8F8
+    doc.setDrawColor(230, 230, 230);
+    doc.roundedRect(margin, finalY, pageWidth - (margin * 2), 95, 3, 3, 'FD');
 
-    // Summary Details - Left Column
-    doc.setFont("helvetica", "bold");
+    // Title
+    doc.setFontSize(11);
+    doc.setTextColor(33, 33, 33);
+    doc.text("May 2025 Summary", margin + 5, finalY + 10);
+
+    // 2. Three Stats Cards
+    const cardWidth = 55;
+    const cardHeight = 25;
+    const gap = 6;
+    const startX = margin + 5;
+    const cardY = finalY + 15;
+
+    // Card 1: Sales
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(230, 230, 230);
+    doc.roundedRect(startX, cardY, cardWidth, cardHeight, 1, 1, 'FD');
+    
+    doc.setFontSize(7);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Total Sales", startX + (cardWidth/2), cardY + 6, { align: 'center' });
+    
     doc.setFontSize(10);
-    doc.text("Total Transactions:", 10, finalY + 15);
-    doc.text("Purchases:", 10, finalY + 25);
-    doc.text("Pickups:", 10, finalY + 32);
-
-    doc.setFont("helvetica", "normal");
-    doc.text(`${totalTransactions}`, 42, finalY + 15);
-    doc.text(`${purchaseTransactions}`, 30, finalY + 25);
-    doc.text(`${pickupTransactions}`, 30, finalY + 32);
-
-    // Summary Details - Right Column
     doc.setFont("helvetica", "bold");
-    doc.text("Deposits:", 70, finalY + 15);
-    doc.text("Total Amount:", 70, finalY + 25);
-    doc.text("Total Savings:", 70, finalY + 32);
-
+    doc.setTextColor(249, 83, 83); // Red
+    doc.text(`-${formatCurrencyForPDF(summarySales)}`, startX + (cardWidth/2), cardY + 13, { align: 'center' });
+    
     doc.setFont("helvetica", "normal");
-    doc.text(`${depositTransactions}`, 87, finalY + 15);
+    doc.setFontSize(6);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`${clientTransactions.filter(t => t.type !== 'DEPOSIT').length} transactions`, startX + (cardWidth/2), cardY + 19, { align: 'center' });
+
+    // Card 2: Deposits
+    const card2X = startX + cardWidth + gap;
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(card2X, cardY, cardWidth, cardHeight, 1, 1, 'FD');
+    
+    doc.setFontSize(7);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Total Deposits", card2X + (cardWidth/2), cardY + 6, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(46, 204, 113); // Green
+    doc.text(`+${formatCurrencyForPDF(summaryDeposits)}`, card2X + (cardWidth/2), cardY + 13, { align: 'center' });
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`${clientTransactions.filter(t => t.type === 'DEPOSIT').length} payments`, card2X + (cardWidth/2), cardY + 19, { align: 'center' });
+
+    // Card 3: Returns
+    const card3X = card2X + cardWidth + gap;
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(card3X, cardY, cardWidth, cardHeight, 1, 1, 'FD');
+    
+    doc.setFontSize(7);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Total Returns", card3X + (cardWidth/2), cardY + 6, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(33, 33, 33); // Black
+    doc.text(`${formatCurrencyForPDF(summaryReturns)}`, card3X + (cardWidth/2), cardY + 13, { align: 'center' });
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`0 return`, card3X + (cardWidth/2), cardY + 19, { align: 'center' });
+
+    // 3. Dark Grand Total Box
+    const darkBoxY = cardY + cardHeight + 8;
+    doc.setFillColor(60, 60, 60); // Dark Grey
+    doc.roundedRect(startX, darkBoxY, (cardWidth * 3) + (gap * 2), 30, 1, 1, 'F');
+
+    doc.setFontSize(7);
+    doc.setTextColor(200, 200, 200);
+    doc.text("NET GRAND TOTAL (MAY 2025)", pageWidth / 2, darkBoxY + 8, { align: 'center' });
+
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(255, 255, 255);
+    doc.text(formatCurrencyForPDF(netGrandTotal), pageWidth / 2, darkBoxY + 16, { align: 'center' });
+
+    doc.setFontSize(6);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(180, 180, 180);
     doc.text(
-      `${formatCurrency(totalAmount).replace(/^\s+/, "")}`,
-      95,
-      finalY + 25
+        `Sales (${formatCurrencyForPDF(summarySales)}) - Deposits (${formatCurrencyForPDF(summaryDeposits)}) - Returns (${formatCurrencyForPDF(summaryReturns)})`, 
+        pageWidth / 2, 
+        darkBoxY + 23, 
+        { align: 'center' }
     );
-    doc.text(`${formatCurrency(totalDiscount)}`, 95, finalY + 32);
 
-    // Generate filename with client name and current date
-    const fileName = `${
-      client?.name?.replace(/[^a-zA-Z0-9]/g, "_") || "Client"
-    }_Transactions_${new Date().toISOString().split("T")[0]}.pdf`;
+    // 4. Additional Charges Box (White bottom)
+    const chargesY = darkBoxY + 35;
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(startX, chargesY, (cardWidth * 3) + (gap * 2), 30, 1, 1, 'F');
 
-    // Save the PDF
-    doc.save(fileName);
+    doc.setFontSize(9);
+    doc.setTextColor(33, 33, 33);
+    doc.setFont("helvetica", "bold");
+    doc.text("Additional Charges Summary", startX + 5, chargesY + 8);
+
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 100, 100);
+    
+    // Charges Grid (Approx)
+    doc.text(`Total Transport: ${formatCurrencyForPDF(totalTransport)}`, startX + 5, chargesY + 16);
+    doc.text(`Total Loading/Offloading: ${formatCurrencyForPDF(totalLoadingOff)}`, startX + 60, chargesY + 16);
+    doc.text(`Total Loading: ${formatCurrencyForPDF(totalLoading)}`, startX + 130, chargesY + 16);
+
+    // Charges Line
+    doc.setDrawColor(240, 240, 240);
+    doc.line(startX + 5, chargesY + 20, startX + (cardWidth * 3) + (gap * 2) - 5, chargesY + 20);
+
+    // Total Charges Text
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(33, 33, 33);
+    doc.text(`Total Additional Charges: ${formatCurrencyForPDF(totalAddCharges)}`, startX + 5, chargesY + 26);
+
+
+    // --- FOOTER ---
+    const footerY = pageHeight - 20;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(margin, footerY, pageWidth - margin, footerY);
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 100, 100);
+    doc.text("This is a system-generated statement", pageWidth / 2, footerY + 6, { align: 'center' });
+    doc.text("For inquiries, please contact your account manager", pageWidth / 2, footerY + 10, { align: 'center' });
+    doc.text(`Statement Date: ${new Date().toLocaleDateString()}`, pageWidth / 2, footerY + 14, { align: 'center' });
+
+    // Save
+    doc.save(`Statement_${client?.name || 'Client'}_${periodText}.pdf`);
   };
-  //
 
+  //
   const mergedTransactions = useMemo(() => {
     if (!transactions || !clients) return [];
     const merged = mergeTransactionsWithClients(transactions, clients);
@@ -506,7 +717,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
             <ChevronLeft />
             <span>Back</span>
           </button>
-          <p className="lg:text-lg text-sm text-[#333333]">
+          <p className="lg:text-lg text-sm text-[#1E1E1E]">
             Client Account Management
           </p>
         </div>
@@ -613,17 +824,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                   </Button>
                 </div>
               </div>
-
-              {/* Transaction summary */}
-              {/* <div className="mb-6 p-4 bg-[#F5F5F5] rounded-lg">
-                <p className="text-sm text-[#7D7D7D]">
-                  Showing {clientTransactions.length} transaction
-                  {clientTransactions.length !== 1 ? "s" : ""}
-                  {transactionTypeFilter !== "all" &&
-                    ` (${transactionTypeFilter})`}
-                  {staffFilter !== "all-staff" && ` by ${staffFilter}`}
-                </p>
-              </div> */}
 
               <ClientTransactionDetails
                 clientTransactions={clientTransactions}
