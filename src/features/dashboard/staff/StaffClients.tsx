@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 //import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
 import type { Client } from "@/types/types";
-import { Search, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight} from "lucide-react";
 import PaymentModal from "./components/PaymentModal";
 import useClientFiltering, {
   type clientBalance,
@@ -35,7 +35,7 @@ const getTypeBadgeStyles = (type: string) => {
 };
 
 // Helper for amount coloring
-const getAmountColor = (amount: number, type: string) => {
+const getAmountColor = (type: string) => {
     if (type.toLowerCase() === 'deposit') return 'text-[#2ECC71]';
     return 'text-[#F95353]';
 }
@@ -167,7 +167,7 @@ const StaffClients: React.FC = () => {
                                         {client.transactions[0]?.type || "N/A"}
                                     </span>
                                 </td>
-                                <td className={`py-4 px-6 text-sm font-medium ${getAmountColor(client.transactions[0]?.total || 0, client.transactions[0]?.type || "")}`}>
+                                <td className={`py-4 px-6 text-sm font-medium ${getAmountColor(client.transactions[0]?.type || "")}`}>
                                     {/* Use the last transaction's amount */}
                                     {client.transactions[0]?.type === 'DEPOSIT' ? '+' : '-'}
                                     ₦{client.transactions[0]?.total?.toLocaleString() || "0"}

@@ -2,18 +2,13 @@
 import type { Transaction } from "@/types/transactions";
 
 // utils
-import { formatCurrency, balanceTextClass } from "@/utils/styles";
+//import { balanceTextClass } from "@/utils/styles";
 
 // ui
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import {
-  getTransactionDateString,
-  // getTransactionTimeString,
+  getTransactionTimeString,
 } from "@/utils/transactions";
 
 // icons
@@ -46,33 +41,33 @@ const MySalesActivity = ({
     </div>
   );
 
-  // 🧠 Sort transactions by createdAt (latest first)
+  // Sort transactions by createdAt (latest first)
   const sortedTransactions = [...(filteredTransactions || [])].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
   return (
     <div className="hidden md:block overflow-x-auto">
-      <table className="w-full min-w-[800px] border-collapse">
+      <table className="w-full min-w-[800px] border-collapse border-[#D9D9D9]">
         <thead>
-          <tr className="bg-[#F5F5F5] h-[65px]">
+          <tr className="bg-[#F5F5F5] border border-[#D9D9D9] h-[65px]">
             <th className="text-left min-w-36 text-[#333333] font-Inter font-medium text-base pl-5 md:pl-10">
-              Client Name
+              Clients
             </th>
             <th className="text-left text-[#333333] font-Inter font-medium text-base">
               Products
             </th>
-            <th className="text-left text-[#333333] font-Inter font-medium text-base">
+            {/* <th className="text-left text-[#333333] font-Inter font-medium text-base">
               Type
-            </th>
+            </th> */}
             <th className="text-left text-[#333333] font-Inter font-medium text-base">
               Amount
             </th>
-            <th className="text-left text-[#333333] font-Inter font-medium text-base">
+            {/* <th className="text-left text-[#333333] font-Inter font-medium text-base">
               Amount Paid
-            </th>
+            </th> */}
             <th className="text-right text-[#333333] font-Inter font-medium text-base pr-5 md:pr-16">
-              Date
+              Time
             </th>
           </tr>
         </thead>
@@ -82,7 +77,16 @@ const MySalesActivity = ({
             sortedTransactions.map((transaction, i) => (
               <tr
                 key={transaction._id || i}
-                className="h-[65px] border-b border-[#D9D9D9]"
+                className={`h-[65px] border-b border-[#D9D9D9] ${
+                  transaction.clientId?._id
+                    ? "hover:bg-gray-50 transition-colors cursor-pointer"
+                    : ""
+                }`}
+                onClick={() => {
+                  if (transaction.clientId?._id) {
+                    window.location.href = `/staff/dashboard/clients/${transaction.clientId._id}`;
+                  }
+                }}
               >
                 <td className="text-[#444444] text-base pl-5 md:pl-10 capitalize">
                   {transaction.clientId?.name || transaction.walkInClientName}
@@ -126,7 +130,7 @@ const MySalesActivity = ({
                   )}
                 </td>
 
-                <td
+                {/* <td
                   className={`text-sm py-1 px-2 capitalize ${
                     transaction.type === "PURCHASE"
                       ? "text-[#F95353]"
@@ -136,18 +140,26 @@ const MySalesActivity = ({
                   }`}
                 >
                   {transaction.type}
-                </td>
+                </td> */}
 
-                <td className={balanceTextClass(transaction.total)}>
+                {/* <td className={balanceTextClass(transaction.total)}>
                   {formatCurrency(transaction.total)}
-                </td>
+                </td> */}
 
-                <td className={balanceTextClass(transaction.amountPaid)}>
+                <td
+                  className={`
+                    ${transaction.type === "PURCHASE"
+                      ? "text-[#F95353]"
+                      : transaction.type === "PICKUP"
+                      ? "text-[#FFA500]"
+                      : "text-[#2ECC71]"
+                    }`}
+                >
                   ₦{transaction.amountPaid?.toLocaleString()}
                 </td>
 
                 <td className="uppercase text-[#444444] text-base text-right pr-5 md:pr-10">
-                  {getTransactionDateString(transaction, "en-NG")}
+                  {getTransactionTimeString(transaction, "en-NG")}
                 </td>
               </tr>
             ))

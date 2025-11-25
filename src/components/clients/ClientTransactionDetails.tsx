@@ -6,7 +6,8 @@ import {
   getTransactionDateString,
   getTransactionTimeString,
 } from "@/utils/transactions";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import ProcessProductReturnModal from "./ProcessProductReturnModal";
 
 interface clientTrasactionDetailsProps {
   clientTransactions: Transaction[];
@@ -43,6 +44,16 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
   clientTransactions,
   client,
 }) => {
+  const [isReturnModalOpen, setReturnModalOpen] = useState(false);
+  const [selectedTxnForReturn, setSelectedTxnForReturn] = useState<Transaction | null>(null);
+
+  const handleOpenReturnModal = (transaction: Transaction) => {
+    setSelectedTxnForReturn(transaction);
+    setReturnModalOpen(true);
+  };
+
+  const handleCloseReturnModal = () => setReturnModalOpen(false);
+
   const transactionWithBalance = useMemo(() => {
     const transactionsWithBalance = calculateTransactionsWithBalance(
       clientTransactions,
@@ -59,7 +70,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
 
   return (
     <div className="font-sans text-[#333333]">
-      
+
       {/* --- 1. FILTERS SECTION (New) --- */}
 
       {/* --- 2. RETURNED PRODUCTS SECTION (New) --- */}
@@ -109,9 +120,6 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
               (txn.amountPaid ?? 0) > 0 &&
               (txn.amountPaid ?? 0) < (txn.total ?? 0);
 
-
-
-
             return (
               <div
                 key={`${txn._id}-${getTransactionDateString(txn)}-${i}`}
@@ -136,19 +144,6 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                         {getTransactionTimeString(txn)}
                       </span>
                     </div>
-
-                    {/* Discount Label (Desktop only) */}
-                    {/* {txn.discount && txn.discount > 0 && (
-                      <span className="hidden md:inline text-[#2ECC71] text-sm font-medium">
-                        {formatCurrency(txn.discount)} saved{" "}
-                        <span className="text-[#666666] font-normal">
-                          {txn.subtotal
-                            ? ((txn.discount / txn.subtotal) * 100).toFixed(1)
-                            : 0}
-                          % discount
-                        </span>
-                      </span>
-                    )} */}
                   </div>
 
                   {/* Total & Actions */}
@@ -166,7 +161,10 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                     </div>
                     {/* Only show Return button for tangible transactions */}
                     {(txn.type === "PURCHASE" || txn.type === "PICKUP") && (
-                      <button className="border border-gray-300 text-[#444444] px-4 py-1.5 rounded-md text-sm font-medium hover:bg-gray-50 bg-white">
+                      <button
+                        onClick={() => handleOpenReturnModal(txn)}
+                        className="border border-gray-300 text-[#444444] px-4 py-1.5 rounded-md text-sm font-medium hover:bg-gray-50 bg-white"
+                      >
                         Return
                       </button>
                     )}
@@ -340,26 +338,6 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                     </div>
                   )}
 
-                {/* B. Description/Note Banner */}
-                {/* {(txn.type === "DEPOSIT" || txn.description) &&
-                  !txn.items?.length && (
-                    <div className="bg-[#F5F5F5] rounded-md p-4 mt-4">
-                      <p className="text-[#444444] text-sm font-medium">
-                        {txn.type === "DEPOSIT" ? "Deposit Details" : "Note"}
-                      </p>
-                      <p className="text-[#7D7D7D] text-xs mt-1">
-                        {txn.description || "Customer deposit"}
-                      </p>
-                    </div>
-                  )} */}
-
-                  {/* --- FOOTER: DEPOSIT NOTE --- */}
-                {/* {(!txn.items?.length && (txn.type === "DEPOSIT" || txn.description)) && !isPartialPayment && (
-                   <div className="bg-[#F5F5F5] rounded-md p-4 mt-4">
-                      <p className="text-[#444] text-sm font-medium">{txn.type === "DEPOSIT" ? "Deposit Details" : "Note"}</p>
-                      <p className="text-[#7D7D7D] text-xs mt-1">{txn.description || "Customer deposit"}</p>
-                   </div>
-                )} */}
 
                 {/* --- FOOTER: PARTIAL PAYMENT BANNER --- */}
                 {isPartialPayment && (
@@ -373,6 +351,11 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
           })}
         </div>
       )}
+      <ProcessProductReturnModal
+        isOpen={isReturnModalOpen}
+        onClose={handleCloseReturnModal}
+        transaction={selectedTxnForReturn}
+      />
     </div>
   );
 };
