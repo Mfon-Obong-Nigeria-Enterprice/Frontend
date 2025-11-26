@@ -431,6 +431,7 @@
 
 //       handleResetClient();
 //     } catch (error) {
+
 //       handleApiError(error, "Transaction error");
 //     } finally {
 //       setIsSubmitting(false);
@@ -853,6 +854,32 @@ const NewSales: React.FC = () => {
 
     setIsSubmitting(true);
     try {
+      // --- SENIOR ENGINEER DEBUG LOG ---
+      console.groupCollapsed("--- New Sales Submission Data ---");
+      console.log("Timestamp:", new Date().toISOString());
+      console.log("Submitting User:", user);
+      console.log("---------------------------------");
+      console.log("CLIENT INFO");
+      console.log("Is Walk-In:", isWalkIn);
+      console.log("Selected Client:", selectedClient);
+      console.log("Walk-In Data:", walkInData);
+      console.log("---------------------------------");
+      console.log("TRANSACTION & PAYMENT");
+      console.log("Sales Type:", salesType);
+      console.log("Transaction Type:", transactionType);
+      console.log("Payment Method:", paymentMethod);
+      console.log("Sub-Method (Bank/POS):", subMethod);
+      console.log("Amount Paid (Raw Input):", amountPaid);
+      console.log("Transaction Date:", date);
+      console.log("Notes:", notes);
+      console.log("---------------------------------");
+      console.log("PRODUCTS & TOTALS");
+      console.log("Product Rows:", rows);
+      console.log("Calculated Totals:", calculateTotals());
+      console.log("Balance Info:", getBalanceInfo());
+      console.groupEnd();
+      // --- END OF DEBUG LOG ---
+
       const { discountTotal } = calculateTotals();
       const effectiveAmountPaid = getAmountPaid() || 0;
 
@@ -943,16 +970,18 @@ const NewSales: React.FC = () => {
                   onSalesTypeChange={setSalesType}
                 />
 
-                {/* should I include the Sales types button here? */}
-                <Button
-                  onClick={() => {
-                    setIsWalkIn(true);
-                    setSelectedClient(null);
-                  }}
-                  className="w-full md:w-fit bg-[#3D80FF] text-white"
-                >
-                  Walk in
-                </Button>
+                {/* Conditionally render Walk in button. Not available for Wholesale. */}
+                {salesType !== "Wholesale" && (
+                  <Button
+                    onClick={() => {
+                      setIsWalkIn(true);
+                      setSelectedClient(null);
+                    }}
+                    className="w-full md:w-fit bg-[#3D80FF] text-white"
+                  >
+                    Walk in
+                  </Button>
+                )}
               </div>
             </div>
           ) : (
@@ -1250,16 +1279,6 @@ const NewSales: React.FC = () => {
           </Button>
         </div>
       </section>
-
-      {/* {showReceipt && receiptData && (
-        <Modal
-          size="xxl"
-          isOpen={showReceipt}
-          onClose={() => setShowReceipt(false)}
-        >
-          <SalesReceipt transaction={receiptData} />
-        </Modal>
-      )} */}
     </main>
   );
 };

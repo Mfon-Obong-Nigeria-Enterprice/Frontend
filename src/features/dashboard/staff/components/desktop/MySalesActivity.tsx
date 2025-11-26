@@ -8,7 +8,7 @@ import type { Transaction } from "@/types/transactions";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import {
-  getTransactionTimeString,
+  getTransactionDateString,
 } from "@/utils/transactions";
 
 // icons
@@ -159,7 +159,7 @@ const MySalesActivity = ({
                 </td>
 
                 <td className="uppercase text-[#444444] text-base text-right pr-5 md:pr-10">
-                  {getTransactionTimeString(transaction, "en-NG")}
+                  {getTransactionDateString(transaction, "en-GB")}
                 </td>
               </tr>
             ))

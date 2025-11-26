@@ -5,7 +5,7 @@ import type { Transaction } from '@/types/transactions';
 import { getTransactionDate } from '@/utils/transactions';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createReturnTransaction, type ReturnTransactionItem } from '@/services/transactionService';
-import { toast } from 'sonner';
+import { toast } from 'react-toastify';
 
 // Infer the item type from the Transaction's items array
 type TransactionItem = Transaction['items'][number];
@@ -29,11 +29,24 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedQua
     onQuantityChange(Math.max(returnedQuantity - 1, 0));
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Allow empty string to let user clear the input, otherwise default to 0
+    let val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+    
+    if (isNaN(val)) val = 0;
+    
+    // Clamp value between 0 and max quantity
+    val = Math.max(0, Math.min(val, item.quantity));
+    
+    onQuantityChange(val);
+  };
+
   const returnAmount = item.unitPrice * returnedQuantity;
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 bg-white">
-      <div className="flex justify-between items-start mb-2">
+    <div className="border border-gray-200 rounded-lg p-4 bg-white mb-4">
+      {/* Checkbox and Item Details */}
+      <div className="flex justify-between items-start mb-4">
         <div className="flex items-start gap-3">
           <input
             type="checkbox"
@@ -42,43 +55,61 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedQua
             onChange={(e) => onQuantityChange(e.target.checked ? 1 : 0)}
           />
           <div>
-            <h3 className="text-base font-semibold text-[#7D7D7D]">{item.productName}</h3>
+            <h3 className="text-base font-semibold text-[#333333]">{item.productName}</h3>
             <p className="text-sm text-gray-500 mt-1">{item.quantity} {item.unit || 'units'}</p>
             <p className="text-sm text-gray-500 mt-1">₦{item.unitPrice.toLocaleString()}/{item.unit || 'unit'}</p>
           </div>
         </div>
-        <span className="text-base font-semibold text-[#7D7D7D]">₦{item.subtotal.toLocaleString()}</span>
+        <span className="text-base font-bold text-[#333333]">₦{item.subtotal.toLocaleString()}</span>
       </div>
 
       <hr className="my-4 border-gray-200" />
 
+      {/* Controls Row */}
       <div className="flex justify-between items-end">
+        
+        {/* Quantity Controls */}
         <div>
-          <label className="block text-sm text-gray-500 mb-2">Quantity to Return</label>
+          <label className="block text-xs text-gray-500 mb-1.5">Quantity to Return</label>
           <div className="flex items-center gap-2">
-            <button onClick={handleDecrement} className="p-2 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-500">
-              <Minus size={16} />
+            {/* Minus Button */}
+            <button 
+              onClick={handleDecrement} 
+              className="w-[34px] h-[34px] flex items-center justify-center border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600 transition-colors"
+            >
+              <Minus size={14} />
             </button>
-            <div className="relative">
-              <input
-                type="text"
-                value={returnedQuantity}
-                readOnly
-                className="w-16 border border-gray-300 rounded p-2 text-center text-gray-700 focus:outline-none"
-              />
+
+            {/* Input Field - Type Number allows typing */}
+            <input
+              type="number"
+              value={returnedQuantity.toString()} // toString removes leading zeros if any
+              onChange={handleInputChange}
+              min={0}
+              max={item.quantity}
+              className="w-[70px] h-[34px] border border-gray-300 rounded px-2 text-left text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+
+            {/* Plus Button */}
+            <button 
+              onClick={handleIncrement} 
+              className="w-[34px] h-[34px] flex items-center justify-center border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600 transition-colors"
+            >
+              <Plus size={14} />
+            </button>
+
+            {/* Stacked Helper Text (Unit & Max) */}
+            <div className="flex flex-col justify-center ml-1 leading-tight">
+              <span className="text-xs text-gray-500">{item.unit || 'units'}</span>
+              <span className="text-xs text-gray-400">Max {item.quantity}</span>
             </div>
-            <button onClick={handleIncrement} className="p-2 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-500">
-              <Plus size={16} />
-            </button>
-            <span className="text-sm text-gray-500 ml-2">
-              {item.unit || 'units'} Max {item.quantity}
-            </span>
           </div>
         </div>
 
+        {/* Return Amount Display */}
         <div className="text-right">
-          <label className="block text-sm text-gray-500 mb-2">Return Amount:</label>
-          <div className="bg-gray-100 py-2 px-4 rounded text-gray-500 font-medium">
+          <label className="block text-xs text-gray-500 mb-1.5">Return Amount:</label>
+          <div className="bg-[#F5F5F5] h-[34px] flex items-center px-3 rounded text-sm text-gray-500 font-medium min-w-[100px]">
             ₦{returnAmount.toLocaleString()}
           </div>
         </div>
@@ -97,15 +128,11 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
   const queryClient = useQueryClient();
   const [returnedItems, setReturnedItems] = useState<Record<string, ReturnedItemInfo>>({});
   const [reason, setReason] = useState('');
-  const [notes, setNotes] = useState('');
-  const [actualAmountReturned, setActualAmountReturned] = useState<number | string>('');
 
   const returnMutation = useMutation({
     mutationFn: createReturnTransaction,
     onSuccess: () => {
       toast.success("Return processed successfully!");
-      // Invalidate queries to refetch client and transaction data.
-      // We add a guard here to ensure clientId exists before invalidating.
       if (transaction?.clientId?._id) {
         queryClient.invalidateQueries({ queryKey: ['client', transaction.clientId._id] });
       }
@@ -138,14 +165,13 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
     return Object.values(returnedItems).reduce((total, item) => total + (item.unitPrice * item.quantity), 0);
   }, [returnedItems]);
 
+  const totalItemsSelected = Object.keys(returnedItems).length;
+
   if (!isOpen || !transaction) return null;
 
   const handleClose = () => {
-    // Reset state on close
     setReturnedItems({});
     setReason('');
-    setNotes('');
-    setActualAmountReturned('');
     onClose();
   };
 
@@ -171,16 +197,14 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
       return;
     }
 
-    const finalAmountReturned = typeof actualAmountReturned === 'number' ? actualAmountReturned : calculatedTotalReturn;
-
     returnMutation.mutate({
       clientId: transaction.clientId._id,
       type: "RETURN",
       reason,
       referenceTransactionId: transaction._id,
       items: itemsToSubmit,
-      actualAmountReturned: finalAmountReturned,
-      notes,
+      actualAmountReturned: calculatedTotalReturn,
+      notes: '', 
     });
   };
 
@@ -207,9 +231,9 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-8 overflow-y-auto flex-grow min-h-0">
+        <div className="p-6 overflow-y-auto flex-grow min-h-0">
           {/* Select Item Section */}
-          <div>
+          <div className="mb-8">
             <h3 className="text-base font-semibold text-[#444444] mb-4">
               Select Item to return
             </h3>
@@ -231,22 +255,24 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
 
           {/* Return Reason Section */}
           <div>
-            <h3 className="text-base font-semibold text-gray-900 mb-4">
+            <h3 className="text-[#444444] text-base font-normal mb-2">
               Return Reason
             </h3>
             <div className="relative">
               <select
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className="block w-full pl-4 pr-10 py-3 text-base border-none rounded-lg bg-gray-100 text-gray-500 appearance-none focus:outline-none focus:ring-0 cursor-pointer"
+                className="block w-full pl-4 pr-10 py-3 text-sm border-none rounded bg-[#F5F5F5] text-[#7D7D7D] appearance-none focus:outline-none focus:ring-0 cursor-pointer"
                 defaultValue=""
               >
                 <option value="" disabled hidden>
                   Select a reason
                 </option>
-                <option value="damaged">Damaged</option>
-                <option value="wrong_item">Wrong Item</option>
-                <option value="customer_changed_mind">Customer changed mind</option>
+                <option value="damage_defective">Damage/Defective product</option>
+                <option value="wrong_item">Wrong item delivered</option>
+                <option value="customer_request">Customer request</option>
+                <option value="quality_issue">Quality issue</option>
+                <option value="excess_order">Excess order</option>
                 <option value="other">Other</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
@@ -255,46 +281,36 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
             </div>
           </div>
 
-          {/* Notes and Actual Amount Returned */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-base font-semibold text-gray-900 mb-4">
-                Notes <span className="text-gray-400 font-normal">(optional)</span>
-              </h3>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={3}
-                placeholder="Add any extra details about the return..."
-                className="block w-full p-3 text-base border border-gray-200 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-[#7D7D7D] mb-4">
-                Actual Amount Returned
-              </h3>
-              <p className="text-xs text-gray-500 mb-2">Override the calculated amount if needed. Leave blank to use the calculated total.</p>
-              <input
-                type="number"
-                value={actualAmountReturned}
-                onChange={(e) => setActualAmountReturned(e.target.value === '' ? '' : Number(e.target.value))}
-                placeholder={`Calc: ₦${calculatedTotalReturn.toLocaleString()}`}
-                className="block w-full p-3 text-base border border-gray-200 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
+          {/* Items Selected Summary Box */}
+          <div className="bg-[#F9FAFB] rounded-lg p-4 mt-6 flex justify-between items-center">
+             <div className="flex flex-col gap-1">
+                <span className="text-xs text-[#7D7D7D]">Items Selected:</span>
+                <span className="text-base font-medium text-[#333333]">Return Amount:</span>
+             </div>
+             <div className="flex flex-col gap-1 text-right">
+                <span className="text-xs text-[#333333]">{totalItemsSelected} item(s)</span>
+                <div className="bg-white px-2 py-1 rounded border border-gray-200">
+                    <span className="text-sm font-medium text-[#7D7D7D]">₦{calculatedTotalReturn.toLocaleString()}</span>
+                </div>
+             </div>
           </div>
         </div>
         
-        {/* Footer */}
-        <div className="p-6 border-t border-gray-200 mt-auto bg-white sticky bottom-0">
+        {/* Footer Buttons */}
+        <div className="p-6 pt-2 mt-auto bg-white sticky bottom-0">
             <div className="flex justify-end gap-4">
-                <button onClick={handleClose} className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button 
+                    onClick={handleClose} 
+                    className="px-8 py-3 border border-[#9CA3AF] rounded-md text-[#333333] font-medium text-sm hover:bg-gray-50 w-full sm:w-auto"
+                >
+                    Cancel
+                </button>
                 <button
                   onClick={handleSubmit}
                   disabled={returnMutation.isPending}
-                  className="px-4 py-2 bg-[#2ECC71] text-white rounded hover:bg-green-700 disabled:bg-blue-300 disabled:cursor-not-allowed"
+                  className="px-6 py-3 bg-[#2ECC71] text-white rounded-md font-medium text-sm hover:bg-green-600 disabled:bg-green-300 disabled:cursor-not-allowed w-full sm:w-auto"
                 >
-                  {returnMutation.isPending ? 'Submitting...' : 'Submit Return'}
+                  {returnMutation.isPending ? 'Processing...' : 'Process Return'}
                 </button>
             </div>
         </div>

@@ -83,7 +83,7 @@ const StaffClients: React.FC = () => {
     <main className="p-6 bg-[#F9FAFB] min-h-screen font-sans">
       
       {/* Top Header Section */}
-      <div className="flex-col gap-4 mb-8">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
         <div>
             <h1 className="text-[32px] font-semibold text-[#1E1E1E] leading-tight">Clients</h1>
             <p className="text-[#7D7D7D] text-base mt-1">Search, view, and edit client transaction</p>
@@ -92,7 +92,7 @@ const StaffClients: React.FC = () => {
         <Button
           onClick={() => window.location.reload()}
           variant="outline"
-          className="h-[44px] w-[213px] mt-6 px-6 bg-white hover:bg-gray-50 text-[#333333] border border-[#7D7D7D] rounded-lg font-medium flex items-center gap-2 shadow-sm"
+          className="h-[44px] w-full md:w-[213px] px-6 bg-white hover:bg-gray-50 text-[#333333] border border-[#7D7D7D] rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm"
         >
           <img src="/icons/refresh_icon.svg" width={16} height={16} className="text-[#333333]" alt="Refresh icon"/>
           Refresh
