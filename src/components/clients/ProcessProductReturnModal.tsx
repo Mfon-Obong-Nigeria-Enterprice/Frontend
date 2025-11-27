@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { X, Minus, Plus, ChevronDown } from 'lucide-react';
 import type { Transaction } from '@/types/transactions';
@@ -12,21 +12,32 @@ type TransactionItem = Transaction['items'][number];
 
 interface ReturnedItemInfo extends ReturnTransactionItem {
   unitPrice: number;
+  returnAmount: number;
 }
 
 interface ProductReturnCardProps {
   item: TransactionItem;
-  returnedQuantity: number;
-  onQuantityChange: (quantity: number) => void;
+  returnedInfo: { quantity: number; returnAmount: number };
+  onReturnInfoChange: (info: { quantity: number; returnAmount: number }) => void;
 }
 
-const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedQuantity, onQuantityChange }) => {
+const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedInfo, onReturnInfoChange }) => {
+  const { quantity: returnedQuantity, returnAmount } = returnedInfo;
+
   const handleIncrement = () => {
-    onQuantityChange(Math.min(returnedQuantity + 1, item.quantity));
+    const newQuantity = Math.min(returnedQuantity + 1, item.quantity);
+    onReturnInfoChange({
+      quantity: newQuantity,
+      returnAmount: newQuantity * item.unitPrice, // Recalculate amount
+    });
   };
 
   const handleDecrement = () => {
-    onQuantityChange(Math.max(returnedQuantity - 1, 0));
+    const newQuantity = Math.max(returnedQuantity - 1, 0);
+    onReturnInfoChange({
+      quantity: newQuantity,
+      returnAmount: newQuantity * item.unitPrice, // Recalculate amount
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,10 +49,11 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedQua
     // Clamp value between 0 and max quantity
     val = Math.max(0, Math.min(val, item.quantity));
     
-    onQuantityChange(val);
+    onReturnInfoChange({
+      quantity: val,
+      returnAmount: val * item.unitPrice, // Recalculate amount
+    });
   };
-
-  const returnAmount = item.unitPrice * returnedQuantity;
 
   return (
     <div className="border border-gray-200 rounded-lg p-4 bg-white mb-4">
@@ -50,9 +62,15 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedQua
         <div className="flex items-start gap-3">
           <input
             type="checkbox"
-            className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="mt-1 h-5 w-5 rounded border-gray-300 text-[#2ECC71] focus:ring-green-400"
             checked={returnedQuantity > 0}
-            onChange={(e) => onQuantityChange(e.target.checked ? 1 : 0)}
+            onChange={(e) => {
+              const newQuantity = e.target.checked ? 1 : 0;
+              onReturnInfoChange({
+                quantity: newQuantity,
+                returnAmount: newQuantity * item.unitPrice,
+              });
+            }}
           />
           <div>
             <h3 className="text-base font-semibold text-[#333333]">{item.productName}</h3>
@@ -88,16 +106,16 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedQua
                 onChange={handleInputChange}
                 min={0}
                 max={item.quantity}
-                className="w-[70px] h-[34px] border border-[#D9D9D9] rounded pl-2 pr-6 text-left text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-[31px] h-[34px] border border-[#D9D9D9] rounded pl-2 text-left text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
-              <div className="absolute right-0 top-0 h-full flex flex-col border border-[#D9D9D9]">
+              {/* <div className="absolute right-0 top-0 h-full flex flex-col border border-[#D9D9D9]">
                 <button onClick={handleIncrement} className="h-1/2 px-1.5 flex items-center justify-center hover:bg-gray-100 border-b border-gray-300 rounded-tr-sm">
                   <ChevronDown size={12} className="rotate-180 text-gray-500" />
                 </button>
                 <button onClick={handleDecrement} className="h-1/2 px-1.5 flex items-center justify-center hover:bg-gray-100 rounded-br-sm">
                   <ChevronDown size={12} className="text-gray-500" />
                 </button>
-              </div>
+              </div> */}
             </div>
 
 
@@ -120,9 +138,22 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedQua
         {/* Return Amount Display */}
         <div className="text-right">
           <label className="block text-xs text-gray-500 mb-1.5">Return Amount:</label>
-          <div className="bg-[#F5F5F5] h-[34px] flex items-center px-3 rounded text-sm text-gray-500 font-medium min-w-[100px]">
-            ₦{returnAmount.toLocaleString()}
-          </div>
+          <input
+            type="number"
+            value={returnAmount}
+            onChange={(e) => {
+              const value = Number(e.target.value);
+              const maxAmount = item.unitPrice * returnedQuantity;
+              if (value > maxAmount) {
+                toast.warn(`Amount cannot exceed ₦${maxAmount.toLocaleString()}`);
+                onReturnInfoChange({ quantity: returnedQuantity, returnAmount: maxAmount });
+              } else {
+                onReturnInfoChange({ quantity: returnedQuantity, returnAmount: value });
+              }
+            }}
+            disabled={returnedQuantity === 0}
+            className="bg-white h-[34px] px-3 rounded text-sm font-medium w-[100px] border border-gray-300 text-right disabled:bg-gray-100"
+          />
         </div>
       </div>
     </div>
@@ -139,6 +170,7 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
   const queryClient = useQueryClient();
   const [returnedItems, setReturnedItems] = useState<Record<string, ReturnedItemInfo>>({});
   const [reason, setReason] = useState('');
+  const [actualAmountReturned, setActualAmountReturned] = useState(0);
 
   const returnMutation = useMutation({
     mutationFn: createReturnTransaction,
@@ -155,15 +187,16 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
     }
   });
 
-  const handleQuantityChange = (item: TransactionItem, quantity: number) => {
+  const handleReturnInfoChange = (item: TransactionItem, info: { quantity: number; returnAmount: number }) => {
     setReturnedItems(prev => {
       const newItems = { ...prev };
-      if (quantity > 0) {
+      if (info.quantity > 0) {
         newItems[item.productId] = {
           productId: item.productId,
-          quantity,
+          quantity: info.quantity,
           unit: item.unit || 'unit',
           unitPrice: item.unitPrice,
+          returnAmount: info.returnAmount,
         };
       } else {
         delete newItems[item.productId];
@@ -172,9 +205,15 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
     });
   };
 
+  // This now sums up the individual (potentially edited) return amounts
   const calculatedTotalReturn = useMemo(() => {
-    return Object.values(returnedItems).reduce((total, item) => total + (item.unitPrice * item.quantity), 0);
+    return Object.values(returnedItems).reduce((total, item) => total + item.returnAmount, 0);
   }, [returnedItems]);
+
+  // Sync the editable amount when the calculated total changes
+  useEffect(() => {
+    setActualAmountReturned(calculatedTotalReturn);
+  }, [calculatedTotalReturn]);
 
   const totalItemsSelected = Object.keys(returnedItems).length;
 
@@ -182,6 +221,7 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
 
   const handleClose = () => {
     setReturnedItems({});
+    setActualAmountReturned(0);
     setReason('');
     onClose();
   };
@@ -214,7 +254,7 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
       reason,
       referenceTransactionId: transaction._id,
       items: itemsToSubmit,
-      actualAmountReturned: calculatedTotalReturn,
+      actualAmountReturned: actualAmountReturned,
       notes: '', 
     });
   };
@@ -254,8 +294,8 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
                   <ProductReturnCard
                     key={`${item.productId}-${index}`}
                     item={item}
-                    returnedQuantity={returnedItems[item.productId]?.quantity || 0}
-                    onQuantityChange={(quantity) => handleQuantityChange(item, quantity)}
+                    returnedInfo={returnedItems[item.productId] || { quantity: 0, returnAmount: 0 }}
+                    onReturnInfoChange={(info) => handleReturnInfoChange(item, info)}
                   />
                 ))
               ) : (
@@ -300,9 +340,21 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
              </div>
              <div className="flex flex-col gap-1 text-right">
                 <span className="text-xs text-[#333333]">{totalItemsSelected} item(s)</span>
-                <div className="bg-white px-2 py-1 rounded border border-gray-200">
-                    <span className="text-sm font-medium text-[#7D7D7D]">₦{calculatedTotalReturn.toLocaleString()}</span>
-                </div>
+                <input
+                  type="number"
+                  value={actualAmountReturned}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    // Prevent amount from exceeding the calculated total
+                    if (value > calculatedTotalReturn) {
+                      toast.warn(`Return amount cannot exceed ₦${calculatedTotalReturn.toLocaleString()}`);
+                      setActualAmountReturned(calculatedTotalReturn);
+                    } else {
+                      setActualAmountReturned(value);
+                    }
+                  }}
+                  className="bg-white px-2 py-1 rounded border border-gray-200 text-sm font-medium text-[#7D7D7D] text-right w-[100px]"
+                />
              </div>
           </div>
         </div>

@@ -161,16 +161,21 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     doc.text(`Transaction History - ${periodText}`, margin, 50);
 
     // --- DATA PREPARATION ---
+    // 1. Sort transactions chronologically (oldest first) to calculate running balance correctly.
+    const chronoSortedTransactions = [...clientTransactions].sort((a, b) => {
+        const dateA = getTransactionDate(a).getTime();
+        const dateB = getTransactionDate(b).getTime();
+        return dateA - dateB;
+    });
+
+    // 2. Calculate running balance on the chronologically sorted list.
     const transactionsWithBalance = calculateTransactionsWithBalance(
-        clientTransactions,
+        chronoSortedTransactions,
         { balance: client?.balance || 0 }
     );
 
-    const sortedTransactions = transactionsWithBalance.sort((a, b) => {
-        const dateA = getTransactionDate(a).getTime();
-        const dateB = getTransactionDate(b).getTime();
-        return dateB - dateA; 
-    });
+    // 3. Reverse the array for display (newest first).
+    const displaySortedTransactions = transactionsWithBalance.reverse();
 
     // Columns Configuration
     const columns = [
@@ -185,7 +190,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     ];
 
     // Map Data
-    const tableData = sortedTransactions.map(txn => {
+    const tableData = displaySortedTransactions.map(txn => {
         const productList = txn.items && txn.items.length > 0 
             ? txn.items.flatMap(item => [
                 `•  ${item.quantity} ${item.unit || 'units'} @ ${formatCurrencyForPDF(item.unitPrice)}`,
