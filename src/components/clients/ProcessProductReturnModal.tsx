@@ -61,17 +61,23 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedInf
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-start gap-3">
           <input
-            type="checkbox"
-            className="mt-1 h-5 w-5 rounded border-gray-300 text-[#2ECC71] focus:ring-green-400"
-            checked={returnedQuantity > 0}
-            onChange={(e) => {
-              const newQuantity = e.target.checked ? 1 : 0;
-              onReturnInfoChange({
-                quantity: newQuantity,
-                returnAmount: newQuantity * item.unitPrice,
-              });
-            }}
-          />
+  type="checkbox"
+  className="
+    mt-1 h-5 w-5 appearance-none rounded border border-gray-300 bg-white
+    checked:bg-[#2ECC71] checked:border-transparent
+    checked:bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%224%22%20stroke%3D%22white%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M4.5%2012.75l6%206%209-13.5%22%2F%3E%3C%2Fsvg%3E')]
+    checked:bg-center checked:bg-no-repeat
+    focus:ring-0 focus:outline-none cursor-pointer
+  "
+  checked={returnedQuantity > 0}
+  onChange={(e) => {
+    const newQuantity = e.target.checked ? 1 : 0;
+    onReturnInfoChange({
+      quantity: newQuantity,
+      returnAmount: newQuantity * item.unitPrice,
+    });
+  }}
+/>
           <div>
             <h3 className="text-base font-semibold text-[#333333]">{item.productName}</h3>
             <p className="text-sm text-gray-500 mt-1">{item.quantity} {item.unit || 'units'}</p>
