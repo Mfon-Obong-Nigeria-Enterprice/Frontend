@@ -499,13 +499,15 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
     // --- FOOTER ---
     // --- FIX: Calculate footerY dynamically based on the end of the summary content ---
-    const lastSummaryElementY = lineY + 6; // Y position of the last text in the summary
-    let footerY = lastSummaryElementY + 15; // Start footer 15mm below the summary
+    const lastElementY = lineY + 6; // Y position of the last text in the summary
+    const footerHeight = 20; // Approximate height of the footer section
+    let footerY = pageHeight - footerHeight; // Default to bottom of the page
 
-    // If the content + footer exceeds the page height, add a new page
-    if (footerY > pageHeight - 20) { // 20mm margin from bottom
+    // If content is too long and would overlap with the bottom-aligned footer,
+    // or if the content is very short, add a new page for the footer.
+    if (lastElementY + 10 > footerY) {
         doc.addPage();
-        footerY = 20; // Start footer near the top of the new page
+        footerY = pageHeight - footerHeight; // Position footer at the bottom of the new page
     }
 
     doc.setDrawColor(200, 200, 200);
