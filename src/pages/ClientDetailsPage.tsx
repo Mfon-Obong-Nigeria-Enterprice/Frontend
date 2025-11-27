@@ -99,6 +99,9 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showBlockUnblockDialog, setShowBlockUnblockDialog] = useState(false);
 
+ 
+ 
+ 
   // --- PDF GENERATION LOGIC ---
   const handleExportPDF = () => {
     const doc = new jsPDF({
@@ -250,13 +253,13 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         },
         columnStyles: {
             0: { cellWidth: 20 }, 
-            1: { cellWidth: 18 }, 
-            2: { cellWidth: 45 }, 
+            1: { cellWidth: 18, cellPadding: 5 },
+            2: { cellWidth: 'auto' }, // Allow this column to expand
             3: { cellWidth: 22 }, 
             4: { cellWidth: 22, fontStyle: 'bold' }, 
             5: { cellWidth: 20 }, 
             6: { cellWidth: 16 }, 
-            7: { cellWidth: 'auto' }, 
+            7: { cellWidth: 20 }, // Give other columns a defined space
         },
         didDrawCell: (data) => {
              // --- FIX: Logic for displaying Products to ensure they fit in cell ---
@@ -421,7 +424,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         doc.text(count, x + (cardWidth/2), cardsY + 24, { align: 'center' });
     };
 
-    drawSummaryCard(cardStartX, "Total Sales", `-${formatCurrencyForPDF(summarySales)}`, `${countSales} transactions`, [249, 83, 83]);
+    drawSummaryCard(cardStartX, "Total Purchase", `-${formatCurrencyForPDF(summarySales)}`, `${countSales} transactions`, [249, 83, 83]);
     drawSummaryCard(cardStartX + cardWidth + cardGap, "Total Deposits", `+${formatCurrencyForPDF(summaryDeposits)}`, `${countDeposits} payments`, [46, 204, 113]);
     drawSummaryCard(cardStartX + (cardWidth * 2) + (cardGap * 2), "Total Returns", `${formatCurrencyForPDF(summaryReturns)}`, `${countReturns} return`, [51, 51, 51]);
 
@@ -501,6 +504,9 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     // Save
     doc.save(`Statement_${client?.name || 'Client'}_${periodText}.pdf`);
   };
+
+
+
 
   //
   const mergedTransactions = useMemo(() => {
