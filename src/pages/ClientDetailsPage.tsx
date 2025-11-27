@@ -263,25 +263,22 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         },
         didDrawCell: (data) => {
              // --- FIX: Logic for displaying Products to ensure they fit in cell ---
-             if (data.section === 'body' && data.column.index === 2) {
+            if (data.section === 'body' && data.column.index === 2) {
                 const cellText = data.cell.raw;
                 if (Array.isArray(cellText)) {
                     const { x, y, width, height } = data.cell;
                     const leftPadding = data.cell.padding('left');
                     const topPadding = data.cell.padding('top');
-                    let currentY = y + topPadding;
-                    const lineWidth = doc.getLineWidth();
-                    
-                    // Clear default text drawn by autoTable
+                    const customLineHeight = 2.8;
+                    let currentY = y + topPadding + 1.5; // Initial offset to align with autotable's text
+
+                    // Clear the cell content drawn by autotable
                     doc.setFillColor(255, 255, 255);
-                    doc.rect(x + lineWidth, y + lineWidth, width - (lineWidth * 2), height - (lineWidth * 2), 'F');
+                    doc.rect(x, y, width, height, 'F');
 
-                    // Draw custom text with adjusted line spacing
-                    const customLineHeight = 2.8; // Reduced from 4 to fit within standard cell calculations
-
+                    // Redraw text with proper styling
                     cellText.forEach((line: string) => {
                         if (line.startsWith('BOLD::')) {
-                            doc.setFontSize(6);
                             const boldText = line.substring('BOLD::'.length);
                             doc.setFont("helvetica", "bold");
                             doc.text(boldText, x + leftPadding, currentY);
@@ -291,7 +288,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                         }
                         currentY += customLineHeight;
                     });
-                    doc.setFont("helvetica", "normal");
+                    doc.setFont("helvetica", "normal"); // Reset font
                 }
             }
 
@@ -490,7 +487,16 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
 
     // --- FOOTER ---
-    const footerY = pageHeight - 15;
+    // --- FIX: Calculate footerY dynamically based on the end of the summary content ---
+    const lastSummaryElementY = lineY + 6; // Y position of the last text in the summary
+    let footerY = lastSummaryElementY + 15; // Start footer 15mm below the summary
+
+    // If the content + footer exceeds the page height, add a new page
+    if (footerY > pageHeight - 20) { // 20mm margin from bottom
+        doc.addPage();
+        footerY = 20; // Start footer near the top of the new page
+    }
+
     doc.setDrawColor(200, 200, 200);
     doc.line(margin, footerY, pageWidth - margin, footerY);
 
