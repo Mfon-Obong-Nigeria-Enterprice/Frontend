@@ -449,7 +449,7 @@
 //   };
 
 //   const isClientBlocked = selectedClient ? false : false;
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { io, Socket } from "socket.io-client";
@@ -555,7 +555,7 @@ const getTodayDateString = () => {
 
 const NewSales: React.FC = () => {
   const queryClient = useQueryClient();
-  const { products } = useInventoryStore();
+  const { products, categories } = useInventoryStore();
   const clients = useClientStore((state) => state.clients);
   const { user } = useAuthStore();
 
@@ -586,6 +586,26 @@ const NewSales: React.FC = () => {
 
   const [bankSearch, setBankSearch] = useState("");
   const [date, setDate] = useState<string>(() => getTodayDateString());
+
+  const productsForSale = useMemo(() => {
+    if (salesType === "Wholesale") {
+      // Find the category ID for 'cement' first to avoid repeated searches
+      const cementCategory = categories.find(
+        (cat) => cat.name.toLowerCase() === "cement"
+      );
+      if (!cementCategory) return []; // No cement category, no products
+
+      return products.filter((p) => {
+        if (typeof p.categoryId === "object" && p.categoryId !== null) {
+          // Case 1: categoryId is a populated object
+          return p.categoryId.name?.toLowerCase() === "cement";
+        }
+        // Case 2: categoryId is a string (ID)
+        return p.categoryId === cementCategory._id;
+      });
+    }
+    return products; // For 'Retail', return all products
+  }, [salesType, products, categories]);
 
   const socketRef = useRef<Socket | null>(null);
 
@@ -645,8 +665,6 @@ const NewSales: React.FC = () => {
     const digitsOnly = stringVal.replace(/\D/g, "");
     if (digitsOnly === "") return "₦0.00";
     const numericValue = parseFloat(digitsOnly);
-    // If it's just raw number entry, we might want to divide by 100 for cents, but based on context seems to be whole numbers usually.
-    // However, screenshot shows 0.00. Let's stick to standard formatting.
     return `₦${numericValue.toLocaleString("en-GB", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
@@ -893,10 +911,6 @@ const NewSales: React.FC = () => {
         }
       }
 
-      // Note: Backend might need updates to accept separate charges, 
-      // or we bundle them into items or notes. 
-      // For now, we follow existing structure but include charges in payload if backend supports 'additionalCharges'
-      // If not supported, this might need adjustment.
       const payload = {
         ...(selectedClient?._id
           ? { clientId: selectedClient._id }
@@ -906,7 +920,7 @@ const NewSales: React.FC = () => {
         items: apiItems,
         amountPaid: effectiveAmountPaid,
         discount: discountTotal,
-        additionalCharges: additionalCharges, // Assuming backend can take this
+        additionalCharges: additionalCharges,
         paymentMethod:
           transactionType === "PICKUP" ? "Credit" : paymentMethodForBackend,
         notes,
@@ -1028,6 +1042,7 @@ const NewSales: React.FC = () => {
           {(!selectedClient || !isClientBlocked || isWalkIn) && (
             <div className="mt-7">
               <AddSaleProduct
+                products={productsForSale}
                 rows={rows}
                 setRows={setRows}
                 emptyRow={emptyRow}
