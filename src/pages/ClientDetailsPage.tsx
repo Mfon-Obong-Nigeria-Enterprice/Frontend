@@ -363,12 +363,23 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     const totalLoading = clientTransactions.reduce((acc, curr) => acc + ((curr as any).loading || 0), 0);
     const totalAddCharges = totalTransport + totalLoadingOff + totalLoading;
 
+    // --- FIX: Check for page overflow before drawing summary ---
+    const summaryHeight = 100; // Estimated height of summary section
+    if (finalY + summaryHeight > pageHeight - margin) {
+        doc.addPage();
+        finalY = margin; // Reset Y position to top of new page
+    }
+
 
     // --- 0. Background Container for Summary ---
     const summaryBoxX = margin - 2;
     const summaryBoxY = finalY - 5;
-    const summaryBoxW = pageWidth - (margin * 2) + 4;
-    const summaryBoxH = 100; // Fixed height
+    const summaryBoxW = pageWidth - (margin * 2) + 4;    
+    // --- FIX: Calculate summary box height dynamically ---
+    const chargesSectionHeight = 25; // Approximate height for the charges summary
+    const grandTotalBoxHeight = 30;
+    const cardsHeight = 32;
+    const summaryBoxH = 15 + cardsHeight + 8 + grandTotalBoxHeight + 8 + chargesSectionHeight;
     const cornerRadius = 2; 
     const accentWidth = 2; 
 
