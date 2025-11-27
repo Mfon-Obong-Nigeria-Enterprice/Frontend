@@ -99,9 +99,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showBlockUnblockDialog, setShowBlockUnblockDialog] = useState(false);
 
- 
- 
- 
   // --- PDF GENERATION LOGIC ---
   const handleExportPDF = () => {
     const doc = new jsPDF({
@@ -140,9 +137,18 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       year: "numeric",
     });
     
-    const periodText = dateRangeFilter.from 
-      ? `${dateRangeFilter.from.toLocaleDateString()} - ${dateRangeFilter.to?.toLocaleDateString() || 'Now'}`
-      : "May 2025"; 
+    let periodText = "All Time";
+    if (dateRangeFilter.from) {
+      const fromDate = dateRangeFilter.from.toLocaleDateString();
+      const toDate = dateRangeFilter.to ? dateRangeFilter.to.toLocaleDateString() : 'Now';
+      periodText = `${fromDate} - ${toDate}`;
+    } else if (clientTransactions.length > 0) {
+      // If no date range is selected, derive it from the transactions
+      const dates = clientTransactions.map(t => getTransactionDate(t));
+      const firstDate = new Date(Math.min(...dates.map(d => d.getTime()))).toLocaleDateString();
+      const lastDate = new Date(Math.max(...dates.map(d => d.getTime()))).toLocaleDateString();
+      periodText = `${firstDate} - ${lastDate}`;
+    }
 
     doc.setTextColor(125, 125, 125);
     doc.setFontSize(10);
@@ -291,7 +297,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                 }
             }
 
-
              // --- FIX: Logic for displaying Products to ensure they fit in cell ---
             if (data.section === 'body' && data.column.index === 2) {
                 const cellText = data.cell.raw;
@@ -302,11 +307,9 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                     const customLineHeight = 2.8;
                     let currentY = y + topPadding + 1.5; // Initial offset to align with autotable's text
 
-                    // Clear the cell content drawn by autotable
                     doc.setFillColor(255, 255, 255);
                     doc.rect(x, y, width, height, 'F');
 
-                    // Redraw text with proper styling
                     cellText.forEach((line: string) => {
                         if (line.startsWith('BOLD::')) {
                             const boldText = line.substring('BOLD::'.length);
@@ -322,7 +325,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                 }
             }
 
-            // ... (Same Status Badge logic as before)
             if (data.section === 'body' && data.column.index === 1) {
                 const type = tableData[data.row.index].rawType;
                 let badgeColor = [230, 230, 230]; 
@@ -400,7 +402,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         finalY = margin; // Reset Y position to top of new page
     }
 
-
     // --- 0. Background Container for Summary ---
     const summaryBoxX = margin - 2;
     const summaryBoxY = finalY - 5;
@@ -424,7 +425,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     // C. Square off the Left Corners of the Light Gray Box (Layer 3)
     doc.rect(summaryBoxX + accentWidth, summaryBoxY, cornerRadius, cornerRadius, 'F'); 
     doc.rect(summaryBoxX + accentWidth, summaryBoxY + summaryBoxH - cornerRadius, cornerRadius, cornerRadius, 'F'); 
-
 
     // --- 1. Summary Title ---
     doc.setFontSize(12);
@@ -465,7 +465,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     drawSummaryCard(cardStartX, "Total Purchase", `-${formatCurrencyForPDF(summarySales)}`, `${countSales} transactions`, [249, 83, 83]);
     drawSummaryCard(cardStartX + cardWidth + cardGap, "Total Deposits", `+${formatCurrencyForPDF(summaryDeposits)}`, `${countDeposits} payments`, [46, 204, 113]);
     drawSummaryCard(cardStartX + (cardWidth * 2) + (cardGap * 2), "Total Returns", `${formatCurrencyForPDF(summaryReturns)}`, `${countReturns} return`, [51, 51, 51]);
-
 
     // --- 3. Dark Grand Total Box ---
     const boxY = cardsY + cardHeight + 8;
@@ -553,9 +552,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     // Save
     doc.save(`Statement_${client?.name || 'Client'}_${periodText}.pdf`);
   };
-
-
-
 
   //
   const mergedTransactions = useMemo(() => {
