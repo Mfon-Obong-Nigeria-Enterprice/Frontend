@@ -2,10 +2,7 @@ import React, { useState } from "react";
 import Modal from "@/components/Modal";
 import { toast } from "react-toastify";
 
-//store
-import { useInventoryStore } from "@/stores/useInventoryStore";
-
-// ui
+// ui & components
 import {
   Select,
   SelectTrigger,
@@ -33,6 +30,7 @@ import { formatCurrency } from "@/utils/styles";
 
 // type
 import type { Row } from "../NewSales";
+import type { Product } from "@/types/types";
 
 interface AddSaleProductProps {
   rows: Row[];
@@ -42,6 +40,7 @@ interface AddSaleProductProps {
   discountReason?: string;
   globalDiscount: number;
   setGlobalDiscount: React.Dispatch<React.SetStateAction<number>>;
+  products: Product[];
 }
 
 const discountReasons = [
@@ -60,9 +59,8 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
   discountReason = "",
   globalDiscount,
   setGlobalDiscount,
+  products,
 }) => {
-  const { products } = useInventoryStore();
-
   const [modal, setModal] = useState<{
     isOpen: boolean;
     rowIndex: number | null;

@@ -63,12 +63,14 @@ export type MergedTransaction = Transaction & {
 // Your existing TransactionCreate for sales/purchases
 export type TransactionCreate = {
   bankName?: string;
-  type: "PURCHASE" | "PICKUP";
+  type: "PURCHASE" | "PICKUP" | "WHOLESALE" | "RETURN";
   items: {
     productId: string;
     quantity: number;
-    unit: string;
+    unit?: string;
     discount?: number;
+    unitPrice?: number;
+    wholesalePrice?: number;
   }[];
   amountPaid: number;
   discount: number;
@@ -77,6 +79,8 @@ export type TransactionCreate = {
   branchId?: string;
   clientId?: string;
   date?: string;
+  salesType?: "Retail" | "Wholesale";
+  walkInClient?: { name: string; phone: string };
 };
 
 // New type specifically for client debt payments

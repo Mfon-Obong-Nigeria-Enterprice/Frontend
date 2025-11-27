@@ -431,6 +431,7 @@
 
 //       handleResetClient();
 //     } catch (error) {
+
 //       handleApiError(error, "Transaction error");
 //     } finally {
 //       setIsSubmitting(false);
@@ -448,18 +449,17 @@
 //   };
 
 //   const isClientBlocked = selectedClient ? false : false;
-
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { io, Socket } from "socket.io-client";
 
 // components
 import ClientSearch from "./components/ClientSearch";
+import ClientSalesTypes from "./components/ClientSalesTypes";
 import AddSaleProduct from "./components/AddSaleProduct";
 import ClientDisplayBox from "./components/ClientDisplayBox";
 import WalkinClientDetailBox from "./components/WalkinClientDetailBox";
-// import SalesReceipt from "./components/SalesReceipt";
 
 // store
 import { useInventoryStore } from "@/stores/useInventoryStore";
@@ -471,7 +471,6 @@ import { AddTransaction } from "@/services/transactionService";
 
 // types
 import type { Client } from "@/types/types";
-// import type { Transaction } from "@/types/transactions";
 
 // ui
 import { Button } from "@/components/ui/button";
@@ -484,7 +483,6 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-// import Modal from "@/components/Modal";
 import ClientStatusBadge from "@/pages/ClientStatusBadge";
 
 // utils
@@ -503,13 +501,11 @@ import { bankNames, posNames } from "@/data/banklist";
 
 // Helper function to get the correct server URL
 const getServerUrl = () => {
-  // explicit override from env (recommended)
   const socketUrl = import.meta.env.VITE_SOCKET_URL as string | undefined;
   if (socketUrl && socketUrl.length) return socketUrl.replace(/\/$/, "");
 
   const apiUrl = import.meta.env.VITE_API_URL as string | undefined;
 
-  // For development with localhost
   if (
     apiUrl?.includes("localhost") ||
     apiUrl?.includes("127.0.0.1") ||
@@ -519,12 +515,10 @@ const getServerUrl = () => {
     return "http://localhost:3000";
   }
 
-  // For production with onrender
   if (apiUrl && apiUrl.includes("onrender.com")) {
     return apiUrl.replace("/api", "");
   }
 
-  // Fallback to current origin
   return window.location.origin;
 };
 
@@ -539,8 +533,6 @@ export type Row = {
   unit?: string;
   productName?: string;
 };
-
-// type ReceiptData = Transaction;
 
 const emptyRow: Row = {
   productId: "",
@@ -563,7 +555,7 @@ const getTodayDateString = () => {
 
 const NewSales: React.FC = () => {
   const queryClient = useQueryClient();
-  const { products } = useInventoryStore();
+  const { products, categories } = useInventoryStore();
   const clients = useClientStore((state) => state.clients);
   const { user } = useAuthStore();
 
@@ -571,10 +563,11 @@ const NewSales: React.FC = () => {
   const [isWalkIn, setIsWalkIn] = useState(false);
   const [walkInData, setWalkInData] = useState({ name: "", phone: "" });
 
+  const [salesType, setSalesType] = useState<"Retail" | "Wholesale">("Retail");
   const [paymentMethod, setPaymentMethod] = useState("cash");
-  const [purchaseType, setPurchaseType] = useState<"PURCHASE" | "PICKUP">(
-    "PURCHASE"
-  );
+  const [transactionType, setTransactionType] = useState<
+    "PURCHASE" | "PICKUP" | "WHOLESALE" | "RETURN"
+  >("PURCHASE");
   const [subMethod, setSubMethod] = useState("");
   const [amountPaid, setAmountPaid] = useState("");
   const [notes, setNotes] = useState("");
@@ -586,18 +579,45 @@ const NewSales: React.FC = () => {
   const [discountReason, setDiscountReason] = useState("");
   const [globalDiscount, setGlobalDiscount] = useState(0);
 
-  // const [showReceipt, setShowReceipt] = useState(false);
-  // const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
+  // Additional Charges State
+  const [transportFare, setTransportFare] = useState("");
+  const [loadingOffloading, setLoadingOffloading] = useState("");
+  const [loadingCharge, setLoadingCharge] = useState("");
 
   const [bankSearch, setBankSearch] = useState("");
   const [date, setDate] = useState<string>(() => getTodayDateString());
 
-  // SOCKET: useRef to hold socket instance and control lifecycle
+  const productsForSale = useMemo(() => {
+    if (salesType === "Wholesale") {
+      // Find the category ID for 'cement' first to avoid repeated searches
+      const cementCategory = categories.find(
+        (cat) => cat.name.toLowerCase() === "cement"
+      );
+      if (!cementCategory) return []; // No cement category, no products
+
+      return products.filter((p) => {
+        if (typeof p.categoryId === "object" && p.categoryId !== null) {
+          // Case 1: categoryId is a populated object
+          return p.categoryId.name?.toLowerCase() === "cement";
+        }
+        // Case 2: categoryId is a string (ID)
+        return p.categoryId === cementCategory._id;
+      });
+    }
+    return products; // For 'Retail', return all products
+  }, [salesType, products, categories]);
+
   const socketRef = useRef<Socket | null>(null);
 
-  // Connect socket inside useEffect so it doesn't run at module import time
   useEffect(() => {
-    // only connect when user branch is present
+    if (selectedClient && selectedClient.salesType) {
+      setSalesType(selectedClient.salesType);
+    } else {
+      setSalesType("Retail");
+    }
+  }, [selectedClient]);
+
+  useEffect(() => {
     if (!user?.branchId) return;
 
     const url = getServerUrl();
@@ -606,14 +626,11 @@ const NewSales: React.FC = () => {
     const s = io(url, {
       path: "/socket.io",
       withCredentials: true,
-      // force websocket to avoid polling/xhr fallback
       transports: ["websocket"],
-      // optional reconnection settings
       reconnection: true,
       reconnectionAttempts: 5,
     });
 
-    // debug handlers
     s.on("connect", () => {
       console.debug("[NewSales][WS] connected, id:", s.id);
     });
@@ -625,11 +642,6 @@ const NewSales: React.FC = () => {
     s.on("error", (err: any) => {
       console.error("[NewSales][WS] error:", err);
     });
-
-    // s.on("transaction_created", (data: ReceiptData) => {
-    //   setReceiptData(data);
-    //   setShowReceipt(true);
-    // });
 
     socketRef.current = s;
 
@@ -647,15 +659,30 @@ const NewSales: React.FC = () => {
     return null;
   }
 
-  const formatCurrencyDisplay = (value: string) => {
-    if (!value) return "₦0";
-    const digitsOnly = value.replace(/\D/g, "");
-    if (digitsOnly === "") return "₦0";
+  const formatCurrencyDisplay = (value: string | number) => {
+    const stringVal = value.toString();
+    if (!stringVal) return "₦0.00";
+    const digitsOnly = stringVal.replace(/\D/g, "");
+    if (digitsOnly === "") return "₦0.00";
     const numericValue = parseFloat(digitsOnly);
     return `₦${numericValue.toLocaleString("en-GB", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    })}`;
+    })}`; // Kept consistent with existing code preference for 0 decimals unless user wants .00
+  };
+
+  // Specialized formatter for the placeholder style in screenshot (₦0.00)
+  const formatInputDisplay = (value: string) => {
+      if(!value) return "";
+      const num = parseFloat(value);
+      if(isNaN(num)) return "";
+      return `₦${num.toLocaleString('en-US')}`;
+  }
+
+  const handleNumericInputChange = (setter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value;
+    const newRawValue = input.replace(/\D/g, "");
+    setter(newRawValue);
   };
 
   const handleAmountPaidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -700,8 +727,9 @@ const NewSales: React.FC = () => {
     if (!selectedClient && !isWalkIn) return false;
     if (isWalkIn && !walkInData.name.trim()) return false;
     if (!rows.some((row) => row.productId)) return false;
+    const gDiscount = globalDiscount || 0;
     if (
-      (rows.some((row) => row.discount > 0) || globalDiscount > 0) &&
+      (rows.some((row) => row.discount > 0) || gDiscount > 0) &&
       !discountReason.trim()
     )
       return false;
@@ -709,6 +737,42 @@ const NewSales: React.FC = () => {
     const paid = getAmountPaid();
     if (paid === null || paid < 0) return false;
     return true;
+  };
+
+  const calculateTotals = () => {
+    const subtotal = rows.reduce(
+      (acc, row) => acc + (Number(row.quantity) * Number(row.unitPrice) || 0),
+      0
+    );
+
+    const rowDiscountTotal = rows.reduce((acc, row) => {
+      const lineAmount = Number(row.quantity) * Number(row.unitPrice);
+      if (!row.discount) return acc;
+
+      let discountAmount = 0;
+      if (row.discountType === "percent") {
+        discountAmount = (lineAmount * Number(row.discount)) / 100;
+      } else if (row.discountType === "amount") {
+        discountAmount = Number(row.discount);
+      }
+
+      return acc + discountAmount;
+    }, 0);
+
+    // Sum up additional charges
+    const transport = parseFloat(transportFare) || 0;
+    const loadingOff = parseFloat(loadingOffloading) || 0;
+    const loading = parseFloat(loadingCharge) || 0;
+    const additionalCharges = transport + loadingOff + loading;
+
+    const gDiscount = globalDiscount || 0;
+    const discountTotal =
+      rowDiscountTotal > 0 ? rowDiscountTotal : gDiscount;
+    
+    // Total calculation: Subtotal + Charges - Discount
+    const total = subtotal + additionalCharges - discountTotal;
+    
+    return { subtotal, discountTotal, total, additionalCharges };
   };
 
   const validateSales = () => {
@@ -736,32 +800,6 @@ const NewSales: React.FC = () => {
     }
 
     return true;
-  };
-
-  const calculateTotals = () => {
-    const subtotal = rows.reduce(
-      (acc, row) => acc + (Number(row.quantity) * Number(row.unitPrice) || 0),
-      0
-    );
-
-    const rowDiscountTotal = rows.reduce((acc, row) => {
-      const lineAmount = Number(row.quantity) * Number(row.unitPrice);
-      if (!row.discount) return acc;
-
-      let discountAmount = 0;
-      if (row.discountType === "percent") {
-        discountAmount = (lineAmount * Number(row.discount)) / 100;
-      } else if (row.discountType === "amount") {
-        discountAmount = Number(row.discount);
-      }
-
-      return acc + discountAmount;
-    }, 0);
-
-    const discountTotal =
-      rowDiscountTotal > 0 ? rowDiscountTotal : globalDiscount;
-    const total = subtotal - discountTotal;
-    return { subtotal, discountTotal, total };
   };
 
   const getBalanceInfo = () => {
@@ -794,7 +832,7 @@ const NewSales: React.FC = () => {
         })} (full payment required)`;
       }
     } else if (balanceDue === 0) {
-      statusMessage = "No balance due";
+      statusMessage = "Status: No balance due";
     } else if (selectedClient && clientBalance > 0) {
       statusMessage = `Balance due: ₦${balanceDue.toLocaleString("en-US", {
         minimumFractionDigits: 0,
@@ -815,6 +853,7 @@ const NewSales: React.FC = () => {
 
   const { statusMessage, total, paid, clientBalance, newBalance } =
     getBalanceInfo();
+  //const { subtotal } = calculateTotals();
 
   const handleWalkInDataChange = (data: { name: string; phone: string }) => {
     setWalkInData(data);
@@ -831,8 +870,11 @@ const NewSales: React.FC = () => {
     setNotes("");
     setIsSubmitting(false);
     setGlobalDiscount(0);
+    setTransportFare("");
+    setLoadingOffloading("");
+    setLoadingCharge("");
     setDate(getTodayDateString());
-    setPurchaseType("PURCHASE");
+    setTransactionType("PURCHASE");
   };
 
   const handleSubmit = async () => {
@@ -840,16 +882,21 @@ const NewSales: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const { discountTotal } = calculateTotals();
+      const { discountTotal, additionalCharges } = calculateTotals();
       const effectiveAmountPaid = getAmountPaid() || 0;
 
       const apiItems = rows
         .filter((row) => row.productId)
         .map((row) => {
-          const product = products.find((p) => p._id === row.productId);
+          const product = products.find((p) => p._id === row.productId)!;
+          const isWholesale = transactionType === "WHOLESALE";
+          const price = isWholesale
+            ? product.wholesalePrice || product.unitPrice
+            : product.unitPrice;
           return {
             productId: row.productId,
             quantity: row.quantity,
+            ...(isWholesale ? { wholesalePrice: price } : { unitPrice: price }),
             unit: product?.unit || "pcs",
             discount: 0,
           };
@@ -868,12 +915,14 @@ const NewSales: React.FC = () => {
         ...(selectedClient?._id
           ? { clientId: selectedClient._id }
           : { walkInClient: walkInData }),
-        type: purchaseType,
+        salesType: salesType,
+        type: transactionType,
         items: apiItems,
         amountPaid: effectiveAmountPaid,
         discount: discountTotal,
+        additionalCharges: additionalCharges,
         paymentMethod:
-          purchaseType === "PICKUP" ? "Credit" : paymentMethodForBackend,
+          transactionType === "PICKUP" ? "Credit" : paymentMethodForBackend,
         notes,
         date,
       };
@@ -913,21 +962,29 @@ const NewSales: React.FC = () => {
         <div className="md:p-5 md:rounded-[8px] md:border md:border-[#D9D9D9]">
           {!isWalkIn ? (
             <div>
-              <h6 className="hidden md:block">Select Client</h6>
-              <div className="flex flex-col md:flex-row gap-4 md:gap-10 md:mt-2">
+              {/* <h6 className="hidden md:block">Select Client</h6> */}
+              <div className="flex flex-col md:flex-row gap-4 md:gap-10 md:mt-2 md:items-end ">
                 <ClientSearch
                   selectedClient={selectedClient}
                   onClientSelect={setSelectedClient}
                 />
-                <Button
-                  onClick={() => {
-                    setIsWalkIn(true);
-                    setSelectedClient(null);
-                  }}
-                  className="w-full md:w-fit bg-[#3D80FF] text-white"
-                >
-                  Walk in
-                </Button>
+                <ClientSalesTypes
+                  salesType={salesType}
+                  onSalesTypeChange={setSalesType}
+                />
+
+                {/* Conditionally render Walk in button. Not available for Wholesale. */}
+                {salesType !== "Wholesale" && (
+                  <Button
+                    onClick={() => {
+                      setIsWalkIn(true);
+                      setSelectedClient(null);
+                    }}
+                    className="w-full md:w-fit bg-[#3D80FF] text-white"
+                  >
+                    Walk in
+                  </Button>
+                )}
               </div>
             </div>
           ) : (
@@ -985,16 +1042,96 @@ const NewSales: React.FC = () => {
           {(!selectedClient || !isClientBlocked || isWalkIn) && (
             <div className="mt-7">
               <AddSaleProduct
+                products={productsForSale}
                 rows={rows}
                 setRows={setRows}
                 emptyRow={emptyRow}
                 onDiscountReasonChange={setDiscountReason}
-                discountReason={discountReason}
-                setGlobalDiscount={setGlobalDiscount}
                 globalDiscount={globalDiscount}
+                setGlobalDiscount={setGlobalDiscount}
               />
             </div>
           )}
+
+          {/* Additional Charges Section */}
+          {(!selectedClient || !isClientBlocked || isWalkIn) && (
+            <div className="mt-6 border border-[#E4E4E7] rounded-lg p-6 bg-white">
+              <h4 className="text-lg font-medium text-[#111] mb-5">
+                Additional Charges
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label className="font-normal text-[#444] text-[15px]">
+                    Transport Fare
+                  </Label>
+                  <Input
+                    type="text"
+                    value={formatInputDisplay(transportFare)}
+                    onChange={handleNumericInputChange(setTransportFare)}
+                    placeholder="₦0.00"
+                    className="bg-[#F5F6F8] border-[#E4E4E7] h-[45px] text-[#333] placeholder:text-gray-400"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-normal text-[#444] text-[15px]">
+                    Loading/Offloading
+                  </Label>
+                  <Input
+                    type="text"
+                    value={formatInputDisplay(loadingOffloading)}
+                    onChange={handleNumericInputChange(setLoadingOffloading)}
+                    placeholder="₦0.00"
+                    className="bg-[#F5F6F8] border-[#E4E4E7] h-[45px] text-[#333] placeholder:text-gray-400"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-normal text-[#444] text-[15px]">
+                    Loading
+                  </Label>
+                  <Input
+                    type="text"
+                    value={formatInputDisplay(loadingCharge)}
+                    onChange={handleNumericInputChange(setLoadingCharge)}
+                    placeholder="₦0.00"
+                    className="bg-[#F5F6F8] border-[#E4E4E7] h-[45px] text-[#333] placeholder:text-gray-400"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Summary Section */}
+          {/* {(!selectedClient || !isClientBlocked || isWalkIn) && (
+             <div className="mt-6 bg-[#F9FAFB] rounded-lg p-6 flex flex-col gap-4">
+                <div className="flex justify-between items-center text-sm">
+                   <span className="text-[#333] text-[15px]">Subtotal:</span>
+                   <span className="font-medium text-[#333]">
+                      ₦{subtotal.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                   </span>
+                </div>
+                
+                <div className="flex justify-between items-center text-sm">
+                   <span className="text-[#333] text-[15px]">Discount:</span>
+                   <div className="w-[100px]">
+                      <Input
+                         type="text"
+                         value={formatInputDisplay(globalDiscount)}
+                         onChange={handleNumericInputChange(setGlobalDiscount)}
+                         placeholder="₦0.00"
+                         className="bg-white border-[#E4E4E7] h-[36px] text-right text-sm"
+                      />
+                   </div>
+                </div>
+
+                <div className="flex justify-between items-center text-base pt-2">
+                   <span className="font-bold text-[#333]">Total:</span>
+                   <span className="font-bold text-[#333]">
+                      ₦{total.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                   </span>
+                </div>
+             </div>
+          )} */}
+
         </div>
 
         {/* Payment Section */}
@@ -1086,19 +1223,20 @@ const NewSales: React.FC = () => {
               <div>
                 <Label className="mb-1">Transaction Type</Label>
                 <Select
-                  value={purchaseType}
+                  value={transactionType}
                   onValueChange={(value: string) =>
-                    setPurchaseType(value as "PURCHASE" | "PICKUP")
+                    setTransactionType(
+                      value as "PURCHASE" | "PICKUP" | "WHOLESALE" | "RETURN"
+                    )
                   }
                 >
                   <SelectTrigger className="w-full sm:w-[180px] bg-[#D9D9D9]">
                     <SelectValue placeholder="Select option" />
                   </SelectTrigger>
-                  <SelectContent
-                    side="top"
-                    className="max-h-[250px] overflow-y-auto"
-                  >
+                  <SelectContent side="top">
                     <SelectItem value="PURCHASE">Purchase</SelectItem>
+                    <SelectItem value="WHOLESALE">Wholesale</SelectItem>
+                    <SelectItem value="RETURN">Return</SelectItem>
                     {!isWalkIn && selectedClient && (
                       <SelectItem value="PICKUP">Pickup</SelectItem>
                     )}
@@ -1224,16 +1362,6 @@ const NewSales: React.FC = () => {
           </Button>
         </div>
       </section>
-
-      {/* {showReceipt && receiptData && (
-        <Modal
-          size="xxl"
-          isOpen={showReceipt}
-          onClose={() => setShowReceipt(false)}
-        >
-          <SalesReceipt transaction={receiptData} />
-        </Modal>
-      )} */}
     </main>
   );
 };

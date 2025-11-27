@@ -81,3 +81,30 @@ export const getRevenue = async (period: Period) => {
   const { data } = await api.get(`/transactions/revenue/${period}`);
   return data;
 };
+
+export interface ReturnTransactionItem {
+  productId: string;
+  quantity: number;
+  unit: string;
+}
+
+export interface ReturnTransactionCreate {
+  clientId: string;
+  type: "RETURN";
+  reason: string;
+  referenceTransactionId: string;
+  items: ReturnTransactionItem[];
+  actualAmountReturned: number;
+  notes?: string;
+}
+
+export const createReturnTransaction = async (data: ReturnTransactionCreate): Promise<Transaction> => {
+  const { user } = useAuthStore.getState();
+  if (!user?.branchId) throw new Error("Branch ID missing for return transaction");
+
+  const response = await api.post("/transactions", {
+    ...data,
+    branchId: user.branchId,
+  });
+  return response.data;
+};

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +23,7 @@ import { mergeTransactionsWithClients } from "@/utils/mergeTransactionsWithClien
 import { ClientTransactionDetails } from "@/components/clients/ClientTransactionDetails";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ClientDiscountDetails from "@/components/clients/ClientDiscountDetails";
-import DateRangePicker from "@/components/DateRangePicker";
+import { DateFromToPicker } from "@/components/DateFromToPicker";
 
 import { useAuthStore } from "@/stores/useAuthStore";
 import DeleteClientDialog from "@/features/dashboard/manager/component/DeleteClientDialog";
@@ -33,14 +32,12 @@ import { toast } from "react-toastify";
 import BlockUnblockClient from "@/features/dashboard/manager/BlockUnblockClient";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { formatCurrency } from "@/utils/formatCurrency";
+//import { formatCurrency } from "@/utils/formatCurrency";
 import { getAllTransactions } from "@/services/transactionService";
 import { useQuery } from "@tanstack/react-query";
 import { calculateTransactionsWithBalance } from "@/utils/calculateOutstanding";
 import {
-  getTransactionDate,
-  getTransactionDateString,
-  getTransactionTimeString,
+  getTransactionDate
 } from "@/utils/transactions";
 
 import type { DateRange } from "react-day-picker";
@@ -66,7 +63,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     if (!user || !user.role) return false;
 
     const normalizedRole = user.role.toString().trim().toUpperCase();
-    return normalizedRole === "SUPER_ADMIN";
+    return (
+      normalizedRole === "SUPER_ADMIN" ||
+      normalizedRole === "ADMIN" ||
+      normalizedRole === "MAINTAINER"
+    );
   }, [user, isManagerView]);
 
   const { data: fetchedTransactions, isLoading: transactionsLoading } =
@@ -98,6 +99,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showBlockUnblockDialog, setShowBlockUnblockDialog] = useState(false);
 
+  // --- PDF GENERATION LOGIC ---
   const handleExportPDF = () => {
     const doc = new jsPDF({
       orientation: "portrait",
@@ -105,232 +107,453 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       format: "a4",
     });
 
-    // Set Background Color
-    doc.setFillColor(211, 211, 211); // Light gray
-    doc.rect(0, 0, 210, 297, "F"); // Fills the entire page with color
+    // Custom currency formatter for PDF
+    const formatCurrencyForPDF = (amount: number) => {
+      const formattedAmount = new Intl.NumberFormat("en-NG", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(amount);
+      return `N${formattedAmount}`;
+    };
 
-    // Set text color for the document
-    doc.setTextColor(0, 0, 0); // Black text
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    const margin = 14;
 
-    // Document Title
+    // --- HEADER ---
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.text(`Transaction Report`, 10, 30);
-
-    // Client Information Header
-    doc.setFontSize(16);
-    doc.text(`Client: ${client?.name || "Unknown Client"}`, 10, 37);
-
-    // Client Details
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Phone: ${client?.phone || "N/A"}`, 10, 43);
-    doc.text(`Email: ${client?.email || "N/A"}`, 10, 49);
-    doc.text(
-      `Current Balance: ${formatCurrency(client?.balance || 0).trim()}`,
-      8,
-      56
-    );
-
-    // Filter Information Section
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text("Applied Filters:", 10, 63);
+    doc.setFontSize(18);
+    doc.setTextColor(33, 33, 33);
+    doc.text("Client Account Statement", pageWidth / 2, 20, { align: "center" });
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    const filterY = 70;
-    const filters: string[] = [];
+    doc.setTextColor(125, 125, 125);
+    doc.text("Account Management Report", pageWidth / 2, 26, { align: "center" });
 
-    if (transactionTypeFilter !== "all") {
-      filters.push(`Type: ${transactionTypeFilter}`);
-    }
-    if (staffFilter !== "all-staff") {
-      filters.push(`Staff: ${staffFilter}`);
-    }
+    const currentDate = new Date().toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+    
+    let periodText = "All Time";
     if (dateRangeFilter.from) {
-      filters.push(`From: ${dateRangeFilter.from.toLocaleDateString()}`);
-    }
-    if (dateRangeFilter.to) {
-      filters.push(`To: ${dateRangeFilter.to.toLocaleDateString()}`);
+      const fromDate = dateRangeFilter.from.toLocaleDateString();
+      const toDate = dateRangeFilter.to ? dateRangeFilter.to.toLocaleDateString() : 'Now';
+      periodText = `${fromDate} - ${toDate}`;
+    } else if (clientTransactions.length > 0) {
+      // If no date range is selected, derive it from the transactions
+      const dates = clientTransactions.map(t => getTransactionDate(t));
+      const firstDate = new Date(Math.min(...dates.map(d => d.getTime()))).toLocaleDateString();
+      const lastDate = new Date(Math.max(...dates.map(d => d.getTime()))).toLocaleDateString();
+      periodText = `${firstDate} - ${lastDate}`;
     }
 
-    const filterText = filters.length > 0 ? filters.join(", ") : "None";
-    doc.text(filterText, 10, filterY);
-
-    // Generation Info
-    doc.setFont("helvetica", "italic");
+    doc.setTextColor(125, 125, 125);
+    doc.setFontSize(10);
     doc.text(
-      `Generated: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`,
-      10,
-      filterY + 8
+      `Period: ${periodText} | Generated: ${currentDate}`,
+      pageWidth / 2,
+      32,
+      { align: "center" }
     );
 
-    // Calculate balance progression for transactions
-    const transactionsWithBalance = calculateTransactionsWithBalance(
-      clientTransactions,
-      { balance: client?.balance || 0 }
-    );
+    // Horizontal Line
+    doc.setDrawColor(230, 230, 230);
+    doc.line(margin + 10, 38, pageWidth - (margin + 10), 38);
 
-    // Sort by date - NEWEST FIRST (for display in PDF)
-    const sortedTransactions = transactionsWithBalance.sort((a, b) => {
-      const dateA = getTransactionDate(a).getTime();
-      const dateB = getTransactionDate(b).getTime();
-      return dateB - dateA; // Descending order (newest first)
+    // Section Title
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(51, 51, 51); // #333333
+    doc.text(`Transaction History - ${periodText}`, margin, 50);
+
+    // --- DATA PREPARATION ---
+    // 1. Sort transactions chronologically (oldest first) to calculate running balance correctly.
+    const chronoSortedTransactions = [...clientTransactions].sort((a, b) => {
+        const dateA = getTransactionDate(a).getTime();
+        const dateB = getTransactionDate(b).getTime();
+        return dateA - dateB;
     });
 
-    // Define table columns for transactions
+    // 2. Calculate running balance on the chronologically sorted list.
+    const transactionsWithBalance = calculateTransactionsWithBalance(
+        chronoSortedTransactions,
+        { balance: client?.balance || 0 }
+    );
+
+    // 3. Reverse the array for display (newest first).
+    const displaySortedTransactions = transactionsWithBalance.reverse();
+
+    // Columns Configuration
     const columns = [
-      { header: "Date", dataKey: "date" },
-      { header: "Time", dataKey: "time" },
-      { header: "Type", dataKey: "type" },
-      { header: "Method", dataKey: "method" },
-      { header: "Staff", dataKey: "staff" },
-      { header: "Balance Before", dataKey: "balanceBefore" },
-      { header: "Balance After", dataKey: "balanceAfter" },
-      { header: "Amount", dataKey: "amount" },
-      { header: "Invoice No", dataKey: "invoice" },
-      { header: "Items", dataKey: "itemCount" },
+        { header: "Date", dataKey: "date" },
+        { header: "Status", dataKey: "status" },
+        { header: "Products", dataKey: "products" },
+        { header: "Subtotal", dataKey: "subtotal" },
+        { header: "Amount", dataKey: "amount" },
+        { header: "Balance Change", dataKey: "balanceChange" },
+        { header: "Method", dataKey: "method" },
+        { header: "Charges", dataKey: "charges" },
     ];
 
-    // Prepare transaction data for the table
-    const transactionRows = sortedTransactions.map((txn) => {
-      const transactionDate = getTransactionDateString(txn);
-      const transactionTime = getTransactionTimeString(txn);
+    // Map Data
+    const tableData = displaySortedTransactions.map(txn => {
+        const productList = txn.items && txn.items.length > 0
+            ? txn.items.flatMap(item => [
+                `• ${item.quantity} ${item.unit || 'units'} @ ${formatCurrencyForPDF(item.unitPrice)}`,
+                `BOLD::  ${item.productName}`
+            ])
+            : (txn.description ? [txn.description] : ["---"]);
 
-      return {
-        date: transactionDate,
-        time: transactionTime,
-        type: txn.type,
-        amount: `${formatCurrency(txn.total || 0).replace(/^\s+/, "")}`,
-        method: txn.paymentMethod || "N/A",
-        staff: txn.userId?.name || "Unknown",
-        balanceBefore: `${formatCurrency(txn.balanceBefore || 0).replace(
-          /^\s+/,
-          ""
-        )}`,
-        balanceAfter: `${formatCurrency(txn.balanceAfter || 0).replace(
-          /^\s+/,
-          ""
-        )}`,
-        invoice: txn.invoiceNumber || "N/A",
-        itemCount:
-          txn.items?.length > 0
-            ? txn.items
-                .map((item) => `${item.quantity}X ${item.productName} `)
-                .join(", ")
-            : "N/A",
-      };
+        const subtotalList = txn.items && txn.items.length > 0
+            ? txn.items.map(item => `Subtotal: ${formatCurrencyForPDF((item.quantity || 0) * (item.unitPrice || 0))}`)
+            : (txn.subtotal ? [`Subtotal: ${formatCurrencyForPDF(txn.subtotal)}`] : ["---"]);
+
+        const chargesList = [];
+        if((txn as any).transportFare && (txn as any).transportFare > 0) chargesList.push(`Transport: ${formatCurrencyForPDF((txn as any).transportFare)}`);
+        if((txn as any).loadingAndOffloading && (txn as any).loadingAndOffloading > 0) chargesList.push(`Loading/Off: ${formatCurrencyForPDF((txn as any).loadingAndOffloading)}`);
+        if((txn as any).loading && (txn as any).loading > 0) chargesList.push(`Loading: ${formatCurrencyForPDF((txn as any).loading)}`);
+        
+        const amountStr = formatCurrencyForPDF(txn.total || 0);
+        const balBefore = formatCurrencyForPDF(txn.balanceBefore || 0);
+        const balAfter = formatCurrencyForPDF(txn.balanceAfter || 0);
+
+        return {
+            date: getTransactionDate(txn).toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            }),
+            status: txn.type, 
+            products: productList,
+            subtotal: subtotalList,
+            amount: txn.type === 'DEPOSIT' ? `+${amountStr}` : `-${amountStr}`,
+            balanceChange: `${balBefore} -> \n${balAfter}`,
+            method: txn.paymentMethod || "Cash",
+            charges: chargesList.length > 0 ? chargesList.join("\n") : "---",
+            rawType: txn.type 
+        };
     });
 
-    // Add transactions table
+    // --- TABLE GENERATION ---
     autoTable(doc, {
-      startY: 80,
-      head: [columns.map((col) => col.header)],
-      body: transactionRows.map((row) =>
-        columns.map((col) => row[col.dataKey as keyof typeof row])
-      ),
-      styles: {
-        fontSize: 5,
-        cellPadding: 3,
-        lineColor: [200, 200, 200],
-        lineWidth: 0.1,
-        halign: "left",
-        textColor: [0, 0, 0], // Black text for table content
-      },
-      headStyles: {
-        fillColor: [46, 204, 113],
-        textColor: [255, 255, 255],
-        fontStyle: "bold",
-        valign: "middle",
-        halign: "center",
-      },
-      alternateRowStyles: {
-        fillColor: [248, 249, 250],
-      },
-      columnStyles: {
-        0: { cellWidth: 17, halign: "left" }, // Date
-        1: { cellWidth: 18, halign: "left" }, // Time
-        2: { cellWidth: 18, halign: "left" }, // Type
-        3: { cellWidth: 15, halign: "left" }, // Method
-        4: { cellWidth: 25, halign: "left" }, // Staff
-        5: { cellWidth: 22, halign: "left" }, // Balance Before
-        6: { cellWidth: 24, halign: "left" }, // Balance After
-        7: { cellWidth: 24, halign: "left" }, // Amount
-        8: { cellWidth: 20, halign: "left" }, // Invoice
-        9: { cellWidth: 26, halign: "left" }, // Items
-      },
-      margin: { left: 2, right: 2 },
+        startY: 55,
+        head: [columns.map(c => c.header)],
+        body: tableData.map(row => columns.map(c => row[c.dataKey as keyof typeof row])),
+        theme: 'grid',
+        styles: {
+            fontSize: 6,
+            font: "helvetica",
+            cellPadding: 2,
+            textColor: [68, 68, 68], 
+            lineColor: [230, 230, 230],
+            lineWidth: 0.1,
+            valign: 'top'
+        },
+        headStyles: {
+            fillColor: [68, 68, 68],
+            textColor: [255, 255, 255],
+            fontSize: 7,
+            fontStyle: 'normal',
+            halign: 'left',
+            cellPadding: { top: 8, bottom: 8, left: 4, right: 4 },
+            lineWidth: { top: 0.1, right: 0, bottom: 0.1, left: 0 }
+        },
+        columnStyles: {
+            0: { cellWidth: 20 }, 
+            1: { cellWidth: 18, cellPadding: 5 },
+            2: { cellWidth: 'auto' }, // Allow this column to expand
+            3: { cellWidth: 22 }, 
+            4: { cellWidth: 22, fontStyle: 'bold' }, 
+            5: { cellWidth: 20 }, 
+            6: { cellWidth: 16 }, 
+            7: { cellWidth: 20 }, // Give other columns a defined space
+        },
+        didDrawCell: (data) => {
+            // --- FIX: Logic for displaying Subtotals to ensure they fit in cell ---
+            if (data.section === 'body' && data.column.index === 3) {
+                const cellText = data.cell.raw;
+                if (Array.isArray(cellText)) {
+                    const { x, y, width, height } = data.cell;
+                    const leftPadding = data.cell.padding('left');
+                    const topPadding = data.cell.padding('top');
+                    const customLineHeight = 5.6; // Double the product line height
+                    let currentY = y + topPadding + 1.5;
+
+                    // Clear the cell content drawn by autotable
+                    doc.setFillColor(255, 255, 255);
+                    doc.rect(x, y, width, height, 'F');
+
+                    // Redraw text for each subtotal
+                    cellText.forEach((line: string) => {
+                        doc.setFont("helvetica", "normal");
+                        doc.text(line, x + leftPadding, currentY);
+                        currentY += customLineHeight;
+                    });
+
+                    doc.setFont("helvetica", "normal"); // Reset font
+                }
+            }
+
+             // --- FIX: Logic for displaying Products to ensure they fit in cell ---
+            if (data.section === 'body' && data.column.index === 2) {
+                const cellText = data.cell.raw;
+                if (Array.isArray(cellText)) {
+                    const { x, y, width, height } = data.cell;
+                    const leftPadding = data.cell.padding('left');
+                    const topPadding = data.cell.padding('top');
+                    const customLineHeight = 2.8;
+                    let currentY = y + topPadding + 1.5; // Initial offset to align with autotable's text
+
+                    doc.setFillColor(255, 255, 255);
+                    doc.rect(x, y, width, height, 'F');
+
+                    cellText.forEach((line: string) => {
+                        if (line.startsWith('BOLD::')) {
+                            const boldText = line.substring('BOLD::'.length);
+                            doc.setFont("helvetica", "bold");
+                            doc.text(boldText, x + leftPadding, currentY);
+                        } else {
+                            doc.setFont("helvetica", "normal");
+                            doc.text(line, x + leftPadding, currentY);
+                        }
+                        currentY += customLineHeight;
+                    });
+                    doc.setFont("helvetica", "normal"); // Reset font
+                }
+            }
+
+            if (data.section === 'body' && data.column.index === 1) {
+                const type = tableData[data.row.index].rawType;
+                let badgeColor = [230, 230, 230]; 
+                let borderColor = [200, 200, 200];
+                let textColor = [80, 80, 80];
+                let badgeText = type.toLowerCase();
+
+                if (type === 'DEPOSIT') {
+                    badgeColor = [200, 249, 221]; 
+                    textColor = [46, 204, 113]; 
+                    borderColor = [46, 204, 113]; 
+                    badgeText = "Deposit";
+                } else if (type === 'PICKUP') {
+                    badgeColor = [255, 231, 164]; 
+                    textColor = [255, 165, 0]; 
+                    borderColor = [255, 165, 0]; 
+                    badgeText = "Pickup";
+                } else if (type === 'PURCHASE') {
+                    badgeColor = [255, 202, 202]; 
+                    textColor = [249, 83, 83]; 
+                    borderColor = [249, 83, 83]; 
+                    badgeText = "Purchase";
+                }
+
+                const { x, y, width, height } = data.cell;
+                doc.setFillColor(255, 255, 255);
+                doc.rect(x + 1, y + 1, width - 2, height - 2, 'F');
+                doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
+                doc.setFillColor(badgeColor[0], badgeColor[1], badgeColor[2]);
+                doc.roundedRect(x + 2, y + 6, width - 4, 4, 2, 2, 'FD'); 
+                doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+                doc.setFontSize(6);
+                doc.text(badgeText, x + width / 2, y + 8.5, { align: 'center' });
+            }
+        },
+        willDrawCell: (data) => {
+             if (data.section === 'body' && data.column.index === 4) {
+                const text = data.cell.raw as string;
+                if (text.startsWith('+')) {
+                    doc.setTextColor(46, 204, 113);
+                } else {
+                    doc.setTextColor(249, 83, 83);
+                }
+             }
+        }
     });
 
-    // Add summary section
-    const finalY =
-      (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable
-        ?.finalY || 80;
+    // --- SUMMARY SECTION ---
+    let finalY = (doc as any).lastAutoTable.finalY + 10;
+    
+    // Summary Calculation
+    const summarySales = clientTransactions
+        .filter(t => t.type === 'PURCHASE' || t.type === 'PICKUP')
+        .reduce((acc, curr) => acc + (curr.total || 0), 0);
+    const countSales = clientTransactions.filter(t => t.type === 'PURCHASE' || t.type === 'PICKUP').length;
+        
+    const summaryDeposits = clientTransactions
+        .filter(t => t.type === 'DEPOSIT')
+        .reduce((acc, curr) => acc + (curr.total || 0), 0);
+    const countDeposits = clientTransactions.filter(t => t.type === 'DEPOSIT').length;
 
-    // Transaction Summary Header
-    doc.setFont("helvetica", "bold");
+    const summaryReturns = 0; 
+    const countReturns = 0;
+    const netGrandTotal = summaryDeposits - summarySales; 
+
+    const totalTransport = clientTransactions.reduce((acc, curr) => acc + ((curr as any).transportFare || 0), 0);
+    const totalLoadingOff = clientTransactions.reduce((acc, curr) => acc + ((curr as any).loadingAndOffloading || 0), 0);
+    const totalLoading = clientTransactions.reduce((acc, curr) => acc + ((curr as any).loading || 0), 0);
+    const totalAddCharges = totalTransport + totalLoadingOff + totalLoading;
+
+    // --- FIX: Check for page overflow before drawing summary ---
+    const summaryHeight = 100; // Estimated height of summary section
+    if (finalY + summaryHeight > pageHeight - margin) {
+        doc.addPage();
+        finalY = margin; // Reset Y position to top of new page
+    }
+
+    // --- 0. Background Container for Summary ---
+    const summaryBoxX = margin - 2;
+    const summaryBoxY = finalY - 5;
+    const summaryBoxW = pageWidth - (margin * 2) + 4;    
+    // --- FIX: Calculate summary box height dynamically ---
+    const chargesSectionHeight = 25; // Approximate height for the charges summary
+    const grandTotalBoxHeight = 30;
+    const cardsHeight = 32;
+    const summaryBoxH = 15 + cardsHeight + 8 + grandTotalBoxHeight + 8 + chargesSectionHeight;
+    const cornerRadius = 2; 
+    const accentWidth = 2; 
+
+    // A. Draw the Accent Background (Layer 1)
+    doc.setFillColor(51, 51, 51); 
+    doc.roundedRect(summaryBoxX, summaryBoxY, summaryBoxW, summaryBoxH, cornerRadius, cornerRadius, 'F');
+
+    // B. Draw the Main Background (Layer 2)
+    doc.setFillColor(249, 249, 249); 
+    doc.roundedRect(summaryBoxX + accentWidth, summaryBoxY, summaryBoxW - accentWidth, summaryBoxH, cornerRadius, cornerRadius, 'F');
+
+    // C. Square off the Left Corners of the Light Gray Box (Layer 3)
+    doc.rect(summaryBoxX + accentWidth, summaryBoxY, cornerRadius, cornerRadius, 'F'); 
+    doc.rect(summaryBoxX + accentWidth, summaryBoxY + summaryBoxH - cornerRadius, cornerRadius, cornerRadius, 'F'); 
+
+    // --- 1. Summary Title ---
     doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0); // Black text
-    doc.text("Transaction Summary", 10, finalY + 6);
-
-    // Calculate summary statistics from filtered transactions
-    const totalTransactions = clientTransactions.length;
-    const purchaseTransactions = clientTransactions.filter(
-      (t) => t.type === "PURCHASE"
-    ).length;
-    const pickupTransactions = clientTransactions.filter(
-      (t) => t.type === "PICKUP"
-    ).length;
-    const depositTransactions = clientTransactions.filter(
-      (t) => t.type === "DEPOSIT"
-    ).length;
-    const totalAmount = clientTransactions.reduce(
-      (sum, t) => sum + (t.total || 0),
-      0
-    );
-    const totalDiscount = clientTransactions.reduce(
-      (sum, t) => sum + (t.discount || 0),
-      0
-    );
-
-    // Summary Details - Left Column
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.text("Total Transactions:", 10, finalY + 15);
-    doc.text("Purchases:", 10, finalY + 25);
-    doc.text("Pickups:", 10, finalY + 32);
-
+    doc.setTextColor(33, 33, 33);
     doc.setFont("helvetica", "normal");
-    doc.text(`${totalTransactions}`, 42, finalY + 15);
-    doc.text(`${purchaseTransactions}`, 30, finalY + 25);
-    doc.text(`${pickupTransactions}`, 30, finalY + 32);
+    doc.text(`${periodText} Summary`, margin + accentWidth + 2, finalY + 2); 
 
-    // Summary Details - Right Column
-    doc.setFont("helvetica", "bold");
-    doc.text("Deposits:", 70, finalY + 15);
-    doc.text("Total Amount:", 70, finalY + 25);
-    doc.text("Total Savings:", 70, finalY + 32);
+    // --- 2. The Three White Cards ---
+    const cardsY = finalY + 8;
+    const cardGap = 5;
+    const availableWidth = pageWidth - (margin * 2) - accentWidth;
+    const cardWidth = (availableWidth - (cardGap * 2)) / 3;
+    const cardHeight = 32;
+    const cardStartX = margin + accentWidth + 1; 
 
+    // Helper to draw card
+    const drawSummaryCard = (x: number, title: string, amount: string, count: string, amountColor: [number, number, number]) => {
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(220, 220, 220); 
+        doc.roundedRect(x, cardsY, cardWidth, cardHeight, 1.5, 1.5, 'FD');
+
+        doc.setFontSize(8);
+        doc.setTextColor(120, 120, 120); 
+        doc.setFont("helvetica", "normal");
+        doc.text(title, x + (cardWidth/2), cardsY + 8, { align: 'center' });
+
+        doc.setFontSize(11);
+        doc.setTextColor(amountColor[0], amountColor[1], amountColor[2]); 
+        doc.setFont("helvetica", "bold");
+        doc.text(amount, x + (cardWidth/2), cardsY + 16, { align: 'center' });
+
+        doc.setFontSize(7);
+        doc.setTextColor(150, 150, 150); 
+        doc.setFont("helvetica", "normal");
+        doc.text(count, x + (cardWidth/2), cardsY + 24, { align: 'center' });
+    };
+
+    drawSummaryCard(cardStartX, "Total Purchase", `-${formatCurrencyForPDF(summarySales)}`, `${countSales} transactions`, [249, 83, 83]);
+    drawSummaryCard(cardStartX + cardWidth + cardGap, "Total Deposits", `+${formatCurrencyForPDF(summaryDeposits)}`, `${countDeposits} payments`, [46, 204, 113]);
+    drawSummaryCard(cardStartX + (cardWidth * 2) + (cardGap * 2), "Total Returns", `${formatCurrencyForPDF(summaryReturns)}`, `${countReturns} return`, [51, 51, 51]);
+
+    // --- 3. Dark Grand Total Box ---
+    const boxY = cardsY + cardHeight + 8;
+    const boxHeight = 30; 
+    const boxWidth = availableWidth; 
+
+    doc.setFillColor(51, 51, 51); 
+    doc.setDrawColor(51, 51, 51);
+    doc.roundedRect(cardStartX, boxY, boxWidth, boxHeight, 1, 1, 'FD');
+
+    doc.setFontSize(7);
+    doc.setTextColor(200, 200, 200); 
     doc.setFont("helvetica", "normal");
-    doc.text(`${depositTransactions}`, 87, finalY + 15);
+    doc.text(`NET GRAND TOTAL (${periodText.toUpperCase()})`, cardStartX + (boxWidth / 2), boxY + 8, { align: 'center' });
+
+    doc.setFontSize(18);
+    doc.setTextColor(255, 255, 255); 
+    doc.setFont("helvetica", "bold");
+    doc.text(formatCurrencyForPDF(netGrandTotal), cardStartX + (boxWidth / 2), boxY + 17, { align: 'center' });
+
+    doc.setFontSize(6);
+    doc.setTextColor(170, 170, 170); 
+    doc.setFont("helvetica", "normal");
     doc.text(
-      `${formatCurrency(totalAmount).replace(/^\s+/, "")}`,
-      95,
-      finalY + 25
+        `Sales (${formatCurrencyForPDF(summarySales)}) - Deposits (${formatCurrencyForPDF(summaryDeposits)}) - Returns (${formatCurrencyForPDF(summaryReturns)})`, 
+        cardStartX + (boxWidth / 2), 
+        boxY + 24, 
+        { align: 'center' }
     );
-    doc.text(`${formatCurrency(totalDiscount)}`, 95, finalY + 32);
 
-    // Generate filename with client name and current date
-    const fileName = `${
-      client?.name?.replace(/[^a-zA-Z0-9]/g, "_") || "Client"
-    }_Transactions_${new Date().toISOString().split("T")[0]}.pdf`;
+    // --- 4. Additional Charges Section ---
+    const chargesStartY = boxY + boxHeight + 8;
 
-    // Save the PDF
-    doc.save(fileName);
+    doc.setFontSize(9);
+    doc.setTextColor(33, 33, 33);
+    doc.setFont("helvetica", "bold");
+    doc.text("Additional Charges Summary", cardStartX, chargesStartY);
+
+    doc.setFontSize(7);
+    doc.setTextColor(100, 100, 100); 
+    doc.setFont("helvetica", "normal");
+
+    const chargesRowY = chargesStartY + 7;
+    doc.text(`Total Transport: ${formatCurrencyForPDF(totalTransport)}`, cardStartX, chargesRowY);
+    
+    const sectionCenter = cardStartX + (boxWidth / 2);
+    const sectionRight = cardStartX + boxWidth;
+
+    doc.text(`Total Loading/Offloading: ${formatCurrencyForPDF(totalLoadingOff)}`, sectionCenter, chargesRowY, {align: 'center'});
+    doc.text(`Total Loading: ${formatCurrencyForPDF(totalLoading)}`, sectionRight, chargesRowY, {align: 'right'});
+
+    const lineY = chargesRowY + 4;
+    doc.setDrawColor(230, 230, 230);
+    doc.line(cardStartX, lineY, sectionRight, lineY);
+
+    doc.setFontSize(9);
+    doc.setTextColor(33, 33, 33);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Total Additional Charges: ${formatCurrencyForPDF(totalAddCharges)}`, cardStartX, lineY + 6);
+
+
+    // --- FOOTER ---
+    // --- FIX: Calculate footerY dynamically based on the end of the summary content ---
+    const lastElementY = lineY + 6; // Y position of the last text in the summary
+    const footerHeight = 20; // Approximate height of the footer section
+    let footerY = pageHeight - footerHeight; // Default to bottom of the page
+
+    // If content is too long and would overlap with the bottom-aligned footer,
+    // or if the content is very short, add a new page for the footer.
+    if (lastElementY + 10 > footerY) {
+        doc.addPage();
+        footerY = pageHeight - footerHeight; // Position footer at the bottom of the new page
+    }
+
+    doc.setDrawColor(200, 200, 200);
+    doc.line(margin, footerY, pageWidth - margin, footerY);
+
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(150, 150, 150);
+    doc.text("This is a system-generated statement", pageWidth / 2, footerY + 5, { align: 'center' });
+    doc.text("For inquiries, please contact your account manager", pageWidth / 2, footerY + 9, { align: 'center' });
+    doc.text(`Statement Date: ${new Date().toLocaleDateString()}`, pageWidth / 2, footerY + 13, { align: 'center' });
+
+    // Save
+    doc.save(`Statement_${client?.name || 'Client'}_${periodText}.pdf`);
   };
-  //
 
+  //
   const mergedTransactions = useMemo(() => {
     if (!transactions || !clients) return [];
     const merged = mergeTransactionsWithClients(transactions, clients);
@@ -430,7 +653,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
           .filter((t) => t.client?._id === clientId)
           .map((t) => t.userId?.name)
           .filter(Boolean)
-      )
+        )
     );
     return uniqueStaff;
   }, [mergedTransactions, clientId]);
@@ -506,7 +729,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
             <ChevronLeft />
             <span>Back</span>
           </button>
-          <p className="lg:text-lg text-sm text-[#333333]">
+          <p className="lg:text-lg text-sm text-[#1E1E1E]">
             Client Account Management
           </p>
         </div>
@@ -546,7 +769,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         </div>
 
         {/* section by the right */}
-        <section className=" bg-white py-8 px-5 rounded lg:col-span-3">
+        <section className="lg:-translate-x-28 max-w-[793px] bg-white py-8 px-5 rounded lg:col-span-3">
           <Tabs className="space-y-4" defaultValue="clientTransaction">
             <TabsList className="flex gap-2 lg:justify-start justify-evenly ">
               <TabsTrigger value="clientTransaction">Transaction</TabsTrigger>
@@ -555,32 +778,28 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
             <TabsContent value="clientTransaction">
               {/* data */}
-              <div className=" flex justify-start items-center flex-wrap w-full gap-4 md:gap-1  lg:gap-4 mb-10">
-                <div className="flex flex-col sm:w-[230px] md:w-[210px] transition-all w-full ">
-                  <label className="text-xs font-medium text-gray-600 ">
-                    Date range
-                  </label>
-                  <div className="">
-                    <DateRangePicker
-                      value={dateRangeFilter}
-                      onChange={(range) => setDateRangeFilter(range)}
-                      className="relative w-full border rounded-lg p-2 text-sm !bg-[#faf6f6] !border-[#cacacaef] text-black h-9"
-                    />
-                  </div>
+              <div className="md:flex justify-start items-center w-full gap-4 md:gap-1  lg:gap-2 mb-10">
+                <div className="flex flex-col justify-end transition-all w-full h-full">
+                  <DateFromToPicker
+                    date={dateRangeFilter}
+                    onDateChange={(range) =>
+                      setDateRangeFilter(range || { from: undefined, to: undefined })
+                    }
+                  />
                 </div>
 
-                <div className="flex flex-col  sm:w-[230px] md:w-[210px] transition-all w-full ">
-                  <label className="text-xs font-medium text-gray-600">
+                <div className="flex flex-col  sm:w-[179px] md:w-[179px] transition-all w-full ">
+                  <label className="mb-2 text-xs font-medium text-[#7D7D7D]">
                     Transaction type
                   </label>
                   <Select
                     value={transactionTypeFilter}
                     onValueChange={setTransactionTypeFilter}
                   >
-                    <SelectTrigger className="  sm:w-[240px] md:w-[210px] transition-all w-full">
+                    <SelectTrigger className="sm:w-[179px] md:w-[179px] transition-all w-full">
                       <SelectValue placeholder="All Transactions" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="text-[#444444]">
                       <SelectItem value="all">All transactions</SelectItem>
                       <SelectItem value="purchase">Purchase</SelectItem>
                       <SelectItem value="pick-up">Pick-up</SelectItem>
@@ -590,11 +809,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                 </div>
 
                 <div className="flex flex-col  sm:w-[230px] md:w-[210px] transition-all w-full">
-                  <label className="text-xs font-medium text-gray-600">
+                  <label className="mb-2 text-xs font-medium text-[#7D7D7D]">
                     Staff member
                   </label>
                   <Select value={staffFilter} onValueChange={setStaffFilter}>
-                    <SelectTrigger className="  sm:w-[230px] md:w-[210px] transition-all w-full">
+                    <SelectTrigger className="sm:w-[126px] md:w-[126px] transition-all w-full">
                       <SelectValue placeholder="All Staff" />
                     </SelectTrigger>
                     <SelectContent>
@@ -608,25 +827,14 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                   </Select>
                 </div>
 
-                <div className="flex flex-col pt-0 sm:pt-4 items-center sm:w-[230px] md:w-[210px] transition-all w-full">
+                <div className="flex flex-col md:items-center sm:w-[101px] md:w-[101px] lg:w-[101px] transition-all w-full">
                   <Button
-                    className="  bg-[#2ECC71] hover:bg-[#27ae60] text-white font-medium  sm:w-[230px] md:w-[210px] transition-all w-full "
+                    className="mt-6 max-w-[101px]  bg-[#2ECC71] hover:bg-[#27ae60] text-white font-medium  sm:w-[230px] md:w-[210px] transition-all w-full "
                     onClick={handleApplyFilters}
                   >
                     Apply filters
                   </Button>
                 </div>
-              </div>
-
-              {/* Transaction summary */}
-              <div className="mb-6 p-4 bg-[#F5F5F5] rounded-lg">
-                <p className="text-sm text-[#7D7D7D]">
-                  Showing {clientTransactions.length} transaction
-                  {clientTransactions.length !== 1 ? "s" : ""}
-                  {transactionTypeFilter !== "all" &&
-                    ` (${transactionTypeFilter})`}
-                  {staffFilter !== "all-staff" && ` by ${staffFilter}`}
-                </p>
               </div>
 
               <ClientTransactionDetails

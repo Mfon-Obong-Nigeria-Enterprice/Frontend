@@ -1,10 +1,18 @@
 import type { Transaction } from "@/types/transactions";
 import type { Client } from "@/types/types";
 
+export interface TransactionWithBalance extends Transaction {
+  loading: number;
+  loadingAndOffloading: number;
+  transportFare: number;
+  balanceBefore: number;
+  balanceAfter: number;
+}
+
 export function calculateTransactionsWithBalance(
   transactions: Transaction[],
   client: Pick<Client, "balance">
-) {
+): TransactionWithBalance[] {
   if (!transactions?.length) {
     // If no transactions, return empty array
     return [];
@@ -56,6 +64,9 @@ export function calculateTransactionsWithBalance(
 
     return {
       ...txn,
+      loading: 0, // Default or calculate if available
+      loadingAndOffloading: 0, // Default or calculate if available
+      transportFare: 0, // Default or calculate if available
       balanceBefore,
       balanceAfter: runningBalance,
     };
