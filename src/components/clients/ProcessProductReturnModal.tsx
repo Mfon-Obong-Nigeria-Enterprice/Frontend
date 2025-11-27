@@ -80,15 +80,26 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedQua
               <Minus size={14} />
             </button>
 
-            {/* Input Field - Type Number allows typing */}
-            <input
-              type="number"
-              value={returnedQuantity.toString()} // toString removes leading zeros if any
-              onChange={handleInputChange}
-              min={0}
-              max={item.quantity}
-              className="w-[70px] h-[34px] border border-gray-300 rounded px-2 text-left text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
+            {/* Input with internal steppers */}
+            <div className="relative">
+              <input
+                type="number"
+                value={returnedQuantity.toString()} // toString removes leading zeros if any
+                onChange={handleInputChange}
+                min={0}
+                max={item.quantity}
+                className="w-[70px] h-[34px] border border-[#D9D9D9] rounded pl-2 pr-6 text-left text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              <div className="absolute right-0 top-0 h-full flex flex-col border border-[#D9D9D9]">
+                <button onClick={handleIncrement} className="h-1/2 px-1.5 flex items-center justify-center hover:bg-gray-100 border-b border-gray-300 rounded-tr-sm">
+                  <ChevronDown size={12} className="rotate-180 text-gray-500" />
+                </button>
+                <button onClick={handleDecrement} className="h-1/2 px-1.5 flex items-center justify-center hover:bg-gray-100 rounded-br-sm">
+                  <ChevronDown size={12} className="text-gray-500" />
+                </button>
+              </div>
+            </div>
+
 
             {/* Plus Button */}
             <button 

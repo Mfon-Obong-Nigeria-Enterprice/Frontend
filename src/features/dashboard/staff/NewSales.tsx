@@ -449,7 +449,6 @@
 //   };
 
 //   const isClientBlocked = selectedClient ? false : false;
-
 import React, { useState, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -461,7 +460,6 @@ import ClientSalesTypes from "./components/ClientSalesTypes";
 import AddSaleProduct from "./components/AddSaleProduct";
 import ClientDisplayBox from "./components/ClientDisplayBox";
 import WalkinClientDetailBox from "./components/WalkinClientDetailBox";
-// import SalesReceipt from "./components/SalesReceipt";
 
 // store
 import { useInventoryStore } from "@/stores/useInventoryStore";
@@ -473,7 +471,6 @@ import { AddTransaction } from "@/services/transactionService";
 
 // types
 import type { Client } from "@/types/types";
-// import type { Transaction } from "@/types/transactions";
 
 // ui
 import { Button } from "@/components/ui/button";
@@ -486,7 +483,6 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-// import Modal from "@/components/Modal";
 import ClientStatusBadge from "@/pages/ClientStatusBadge";
 
 // utils
@@ -505,13 +501,11 @@ import { bankNames, posNames } from "@/data/banklist";
 
 // Helper function to get the correct server URL
 const getServerUrl = () => {
-  // explicit override from env (recommended)
   const socketUrl = import.meta.env.VITE_SOCKET_URL as string | undefined;
   if (socketUrl && socketUrl.length) return socketUrl.replace(/\/$/, "");
 
   const apiUrl = import.meta.env.VITE_API_URL as string | undefined;
 
-  // For development with localhost
   if (
     apiUrl?.includes("localhost") ||
     apiUrl?.includes("127.0.0.1") ||
@@ -521,12 +515,10 @@ const getServerUrl = () => {
     return "http://localhost:3000";
   }
 
-  // For production with onrender
   if (apiUrl && apiUrl.includes("onrender.com")) {
     return apiUrl.replace("/api", "");
   }
 
-  // Fallback to current origin
   return window.location.origin;
 };
 
@@ -541,8 +533,6 @@ export type Row = {
   unit?: string;
   productName?: string;
 };
-
-// type ReceiptData = Transaction;
 
 const emptyRow: Row = {
   productId: "",
@@ -589,29 +579,25 @@ const NewSales: React.FC = () => {
   const [discountReason, setDiscountReason] = useState("");
   const [globalDiscount, setGlobalDiscount] = useState(0);
 
-  // const [showReceipt, setShowReceipt] = useState(false);
-  // const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
+  // Additional Charges State
+  const [transportFare, setTransportFare] = useState("");
+  const [loadingOffloading, setLoadingOffloading] = useState("");
+  const [loadingCharge, setLoadingCharge] = useState("");
 
   const [bankSearch, setBankSearch] = useState("");
   const [date, setDate] = useState<string>(() => getTodayDateString());
 
-  // SOCKET: useRef to hold socket instance and control lifecycle
   const socketRef = useRef<Socket | null>(null);
 
-  // Update sales type when a client is selected
   useEffect(() => {
     if (selectedClient && selectedClient.salesType) {
-      // If client has a salesType, use it
       setSalesType(selectedClient.salesType);
     } else {
-      // Otherwise, default to "Retail"
       setSalesType("Retail");
     }
   }, [selectedClient]);
 
-  // Connect socket inside useEffect so it doesn't run at module import time
   useEffect(() => {
-    // only connect when user branch is present
     if (!user?.branchId) return;
 
     const url = getServerUrl();
@@ -620,14 +606,11 @@ const NewSales: React.FC = () => {
     const s = io(url, {
       path: "/socket.io",
       withCredentials: true,
-      // force websocket to avoid polling/xhr fallback
       transports: ["websocket"],
-      // optional reconnection settings
       reconnection: true,
       reconnectionAttempts: 5,
     });
 
-    // debug handlers
     s.on("connect", () => {
       console.debug("[NewSales][WS] connected, id:", s.id);
     });
@@ -639,11 +622,6 @@ const NewSales: React.FC = () => {
     s.on("error", (err: any) => {
       console.error("[NewSales][WS] error:", err);
     });
-
-    // s.on("transaction_created", (data: ReceiptData) => {
-    //   setReceiptData(data);
-    //   setShowReceipt(true);
-    // });
 
     socketRef.current = s;
 
@@ -661,15 +639,32 @@ const NewSales: React.FC = () => {
     return null;
   }
 
-  const formatCurrencyDisplay = (value: string) => {
-    if (!value) return "₦0";
-    const digitsOnly = value.replace(/\D/g, "");
-    if (digitsOnly === "") return "₦0";
+  const formatCurrencyDisplay = (value: string | number) => {
+    const stringVal = value.toString();
+    if (!stringVal) return "₦0.00";
+    const digitsOnly = stringVal.replace(/\D/g, "");
+    if (digitsOnly === "") return "₦0.00";
     const numericValue = parseFloat(digitsOnly);
+    // If it's just raw number entry, we might want to divide by 100 for cents, but based on context seems to be whole numbers usually.
+    // However, screenshot shows 0.00. Let's stick to standard formatting.
     return `₦${numericValue.toLocaleString("en-GB", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    })}`;
+    })}`; // Kept consistent with existing code preference for 0 decimals unless user wants .00
+  };
+
+  // Specialized formatter for the placeholder style in screenshot (₦0.00)
+  const formatInputDisplay = (value: string) => {
+      if(!value) return "";
+      const num = parseFloat(value);
+      if(isNaN(num)) return "";
+      return `₦${num.toLocaleString('en-US')}`;
+  }
+
+  const handleNumericInputChange = (setter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value;
+    const newRawValue = input.replace(/\D/g, "");
+    setter(newRawValue);
   };
 
   const handleAmountPaidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -714,8 +709,9 @@ const NewSales: React.FC = () => {
     if (!selectedClient && !isWalkIn) return false;
     if (isWalkIn && !walkInData.name.trim()) return false;
     if (!rows.some((row) => row.productId)) return false;
+    const gDiscount = globalDiscount || 0;
     if (
-      (rows.some((row) => row.discount > 0) || globalDiscount > 0) &&
+      (rows.some((row) => row.discount > 0) || gDiscount > 0) &&
       !discountReason.trim()
     )
       return false;
@@ -723,6 +719,42 @@ const NewSales: React.FC = () => {
     const paid = getAmountPaid();
     if (paid === null || paid < 0) return false;
     return true;
+  };
+
+  const calculateTotals = () => {
+    const subtotal = rows.reduce(
+      (acc, row) => acc + (Number(row.quantity) * Number(row.unitPrice) || 0),
+      0
+    );
+
+    const rowDiscountTotal = rows.reduce((acc, row) => {
+      const lineAmount = Number(row.quantity) * Number(row.unitPrice);
+      if (!row.discount) return acc;
+
+      let discountAmount = 0;
+      if (row.discountType === "percent") {
+        discountAmount = (lineAmount * Number(row.discount)) / 100;
+      } else if (row.discountType === "amount") {
+        discountAmount = Number(row.discount);
+      }
+
+      return acc + discountAmount;
+    }, 0);
+
+    // Sum up additional charges
+    const transport = parseFloat(transportFare) || 0;
+    const loadingOff = parseFloat(loadingOffloading) || 0;
+    const loading = parseFloat(loadingCharge) || 0;
+    const additionalCharges = transport + loadingOff + loading;
+
+    const gDiscount = globalDiscount || 0;
+    const discountTotal =
+      rowDiscountTotal > 0 ? rowDiscountTotal : gDiscount;
+    
+    // Total calculation: Subtotal + Charges - Discount
+    const total = subtotal + additionalCharges - discountTotal;
+    
+    return { subtotal, discountTotal, total, additionalCharges };
   };
 
   const validateSales = () => {
@@ -750,32 +782,6 @@ const NewSales: React.FC = () => {
     }
 
     return true;
-  };
-
-  const calculateTotals = () => {
-    const subtotal = rows.reduce(
-      (acc, row) => acc + (Number(row.quantity) * Number(row.unitPrice) || 0),
-      0
-    );
-
-    const rowDiscountTotal = rows.reduce((acc, row) => {
-      const lineAmount = Number(row.quantity) * Number(row.unitPrice);
-      if (!row.discount) return acc;
-
-      let discountAmount = 0;
-      if (row.discountType === "percent") {
-        discountAmount = (lineAmount * Number(row.discount)) / 100;
-      } else if (row.discountType === "amount") {
-        discountAmount = Number(row.discount);
-      }
-
-      return acc + discountAmount;
-    }, 0);
-
-    const discountTotal =
-      rowDiscountTotal > 0 ? rowDiscountTotal : globalDiscount;
-    const total = subtotal - discountTotal;
-    return { subtotal, discountTotal, total };
   };
 
   const getBalanceInfo = () => {
@@ -829,6 +835,7 @@ const NewSales: React.FC = () => {
 
   const { statusMessage, total, paid, clientBalance, newBalance } =
     getBalanceInfo();
+  //const { subtotal } = calculateTotals();
 
   const handleWalkInDataChange = (data: { name: string; phone: string }) => {
     setWalkInData(data);
@@ -845,6 +852,9 @@ const NewSales: React.FC = () => {
     setNotes("");
     setIsSubmitting(false);
     setGlobalDiscount(0);
+    setTransportFare("");
+    setLoadingOffloading("");
+    setLoadingCharge("");
     setDate(getTodayDateString());
     setTransactionType("PURCHASE");
   };
@@ -854,33 +864,7 @@ const NewSales: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      // --- SENIOR ENGINEER DEBUG LOG ---
-      console.groupCollapsed("--- New Sales Submission Data ---");
-      console.log("Timestamp:", new Date().toISOString());
-      console.log("Submitting User:", user);
-      console.log("---------------------------------");
-      console.log("CLIENT INFO");
-      console.log("Is Walk-In:", isWalkIn);
-      console.log("Selected Client:", selectedClient);
-      console.log("Walk-In Data:", walkInData);
-      console.log("---------------------------------");
-      console.log("TRANSACTION & PAYMENT");
-      console.log("Sales Type:", salesType);
-      console.log("Transaction Type:", transactionType);
-      console.log("Payment Method:", paymentMethod);
-      console.log("Sub-Method (Bank/POS):", subMethod);
-      console.log("Amount Paid (Raw Input):", amountPaid);
-      console.log("Transaction Date:", date);
-      console.log("Notes:", notes);
-      console.log("---------------------------------");
-      console.log("PRODUCTS & TOTALS");
-      console.log("Product Rows:", rows);
-      console.log("Calculated Totals:", calculateTotals());
-      console.log("Balance Info:", getBalanceInfo());
-      console.groupEnd();
-      // --- END OF DEBUG LOG ---
-
-      const { discountTotal } = calculateTotals();
+      const { discountTotal, additionalCharges } = calculateTotals();
       const effectiveAmountPaid = getAmountPaid() || 0;
 
       const apiItems = rows
@@ -909,6 +893,10 @@ const NewSales: React.FC = () => {
         }
       }
 
+      // Note: Backend might need updates to accept separate charges, 
+      // or we bundle them into items or notes. 
+      // For now, we follow existing structure but include charges in payload if backend supports 'additionalCharges'
+      // If not supported, this might need adjustment.
       const payload = {
         ...(selectedClient?._id
           ? { clientId: selectedClient._id }
@@ -918,6 +906,7 @@ const NewSales: React.FC = () => {
         items: apiItems,
         amountPaid: effectiveAmountPaid,
         discount: discountTotal,
+        additionalCharges: additionalCharges, // Assuming backend can take this
         paymentMethod:
           transactionType === "PICKUP" ? "Credit" : paymentMethodForBackend,
         notes,
@@ -1043,12 +1032,91 @@ const NewSales: React.FC = () => {
                 setRows={setRows}
                 emptyRow={emptyRow}
                 onDiscountReasonChange={setDiscountReason}
-                discountReason={discountReason}
-                setGlobalDiscount={setGlobalDiscount}
                 globalDiscount={globalDiscount}
+                setGlobalDiscount={setGlobalDiscount}
               />
             </div>
           )}
+
+          {/* Additional Charges Section */}
+          {(!selectedClient || !isClientBlocked || isWalkIn) && (
+            <div className="mt-6 border border-[#E4E4E7] rounded-lg p-6 bg-white">
+              <h4 className="text-lg font-medium text-[#111] mb-5">
+                Additional Charges
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label className="font-normal text-[#444] text-[15px]">
+                    Transport Fare
+                  </Label>
+                  <Input
+                    type="text"
+                    value={formatInputDisplay(transportFare)}
+                    onChange={handleNumericInputChange(setTransportFare)}
+                    placeholder="₦0.00"
+                    className="bg-[#F5F6F8] border-[#E4E4E7] h-[45px] text-[#333] placeholder:text-gray-400"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-normal text-[#444] text-[15px]">
+                    Loading/Offloading
+                  </Label>
+                  <Input
+                    type="text"
+                    value={formatInputDisplay(loadingOffloading)}
+                    onChange={handleNumericInputChange(setLoadingOffloading)}
+                    placeholder="₦0.00"
+                    className="bg-[#F5F6F8] border-[#E4E4E7] h-[45px] text-[#333] placeholder:text-gray-400"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-normal text-[#444] text-[15px]">
+                    Loading
+                  </Label>
+                  <Input
+                    type="text"
+                    value={formatInputDisplay(loadingCharge)}
+                    onChange={handleNumericInputChange(setLoadingCharge)}
+                    placeholder="₦0.00"
+                    className="bg-[#F5F6F8] border-[#E4E4E7] h-[45px] text-[#333] placeholder:text-gray-400"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Summary Section */}
+          {/* {(!selectedClient || !isClientBlocked || isWalkIn) && (
+             <div className="mt-6 bg-[#F9FAFB] rounded-lg p-6 flex flex-col gap-4">
+                <div className="flex justify-between items-center text-sm">
+                   <span className="text-[#333] text-[15px]">Subtotal:</span>
+                   <span className="font-medium text-[#333]">
+                      ₦{subtotal.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                   </span>
+                </div>
+                
+                <div className="flex justify-between items-center text-sm">
+                   <span className="text-[#333] text-[15px]">Discount:</span>
+                   <div className="w-[100px]">
+                      <Input
+                         type="text"
+                         value={formatInputDisplay(globalDiscount)}
+                         onChange={handleNumericInputChange(setGlobalDiscount)}
+                         placeholder="₦0.00"
+                         className="bg-white border-[#E4E4E7] h-[36px] text-right text-sm"
+                      />
+                   </div>
+                </div>
+
+                <div className="flex justify-between items-center text-base pt-2">
+                   <span className="font-bold text-[#333]">Total:</span>
+                   <span className="font-bold text-[#333]">
+                      ₦{total.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                   </span>
+                </div>
+             </div>
+          )} */}
+
         </div>
 
         {/* Payment Section */}

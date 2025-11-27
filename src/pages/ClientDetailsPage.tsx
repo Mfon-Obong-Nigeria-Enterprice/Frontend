@@ -109,11 +109,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
     // Custom currency formatter for PDF
     const formatCurrencyForPDF = (amount: number) => {
-      return new Intl.NumberFormat("en-NG", {
-        style: "currency",
-        currency: "NGN",
-        currencyDisplay: "code", 
+      const formattedAmount = new Intl.NumberFormat("en-NG", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
       }).format(amount);
+      return `N${formattedAmount}`;
     };
 
     const pageWidth = doc.internal.pageSize.width;
