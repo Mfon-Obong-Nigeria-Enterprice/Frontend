@@ -194,12 +194,16 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
     // Map Data
     const tableData = displaySortedTransactions.map(txn => {
-        const productList = txn.items && txn.items.length > 0 
+        const productList = txn.items && txn.items.length > 0
             ? txn.items.flatMap(item => [
-                `•  ${item.quantity} ${item.unit || 'units'} @ ${formatCurrencyForPDF(item.unitPrice)}`,
-                `BOLD::  ${item.productName}` 
-              ])
+                `• ${item.quantity} ${item.unit || 'units'} @ ${formatCurrencyForPDF(item.unitPrice)}`,
+                `BOLD::  ${item.productName}`
+            ])
             : (txn.description ? [txn.description] : ["---"]);
+
+        const subtotalList = txn.items && txn.items.length > 0
+            ? txn.items.map(item => `Subtotal: ${formatCurrencyForPDF((item.quantity || 0) * (item.unitPrice || 0))}`)
+            : (txn.subtotal ? [`Subtotal: ${formatCurrencyForPDF(txn.subtotal)}`] : ["---"]);
 
         const chargesList = [];
         if((txn as any).transportFare && (txn as any).transportFare > 0) chargesList.push(`Transport: ${formatCurrencyForPDF((txn as any).transportFare)}`);
@@ -218,7 +222,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
             }),
             status: txn.type, 
             products: productList,
-            subtotal: txn.subtotal ? `Subtotal: ${formatCurrencyForPDF(txn.subtotal)}` : "---",
+            subtotal: subtotalList,
             amount: txn.type === 'DEPOSIT' ? `+${amountStr}` : `-${amountStr}`,
             balanceChange: `${balBefore} -> \n${balAfter}`,
             method: txn.paymentMethod || "Cash",
@@ -262,6 +266,32 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
             7: { cellWidth: 20 }, // Give other columns a defined space
         },
         didDrawCell: (data) => {
+            // --- FIX: Logic for displaying Subtotals to ensure they fit in cell ---
+            if (data.section === 'body' && data.column.index === 3) {
+                const cellText = data.cell.raw;
+                if (Array.isArray(cellText)) {
+                    const { x, y, width, height } = data.cell;
+                    const leftPadding = data.cell.padding('left');
+                    const topPadding = data.cell.padding('top');
+                    const customLineHeight = 5.6; // Double the product line height
+                    let currentY = y + topPadding + 1.5;
+
+                    // Clear the cell content drawn by autotable
+                    doc.setFillColor(255, 255, 255);
+                    doc.rect(x, y, width, height, 'F');
+
+                    // Redraw text for each subtotal
+                    cellText.forEach((line: string) => {
+                        doc.setFont("helvetica", "normal");
+                        doc.text(line, x + leftPadding, currentY);
+                        currentY += customLineHeight;
+                    });
+
+                    doc.setFont("helvetica", "normal"); // Reset font
+                }
+            }
+
+
              // --- FIX: Logic for displaying Products to ensure they fit in cell ---
             if (data.section === 'body' && data.column.index === 2) {
                 const cellText = data.cell.raw;
