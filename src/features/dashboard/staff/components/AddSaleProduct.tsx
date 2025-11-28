@@ -41,6 +41,7 @@ interface AddSaleProductProps {
   globalDiscount: number;
   setGlobalDiscount: React.Dispatch<React.SetStateAction<number>>;
   products: Product[];
+  salesType: "Retail" | "Wholesale";
 }
 
 const discountReasons = [
@@ -60,6 +61,7 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
   globalDiscount,
   setGlobalDiscount,
   products,
+  salesType,
 }) => {
   const [modal, setModal] = useState<{
     isOpen: boolean;
@@ -280,7 +282,11 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
 
                       const newQuantity = Number(value);
 
-                      if (newQuantity > maxQuantity && maxQuantity > 0) {
+                      if (
+                        salesType === "Retail" &&
+                        newQuantity > maxQuantity &&
+                        maxQuantity > 0
+                      ) {
                         toast.warn(
                           `Only ${maxQuantity} ${
                             row.unit || "items"
