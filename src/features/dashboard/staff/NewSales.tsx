@@ -921,7 +921,9 @@ const NewSales: React.FC = () => {
         amountPaid: effectiveAmountPaid,
         discount: discountTotal,
         additionalCharges: additionalCharges,
-        paymentMethod:
+        transportFare: parseFloat(transportFare) || 0,
+        loadingAndOffloading: parseFloat(loadingOffloading) || 0,
+        loading: parseFloat(loadingCharge) || 0,        paymentMethod:
           transactionType === "PICKUP" ? "Credit" : paymentMethodForBackend,
         notes,
         date,
@@ -950,6 +952,16 @@ const NewSales: React.FC = () => {
   };
 
   const isClientBlocked = selectedClient ? false : false;
+
+  // Automatically update amountPaid for walk-in clients when total changes
+  useEffect(() => {
+    if (isWalkIn) {
+      const { total } = calculateTotals();
+      if (total > 0) {
+        setAmountPaid(total.toString());
+      }
+    }
+  }, [isWalkIn, rows, globalDiscount, transportFare, loadingOffloading, loadingCharge]);
 
   return (
     <main>
@@ -1049,6 +1061,7 @@ const NewSales: React.FC = () => {
                 onDiscountReasonChange={setDiscountReason}
                 globalDiscount={globalDiscount}
                 setGlobalDiscount={setGlobalDiscount}
+                salesType={salesType}
               />
             </div>
           )}
