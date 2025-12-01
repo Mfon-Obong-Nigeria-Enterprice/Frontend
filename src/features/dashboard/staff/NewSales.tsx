@@ -618,6 +618,12 @@ const NewSales: React.FC = () => {
   }, [selectedClient]);
 
   useEffect(() => {
+    if (salesType === "Wholesale") {
+      setTransactionType("WHOLESALE");
+    }
+  }, [salesType]);
+
+  useEffect(() => {
     if (!user?.branchId) return;
 
     const url = getServerUrl();
@@ -1249,7 +1255,7 @@ const NewSales: React.FC = () => {
                   <SelectContent side="top">
                     <SelectItem value="PURCHASE">Purchase</SelectItem>
                     <SelectItem value="WHOLESALE">Wholesale</SelectItem>
-                    <SelectItem value="RETURN">Return</SelectItem>
+                    {/* <SelectItem value="RETURN">Return</SelectItem> */}
                     {!isWalkIn && selectedClient && (
                       <SelectItem value="PICKUP">Pickup</SelectItem>
                     )}
