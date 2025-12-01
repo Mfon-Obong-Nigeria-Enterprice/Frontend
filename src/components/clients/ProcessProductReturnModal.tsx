@@ -12,23 +12,25 @@ type TransactionItem = Transaction['items'][number];
 
 interface ReturnedItemInfo extends ReturnTransactionItem {
   unitPrice: number;
+  returnPrice: number;
   returnAmount: number;
 }
 
 interface ProductReturnCardProps {
   item: TransactionItem;
-  returnedInfo: { quantity: number; returnAmount: number };
-  onReturnInfoChange: (info: { quantity: number; returnAmount: number }) => void;
+  returnedInfo: { quantity: number; returnPrice: number; returnAmount: number };
+  onReturnInfoChange: (info: { quantity: number; returnPrice: number; returnAmount: number }) => void;
 }
 
 const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedInfo, onReturnInfoChange }) => {
-  const { quantity: returnedQuantity, returnAmount } = returnedInfo;
+  const { quantity: returnedQuantity, returnPrice, returnAmount } = returnedInfo;
 
   const handleIncrement = () => {
     const newQuantity = Math.min(returnedQuantity + 1, item.quantity);
     onReturnInfoChange({
       quantity: newQuantity,
-      returnAmount: newQuantity * item.unitPrice, // Recalculate amount
+      returnPrice: returnPrice,
+      returnAmount: newQuantity * returnPrice, // Recalculate amount
     });
   };
 
@@ -36,7 +38,8 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedInf
     const newQuantity = Math.max(returnedQuantity - 1, 0);
     onReturnInfoChange({
       quantity: newQuantity,
-      returnAmount: newQuantity * item.unitPrice, // Recalculate amount
+      returnPrice: returnPrice,
+      returnAmount: newQuantity * returnPrice, // Recalculate amount
     });
   };
 
@@ -51,7 +54,19 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedInf
     
     onReturnInfoChange({
       quantity: val,
-      returnAmount: val * item.unitPrice, // Recalculate amount
+      returnPrice: returnPrice,
+      returnAmount: val * returnPrice, // Recalculate amount
+    });
+  };
+
+  const handleReturnPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+    if (isNaN(val)) val = 0;
+
+    onReturnInfoChange({
+      quantity: returnedQuantity,
+      returnPrice: val,
+      returnAmount: returnedQuantity * val,
     });
   };
 
@@ -74,6 +89,7 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedInf
     const newQuantity = e.target.checked ? 1 : 0;
     onReturnInfoChange({
       quantity: newQuantity,
+      returnPrice: item.unitPrice, // Reset to default on check
       returnAmount: newQuantity * item.unitPrice,
     });
   }}
@@ -90,78 +106,80 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedInf
       <hr className="my-4 border-gray-200" />
 
       {/* Controls Row */}
-      <div className="flex justify-between items-end">
-        
-        {/* Quantity Controls */}
-        <div>
-          <label className="block text-xs text-gray-500 mb-1.5">Quantity to Return</label>
-          <div className="flex items-center gap-2">
-            {/* Minus Button */}
-            <button 
-              onClick={handleDecrement} 
-              className="w-[34px] h-[34px] flex items-center justify-center border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600 transition-colors"
-            >
-              <Minus size={14} />
-            </button>
+      <div className="grid grid-cols-3 items-start gap-4">
+  {/* Quantity Controls */}
+  <div>
+    <label className="block text-xs text-gray-500 mb-1.5">Quantity to Return</label>
+    <div className="flex items-center gap-2">
+      {/* Minus Button */}
+      <button
+        onClick={handleDecrement}
+        className="w-[34px] h-[34px] flex items-center justify-center border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600 transition-colors"
+      >
+        <Minus size={14} />
+      </button>
 
-            {/* Input with internal steppers */}
-            <div className="relative">
-              <input
-                type="number"
-                value={returnedQuantity.toString()} // toString removes leading zeros if any
-                onChange={handleInputChange}
-                min={0}
-                max={item.quantity}
-                className="w-[31px] h-[34px] border border-[#D9D9D9] rounded pl-2 text-left text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-              {/* <div className="absolute right-0 top-0 h-full flex flex-col border border-[#D9D9D9]">
-                <button onClick={handleIncrement} className="h-1/2 px-1.5 flex items-center justify-center hover:bg-gray-100 border-b border-gray-300 rounded-tr-sm">
-                  <ChevronDown size={12} className="rotate-180 text-gray-500" />
-                </button>
-                <button onClick={handleDecrement} className="h-1/2 px-1.5 flex items-center justify-center hover:bg-gray-100 rounded-br-sm">
-                  <ChevronDown size={12} className="text-gray-500" />
-                </button>
-              </div> */}
-            </div>
-
-
-            {/* Plus Button */}
-            <button 
-              onClick={handleIncrement} 
-              className="w-[34px] h-[34px] flex items-center justify-center border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600 transition-colors"
-            >
-              <Plus size={14} />
-            </button>
-
-            {/* Stacked Helper Text (Unit & Max) */}
-            <div className="flex flex-col justify-center ml-1 leading-tight">
-              <span className="text-xs text-gray-500">{item.unit || 'units'}</span>
-              <span className="text-xs text-gray-400">Max {item.quantity}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Return Amount Display */}
-        <div className="text-right">
-          <label className="block text-xs text-gray-500 mb-1.5">Return Amount:</label>
-          <input
-            type="number"
-            value={returnAmount}
-            onChange={(e) => {
-              const value = Number(e.target.value);
-              const maxAmount = item.unitPrice * returnedQuantity;
-              if (value > maxAmount) {
-                toast.warn(`Amount cannot exceed ₦${maxAmount.toLocaleString()}`);
-                onReturnInfoChange({ quantity: returnedQuantity, returnAmount: maxAmount });
-              } else {
-                onReturnInfoChange({ quantity: returnedQuantity, returnAmount: value });
-              }
-            }}
-            disabled={returnedQuantity === 0}
-            className="bg-white h-[34px] px-3 rounded text-sm font-medium w-[100px] border border-gray-300 text-right disabled:bg-gray-100"
-          />
-        </div>
+      {/* Input with internal steppers */}
+      <div className="relative">
+        <input
+          type="number"
+          value={returnedQuantity.toString()} // toString removes leading zeros if any
+          onChange={handleInputChange}
+          min={0}
+          max={item.quantity}
+          className="w-[31px] h-[34px] border border-[#D9D9D9] rounded pl-2 text-left text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
       </div>
+
+      {/* Plus Button */}
+      <button
+        onClick={handleIncrement}
+        className="w-[34px] h-[34px] flex items-center justify-center border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-600 transition-colors"
+      >
+        <Plus size={14} />
+      </button>
+    </div>
+    {/* Stacked Helper Text (Unit & Max) */}
+    <div className="flex flex-col mt-1.5">
+      <span className="text-xs text-gray-500">{item.unit || 'units'}</span>
+      <span className="text-xs text-gray-400">Max {item.quantity}</span>
+    </div>
+  </div>
+
+  {/* Return Price Input */}
+  <div className="text-left">
+    <label className="block text-xs text-gray-500 mb-1.5">Return Price</label>
+    <input
+      type="number"
+      value={returnPrice}
+      onChange={handleReturnPriceChange}
+      disabled={returnedQuantity === 0}
+      className="bg-white h-[34px] px-3 rounded text-sm font-medium w-[100px] border border-gray-300 text-left disabled:bg-gray-100"
+      placeholder="₦0"
+    />
+  </div>
+
+  {/* Return Amount Display */}
+  <div className="text-right">
+    <label className="block text-xs text-gray-500 mb-1.5">Return Amount:</label>
+    <input
+      type="number"
+      value={returnAmount}
+      onChange={(e) => {
+        const value = Number(e.target.value);
+        const maxAmount = returnPrice * returnedQuantity;
+        if (value > maxAmount) {
+          toast.warn(`Amount cannot exceed ₦${maxAmount.toLocaleString()}`);
+          onReturnInfoChange({ quantity: returnedQuantity, returnPrice, returnAmount: maxAmount });
+        } else {
+          onReturnInfoChange({ quantity: returnedQuantity, returnPrice, returnAmount: value });
+        }
+      }}
+      disabled={returnedQuantity === 0}
+      className="bg-white h-[34px] px-3 rounded text-sm font-medium w-[100px] border border-gray-300 text-right disabled:bg-gray-100"
+    />
+  </div>
+</div>
     </div>
   );
 };
@@ -193,7 +211,7 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
     }
   });
 
-  const handleReturnInfoChange = (item: TransactionItem, info: { quantity: number; returnAmount: number }) => {
+  const handleReturnInfoChange = (item: TransactionItem, info: { quantity: number; returnPrice: number; returnAmount: number }) => {
     setReturnedItems(prev => {
       const newItems = { ...prev };
       if (info.quantity > 0) {
@@ -202,6 +220,7 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
           quantity: info.quantity,
           unit: item.unit || 'unit',
           unitPrice: item.unitPrice,
+          returnPrice: info.returnPrice,
           returnAmount: info.returnAmount,
         };
       } else {
@@ -300,7 +319,7 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
                   <ProductReturnCard
                     key={`${item.productId}-${index}`}
                     item={item}
-                    returnedInfo={returnedItems[item.productId] || { quantity: 0, returnAmount: 0 }}
+                    returnedInfo={returnedItems[item.productId] || { quantity: 0, returnPrice: item.unitPrice, returnAmount: 0 }}
                     onReturnInfoChange={(info) => handleReturnInfoChange(item, info)}
                   />
                 ))
