@@ -95,338 +95,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showBlockUnblockDialog, setShowBlockUnblockDialog] = useState(false);
 
-  // --- PDF GENERATION LOGIC ---
-  const handleExportPDF = () => {
-    const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
-    });
-
-    // --- UTILS FOR PDF ---
-    const pageWidth = doc.internal.pageSize.width;
-    const pageHeight = doc.internal.pageSize.height;
-    const margin = 15;
-    let cursorY = 20;
-
-    const formatCurrencyForPDF = (amount: number) => {
-      // Formats currency to Nigeria Naira style (N)
-      const val = new Intl.NumberFormat("en-NG", {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(Math.abs(amount));
-      return `N${val}`;
-    };
-
-    const formatDate = (date: Date) => {
-      return date.toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "numeric",
-        year: "2-digit",
-      }); // Format: 6/11/25
-    };
-
-    const checkPageBreak = (neededHeight: number) => {
-      if (cursorY + neededHeight > pageHeight - margin) {
-        doc.addPage();
-        cursorY = margin;
-        return true;
-      }
-      return false;
-    };
-
-    // --- 1. HEADER ---
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.setTextColor(33, 33, 33);
-    doc.text("Account Statement", pageWidth / 2, cursorY, { align: "center" });
-    
-    cursorY += 6;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(80, 80, 80);
-    doc.text("Materials Supply Record", pageWidth / 2, cursorY, { align: "center" });
-
-    cursorY += 5;
-    doc.setDrawColor(200, 200, 200);
-    doc.setLineWidth(0.2);
-    doc.line(margin, cursorY, pageWidth - margin, cursorY);
-    cursorY += 10;
-
-    // --- DATA PREPARATION ---
-    // Sort transactions oldest to newest for logical flow
-    const sortedTxns = [...transactionsWithBalance].sort(
-      (a, b) => getTransactionDate(a).getTime() - getTransactionDate(b).getTime()
-    );
-
-    // Calculate B/F (Balance Forward)
-    // We assume the starting balance is the balance BEFORE the first transaction in this list
-    const firstTxn = sortedTxns[0];
-    const initialBalance = firstTxn ? (firstTxn.balanceBefore as number ?? 0) : (client?.balance || 0);
-    
-    // Split into Supplies (Purchases/Pickups) and Deductions (Deposits/Returns)
-    const supplies = sortedTxns.filter(t => t.type === 'PURCHASE' || t.type === 'PICKUP');
-    const deductions = sortedTxns.filter(t => t.type === 'DEPOSIT' || t.type === 'RETURN');
-
-    // --- 2. ACCOUNT UPDATE (B/F) ---
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.setTextColor(51, 51, 51);
-    doc.text("Account Update", margin, cursorY);
-    cursorY += 5;
-
-    // Pink B/F Box
-    doc.setFillColor(248, 235, 235); // Light pink
-    doc.rect(margin, cursorY, pageWidth - (margin * 2), 10, 'F');
-    
-    // Red Accent Line
-    doc.setFillColor(231, 76, 60); // Red
-    doc.rect(margin, cursorY, 1.5, 10, 'F');
-
-    // B/F Text
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(51, 51, 51);
-    const bfDate = dateRangeFilter.from ? formatDate(dateRangeFilter.from) : (sortedTxns.length > 0 ? formatDate(getTransactionDate(sortedTxns[0])) : formatDate(new Date()));
-    doc.text(`B/F Debt - ${bfDate}: ${formatCurrencyForPDF(initialBalance)}`, margin + 4, cursorY + 6.5);
-    
-    cursorY += 18;
-
-    // --- 3. SUPPLIES LIST ---
-    let runningTotalForGrand = initialBalance;
-
-    supplies.forEach((txn) => {
-        // Calculate Subtotal for this transaction
-        const subTotal = txn.total || 0;
-        runningTotalForGrand += subTotal;
-        
-        // Calculate box heights
-        const headerHeight = 8;
-        const itemLineHeight = 6;
-        const chargesLineHeight = 6;
-        const subTotalHeight = 10;
-        
-        const itemsCount = txn.items?.length || 1;
-        // Check for charges
-        const charges = [];
-        if ((txn as any).loading && (txn as any).loading > 0) charges.push({ label: "Loading", amount: (txn as any).loading });
-        if ((txn as any).transportFare && (txn as any).transportFare > 0) charges.push({ label: "Transport", amount: (txn as any).transportFare });
-        if ((txn as any).loadingAndOffloading && (txn as any).loadingAndOffloading > 0) charges.push({ label: "Loading/Offloading", amount: (txn as any).loadingAndOffloading });
-
-        const totalBlockHeight = headerHeight + (itemsCount * itemLineHeight) + (charges.length * chargesLineHeight) + subTotalHeight + 5;
-
-        checkPageBreak(totalBlockHeight);
-
-        // A. Header Bar (Gray)
-        doc.setFillColor(246, 246, 246);
-        doc.rect(margin, cursorY, pageWidth - (margin * 2), headerHeight, 'F');
-        
-        // Black Accent Line
-        doc.setFillColor(51, 51, 51);
-        doc.rect(margin, cursorY, 1.5, headerHeight, 'F');
-
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(51, 51, 51);
-        doc.text(`Materials Supplied on ${formatDate(getTransactionDate(txn))}`, margin + 4, cursorY + 5.5);
-        cursorY += headerHeight + 3;
-
-        // B. Items
-        doc.setFontSize(8);
-        doc.setTextColor(80, 80, 80);
-        
-        if (txn.items && txn.items.length > 0) {
-            txn.items.forEach(item => {
-                const itemText = `(${item.quantity}) ${item.productName?.toUpperCase()} @ ${formatCurrencyForPDF(item.unitPrice || 0)}`;
-                doc.text(itemText, margin + 4, cursorY);
-                
-                const lineTotal = formatCurrencyForPDF((item.quantity || 0) * (item.unitPrice || 0));
-                doc.text(lineTotal, pageWidth - margin - 4, cursorY, { align: 'right' });
-                
-                cursorY += itemLineHeight;
-            });
-        } else {
-             doc.text(txn.description || "Items supplied", margin + 4, cursorY);
-             doc.text(formatCurrencyForPDF(txn.total || 0), pageWidth - margin - 4, cursorY, { align: 'right' });
-             cursorY += itemLineHeight;
-        }
-
-        // C. Charges
-        doc.setTextColor(80, 80, 80);
-        charges.forEach(charge => {
-            doc.text(charge.label, margin + 4, cursorY);
-            doc.text(formatCurrencyForPDF(charge.amount), pageWidth - margin - 4, cursorY, { align: 'right' });
-            cursorY += chargesLineHeight;
-        });
-
-        // D. Subtotal Bar
-        doc.setFillColor(246, 246, 246);
-        doc.rect(margin, cursorY, pageWidth - (margin * 2), subTotalHeight, 'F');
-        
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(51, 51, 51);
-        doc.text(`SUB TOTAL: ${formatCurrencyForPDF(subTotal)}`, pageWidth - margin - 4, cursorY + 6.5, { align: 'right' });
-        
-        cursorY += subTotalHeight + 6; // Space after block
-    });
-
-    // --- 4. GRAND TOTAL BAR ---
-    checkPageBreak(15);
-    doc.setFillColor(68, 68, 68); // Dark gray
-    doc.rect(margin, cursorY, pageWidth - (margin * 2), 12, 'F');
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.setTextColor(255, 255, 255);
-    doc.text(`GRAND TOTAL: ${formatCurrencyForPDF(runningTotalForGrand)}`, pageWidth - margin - 4, cursorY + 8, { align: 'right' });
-    cursorY += 18;
-
-    // --- 5. LESS SECTION (Deposits/Returns) ---
-    // Calculate dynamic space needed based on number of items
-    const deductionItemHeight = 18; // Height per item block
-    const lessSectionHeaderHeight = 10;
-    const lessSectionPadding = 5;
-    
-    // Calculate total height needed for the Less section
-    // We iterate through deductions to account for potential multiple items in a return
-    let totalDeductionLines = 0;
-    deductions.forEach(txn => {
-        if (txn.type === 'RETURN' && txn.items && txn.items.length > 0) {
-            totalDeductionLines += txn.items.length;
-        } else {
-            totalDeductionLines += 1;
-        }
-    });
-    
-    const lessSectionHeight = lessSectionHeaderHeight + (totalDeductionLines * deductionItemHeight) + lessSectionPadding;
-    
-    checkPageBreak(lessSectionHeight);
-
-    // Background container for "Less"
-    doc.setFillColor(249, 249, 249);
-    doc.rect(margin, cursorY, pageWidth - (margin * 2), lessSectionHeight, 'F');
-    
-    // Left Border for "Less" container
-    doc.setFillColor(150, 150, 150);
-    doc.rect(margin, cursorY, 1.5, lessSectionHeight, 'F');
-
-    let innerY = cursorY + 8;
-    
-    // "Less:" Label
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(51, 51, 51);
-    doc.text("Less:", margin + 5, innerY);
-    innerY += 8;
-
-    let totalDeductions = 0;
-
-    deductions.forEach(txn => {
-        const amount = txn.total || 0;
-        totalDeductions += amount;
-
-        const displayItems = [];
-        if (txn.type === 'RETURN' && txn.items && txn.items.length > 0) {
-             txn.items.forEach(item => {
-                 const itemAmount = (item.quantity || 0) * (item.unitPrice || 0);
-                 displayItems.push({
-                    description: `(${item.quantity}) ${item.productName?.toUpperCase() || 'PRODUCT'} (RETURNED): `,
-                    value: formatCurrencyForPDF(itemAmount),
-                    isReturn: true,
-                 });
-             });
-        } else if (txn.type === 'RETURN') {
-             displayItems.push({
-                description: `(1) ITEM (RETURNED): `,
-                value: formatCurrencyForPDF(amount),
-                isReturn: true,
-             });
-        } else {
-            // Deposit
-             displayItems.push({
-                description: `Deposited: `,
-                value: formatCurrencyForPDF(amount),
-                isReturn: false,
-             });
-        }
-
-        displayItems.forEach((item) => {
-            doc.setFillColor(224, 224, 224); // #E0E0E0
-            doc.rect(margin + 5, innerY - 4, 35, 6, 'F'); 
-            
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(8);
-            doc.setTextColor(51, 51, 51);
-            doc.text(`On ${formatDate(getTransactionDate(txn))}`, margin + 7, innerY);
-
-            innerY += 6;
-            doc.setFontSize(9);
-            
-            const descriptionWidth = doc.getStringUnitWidth(item.description) * doc.getFontSize() / doc.internal.scaleFactor;
-            const startX = margin + 7;
-
-            if (item.isReturn) {
-                // Set color for description
-                doc.setTextColor(68, 68, 68); // #444444
-                doc.text(item.description, startX, innerY);
-                
-                // Set color for value (price)
-                doc.setTextColor(231, 76, 60); 
-                doc.text(item.value, startX + descriptionWidth, innerY);
-            } else {
-                // Set color for description
-                doc.setTextColor(68, 68, 68); // #444444
-                doc.text(item.description, startX, innerY);
-
-                // Set color for value (price)
-                doc.setTextColor(46, 204, 113); 
-                doc.text(item.value, startX + descriptionWidth, innerY);
-            }
-            
-            // Faint Separator Line
-            doc.setDrawColor(230, 230, 230);
-            doc.line(margin + 5, innerY + 4, pageWidth - margin - 5, innerY + 4);
-
-            innerY += 12; // Space for next item
-        });
-    });
-
-    cursorY += lessSectionHeight + 5;
-
-    // --- 6. FINAL BALANCE ---
-    checkPageBreak(12);
-    
-    // Calculate Final Balance (Grand Total - Deductions)
-    const finalBalance = runningTotalForGrand - totalDeductions;
-
-    // Pink Balance Box
-    doc.setFillColor(248, 235, 235);
-    doc.rect(margin, cursorY, pageWidth - (margin * 2), 12, 'F');
-    
-    // Red Accent Line
-    doc.setFillColor(231, 76, 60);
-    doc.rect(margin, cursorY, 1.5, 12, 'F');
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
-    doc.setTextColor(51, 51, 51);
-    // Right aligned balance
-    doc.text(`BALANCE: ${formatCurrencyForPDF(finalBalance)}`, pageWidth - margin - 4, cursorY + 8, { align: 'right' });
-    
-    // --- FOOTER ---
-    const footerY = pageHeight - 15;
-    doc.setDrawColor(200, 200, 200);
-    doc.line(margin, footerY, pageWidth - margin, footerY);
-    
-    doc.setFontSize(7);
-    doc.setTextColor(120, 120, 120);
-    doc.text("This is a system-generated statement", pageWidth / 2, footerY + 4, { align: 'center' });
-    doc.text("For inquiries, please contact your account manager", pageWidth / 2, footerY + 8, { align: 'center' });
-    doc.text(`Statement Date: ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`, pageWidth / 2, footerY + 12, { align: 'center' });
-
-
-    doc.save(`Statement_${client?.name || 'Client'}.pdf`);
-  };
-
   //
   const mergedTransactions = useMemo(() => {
     if (!transactions || !clients) return [];
@@ -463,7 +131,9 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   //
   const clientTransactions = useMemo(() => {
     if (!clientId) return [];
-    let filtered = mergedTransactions.filter((t) => t.client?._id === clientId);
+    let filtered = mergedTransactions.filter(
+      (t) => t.client?._id === clientId
+    );
 
     // Apply transaction type filter
     if (transactionTypeFilter !== "all") {
@@ -526,6 +196,388 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     });
   }, [clientTransactions, client]);
 
+  // --- PDF GENERATION LOGIC ---
+  const handleExportPDF = () => {
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    const margin = 15;
+    let cursorY = 20;
+
+    const formatCurrencyForPDF = (amount: number) => {
+      const val = new Intl.NumberFormat("en-NG", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(Math.abs(amount));
+      return `N${val}`;
+    };
+
+    const formatDate = (date: Date) => {
+      return date.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "numeric",
+        year: "2-digit",
+      });
+    };
+
+    const checkPageBreak = (neededHeight: number) => {
+      if (cursorY + neededHeight > pageHeight - margin) {
+        doc.addPage();
+        cursorY = margin;
+        return true;
+      }
+      return false;
+    };
+
+    // --- 1. HEADER ---
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.setTextColor(33, 33, 33);
+    doc.text("Account Statement", pageWidth / 2, cursorY, { align: "center" });
+    cursorY += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+    doc.text("Materials Supply Record", pageWidth / 2, cursorY, { align: "center" });
+    cursorY += 5;
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.2);
+    doc.line(margin, cursorY, pageWidth - margin, cursorY);
+    cursorY += 10;
+
+    // --- DATA ---
+    const sortedTxns = [...transactionsWithBalance].sort(
+      (a, b) =>
+        getTransactionDate(a).getTime() - getTransactionDate(b).getTime()
+    );
+
+    const firstTxn = sortedTxns[0];
+    const initialBalance = firstTxn
+      ? (firstTxn.balanceBefore as number) ?? 0
+      : client?.balance || 0;
+
+    const supplies = sortedTxns.filter(
+      (t) => t.type === "PURCHASE" || t.type === "PICKUP"
+    );
+    const deductions = sortedTxns.filter(
+      (t) => t.type === "DEPOSIT" || t.type === "RETURN"
+    );
+
+    // --- 2. B/F ---
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(51, 51, 51);
+    doc.text("Account Update", margin, cursorY);
+    cursorY += 5;
+
+    doc.setFillColor(248, 235, 235);
+    doc.rect(margin, cursorY, pageWidth - margin * 2, 10, "F");
+    doc.setFillColor(231, 76, 60);
+    doc.rect(margin, cursorY, 1.5, 10, "F");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(51, 51, 51);
+    const bfDate = dateRangeFilter.from
+      ? formatDate(dateRangeFilter.from)
+      : sortedTxns.length > 0
+      ? formatDate(getTransactionDate(sortedTxns[0]))
+      : formatDate(new Date());
+    doc.text(
+      `B/F Debt - ${bfDate}: ${formatCurrencyForPDF(initialBalance)}`,
+      margin + 4,
+      cursorY + 6.5
+    );
+    cursorY += 18;
+
+    // --- 3. SUPPLIES LOOP ---
+    let runningTotalForGrand = initialBalance;
+
+    supplies.forEach((txn) => {
+      // Lookup raw transaction to ensure fields exist
+      const rawTxn = mergedTransactions.find((t) => t._id === txn._id) || txn;
+      const t = rawTxn as any;
+
+      const transactionTotal = Number(t.total) || 0;
+      runningTotalForGrand += transactionTotal;
+
+      // Calculate Items Subtotal
+      let itemsTotal = 0;
+      if (t.items && t.items.length > 0) {
+        itemsTotal = t.items.reduce(
+          (sum: number, item: any) =>
+            sum + (item.quantity || 0) * (item.unitPrice || 0),
+          0
+        );
+      } else {
+        itemsTotal = Number(t.subtotal) || transactionTotal;
+      }
+
+      // Identify Specific Charges
+      const charges = [];
+      const loading = Number(t.loading) || 0;
+      const transport = Number(t.transportFare) || 0;
+      const loadingOffloading = Number(t.loadingAndOffloading) || 0;
+
+      if (loading > 0) charges.push({ label: "Loading", amount: loading });
+      if (transport > 0) charges.push({ label: "Transport", amount: transport });
+      if (loadingOffloading > 0)
+        charges.push({ label: "Loading/Offloading", amount: loadingOffloading });
+
+      const discount = Number(t.discount) || 0;
+
+      // --- DISCREPANCY CHECK ---
+      // We calculate what the total *should* be:
+      const calculatedExpectedTotal = itemsTotal + loading + transport + loadingOffloading - discount;
+      
+      // We compare it to the actual total stored in DB
+      const discrepancy = transactionTotal - calculatedExpectedTotal;
+
+      // If there is a meaningful difference (positive), we treat it as "Other Charges"
+      if (discrepancy > 1) {
+         charges.push({ label: "Other Charges", amount: discrepancy });
+      }
+
+      // --- RENDERING ---
+      const headerHeight = 8;
+      const itemLineHeight = 6;
+      const chargesLineHeight = 6;
+      const discountLineHeight = 6;
+      const subTotalHeight = 10;
+      const itemsCount = txn.items?.length || 1;
+
+      let totalBlockHeight =
+        headerHeight +
+        itemsCount * itemLineHeight +
+        charges.length * chargesLineHeight +
+        subTotalHeight +
+        5;
+
+      if (discount > 0) totalBlockHeight += discountLineHeight;
+
+      checkPageBreak(totalBlockHeight);
+
+      // Header
+      doc.setFillColor(246, 246, 246);
+      doc.rect(margin, cursorY, pageWidth - margin * 2, headerHeight, "F");
+      doc.setFillColor(51, 51, 51);
+      doc.rect(margin, cursorY, 1.5, headerHeight, "F");
+
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(51, 51, 51);
+      doc.text(
+        `Materials Supplied on ${formatDate(getTransactionDate(txn))}`,
+        margin + 4,
+        cursorY + 5.5
+      );
+      cursorY += headerHeight + 3;
+
+      // Items
+      doc.setFontSize(8);
+      doc.setTextColor(80, 80, 80);
+
+      if (txn.items && txn.items.length > 0) {
+        txn.items.forEach((item) => {
+          const qty = item.quantity || 0;
+          const price = item.unitPrice || 0;
+          const itemText = `(${qty}) ${
+            item.productName?.toUpperCase() || "ITEM"
+          } @ ${formatCurrencyForPDF(price)}`;
+          doc.text(itemText, margin + 4, cursorY);
+          doc.text(
+            formatCurrencyForPDF(qty * price),
+            pageWidth - margin - 4,
+            cursorY,
+            { align: "right" }
+          );
+          cursorY += itemLineHeight;
+        });
+      } else {
+        doc.text(txn.description || "Items supplied", margin + 4, cursorY);
+        doc.text(
+          formatCurrencyForPDF(itemsTotal),
+          pageWidth - margin - 4,
+          cursorY,
+          { align: "right" }
+        );
+        cursorY += itemLineHeight;
+      }
+
+      // Charges (Loading, Transport, Other Charges)
+      doc.setTextColor(80, 80, 80);
+      charges.forEach((charge) => {
+        doc.text(charge.label, margin + 4, cursorY);
+        doc.text(
+          formatCurrencyForPDF(charge.amount),
+          pageWidth - margin - 4,
+          cursorY,
+          { align: "right" }
+        );
+        cursorY += chargesLineHeight;
+      });
+
+      // Discount
+      if (discount > 0) {
+        doc.setTextColor(246, 246, 246);
+        doc.text("Discount", margin + 4, cursorY);
+        doc.text(
+          `-${formatCurrencyForPDF(discount)}`,
+          pageWidth - margin - 4,
+          cursorY,
+          { align: "right" }
+        );
+        cursorY += discountLineHeight;
+      }
+
+      // Subtotal
+      doc.setFillColor(246, 246, 246);
+      doc.rect(margin, cursorY, pageWidth - margin * 2, subTotalHeight, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(51, 51, 51);
+      doc.text(
+        `SUB TOTAL: ${formatCurrencyForPDF(transactionTotal)}`,
+        pageWidth - margin - 4,
+        cursorY + 6.5,
+        { align: "right" }
+      );
+      cursorY += subTotalHeight + 6;
+    });
+
+    // --- 4. GRAND TOTAL ---
+    checkPageBreak(15);
+    doc.setFillColor(68, 68, 68);
+    doc.rect(margin, cursorY, pageWidth - margin * 2, 12, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(255, 255, 255);
+    doc.text(
+      `GRAND TOTAL: ${formatCurrencyForPDF(runningTotalForGrand)}`,
+      pageWidth - margin - 4,
+      cursorY + 8,
+      { align: "right" }
+    );
+    cursorY += 18;
+
+    // --- 5. LESS SECTION ---
+    const deductionItemHeight = 18;
+    const lessSectionHeaderHeight = 10;
+    const lessSectionPadding = 5;
+    let totalDeductionLines = 0;
+    deductions.forEach((txn) => {
+      if (txn.type === "RETURN" && txn.items && txn.items.length > 0) {
+        totalDeductionLines += txn.items.length;
+      } else {
+        totalDeductionLines += 1;
+      }
+    });
+    const lessSectionHeight =
+      lessSectionHeaderHeight +
+      totalDeductionLines * deductionItemHeight +
+      lessSectionPadding;
+
+    checkPageBreak(lessSectionHeight);
+    doc.setFillColor(249, 249, 249);
+    doc.rect(margin, cursorY, pageWidth - margin * 2, lessSectionHeight, "F");
+    doc.setFillColor(150, 150, 150);
+    doc.rect(margin, cursorY, 1.5, lessSectionHeight, "F");
+
+    let innerY = cursorY + 8;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(51, 51, 51);
+    doc.text("Less:", margin + 5, innerY);
+    innerY += 8;
+
+    let totalDeductions = 0;
+    deductions.forEach((txn) => {
+      const rawTxn = mergedTransactions.find((t) => t._id === txn._id) || txn;
+      const t = rawTxn as any;
+      const amount = Number(t.total) || 0;
+      totalDeductions += amount;
+      const displayItems = [];
+      if (t.type === "RETURN" && t.items && t.items.length > 0) {
+        t.items.forEach((item: any) => {
+          const itemAmount = (item.quantity || 0) * (item.unitPrice || 0);
+          displayItems.push({
+            description: `(${item.quantity}) ${item.productName?.toUpperCase() || "PRODUCT"} (RETURNED): `,
+            value: formatCurrencyForPDF(itemAmount),
+            isReturn: true,
+          });
+        });
+      } else if (t.type === "RETURN") {
+        displayItems.push({
+          description: `(1) ITEM (RETURNED): `,
+          value: formatCurrencyForPDF(amount),
+          isReturn: true,
+        });
+      } else {
+        displayItems.push({
+          description: `Deposited: `,
+          value: formatCurrencyForPDF(amount),
+          isReturn: false,
+        });
+      }
+
+      displayItems.forEach((item) => {
+        doc.setFillColor(224, 224, 224);
+        doc.rect(margin + 5, innerY - 4, 35, 6, "F");
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(51, 51, 51);
+        doc.text(`On ${formatDate(getTransactionDate(txn))}`, margin + 7, innerY);
+        innerY += 6;
+
+        doc.setFontSize(9);
+        const descriptionWidth = (doc.getStringUnitWidth(item.description) * doc.getFontSize()) / doc.internal.scaleFactor;
+        const startX = margin + 7;
+        if (item.isReturn) {
+          doc.setTextColor(68, 68, 68);
+          doc.text(item.description, startX, innerY);
+          doc.setTextColor(231, 76, 60);
+          doc.text(item.value, startX + descriptionWidth, innerY);
+        } else {
+          doc.setTextColor(68, 68, 68);
+          doc.text(item.description, startX, innerY);
+          doc.setTextColor(46, 204, 113);
+          doc.text(item.value, startX + descriptionWidth, innerY);
+        }
+
+        doc.setDrawColor(230, 230, 230);
+        doc.line(margin + 5, innerY + 4, pageWidth - margin - 5, innerY + 4);
+        innerY += 12;
+      });
+    });
+    cursorY += lessSectionHeight + 5;
+
+    // --- 6. BALANCE ---
+    checkPageBreak(12);
+    const finalBalance = runningTotalForGrand - totalDeductions;
+    doc.setFillColor(248, 235, 235);
+    doc.rect(margin, cursorY, pageWidth - margin * 2, 12, "F");
+    doc.setFillColor(231, 76, 60);
+    doc.rect(margin, cursorY, 1.5, 12, "F");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(51, 51, 51);
+    doc.text(`BALANCE: ${formatCurrencyForPDF(finalBalance)}`, pageWidth - margin - 4, cursorY + 8, { align: "right" });
+
+    // --- FOOTER ---
+    const footerY = pageHeight - 15;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(margin, footerY, pageWidth - margin, footerY);
+    doc.setFontSize(7);
+    doc.setTextColor(120, 120, 120);
+    doc.text("This is a system-generated statement", pageWidth / 2, footerY + 4, { align: "center" });
+    doc.text("For inquiries, please contact your account manager", pageWidth / 2, footerY + 8, { align: "center" });
+    doc.text(`Statement Date: ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`, pageWidth / 2, footerY + 12, { align: "center" });
+
+    doc.save(`Statement_${client?.name || "Client"}.pdf`);
+  };
 
   // Get unique staff members for filter dropdown
   const staffMembers = useMemo(() => {
@@ -601,7 +653,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   }
 
   return (
-    <>
+      <>
       <header className="grid md:grid-cols-5 grid-cols-1 items-center  md:px-10 sticky top-0 bg-white z-10 border-b border-[#D9D9D9]">
         <div className="flex gap-5 justify-between md:justify-start col-span-2 md:col-span-2 px-5 md:px-0">
           <button
