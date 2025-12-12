@@ -423,7 +423,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
       // Discount
       if (discount > 0) {
-        doc.setTextColor(246, 246, 246);
+        doc.setTextColor(80, 80, 80); 
         doc.text("Discount", margin + 4, cursorY);
         doc.text(
           `-${formatCurrencyForPDF(discount)}`,
@@ -653,8 +653,8 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   }
 
   return (
-      <>
-      <header className="grid md:grid-cols-5 grid-cols-1 items-center  md:px-10 sticky top-0 bg-white z-10 border-b border-[#D9D9D9]">
+    <>
+      <header className="grid md:grid-cols-5 grid-cols-1 items-center  md:px-10 sticky top-0 bg-white z-10 border-b border-[#D9D9D9]">
         <div className="flex gap-5 justify-between md:justify-start col-span-2 md:col-span-2 px-5 md:px-0">
           <button
             onClick={() => navigate(-1)}
@@ -696,7 +696,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       </header>
 
       {/* main content */}
-      <main className="grid gap-3 bg-[#F5F5F5] py-5 px-3 md:px-9 grid-cols-1  lg:grid-cols-5">
+      <main className="grid gap-3 bg-[#F5F5F5] py-5 px-3 md:px-9 grid-cols-1 lg:grid-cols-5">
         {/* section by the left */}
         <div className=" lg:col-span-2">
           <ClientDetailInfo client={client} />
@@ -712,7 +712,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
             <TabsContent value="clientTransaction">
               {/* data */}
-              <div className="md:flex justify-start items-center w-full gap-4 md:gap-1  lg:gap-2 mb-10">
+              <div className="md:flex justify-start items-center w-full gap-4 md:gap-1  lg:gap-2 mb-10">
                 <div className="flex flex-col justify-end transition-all w-full h-full">
                   <DateFromToPicker
                     date={dateRangeFilter}
@@ -722,7 +722,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                   />
                 </div>
 
-                <div className="flex flex-col  sm:w-[179px] md:w-[179px] transition-all w-full ">
+                <div className="flex flex-col  sm:w-[179px] md:w-[179px] transition-all w-full ">
                   <label className="mb-2 text-xs font-medium text-[#7D7D7D]">
                     Transaction type
                   </label>
@@ -742,7 +742,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                   </Select>
                 </div>
 
-                <div className="flex flex-col  sm:w-[230px] md:w-[210px] transition-all w-full">
+                <div className="flex flex-col  sm:w-[230px] md:w-[210px] transition-all w-full">
                   <label className="mb-2 text-xs font-medium text-[#7D7D7D]">
                     Staff member
                   </label>
@@ -763,7 +763,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
                 <div className="flex flex-col md:items-center sm:w-[101px] md:w-[101px] lg:w-[101px] transition-all w-full">
                   <Button
-                    className="mt-6 max-w-[101px]  bg-[#2ECC71] hover:bg-[#27ae60] text-white font-medium  sm:w-[230px] md:w-[210px] transition-all w-full "
+                    className="mt-6 max-w-[101px]  bg-[#2ECC71] hover:bg-[#27ae60] text-white font-medium  sm:w-[230px] md:w-[210px] transition-all w-full "
                     onClick={handleApplyFilters}
                   >
                     Apply filters
