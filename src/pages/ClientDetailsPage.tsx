@@ -464,34 +464,19 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     cursorY += 18;
 
     // --- 5. LESS SECTION ---
-    const deductionItemHeight = 18;
     const lessSectionHeaderHeight = 10;
-    const lessSectionPadding = 5;
-    let totalDeductionLines = 0;
-    deductions.forEach((txn) => {
-      if (txn.type === "RETURN" && txn.items && txn.items.length > 0) {
-        totalDeductionLines += txn.items.length;
-      } else {
-        totalDeductionLines += 1;
-      }
-    });
-    const lessSectionHeight =
-      lessSectionHeaderHeight +
-      totalDeductionLines * deductionItemHeight +
-      lessSectionPadding;
+    checkPageBreak(lessSectionHeaderHeight + 5);
 
-    checkPageBreak(lessSectionHeight);
     doc.setFillColor(249, 249, 249);
-    doc.rect(margin, cursorY, pageWidth - margin * 2, lessSectionHeight, "F");
+    doc.rect(margin, cursorY, pageWidth - margin * 2, lessSectionHeaderHeight, "F");
     doc.setFillColor(150, 150, 150);
-    doc.rect(margin, cursorY, 1.5, lessSectionHeight, "F");
+    doc.rect(margin, cursorY, 1.5, lessSectionHeaderHeight, "F");
 
-    let innerY = cursorY + 8;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(51, 51, 51);
-    doc.text("Less:", margin + 5, innerY);
-    innerY += 8;
+    doc.text("Less:", margin + 5, cursorY + 7);
+    cursorY += lessSectionHeaderHeight;
 
     let totalDeductions = 0;
     deductions.forEach((txn) => {
@@ -524,35 +509,47 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       }
 
       displayItems.forEach((item) => {
+        const itemHeight = 18;
+        checkPageBreak(itemHeight);
+
+        // Background for item
         doc.setFillColor(224, 224, 224);
-        doc.rect(margin + 5, innerY - 4, 35, 6, "F");
+        doc.rect(margin, cursorY, pageWidth - margin * 2, itemHeight, "F");
+        doc.setFillColor(150, 150, 150);
+        doc.rect(margin, cursorY, 1.5, itemHeight, "F");
+
+        // Date Pill
+        doc.setFillColor(224, 224, 224);
+        doc.rect(margin + 5, cursorY + 2, 35, 6, "F");
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8);
         doc.setTextColor(51, 51, 51);
-        doc.text(`On ${formatDate(getTransactionDate(txn))}`, margin + 7, innerY);
-        innerY += 6;
+        doc.text(`On ${formatDate(getTransactionDate(txn))}`, margin + 7, cursorY + 6);
 
+        // Description & Value
         doc.setFontSize(9);
         const descriptionWidth = (doc.getStringUnitWidth(item.description) * doc.getFontSize()) / doc.internal.scaleFactor;
         const startX = margin + 7;
+        const textY = cursorY + 12;
+
         if (item.isReturn) {
           doc.setTextColor(68, 68, 68);
-          doc.text(item.description, startX, innerY);
+          doc.text(item.description, startX, textY);
           doc.setTextColor(231, 76, 60);
-          doc.text(item.value, startX + descriptionWidth, innerY);
+          doc.text(item.value, startX + descriptionWidth, textY);
         } else {
           doc.setTextColor(68, 68, 68);
-          doc.text(item.description, startX, innerY);
+          doc.text(item.description, startX, textY);
           doc.setTextColor(46, 204, 113);
-          doc.text(item.value, startX + descriptionWidth, innerY);
+          doc.text(item.value, startX + descriptionWidth, textY);
         }
 
         doc.setDrawColor(230, 230, 230);
-        doc.line(margin + 5, innerY + 4, pageWidth - margin - 5, innerY + 4);
-        innerY += 12;
+        doc.line(margin + 5, cursorY + 16, pageWidth - margin - 5, cursorY + 16);
+        cursorY += itemHeight;
       });
     });
-    cursorY += lessSectionHeight + 5;
+    cursorY += 5;
 
     // --- 6. BALANCE ---
     checkPageBreak(12);
