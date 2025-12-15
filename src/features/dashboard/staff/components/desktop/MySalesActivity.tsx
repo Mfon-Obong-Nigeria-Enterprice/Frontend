@@ -67,7 +67,7 @@ const MySalesActivity = ({
               Amount Paid
             </th> */}
             <th className="text-right text-[#333333] font-Inter font-medium text-base pr-5 md:pr-16">
-              Time
+              Date
             </th>
           </tr>
         </thead>
