@@ -270,10 +270,32 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
     // --- 2. B/F ---
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
+    doc.setFontSize(9);
     doc.setTextColor(51, 51, 51);
-    doc.text("Account Update", margin, cursorY);
-    cursorY += 5;
+
+    // Insert UserName on the far right
+    doc.text(client?.name || "", pageWidth - margin, cursorY, { align: "right" });
+
+    cursorY += 6;
+
+    // Transaction History text
+    let dateRangeText = "";
+    const startDate = dateRangeFilter.from || (sortedTxns.length > 0 ? getTransactionDate(sortedTxns[0]) : new Date());
+    const endDate = dateRangeFilter.to || (sortedTxns.length > 0 ? getTransactionDate(sortedTxns[sortedTxns.length - 1]) : new Date());
+
+    const startYear = startDate.getFullYear();
+    const endYear = endDate.getFullYear();
+    const startMonth = startDate.toLocaleDateString("en-US", { month: "long" });
+    const endMonth = endDate.toLocaleDateString("en-US", { month: "long" });
+
+    if (startYear === endYear) {
+      dateRangeText = startMonth === endMonth ? `${startMonth}, ${startYear}` : `${startMonth} - ${endMonth}, ${startYear}`;
+    } else {
+      dateRangeText = `${startMonth} ${startYear} - ${endMonth} ${endYear}`;
+    }
+    doc.setFont("helvetica", "bold");
+    doc.text(`Transaction History, ${dateRangeText}`, margin, cursorY);
+    cursorY += 10;
 
     doc.setFillColor(248, 235, 235);
     doc.rect(margin, cursorY, pageWidth - margin * 2, 10, "F");
