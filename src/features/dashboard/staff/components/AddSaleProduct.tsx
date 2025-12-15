@@ -429,14 +429,16 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
       )}
 
       {/* add button */}
-      <Button
-        variant="ghost"
-        onClick={addRow}
-        className="flex justify-center items-center gap-1 py-8 px-2.5 border-2 border-dashed border-[#D9D9D9] my-7 rounded-md w-full"
-      >
-        <Plus className="text-[#2ECC71] w-4" />
-        <span className="text-[#2ECC71]">Add Another Product</span>
-      </Button>
+      {salesType !== "Wholesale" && (
+        <Button
+          variant="ghost"
+          onClick={addRow}
+          className="flex justify-center items-center gap-1 py-8 px-2.5 border-2 border-dashed border-[#D9D9D9] my-7 rounded-md w-full"
+        >
+          <Plus className="text-[#2ECC71] w-4" />
+          <span className="text-[#2ECC71]">Add Another Product</span>
+        </Button>
+      )}
 
       {/* total */}
       <div className="bg-[#F5F5F5] rounded-md overflow-hidden">

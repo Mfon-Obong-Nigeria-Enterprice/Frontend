@@ -623,6 +623,23 @@ const NewSales: React.FC = () => {
     }
   }, [salesType]);
 
+  // Enforce single row constraint for Wholesale
+  useEffect(() => {
+    if (salesType === "Wholesale" && rows.length > 1) {
+      setRows((prev) => [prev[0]]);
+    }
+  }, [salesType, rows]);
+
+  const handleSetRows = (newRows: React.SetStateAction<Row[]>) => {
+    setRows((prev) => {
+      const result = typeof newRows === "function" ? newRows(prev) : newRows;
+      if (salesType === "Wholesale" && result.length > 1) {
+        return result.slice(0, 1);
+      }
+      return result;
+    });
+  };
+
   useEffect(() => {
     if (!user?.branchId) return;
 
@@ -1062,7 +1079,7 @@ const NewSales: React.FC = () => {
               <AddSaleProduct
                 products={productsForSale}
                 rows={rows}
-                setRows={setRows}
+                setRows={handleSetRows}
                 emptyRow={emptyRow}
                 onDiscountReasonChange={setDiscountReason}
                 globalDiscount={globalDiscount}
