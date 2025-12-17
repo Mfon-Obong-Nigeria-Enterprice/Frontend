@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
 // icons
 import { MdOutlineShoppingBag } from "react-icons/md";
@@ -10,6 +10,7 @@ import {
   CreditCard,
   Settings,
   Bell,
+  ChevronLeft,
 } from "lucide-react";
 import { IoIosLogOut } from "react-icons/io";
 import { IoPerson } from "react-icons/io5";
@@ -66,6 +67,7 @@ type AdminSidebarProps = {
 
 function AdminSidebar({ onLogoutClick }: AdminSidebarProps) {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   return (
     <Sidebar>
@@ -75,6 +77,14 @@ function AdminSidebar({ onLogoutClick }: AdminSidebarProps) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  className="cursor-pointer hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all text-[#333333]"
+                  onClick={() => navigate(-1)}
+                >
+                  <ChevronLeft />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               {items.map((item) => {
                 const isActive = pathname.startsWith(item.url);
                 return (
