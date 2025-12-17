@@ -56,7 +56,7 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
-          style={{ 
+          style={{
             transition: "stroke-dashoffset 0.5s ease",
           }}
         />
@@ -87,18 +87,22 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
       className={`
         grid gap-4 mt-2
         /* 1. GRID BEHAVIOR */
-        /* Mobile & Tablet & Small Laptop: Stacked (1 Column) */
-        grid-cols-1 
-        md:grid-cols-1    
-        lg:grid-cols-1    
+        /* Mobile: 2 Columns (Matches Screenshot) */
+        grid-cols-2 
         
-        /* Desktop (XL+): Split to 3 Columns */
+        /* Tablet: 2 Columns */
+        md:grid-cols-2    
+        
+        /* Large Tablet/Laptop: 2 Columns */
+        lg:grid-cols-2    
+        
+        /* Desktop (XL+): Split to 3 or 4 Columns */
         ${
           data.length <= 2
-            ? "xl:grid-cols-2"  
+            ? "xl:grid-cols-2"
             : data.length === 3
-            ? "xl:grid-cols-3"  
-            : "xl:grid-cols-4" 
+            ? "xl:grid-cols-3"
+            : "xl:grid-cols-4"
         }
       `}
     >
@@ -128,7 +132,7 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
           return String(stat.salesValue ?? "");
         };
 
-        // Reusable Percentage Component to avoid code duplication
+        // Reusable Percentage Component
         const PercentageBadge = () => (
           stat.statValue ? (
             <span
@@ -145,87 +149,72 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
             key={index}
             className="bg-white rounded-lg border border-[#D9D9D9] p-4 sm:p-6 hover:shadow-md transition-shadow duration-200"
           >
-            {/* 2. INTERNAL LAYOUT SWITCH 
-               - Default / Desktop (xl): Flexbox (Left Text, Right Chart)
-               - Tablet (md -> lg): Grid 12-col (Left Text, Middle %, Right Chart)
-            */}
-            <div className="flex flex-row items-center justify-between xl:flex xl:flex-row xl:items-center xl:justify-between md:grid md:grid-cols-12 h-full">
+            {/* 2. INTERNAL LAYOUT */ }
+            <div className="flex flex-row items-center justify-between xl:flex xl:flex-row xl:items-center xl:justify-between h-full">
               
               {/* SECTION A: Heading & Amount */}
-              {/* Desktop/Mobile: Flex Item. Tablet: Span 4 */}
-              <div className="md:col-span-4 flex flex-col justify-center">
+              <div className="flex flex-col justify-center w-full">
                 <div className="text-xs sm:text-sm text-[#7D7D7D] whitespace-nowrap mb-2">
                   {stat.heading}
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-text-dark leading-none">
+                {/* Responsive text size to prevent overflow on small screens */}
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-text-dark leading-none truncate">
                   {renderSales()}
                 </div>
                 
-                {/* PERCENTAGE LOCATION 1: 
-                   Visible on Mobile & Desktop (Hidden on Tablet)
-                   This keeps desktop compact.
-                */}
-                <div className="mt-2 block md:hidden xl:block">
+                {/* PERCENTAGE LOCATION: Always visible (Mobile/Tablet/Desktop) */}
+                <div className="mt-2 block">
                   <PercentageBadge />
                 </div>
               </div>
 
-              {/* SECTION B: Percentage (Centered)
-                 PERCENTAGE LOCATION 2:
-                 Visible ONLY on Tablet (Hidden on Mobile & Desktop)
-                 This creates the centered look for wide cards.
-              */}
-              <div className="hidden md:flex xl:hidden col-span-4 justify-center items-center">
-                 <PercentageBadge />
-              </div>
-
-              {/* SECTION C: Chart */}
-              {/* Desktop/Mobile: Fixed Width. Tablet: Span 4 aligned right */}
-              <div className="md:col-span-4 flex items-center justify-end w-24 sm:w-32 md:w-full">
-                <div className="w-full h-16 max-w-[120px]">
-                  {isCircularCard ? (
-                    <div className="flex justify-end xl:justify-center">
-                      <CircularProgress
-                        percentage={computedCircularPercent}
-                        size={65} 
-                        strokeColor={color}
-                      />
-                    </div>
-                  ) : showArea ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData}>
-                        <defs>
-                          <linearGradient id={`grad-${index}`} x1="0" x2="0" y1="0" y2="1">
-                            <stop offset="0%" stopColor={color} stopOpacity={0.2} />
-                            <stop offset="100%" stopColor={color} stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <Area
-                          type="monotone"
-                          dataKey="value"
-                          stroke={color}
-                          fill={`url(#grad-${index})`}
-                          strokeWidth={2}
-                          dot={false}
-                          isAnimationActive={false}
+              {/* SECTION C: Chart (Only renders if chart data exists) */}
+              {(isCircularCard || showArea || showBar) && (
+                <div className="flex items-center justify-end w-24 sm:w-32 md:w-full ml-2">
+                  <div className="w-full h-16 max-w-[120px]">
+                    {isCircularCard ? (
+                      <div className="flex justify-end xl:justify-center">
+                        <CircularProgress
+                          percentage={computedCircularPercent}
+                          size={65} 
+                          strokeColor={color}
                         />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  ) : showBar ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData.slice(-7)}>
-                        <Bar
-                          dataKey="value"
-                          fill={color}
-                          radius={[2, 2, 0, 0]} 
-                          isAnimationActive={false}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : null}
+                      </div>
+                    ) : showArea ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData}>
+                          <defs>
+                            <linearGradient id={`grad-${index}`} x1="0" x2="0" y1="0" y2="1">
+                              <stop offset="0%" stopColor={color} stopOpacity={0.2} />
+                              <stop offset="100%" stopColor={color} stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <Area
+                            type="monotone"
+                            dataKey="value"
+                            stroke={color}
+                            fill={`url(#grad-${index})`}
+                            strokeWidth={2}
+                            dot={false}
+                            isAnimationActive={false}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    ) : showBar ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData.slice(-7)}>
+                          <Bar
+                            dataKey="value"
+                            fill={color}
+                            radius={[2, 2, 0, 0]} 
+                            isAnimationActive={false}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-
+              )}
             </div>
           </div>
         );

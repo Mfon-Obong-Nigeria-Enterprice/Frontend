@@ -311,13 +311,13 @@ const AdminInventory = () => {
                       <CiImport size={20} />
                       Import Stock
                     </Button> */}
-                    <Button
+                    {/* <Button
                       onClick={() => navigate("/admin/dashboard/sale")}
                       className="gap-2"
                     >
                       <Plus size={16} />
                       Add Sales
-                    </Button>
+                    </Button> */}
                   </div>
 
                   {/* Mobile Actions Button */}

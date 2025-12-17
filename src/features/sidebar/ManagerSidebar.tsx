@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
 // icons
 import {
@@ -8,7 +8,7 @@ import {
   MdBarChart,
   MdManageAccounts,
 } from "react-icons/md";
-import { FiUsers, FiSettings, FiLogOut } from "react-icons/fi";
+import { FiUsers, FiSettings, FiLogOut, FiChevronLeft } from "react-icons/fi";
 import { IoNotificationsOutline } from "react-icons/io5";
 import { CgArrowsExchangeAlt } from "react-icons/cg";
 // hooks
@@ -80,6 +80,7 @@ interface ManagerSidebarProps {
 
 const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   return (
     <Sidebar>
@@ -89,6 +90,15 @@ const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  className="cursor-pointer hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all bg-[#F4E8E7] text-[#333333]"
+                  onClick={() => navigate(-1)}
+                >
+                  <FiChevronLeft />
+                  <span>Back</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               {items.map((item) => {
                 const isActive = pathname.startsWith(item.url);
                 return (
