@@ -380,7 +380,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                     Processing...
                   </div>
                 ) : (
-                  "Process Payment"
+                  "Process Debt Payment"
                 )}
               </Button>
             </div>

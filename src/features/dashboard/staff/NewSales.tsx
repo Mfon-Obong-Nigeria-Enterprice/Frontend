@@ -1381,7 +1381,7 @@ const NewSales: React.FC = () => {
         )}
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col  gap-3">
           <Button
             variant="outline"
             onClick={handleResetClient}

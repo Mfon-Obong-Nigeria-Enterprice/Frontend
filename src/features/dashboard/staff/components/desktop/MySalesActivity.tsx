@@ -1,3 +1,4 @@
+//src\features\dashboard\staff\components\desktop\MySalesActivity.tsx
 // type
 import type { Transaction } from "@/types/transactions";
 
