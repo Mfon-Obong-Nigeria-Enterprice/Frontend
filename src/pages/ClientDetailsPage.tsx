@@ -722,7 +722,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         </div>
 
         {/* section by the right */}
-        <section className="lg:-translate-x-28 max-w-[793px] bg-white py-8 px-5 rounded lg:col-span-3">
+        <section className="lg:-translate-x-28 max-w-[793px] bg-white py-8 px-5  lg:col-span-3">
           <Tabs className="space-y-4" defaultValue="clientTransaction">
             <TabsList className="flex gap-2 lg:justify-start justify-evenly ">
               <TabsTrigger value="clientTransaction">Transaction</TabsTrigger>
