@@ -31,21 +31,25 @@ const MaintainerDashboard = () => {
       heading: "Total Activity Today",
       salesValue: totalActivityToday.toString(),
       icon: "/icons/activity-today.svg",
+      color: "green",
     },
     {
       heading: "Failed Login Attempts",
       salesValue: failedLoginAttempts.toString(),
       icon: "/icons/failed-login-attempt.svg",
+      color: "red",
     },
     {
       heading: "Active Users",
       salesValue: activeUsers.toString(),
       icon: "/icons/active-users.svg",
+      color: "blue", // This is already a valid color name
     },
     {
       heading: "Data modifications",
       salesValue: dataModifications.toString(),
       icon: "/icons/data-modifications.svg",
+      color: "orange",
     },
   ];
 

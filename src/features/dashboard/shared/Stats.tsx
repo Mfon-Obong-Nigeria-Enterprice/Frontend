@@ -69,11 +69,14 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
 };
 
 const getColor = (color?: string) => {
+  if (color?.startsWith("#")) {
+    return color;
+  }
   switch (color) {
-    case "green": return "#16a34a";
-    case "orange": return "#f97316";
-    case "red": return "#ef4444";
-    case "blue": return "#2563eb";
+    case "green": return "#2ECC71";
+    case "red": return "#F95353";
+    case "blue": return "#3D80FF";
+    case "orange": return "#FFA500";
     default: return "#6b7280";
   }
 };
@@ -81,6 +84,9 @@ const getColor = (color?: string) => {
 const Stats: React.FC<StatsProps> = ({ data }) => {
   const revenueStore = useRevenueStore();
   const monthlyRevenue = revenueStore.getMOMRevenue && revenueStore.getMOMRevenue();
+
+  // Explicit border colors based on index position
+  const borderColors = ["#2ECC71", "#F95353", "#3D80FF", "#FFA500"];
 
   return (
     <section
@@ -97,10 +103,9 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
         lg:grid-cols-2    
         
         /* Desktop (XL+): Split to 3 or 4 Columns */
-        ${
-          data.length <= 2
-            ? "xl:grid-cols-2"
-            : data.length === 3
+        ${data.length <= 2
+          ? "xl:grid-cols-2"
+          : data.length === 3
             ? "xl:grid-cols-3"
             : "xl:grid-cols-4"
         }
@@ -112,13 +117,17 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
         const chartData = numericSeries.map((v, i) => ({ name: `${i}`, value: v }));
 
         const color = getColor(stat.color);
+        // Get the border color based on index (cyclic if more than 4 items)
+        const borderColor = borderColors[index % borderColors.length];
+
         const isCircularCard = stat.displayType === "circular";
         const showArea = stat.chartType === "line" && chartData.length > 0 && !isCircularCard;
         const showBar = stat.chartType === "bar" && chartData.length > 0 && !isCircularCard;
+        const showIcon = !!stat.icon;
 
         const computedCircularPercent = typeof stat.percentage === "number"
-            ? stat.percentage
-            : monthlyRevenue?.percentageChange ?? 0;
+          ? stat.percentage
+          : monthlyRevenue?.percentageChange ?? 0;
 
         const renderSales = () => {
           if (stat.format === "currency") {
@@ -147,36 +156,22 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
         return (
           <div
             key={index}
-            className="bg-white rounded-lg border border-[#D9D9D9] p-4 sm:p-6 hover:shadow-md transition-shadow duration-200"
+            className="bg-white rounded-lg border border-[#D9D9D9] p-4 sm:p-6 hover:shadow-md transition-shadow duration-200 flex flex-col justify-between min-h-[120px]"
           >
-            {/* 2. INTERNAL LAYOUT */ }
-            <div className="flex flex-row items-center justify-between xl:flex xl:flex-row xl:items-center xl:justify-between h-full">
-              
-              {/* SECTION A: Heading & Amount */}
-              <div className="flex flex-col justify-center w-full">
-                <div className="text-xs sm:text-sm text-[#7D7D7D] whitespace-nowrap mb-2">
-                  {stat.heading}
-                </div>
-                {/* Responsive text size to prevent overflow on small screens */}
-                <div className="text-lg sm:text-xl md:text-2xl font-bold text-text-dark leading-none truncate">
-                  {renderSales()}
-                </div>
-                
-                {/* PERCENTAGE LOCATION: Always visible (Mobile/Tablet/Desktop) */}
-                <div className="mt-2 block">
-                  <PercentageBadge />
-                </div>
+            {/* Top Row: Number and Icon/Chart */}
+            <div className="flex justify-between items-center">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-text-dark leading-none truncate">
+                {renderSales()}
               </div>
 
-              {/* SECTION C: Chart (Only renders if chart data exists) */}
-              {(isCircularCard || showArea || showBar) && (
-                <div className="flex items-center justify-end w-24 sm:w-32 md:w-full ml-2">
-                  <div className="w-full h-16 max-w-[120px]">
+              {(isCircularCard || showArea || showBar || showIcon) && (
+                <div className="flex items-center justify-end ml-2">
+                  <div className="w-16 h-10 sm:w-20 sm:h-12">
                     {isCircularCard ? (
-                      <div className="flex justify-end xl:justify-center">
+                      <div className="flex justify-end">
                         <CircularProgress
                           percentage={computedCircularPercent}
-                          size={65} 
+                          size={40}
                           strokeColor={color}
                         />
                       </div>
@@ -184,9 +179,23 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={chartData}>
                           <defs>
-                            <linearGradient id={`grad-${index}`} x1="0" x2="0" y1="0" y2="1">
-                              <stop offset="0%" stopColor={color} stopOpacity={0.2} />
-                              <stop offset="100%" stopColor={color} stopOpacity={0} />
+                            <linearGradient
+                              id={`grad-${index}`}
+                              x1="0"
+                              x2="0"
+                              y1="0"
+                              y2="1"
+                            >
+                              <stop
+                                offset="0%"
+                                stopColor={color}
+                                stopOpacity={0.2}
+                              />
+                              <stop
+                                offset="100%"
+                                stopColor={color}
+                                stopOpacity={0}
+                              />
                             </linearGradient>
                           </defs>
                           <Area
@@ -206,15 +215,41 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
                           <Bar
                             dataKey="value"
                             fill={color}
-                            radius={[2, 2, 0, 0]} 
+                            radius={[2, 2, 0, 0]}
                             isAnimationActive={false}
                           />
                         </BarChart>
                       </ResponsiveContainer>
+                    ) : showIcon ? (
+                      <div className="flex justify-end items-center h-full">
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center border"
+                          style={{
+                            borderColor: borderColor,
+                            borderWidth: "1px",
+                          }}
+                        >
+                          <img
+                            src={stat.icon}
+                            alt=""
+                            className="w-[20px] h-[14px] object-contain"
+                          />
+                        </div>
+                      </div>
                     ) : null}
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Bottom Row: Heading and Percentage */}
+            <div className="mt-auto pt-2">
+              <div className="text-xs sm:text-sm text-[#7D7D7D] whitespace-nowrap">
+                {stat.heading}
+              </div>
+              <div className="mt-1">
+                <PercentageBadge />
+              </div>
             </div>
           </div>
         );
