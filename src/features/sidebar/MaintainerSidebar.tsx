@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 
 // icons imported from react-icons
 import { MdOutlineDashboard } from "react-icons/md";
 import { IoIosPeople, IoIosStats, IoIosNotifications } from "react-icons/io";
 import { RiSettings3Line } from "react-icons/ri";
-import { IoIosLogOut, IoIosArrowBack } from "react-icons/io";
+import { IoIosLogOut } from "react-icons/io";
 
 // hooks
 import { useLogout } from "@/hooks/uselogout";
@@ -62,7 +62,6 @@ type MaintainerSidebarProps = {
 
 const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
   const { pathname } = useLocation();
-  const navigate = useNavigate();
 
   return (
     <Sidebar>
