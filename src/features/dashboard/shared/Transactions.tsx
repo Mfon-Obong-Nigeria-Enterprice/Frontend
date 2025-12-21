@@ -411,7 +411,7 @@ const Transactions = () => {
             placeholder="Search by invoice..."
           />
         </div>
-        <div className="flex items-center gap-4 pt-4 sm:pt-0 md:gap-3 w-full md:w-auto overflow-x-auto md:overflow-visible">
+        <div className="flex items-center gap-4 pt-4 sm:pt-0 md:gap-3 w-full md:w-auto overflow-x-auto md:overflow-visible [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <Button
             onClick={handleExportExcel}
             variant="secondary"
@@ -437,10 +437,10 @@ const Transactions = () => {
       </div>
 
       {/* filter buttons */}
-      <div className="flex gap-2 flex-wrap md:gap-4">
+      <div className="flex gap-2 overflow-x-auto md:overflow-visible md:flex-wrap md:gap-4 pb-2 md:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {/* filter by registered or unregistered clients */}
         <Select value={clientFilter} onValueChange={setClientFilter}>
-          <SelectTrigger className="bg-[#d9d9d9]! h-10 w-full md:w-46 text-[#444444] border-[#7D7D7D]">
+          <SelectTrigger className="bg-white! h-10 w-46 shrink-0 md:w-46 text-[#444444] border-[#7D7D7D]">
             <SelectValue placeholder="Clients Filter" />
           </SelectTrigger>
           <SelectContent>
@@ -460,7 +460,7 @@ const Transactions = () => {
         <DateRangePicker
           value={dateRangeFilter}
           onChange={(range) => setDateRangeFilter(range)}
-          className="h-9 w-full md:w-46 !bg-[#d9d9d9] !border-[#7D7D7D]"
+          className="bg-white! h-9 w-46 shrink-0 md:w-46 !border-[#7D7D7D]"
         />
 
         {/* filter by transaction type */}
@@ -468,7 +468,7 @@ const Transactions = () => {
           value={transactionTypeFilter}
           onValueChange={setTransactionTypeFilter}
         >
-          <SelectTrigger className="!bg-[#d9d9d9] h-10 w-full md:w-46 text-[#444444] border-[#7D7D7D]">
+          <SelectTrigger className="bg-white! h-10 w-46 shrink-0 md:w-46 text-[#444444] border-[#7D7D7D]">
             <SelectValue placeholder="Transaction Type"></SelectValue>
           </SelectTrigger>
           <SelectContent>

@@ -731,7 +731,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
             <TabsContent value="clientTransaction">
               {/* data */}
-              <div className="flex overflow-x-auto md:overflow-visible justify-start items-center w-full gap-4 md:gap-1 lg:gap-2 mb-10 pb-2 md:pb-0">
+              <div className="flex overflow-x-auto md:overflow-visible justify-start items-center w-full gap-4 md:gap-1 lg:gap-2 mb-10 pb-2 md:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <div className="flex flex-col justify-end transition-all min-w-[250px] md:min-w-0 w-auto md:w-full h-full flex-shrink-0 md:shrink">
                   <DateFromToPicker
                     date={dateRangeFilter}
