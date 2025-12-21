@@ -107,12 +107,12 @@ const InventoryTab = React.memo(
               <TabsTrigger
                 value="allProducts"
                 className={cn(
-                  "!bg-white px-3 data-[state=active]:[&_span]:bg-green-400 data-[state=active]:[&_span]:text-white data-[state=active]:shadow-xl text-sm"
+                  "!bg-white px-3 data-[state=active]:shadow-xl text-sm"
                 )}
               >
                 <p>
                   All Products
-                  <span className="ml-1 rounded-2xl text-[#7d7d7d] bg-gray-300 py-1 px-2">
+                  <span className="ml-1 rounded-2xl text-white bg-green-400 py-1 px-2">
                     {products.length}
                   </span>
                 </p>
@@ -133,11 +133,11 @@ const InventoryTab = React.memo(
                     key={category._id}
                     value={categoryName}
                     className={cn(
-                      "!bg-white px-3 border border-gray-200 data-[state=active]:shadow-xl data-[state=active]:[&_span]:bg-green-400 data-[state=active]:[&_span]:text-white hover:border-dashed hover:border-green-400 data-[state=active]:border-green-400 text-sm"
+                      "!bg-white px-3 border border-gray-200 data-[state=active]:shadow-xl hover:border-dashed hover:border-green-400 data-[state=active]:border-green-400 text-sm"
                     )}
                   >
                     {category.name}
-                    <span className="mx-0.5 bg-gray-300 rounded-2xl text-[0.625rem] text-[#7d7d7d] py-1 px-2">
+                    <span className="mx-0.5 bg-green-400 rounded-2xl text-[0.625rem] text-white py-1 px-2">
                       {count}
                     </span>
                     <p

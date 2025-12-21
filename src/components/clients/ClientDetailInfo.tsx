@@ -65,7 +65,7 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
   if (!client) return null;
 
   return (
-    <section className="bg-white p-6 md:p-6 rounded-xl lg:max-w-[347px] font-sans shadow-sm">
+    <section className="bg-white p-6 md:p-6 rounded-xl lg:max-w-[347px] font-sans shadow-sm sticky top-6 h-fit">
       {/* Header */}
       <h1 className="text-[16px] font-semibold text-[#333333] mb-8">
         {client.name || "Null"}

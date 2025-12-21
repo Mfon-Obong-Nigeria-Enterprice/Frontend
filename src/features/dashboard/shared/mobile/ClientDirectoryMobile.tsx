@@ -7,6 +7,7 @@ import { formatCurrency } from "@/utils/formatCurrency";
 import { getTypeDisplay } from "@/utils/helpersfunction";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ClientDirectoryProps {
   searchTerm: string;
@@ -169,11 +170,11 @@ const ClientDirectoryMobile: React.FC<ClientDirectoryProps> = ({
         <Button
           onClick={goToPreviousPage}
           disabled={!canGoPrevious}
-          className={`px-4 py-2 bg-gray-300 rounded ${
+          className={`px-4 py-2 border bg-[#F5F5F578] opacity-47 border-[#D9D9D9] rounded ${
             !canGoPrevious ? "cursor-not-allowed" : ""
           }`}
         >
-          Previous
+          <ChevronLeft size={16} className="text-[#7D7D7D]" />
         </Button>
         <span>
           Page {currentPage} of {totalPages}
@@ -181,11 +182,11 @@ const ClientDirectoryMobile: React.FC<ClientDirectoryProps> = ({
         <Button
           onClick={goToNextPage}
           disabled={!canGoNext}
-          className={`px-4 py-2 bg-gray-300 rounded ${
+          className={`px-4 py-2 border bg-[#F5F5F578] opacity-47 border-[#D9D9D9] rounded ${
             !canGoNext ? "cursor-not-allowed" : ""
           }`}
         >
-          Next
+          <ChevronRight size={16} className="text-[#7D7D7D]" />
         </Button>
       </div>
     </section>

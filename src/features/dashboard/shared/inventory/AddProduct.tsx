@@ -257,7 +257,7 @@ const AddProduct = () => {
           </div>
         </div>
 
-        <div className="flex justify-end gap-7 mt-7">
+        <div className="flex flex-col-reverse lg:flex-row justify-center lg:justify-end gap-7 mt-7">
           <Button
             type="button"
             onClick={() => goBack()}

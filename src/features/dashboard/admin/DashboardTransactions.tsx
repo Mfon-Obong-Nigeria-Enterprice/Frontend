@@ -2,7 +2,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import DashboardTitle from "../shared/DashboardTitle";
 import Transactions from "../shared/Transactions";
 import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
+//import { Button } from "@/components/ui/button";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import WaybillModal from "../staff/components/WaybillModal";
 
@@ -65,7 +65,7 @@ const DashboardTransactions: React.FC<DashboardTransactionProps> = ({
           heading="Transaction Management"
           description="Track all sales payment & client account activities"
         />
-        {isAdmin && (
+        {/* {isAdmin && (
           <Button
             className="min-w-40"
             onClick={() => setIsWaybillModalOpen(true)}
@@ -73,7 +73,7 @@ const DashboardTransactions: React.FC<DashboardTransactionProps> = ({
             <img src="/icons/brick.svg" alt="" className="w-4" />
             Add Waybill
           </Button>
-        )}
+        )} */}
       </div>
       <Transactions />
 

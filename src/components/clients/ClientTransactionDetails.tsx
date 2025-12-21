@@ -303,7 +303,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                             Product
                           </span>
                           <span className="text-xs md:text-[16px] text-[#333333] text-right">
-                            Subtotal
+                            Amount
                           </span>
                         </div>
                         {/* Table Body */}
@@ -325,7 +325,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                                   {item.productName}
                                 </span>
                                 <span className="text-xs md:text-sm text-[#444444] text-right">
-                                  Subtotal: {formatCurrency(item.subtotal)}
+                                  {formatCurrency(item.subtotal)}
                                 </span>
                               </div>
                               {index < txn.items.length - 1 && (
@@ -333,6 +333,19 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                               )}
                             </div>
                           ))}
+                          <div className="bg-[#F5F5F5] flex justify-end px-4 gap-4 items-center py-3 border-t border-gray-100">
+                            <span className="text-xs md:text-sm text-[#333333] font-medium">
+                              Subtotal:
+                            </span>
+                            <span className="text-xs md:text-sm text-[#333333] font-bold">
+                              {formatCurrency(
+                                txn.items.reduce(
+                                  (sum, item) => sum + (item.subtotal || 0),
+                                  0
+                                )
+                              )}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>

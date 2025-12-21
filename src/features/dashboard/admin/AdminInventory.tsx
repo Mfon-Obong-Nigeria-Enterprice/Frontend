@@ -49,6 +49,7 @@ const AdminInventory = () => {
   const [stockStatus, setStockStatus] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
   const [showMobileActions, setShowMobileActions] = useState(false);
+  const [showExportConfirm, setShowExportConfirm] = useState(false);
 
   // Zustand store
   const {
@@ -281,7 +282,7 @@ const AdminInventory = () => {
                       <PopoverContent className="p-0 w-48">
                         <button
                           className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-t-md"
-                          onClick={handleExportPDF}
+                          onClick={() => setShowExportConfirm(true)}
                         >
                           Export as PDF
                         </button>
@@ -339,7 +340,7 @@ const AdminInventory = () => {
                       <div className="grid grid-cols-1 gap-2">
                         <Button
                           variant="ghost"
-                          onClick={handleExportPDF}
+                          onClick={() => setShowExportConfirm(true)}
                           className="justify-start gap-2"
                         >
                           <IoIosArrowUp size={16} />
@@ -544,6 +545,31 @@ const AdminInventory = () => {
               size="xxl"
             >
               <AddCategory closeBothModals={closeBothModals} />
+            </Modal>
+
+            <Modal
+              isOpen={showExportConfirm}
+              onClose={() => setShowExportConfirm(false)}
+            >
+              <div className="p-6 max-w-[378px] max-h-[212px] bg-white rounded-lg shadow-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Confirm Export
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Are you sure you want to download the inventory list as a PDF?
+                </p>
+                <div className="flex justify-end gap-3">
+                  <Button variant="outline" onClick={() => setShowExportConfirm(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => { handleExportPDF(); setShowExportConfirm(false); }}
+                    className="bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)]"
+                  >
+                    Download
+                  </Button>
+                </div>
+              </div>
             </Modal>
           </section>
         ) : (

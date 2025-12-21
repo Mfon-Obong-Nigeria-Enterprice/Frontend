@@ -136,7 +136,7 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
         const PercentageBadge = () => (
           stat.statValue ? (
             <span
-              className="text-xs sm:text-sm font-medium flex items-center gap-1"
+              className="text-xs sm:text-sm font-medium flex items-center gap-1 whitespace-nowrap"
               style={{ color: color }}
             >
               {stat.statValue}

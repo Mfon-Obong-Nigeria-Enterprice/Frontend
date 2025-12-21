@@ -29,6 +29,7 @@ import Stats from "../shared/Stats";
 import SearchBar from "./SearchBar";
 import TransactionTable from "./desktop/TransactionTable";
 import DateRangePicker from "@/components/DateRangePicker";
+import WaybillModal from "../staff/components/WaybillModal";
 
 // ui
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,37 @@ const Transactions = () => {
     from: undefined,
     to: undefined,
   });
+  const [isWaybillModalOpen, setIsWaybillModalOpen] = useState(false);
+
+  const isAdmin = useMemo(() => {
+    if (!user || !user.role) return false;
+    const normalizedRole = user.role.toString().trim().toUpperCase();
+    return normalizedRole === "ADMIN";
+  }, [user]);
+
+  const branchTransactions = useMemo(() => {
+    if (!user?.branchId) return transactions ?? [];
+
+    if (isAdmin) {
+      return (transactions ?? []).filter((transaction) => {
+        const txBranchId =
+          typeof transaction.branchId === "string"
+            ? transaction.branchId
+            : (transaction.branchId as { _id?: string } | undefined)?._id;
+        return txBranchId === user.branchId;
+      });
+    }
+    return transactions ?? [];
+  }, [transactions, user?.branchId, isAdmin]);
+
+  const handleWaybillAssigned = (
+    transactionId: string,
+    waybillNumber: string
+  ) => {
+    console.log(
+      `Waybill ${waybillNumber} assigned to transaction ${transactionId}`
+    );
+  };
 
   const outstandingBalance = getOutStandingBalanceData() || {
     totalDebt: 0,
@@ -120,8 +152,8 @@ const Transactions = () => {
         monthlyChange.direction === "increase"
           ? "green"
           : monthlyChange.direction === "decrease"
-          ? "red"
-          : "orange",
+            ? "red"
+            : "orange",
       hideArrow: false,
       salesColor: "green",
     },
@@ -140,8 +172,8 @@ const Transactions = () => {
         transactionCountChange.direction === "increase"
           ? "green"
           : transactionCountChange.direction === "decrease"
-          ? "red"
-          : "blue",
+            ? "red"
+            : "blue",
       hideArrow: false,
     },
   ];
@@ -379,25 +411,36 @@ const Transactions = () => {
             placeholder="Search by invoice..."
           />
         </div>
-        <div className="flex items-center gap-4 pt-4 sm:pt-0 md:gap-3">
+        <div className="flex items-center gap-4 pt-4 sm:pt-0 md:gap-3 w-full md:w-auto overflow-x-auto md:overflow-visible [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <Button
             onClick={handleExportExcel}
             variant="secondary"
-            className="w-42 md:w-50 h-10 bg-white text-base text-[#444444] border border-[#7d7d7d]"
+            className="w-42 md:w-50 h-10 bg-white text-base text-[#444444] border border-[#7d7d7d] shrink-0"
           >
             Download Excel
           </Button>
-          <Button onClick={handleExportPDF} className="w-42 md:w-50 h-10">
+
+          {isAdmin && (
+            <Button
+              className="min-w-40 bg-white text-[#444444] border border-[#7d7d7d] hover:bg-gray-100 shrink-0"
+              onClick={() => setIsWaybillModalOpen(true)}
+            >
+              <img src="/icons/add-waybill-icon.svg" alt="" className="w-4" />
+              Add Waybill
+            </Button>
+          )}
+
+          <Button onClick={handleExportPDF} className="w-42 md:w-50 h-10 shrink-0">
             Export PDF
           </Button>
         </div>
       </div>
 
       {/* filter buttons */}
-      <div className="flex gap-2 flex-wrap md:gap-4">
+      <div className="flex gap-2 overflow-x-auto md:overflow-visible md:flex-wrap md:gap-4 pb-2 md:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {/* filter by registered or unregistered clients */}
         <Select value={clientFilter} onValueChange={setClientFilter}>
-          <SelectTrigger className="bg-[#d9d9d9]! h-10 w-full md:w-46 text-[#444444] border-[#7D7D7D]">
+          <SelectTrigger className="bg-white! h-10 w-46 shrink-0 md:w-46 text-[#444444] border-[#7D7D7D]">
             <SelectValue placeholder="Clients Filter" />
           </SelectTrigger>
           <SelectContent>
@@ -417,7 +460,7 @@ const Transactions = () => {
         <DateRangePicker
           value={dateRangeFilter}
           onChange={(range) => setDateRangeFilter(range)}
-          className="h-9 w-full md:w-46 !bg-[#d9d9d9] !border-[#7D7D7D]"
+          className="bg-white! h-9 w-46 shrink-0 md:w-46 !border-[#7D7D7D]"
         />
 
         {/* filter by transaction type */}
@@ -425,7 +468,7 @@ const Transactions = () => {
           value={transactionTypeFilter}
           onValueChange={setTransactionTypeFilter}
         >
-          <SelectTrigger className="!bg-[#d9d9d9] h-10 w-full md:w-46 text-[#444444] border-[#7D7D7D]">
+          <SelectTrigger className="bg-white! h-10 w-46 shrink-0 md:w-46 text-[#444444] border-[#7D7D7D]">
             <SelectValue placeholder="Transaction Type"></SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -513,6 +556,13 @@ const Transactions = () => {
             </div>
           )}
       </div>
+
+      <WaybillModal
+        isOpen={isWaybillModalOpen}
+        onClose={() => setIsWaybillModalOpen(false)}
+        transactions={branchTransactions}
+        onWaybillGenerated={handleWaybillAssigned}
+      />
     </div>
   );
 };

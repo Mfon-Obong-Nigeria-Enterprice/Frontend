@@ -1,11 +1,10 @@
 /** @format */
 
+import React, { useState } from "react";
 import DashboardTitle from "../shared/DashboardTitle";
-// import ClientStats from "./components/ClientStats";
 import { Button } from "@/components/ui/button";
 import { MoreVertical, Plus, Search } from "lucide-react";
 import ClientDirectory from "../shared/ClientDirectory";
-import { useState } from "react";
 import { AddClientDialog } from "./components/AddClientDialog";
 import * as XLSX from "xlsx";
 import type { Client, TransactionItem } from "@/types/types";
@@ -30,7 +29,6 @@ import {
   SelectValue,
   SelectContent,
   SelectItem,
-  SelectGroup,
 } from "@/components/ui/select";
 import { getTransactionDate } from "@/utils/transactions";
 
@@ -55,7 +53,7 @@ export const Clients: React.FC<ClientProps> = ({
     setClientBalance,
     setClientStatus,
   } = useClientFiltering(clients);
-  //
+
   const handleStatusChange = (value: string) => {
     setClientStatus(value as clientStat);
   };
@@ -64,19 +62,14 @@ export const Clients: React.FC<ClientProps> = ({
     setClientBalance(value as clientBalance);
   };
 
-  // pdf function downloader
-
+  // --- PDF Export Logic ---
   const handleExportPDF = () => {
     const doc = new jsPDF();
-
     const columns = [
       { header: "Client Name", dataKey: "Name" },
       { header: "Phone", dataKey: "Phone" },
       { header: " Email", dataKey: "Email" },
-      {
-        header: " Last Transaction",
-        dataKey: "Last Transaction Type",
-      },
+      { header: " Last Transaction", dataKey: "Last Transaction Type" },
       { header: " Amount", dataKey: "Amount" },
       { header: "Balance Status", dataKey: "Balance Status" },
       { header: " Total Transaction", dataKey: "Total Transaction" },
@@ -84,16 +77,9 @@ export const Clients: React.FC<ClientProps> = ({
 
     const rows = filteredClients.map((client) => {
       const getLatestTransaction = (client: Client): TransactionItem | null => {
-        if (
-          !client.transactions ||
-          client.transactions.length === 0 ||
-          !Array.isArray(client.transactions)
-        )
-          return null;
-
+        if (!client.transactions || !Array.isArray(client.transactions)) return null;
         const sortedTransactions = [...client.transactions].sort(
-          (a, b) =>
-            getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
+          (a, b) => getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
         );
         return sortedTransactions[0] || null;
       };
@@ -104,36 +90,22 @@ export const Clients: React.FC<ClientProps> = ({
         Name: client.name,
         Phone: client.phone || "N/A",
         Email: client.email || "N/A",
-        "Last Transaction Type": latestTransaction
-          ? latestTransaction.type
-          : "No Transaction",
+        "Last Transaction Type": latestTransaction ? latestTransaction.type : "No Transaction",
         Amount: client.balance,
-        "Balance Status":
-          client.balance > 0
-            ? "DEPOSIT"
-            : client.balance < 0
-            ? "PURCHASE"
-            : "PICKUP",
-        "Total Transaction": client.transactions
-          ? client.transactions.length
-          : 0,
+        "Balance Status": client.balance > 0 ? "DEPOSIT" : client.balance < 0 ? "PURCHASE" : "PICKUP",
+        "Total Transaction": client.transactions ? client.transactions.length : 0,
       };
     });
+
     doc.setFontSize(16);
     doc.text("Client Summary", 14, 16);
-
     doc.setFontSize(10);
-    doc.text(
-      `Generated: ${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
-      14,
-      26
-    );
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 26);
+    
     autoTable(doc, {
       startY: 30,
       head: [columns.map((col) => col.header)],
-      body: rows.map((row) =>
-        columns.map((col) => row[col.dataKey as keyof typeof row])
-      ),
+      body: rows.map((row) => columns.map((col) => row[col.dataKey as keyof typeof row])),
       styles: { fontSize: 9 },
       headStyles: { fillColor: [44, 204, 113] },
       alternateRowStyles: { fillColor: [245, 245, 245] },
@@ -141,20 +113,13 @@ export const Clients: React.FC<ClientProps> = ({
     doc.save("Client_Summary.pdf");
   };
 
-  // Export Excel function handler
+  // --- Excel Export Logic ---
   const handleExportExcel = () => {
     const data = filteredClients.map((client) => {
       const getLatestTransaction = (client: Client): TransactionItem | null => {
-        if (
-          !client.transactions ||
-          client.transactions.length === 0 ||
-          !Array.isArray(client.transactions)
-        )
-          return null;
-
+        if (!client.transactions || !Array.isArray(client.transactions)) return null;
         const sortedTransactions = [...client.transactions].sort(
-          (a, b) =>
-            getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
+          (a, b) => getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
         );
         return sortedTransactions[0] || null;
       };
@@ -168,27 +133,14 @@ export const Clients: React.FC<ClientProps> = ({
         "Client ID": client._id,
         "Active Status": client.isActive ? "Active" : "Inactive",
         "Last Transaction Date": latestTransaction
-          ? new Date(latestTransaction.date).toLocaleDateString
-          : new Date(client.createdAt).toLocaleDateString,
-        "Registration Status": client.isRegistered
-          ? "Registered"
-          : "Unregistered",
-        "Last Transaction Type": latestTransaction
-          ? latestTransaction.type
-          : "No Transaction",
-        "Last Transaction Amount": latestTransaction
-          ? latestTransaction.amount
-          : 0,
+          ? new Date(latestTransaction.date).toLocaleDateString()
+          : new Date(client.createdAt).toLocaleDateString(),
+        "Registration Status": client.isRegistered ? "Registered" : "Unregistered",
+        "Last Transaction Type": latestTransaction ? latestTransaction.type : "No Transaction",
+        "Last Transaction Amount": latestTransaction ? latestTransaction.amount : 0,
         Amount: client.balance,
-        "Balance Status":
-          client.balance > 0
-            ? "DEPOSIT"
-            : client.balance < 0
-            ? "PURCHASE"
-            : "PICKUP",
-        "Total Transaction": client.transactions
-          ? client.transactions.length
-          : 0,
+        "Balance Status": client.balance > 0 ? "DEPOSIT" : client.balance < 0 ? "PURCHASE" : "PICKUP",
+        "Total Transaction": client.transactions ? client.transactions.length : 0,
       };
     });
 
@@ -202,88 +154,68 @@ export const Clients: React.FC<ClientProps> = ({
     <main>
       <DashboardTitle
         heading="Client Management"
-        description="Manage client accounts & relationships"
+        description="Manage client accounts & relationship"
       />
 
       <ClientStats />
 
-      {/* client directory */}
-      <section className="bg-white rounded-[0.625rem] pt-4 border border-[#D9D9D9] mt-10 mx-3 md:mx-0 ">
-        <div className="flex justify-between items-center px-7 pt-5 flex-wrap">
+      {/* Client Directory Section */}
+      <section className="bg-white rounded-[0.625rem] pt-4 border border-[#D9D9D9] mt-10 mx-3 md:mx-0">
+        
+        {/* Header Row */}
+        <div className="flex justify-between items-center px-4 sm:px-7 pt-2">
+          {/* Screenshot matches 'Clients Directory' (plural) */}
           <h4 className="font-medium text-xl font-Inter text-[#1E1E1E]">
-            Client directory
+            Clients Directory
           </h4>
 
           {showExportButtons !== false && (
             <>
-              {/* Desktop buttons - hidden on tablet and below */}
-              <div className="hidden lg:flex items-center gap-3 pt-5 lg:pt-0">
+              {/* Desktop Buttons (Hidden on Tablet/Mobile) */}
+              <div className="hidden lg:flex items-center gap-3">
                 <Button
-                  className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
+                  className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium"
                   onClick={handleExportPDF}
                 >
                   Export PDF
                 </Button>
                 <Button
-                  className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
+                  className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium"
                   onClick={handleExportExcel}
                 >
                   Download Excel
                 </Button>
                 <Button
                   onClick={() => setShowAddDialog(true)}
-                  className="bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)] transition-colors duration-200 ease-in-out"
+                  className="bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)]"
                 >
                   <Plus className="w-5 h-5 text-white mr-2" />
                   Add Client
                 </Button>
               </div>
 
-              {/* Mobile/Tablet dropdown menu - shown on tablet and below */}
-              <div className="lg:hidden pt-5 lg:pt-0">
+              {/* Tablet/Mobile Menu (Visible < lg) */}
+              <div className="lg:hidden">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)]"
+                      variant="ghost"
+                      size="icon"
+                      className="text-[#7D7D7D] hover:bg-transparent"
                     >
-                      <MoreVertical className="w-5 h-5" />
+                      <MoreVertical className="w-6 h-6" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    className="w-48 bg-white border border-[#D9D9D9] shadow-lg"
-                  >
-                    <div className="flex flex-col gap-1 p-1">
-                      <DropdownMenuItem
-                        onClick={handleExportPDF}
-                        className="cursor-pointer hover:bg-[#f5f5f5] focus:bg-[#f5f5f5] p-3 rounded-md"
-                      >
-                        <span className="text-[#333333] font-Inter font-medium">
-                          Export PDF
-                        </span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={handleExportExcel}
-                        className="cursor-pointer hover:bg-[#f5f5f5] focus:bg-[#f5f5f5] p-3 rounded-md"
-                      >
-                        <span className="text-[#333333] font-Inter font-medium">
-                          Download Excel
-                        </span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setShowAddDialog(true)}
-                        className="cursor-pointer hover:bg-[#e8f5e8] focus:bg-[#e8f5e8] p-3 rounded-md"
-                      >
-                        <div className="flex items-center">
-                          <Plus className="w-4 h-4 text-[#2ECC71] mr-2" />
-                          <span className="text-[#2ECC71] font-Inter font-medium">
-                            Add Client
-                          </span>
-                        </div>
-                      </DropdownMenuItem>
-                    </div>
+                  <DropdownMenuContent align="end" className="w-48 bg-white border border-[#D9D9D9]">
+                    <DropdownMenuItem onClick={handleExportPDF}>
+                      Export PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleExportExcel}>
+                      Download Excel
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowAddDialog(true)}>
+                      <span className="text-[#2ECC71]">Add Client</span>
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -291,67 +223,73 @@ export const Clients: React.FC<ClientProps> = ({
           )}
         </div>
 
-        {/* search */}
-        <div className="flex justify-between items-center px-4 py-5 mt-5 flex-wrap sm:flex-nowrap sm:px-2 md:px-8 ">
-          <div className="bg-[#F5F5F5] flex items-center gap-1 px-4 rounded-md w-full sm:w-1/2">
-            <Search size={18} />
+        {/* Controls Section: Stacked on Tablet/Mobile, Row on Desktop */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-4 sm:px-7 py-5">
+          
+          {/* Search Bar - Full width on Tablet */}
+          <div className="bg-[#F5F5F5] flex items-center gap-2 px-4 rounded-md w-full lg:w-1/2 h-10 border border-transparent focus-within:border-[#D9D9D9]">
+            <Search size={18} className="text-[#7D7D7D]" />
             <input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               type="search"
-              placeholder="Search products, categories..."
-              className="py-2 outline-0 w-full"
+              placeholder="Search"
+              className="bg-transparent outline-none w-full text-sm text-[#1E1E1E] placeholder:text-[#7D7D7D]"
             />
           </div>
-          <div className="flex items-center gap-4 pt-4 sm:pt-0 md:gap-3">
-            {/* Client Status */}
 
+          {/* Filters - Below search on Tablet, Left Aligned */}
+          <div className="flex items-center gap-3 w-full lg:w-auto">
+            {/* Status Filter */}
             <Select value={clientStatus} onValueChange={handleStatusChange}>
-              <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] p-2 rounded-sm">
+              <SelectTrigger className="w-[140px] bg-[#E0E0E0] text-[#1E1E1E] border border-[#C0C0C0] h-9 rounded-md text-sm font-medium">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
-              <SelectContent className="bg-[#D9D9D9] text-[#444444]">
-                <SelectGroup>
-                  <SelectItem value="All status">All Status</SelectItem>
-                  <SelectItem value="registered">Registered</SelectItem>
-                  <SelectItem value="unregistered">Unregistered</SelectItem>
-                </SelectGroup>
+              <SelectContent className="bg-white">
+                <SelectItem value="All status">All Status</SelectItem>
+                <SelectItem value="registered">Registered</SelectItem>
+                <SelectItem value="unregistered">Unregistered</SelectItem>
               </SelectContent>
             </Select>
 
-            {/* Client Balance */}
-
+            {/* Balance Filter */}
             <Select value={clientBalance} onValueChange={handleBalanceChange}>
-              <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] p-2 rounded-sm">
+              <SelectTrigger className="w-[150px] bg-[#E0E0E0] text-[#1E1E1E] border border-[#C0C0C0] h-9 rounded-md text-sm font-medium">
                 <SelectValue placeholder="All Balances" />
               </SelectTrigger>
-              <SelectContent className="bg-[#D9D9D9] text-[#444444]">
-                <SelectGroup>
-                  <SelectItem value="All Balances">All Balances</SelectItem>
-                  <SelectItem value="PURCHASE">Purchase</SelectItem>
-                  <SelectItem value="PICKUP">Pickup</SelectItem>
-                  <SelectItem value="DEPOSIT">Deposit</SelectItem>
-                </SelectGroup>
+              <SelectContent className="bg-white">
+                <SelectItem value="All Balances">All Balances</SelectItem>
+                <SelectItem value="PURCHASE">Purchase</SelectItem>
+                <SelectItem value="PICKUP">Pickup</SelectItem>
+                <SelectItem value="DEPOSIT">Deposit</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        <ClientDirectory
-          searchTerm={searchTerm}
-          filteredClientsData={filteredClients}
-          onClientAction={onClientAction}
-          actionLabel="view"
-          isStaffView={false}
-        />
-        <ClientDirectoryMobile
-          searchTerm={searchTerm}
-          filteredClientsData={filteredClients}
-          onClientAction={onClientAction}
-          actionLabel="view"
-          isStaffView={false}
-        />
+        {/* Desktop View: Table */}
+        <div className="hidden lg:block">
+          <ClientDirectory
+            searchTerm={searchTerm}
+            filteredClientsData={filteredClients}
+            onClientAction={onClientAction}
+            actionLabel="view"
+            isStaffView={false}
+          />
+        </div>
+
+        {/* Tablet/Mobile View: List/Cards (Matches screenshot) */}
+        <div className="block lg:hidden">
+          <ClientDirectoryMobile
+            searchTerm={searchTerm}
+            filteredClientsData={filteredClients}
+            onClientAction={onClientAction}
+            actionLabel="view"
+            isStaffView={false}
+          />
+        </div>
       </section>
+
       <AddClientDialog open={showAddDialog} onOpenChange={setShowAddDialog} />
     </main>
   );

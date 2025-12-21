@@ -217,7 +217,7 @@ const DashboardSales = () => {
         description="Process orders & manage customer purchases"
       />
       <section className="px-2 md:px-0">
-        <div className="flex gap-[24px] items-end justify-end mb-5">
+        <div className="flex gap-[24px] items-end justify-end md:items-start md:justify-start lg:items-end lg:justify-end mb-5">
           <Button variant="tertiary" onClick={handleExportExcel}>
             Download Excel
           </Button>
