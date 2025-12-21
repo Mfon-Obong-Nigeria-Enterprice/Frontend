@@ -10,7 +10,7 @@ import {
 } from "@/stores/useNotificationStore";
 import { cn } from "@/lib/utils";
 import DashboardTitle from "../DashboardTitle";
-import { useAuthStore } from "@/stores/useAuthStore";
+//import { useAuthStore } from "@/stores/useAuthStore";
 import {
   Select,
   SelectContent,
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 
 const Notifications = () => {
-  const user = useAuthStore((s) => s.user);
+  //const user = useAuthStore((s) => s.user);
   const { markAsRead, markAllAsRead, deleteNotification } =
     useNotificationStore();
 
