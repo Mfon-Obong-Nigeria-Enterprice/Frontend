@@ -731,8 +731,8 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
             <TabsContent value="clientTransaction">
               {/* data */}
-              <div className="md:flex justify-start items-center w-full gap-4 md:gap-1  lg:gap-2 mb-10">
-                <div className="flex flex-col justify-end transition-all w-full h-full">
+              <div className="flex overflow-x-auto md:overflow-visible justify-start items-center w-full gap-4 md:gap-1 lg:gap-2 mb-10 pb-2 md:pb-0">
+                <div className="flex flex-col justify-end transition-all min-w-[250px] md:min-w-0 w-auto md:w-full h-full flex-shrink-0 md:shrink">
                   <DateFromToPicker
                     date={dateRangeFilter}
                     onDateChange={(range) =>
@@ -741,7 +741,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                   />
                 </div>
 
-                <div className="flex flex-col  sm:w-[179px] md:w-[179px] transition-all w-full ">
+                <div className="flex flex-col w-[179px] sm:w-[179px] md:w-[179px] transition-all flex-shrink-0 md:shrink">
                   <label className="mb-2 text-xs font-medium text-[#7D7D7D]">
                     Transaction type
                   </label>
@@ -761,7 +761,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                   </Select>
                 </div>
 
-                <div className="flex flex-col  sm:w-[230px] md:w-[210px] transition-all w-full">
+                <div className="flex flex-col w-[230px] sm:w-[230px] md:w-[210px] transition-all flex-shrink-0 md:shrink">
                   <label className="mb-2 text-xs font-medium text-[#7D7D7D]">
                     Staff member
                   </label>
@@ -780,7 +780,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                   </Select>
                 </div>
 
-                <div className="flex flex-col md:items-center sm:w-[101px] md:w-[101px] lg:w-[101px] transition-all w-full">
+                <div className="flex flex-col md:items-center w-[101px] sm:w-[101px] md:w-[101px] lg:w-[101px] transition-all flex-shrink-0 md:shrink">
                   <Button
                     className="mt-6 max-w-[101px]  bg-[#2ECC71] hover:bg-[#27ae60] text-white font-medium  sm:w-[230px] md:w-[210px] transition-all w-full "
                     onClick={handleApplyFilters}
