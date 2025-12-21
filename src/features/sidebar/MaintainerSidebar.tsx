@@ -72,7 +72,7 @@ const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
+              {/* <SidebarMenuItem>
                 <SidebarMenuButton
                   className="cursor-pointer hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all bg-[#F4E8E7] text-[#333333]"
                   onClick={() => navigate(-1)}
@@ -80,7 +80,7 @@ const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
                   <IoIosArrowBack />
                   <span>Back</span>
                 </SidebarMenuButton>
-              </SidebarMenuItem>
+              </SidebarMenuItem> */}
               {items.map((item) => {
                 const isActive = pathname.startsWith(item.url);
 

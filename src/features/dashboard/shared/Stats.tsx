@@ -73,10 +73,10 @@ const getColor = (color?: string) => {
     return color;
   }
   switch (color) {
-    case "green": return "#16a34a";
-    case "orange": return "#f97316";
-    case "red": return "#ef4444";
-    case "blue": return "#2563eb";
+    case "green": return "#2ECC71";
+    case "red": return "#F95353";
+    case "blue": return "#3D80FF";
+    case "orange": return "#FFA500";
     default: return "#6b7280";
   }
 };
