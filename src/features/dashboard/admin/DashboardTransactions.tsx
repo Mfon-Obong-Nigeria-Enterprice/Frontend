@@ -65,7 +65,7 @@ const DashboardTransactions: React.FC<DashboardTransactionProps> = ({
           heading="Transaction Management"
           description="Track all sales payment & client account activities"
         />
-        {isAdmin && (
+        {/* {isAdmin && (
           <Button
             className="min-w-40"
             onClick={() => setIsWaybillModalOpen(true)}
@@ -73,7 +73,7 @@ const DashboardTransactions: React.FC<DashboardTransactionProps> = ({
             <img src="/icons/brick.svg" alt="" className="w-4" />
             Add Waybill
           </Button>
-        )}
+        )} */}
       </div>
       <Transactions />
 
