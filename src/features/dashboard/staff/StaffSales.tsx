@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import DashboardTitle from "../shared/DashboardTitle";
 import MySalesActivity from "./components/desktop/MySalesActivity";
 import MobileSalesActivity from "./components/mobile/MobileSalesActivity";
-import WaybillModal from "./components/WaybillModal"; // Import the new modal
+import WaybillModal from "./components/WaybillModal"; 
 
 // ui
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,7 @@ const StaffSales = () => {
   const [filter, setFilter] = useState<"today" | "week" | "month" | "all">(
     "today"
   );
-  const [isWaybillModalOpen, setIsWaybillModalOpen] = useState(false); // Add modal state
+  const [isWaybillModalOpen, setIsWaybillModalOpen] = useState(false);
 
   // Filter and sort transactions
   const filteredTransactions = useMemo(() => {
@@ -203,8 +203,15 @@ const StaffSales = () => {
             </div>
           </div>
         </div>
-        <MySalesActivity filteredTransactions={currentTransaction} />
-        <MobileSalesActivity filteredTransactions={currentTransaction} />
+
+        {/* --- CHANGED: md to lg to ensure Tablet uses Mobile view --- */}
+        <div className="hidden lg:block">
+            <MySalesActivity filteredTransactions={currentTransaction} />
+        </div>
+        <div className="lg:hidden">
+             <MobileSalesActivity filteredTransactions={currentTransaction} />
+        </div>
+        {/* ------------------------------------------------------------- */}
 
         {/* pagination */}
         {currentTransaction &&

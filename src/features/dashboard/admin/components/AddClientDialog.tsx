@@ -14,16 +14,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { useClientMutations } from "@/hooks/useClientMutations";
 import { isAxiosError, type AxiosError } from "axios";
+import type { CreateClientPayload } from "@/services/clientService";
 
 interface AddClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
 interface FormData {
   name: string;
   phone: string;
   description: string;
   balance: number;
+  balanceDisplay: string;
   address: string;
 }
 
@@ -37,15 +40,50 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
     phone: "",
     description: "",
     balance: 0,
+    balanceDisplay: "₦0",
     address: "",
   });
+
+  const formatCurrencyDisplay = (value: string) => {
+    if (!value) return "₦0";
+    const digitsOnly = value.replace(/\D/g, "");
+    if (digitsOnly === "") return "₦0";
+    const numericValue = parseFloat(digitsOnly);
+    return `₦${numericValue.toLocaleString("en-GB", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })}`;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    const digitsOnly = inputValue.replace(/\D/g, "");
+    const limitedDigits = digitsOnly.slice(0, 11);
+
+    setFormData((prev) => ({
+      ...prev,
+      phone: limitedDigits,
+    }));
+  };
+
+  const handleBalanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    const digitsOnly = inputValue.replace(/\D/g, "");
+    const numericValue = digitsOnly === "" ? 0 : parseFloat(digitsOnly);
+    const formattedDisplay = formatCurrencyDisplay(digitsOnly);
+
+    setFormData((prev) => ({
+      ...prev,
+      balance: numericValue,
+      balanceDisplay: formattedDisplay,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
-    // Client-side validation
     if (!formData.name.trim()) {
       setError("Client name is required");
       setIsLoading(false);
@@ -58,40 +96,59 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
       return;
     }
 
-    // Basic phone number validation (adjust regex as needed for your format)
-    const phoneRegex = /^[0-9+\-\s()]+$/;
-    if (!phoneRegex.test(formData.phone)) {
-      setError("Please enter a valid phone number");
+    if (!formData.address.trim()) {
+      setError("Client address is required");
+      setIsLoading(false);
+      return;
+    }
+
+    const digitsOnly = formData.phone.replace(/\D/g, "");
+    if (digitsOnly.length !== 11) {
+      setError("Phone number must be exactly 11 digits");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!/^[0-9]+$/.test(digitsOnly)) {
+      setError("Phone number must contain only digits");
       setIsLoading(false);
       return;
     }
 
     try {
-      const clientData = {
+      // Build the client data object matching backend requirements
+      const clientData: CreateClientPayload = {
         name: formData.name.trim(),
         phone: formData.phone.trim(),
-        description: formData.description.trim(),
-        balance: Number(formData.balance),
         address: formData.address.trim(),
       };
+
+      if (formData.description.trim()) {
+        clientData.description = formData.description.trim();
+      }
+
+      if (formData.balance > 0) {
+        clientData.balance = Number(formData.balance);
+      }
+
       await createMutate.mutateAsync(clientData);
 
       onOpenChange(false);
+
       // Reset form
       setFormData({
         name: "",
         phone: "",
         description: "",
         balance: 0,
+        balanceDisplay: "₦0",
         address: "",
       });
+      setError(null);
     } catch (err) {
-      // console.error("Failed to add client:", err);
-
       if (isAxiosError(err)) {
         const axiosError = err as AxiosError<{ message: string }>;
 
-        // Handle specific error cases
         if (axiosError.response?.status === 409) {
           setError(
             "A client with this name or phone number already exists. Please use different details."
@@ -101,15 +158,32 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
         } else {
           setError("Failed to add client. Please try again.");
         }
+      } else {
+        setError("An unexpected error occurred. Please try again.");
       }
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen && !isLoading) {
+      setFormData({
+        name: "",
+        phone: "",
+        description: "",
+        balance: 0,
+        balanceDisplay: "₦0",
+        address: "",
+      });
+      setError(null);
+    }
+    onOpenChange(newOpen);
+  };
+
   return (
     <div className="">
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogOverlay className="bg-[#ffffff] fixed inset-0 z-50" />
         <DialogContent aria-describedby="add-client-dialog z-50">
           <DialogHeader>
@@ -124,13 +198,14 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                 {error}
               </div>
             )}
+
             <div className="flex items-center gap-3 flex-wrap ">
               <div className="sm:w-[225px] w-full ">
                 <Label
                   htmlFor="name"
                   className="text-sm text-[#333333] font-[400]"
                 >
-                  Client Name{" "}
+                  Client Name
                 </Label>
                 <Input
                   className="w-full mt-2 font-[400] text-sm border-[#444444] border "
@@ -150,7 +225,7 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                   htmlFor="phone"
                   className="text-sm text-[#333333] font-[400]"
                 >
-                  Phone Number{" "}
+                  Phone Number
                 </Label>
                 <Input
                   className="w-full mt-2 font-[400] text-sm border border-[#444444] "
@@ -158,9 +233,7 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                   value={formData.phone}
                   disabled={isLoading}
                   placeholder="080 XXX XXX XX"
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, phone: e.target.value }))
-                  }
+                  onChange={handlePhoneChange}
                   required
                 />
               </div>
@@ -177,7 +250,7 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                 <Input
                   className="mt-2 font-[400] text-sm border border-[#444444] "
                   id="address"
-                  placeholder="Enter Client address"
+                  placeholder="Enter client address"
                   required
                   disabled={isLoading}
                   value={formData.address}
@@ -189,44 +262,35 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                   }
                 />
               </div>
-
-              {/*  */}
               <div className="sm:w-[225px] w-full">
                 <Label
-                  htmlFor="number"
+                  htmlFor="balance"
                   className="text-sm text-[#333333] font-[400]"
                 >
-                  Initial Balance(optional)
+                  Initial Balance (optional)
                 </Label>
                 <Input
                   className="mt-2 font-[400] text-sm border border-[#444444] "
-                  id="number"
-                  type="number"
-                  step="1"
-                  placeholder="0.00"
-                  required
+                  id="balance"
+                  type="text"
+                  placeholder="₦0"
                   disabled={isLoading}
-                  value={formData.balance}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      balance: Number.parseFloat(e.target.value),
-                    }))
-                  }
+                  value={formData.balanceDisplay}
+                  onChange={handleBalanceChange}
                 />
               </div>
             </div>
 
             <div>
               <Label
-                htmlFor="Description"
+                htmlFor="description"
                 className="text-sm text-[#444444] font-[400] "
               >
-                Description(optional)
+                Description (optional)
               </Label>
               <Textarea
                 className="mt-2 font-[400] text-sm border border-[#444444]"
-                id="notes"
+                id="description"
                 value={formData.description}
                 onChange={(e) =>
                   setFormData((prev) => ({
@@ -234,6 +298,7 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
                     description: e.target.value,
                   }))
                 }
+                placeholder="Add any additional notes about this client..."
                 rows={5}
                 disabled={isLoading}
               />
@@ -243,12 +308,17 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => onOpenChange(false)}
+                onClick={() => handleOpenChange(false)}
                 className="border-[#444444] border p-5"
+                disabled={isLoading}
               >
                 Cancel
               </Button>
-              <Button type="submit" className="bg-[#2ECC71] p-5">
+              <Button
+                type="submit"
+                className="bg-[#2ECC71] p-5 hover:bg-[#27AE60]"
+                disabled={isLoading}
+              >
                 {isLoading ? "Adding..." : "Add Client"}
               </Button>
             </div>

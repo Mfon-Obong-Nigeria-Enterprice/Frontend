@@ -34,10 +34,40 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [amount, setAmount] = useState(0);
+  const [amountDisplay, setAmountDisplay] = useState("₦0");
   const [reference, setReference] = useState("");
   const [description, setDescription] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Format currency display with Naira symbol and commas
+  const formatCurrencyDisplay = (value: string) => {
+    if (!value) return "₦0";
+    const digitsOnly = value.replace(/\D/g, "");
+    if (digitsOnly === "") return "₦0";
+    const numericValue = parseFloat(digitsOnly);
+    return `₦${numericValue.toLocaleString("en-GB", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })}`;
+  };
+
+  // Handle amount input change
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+
+    // Remove all non-digit characters
+    const digitsOnly = inputValue.replace(/\D/g, "");
+
+    // Convert to number
+    const numericValue = digitsOnly === "" ? 0 : parseFloat(digitsOnly);
+
+    // Format for display
+    const formattedDisplay = formatCurrencyDisplay(digitsOnly);
+
+    setAmount(numericValue);
+    setAmountDisplay(formattedDisplay);
+  };
 
   const newBalance = useMemo(() => {
     const currentBalance = client?.balance ?? 0;
@@ -110,7 +140,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       }
 
       toast.success(
-        `Payment of ₦${formatCurrency(amount)} processed successfully!`
+        `Payment of ${formatCurrency(amount)} processed successfully!`
       );
       onPaymentSuccess();
       onClose();
@@ -157,6 +187,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
       // Reset form
       setAmount(0);
+      setAmountDisplay("₦0");
       setReference("");
       setDescription("");
       setPaymentMethod("Cash");
@@ -202,6 +233,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 </div>
                 <div>
                   <p className="flex gap-1 items-center text-[#444444] text-sm">
+                    <span className="text-[#444444]">Phone: </span>
                     <span>{client.phone}</span>
                   </p>
                 </div>
@@ -230,24 +262,22 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           <div className="space-y-4 px-2">
             <div>
               <label className="block text-sm font-medium mb-1 text-[#1E1E1E] font-Inter">
-                Payment Amount *
+                Payment Amount <span className="text-red-500">*</span>
               </label>
               <input
                 disabled={isProcessing}
                 required
-                type="number"
-                min="0.01"
-                step="0.01"
-                value={amount || ""}
-                onChange={(e) => setAmount(Number(e.target.value))}
+                type="text"
+                value={amountDisplay}
+                onChange={handleAmountChange}
                 className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="1000"
+                placeholder="₦0"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1 text-[#1E1E1E] font-Inter">
-                Payment Method *
+                Payment Method <span className="text-red-500">*</span>
               </label>
               <select
                 value={paymentMethod}
@@ -265,7 +295,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium mb-1 text-[#1E1E1E] font-Inter">
-                Description
+                Description (optional)
               </label>
               <textarea
                 disabled={isProcessing}
@@ -279,7 +309,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium mb-1 text-[#1E1E1E] font-Inter">
-                Reference/note
+                Reference/Note (optional)
               </label>
               <input
                 disabled={isProcessing}
@@ -294,9 +324,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             <div className="rounded-lg bg-[#F5F5F5] px-5 py-4">
               <div className="space-y-4 border-b-1 pb-4 border-[#D9D9D9]">
                 <div className="flex justify-between items-center">
-                  <p>Current Balance:</p>
+                  <p className="text-sm">Current Balance:</p>
                   <p
-                    className={`${
+                    className={`font-medium ${
                       client?.balance < 0
                         ? " text-[#F95353]"
                         : client?.balance > 0
@@ -308,14 +338,16 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                   </p>
                 </div>
                 <div className="flex justify-between items-center">
-                  <p>Payment Amount:</p>
-                  <p className="text-[#2ECC71]">+{formatCurrency(amount)}</p>
+                  <p className="text-sm">Payment Amount:</p>
+                  <p className="text-[#2ECC71] font-medium">
+                    +{formatCurrency(amount)}
+                  </p>
                 </div>
               </div>
               <div className="flex justify-between items-center pt-4">
                 <p className="font-semibold">New Balance:</p>
                 <p
-                  className={`font-semibold ${
+                  className={`font-semibold text-lg ${
                     newBalance < 0
                       ? " text-[#F95353]"
                       : newBalance > 0
@@ -328,7 +360,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-2">
               <Button
                 variant="outline"
                 onClick={onClose}
@@ -348,7 +380,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                     Processing...
                   </div>
                 ) : (
-                  "Process Payment"
+                  "Process Debt Payment"
                 )}
               </Button>
             </div>

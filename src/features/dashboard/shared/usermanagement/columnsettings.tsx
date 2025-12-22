@@ -187,7 +187,10 @@ const DraggableColumnItem = ({
         <Checkbox
           checked={true}
           onCheckedChange={handleCheckboxChange}
-          className="border border-gray-400 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+          className="border-[#2ECC71]
+    data-[state=checked]:bg-[#2ECC71]
+    data-[state=checked]:border-[#2ECC71]
+    data-[state=checked]:text-white"
         />
         <span className="text-sm font-light text-[#444444]">{col}</span>
       </div>

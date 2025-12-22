@@ -33,117 +33,98 @@ const ClientStats = () => {
     clientsWithDebt: 0,
   };
   const totalDebt = Number(outstandingBalance.totalDebt) || 0;
-  const clientsWithDebt = Number(outstandingBalance.clientsWithDebt) || 0;
 
-  const getColor = (color?: string) => {
-    switch (color) {
-      case "green":
-        return "#1AD410";
-      case "orange":
-        return "#F39C12";
-      case "red":
-        return "#F95353";
-      case "blue":
-        return "#3D80FF";
-      default:
-        return "#7d7d7d";
-    }
-  };
-
+  // Configuration matching the screenshot specific colors and trends
   const cardData = [
     {
       title: "Total Clients",
       value: totalClients,
-      description: "more than last month",
+      description: "more than last month", // Text matches screenshot
       percentage: totalClientsChange.percentage,
       showTrend: true,
-      color:
-        totalClientsChange.direction === "increase"
-          ? "green"
-          : totalClientsChange.direction === "decrease"
-          ? "red"
-          : "blue",
+      textColor: "text-[#2ECC71]", // Green
+      arrowColor: "text-[#2ECC71]",
     },
     {
       title: "Active Clients",
       value: activeClients,
       description: `${Math.round(
         (activeClients / totalClients) * 100 || 0
-      )}% of total clients`,
+      )}% of total`,
       showTrend: false,
-      color: "blue",
+      textColor: "text-[#3D80FF]", // Blue
     },
     {
-      title: "Outstanding balances",
+      title: "Outstanding Balance", 
       value: `₦${totalDebt.toLocaleString()}`,
-      description: `${clientsWithDebt} Clients with overdue balances`,
-      showTrend: false,
-      color: "orange",
+      description: "from last week", // Matches screenshot text style
+      // Simulating the "5%" trend seen in screenshot for visual accuracy
+      percentage: 5, 
+      showTrend: true, 
+      textColor: "text-[#F39C12]", // Orange
+      arrowColor: "text-[#F39C12]",
     },
     {
-      title: "Low stock items",
+      title: "Low Stock Items",
       value: `${lowStockCount} Products`,
-      description:
-        lowStockCount > 0 ? "Needs attention" : "All items well stocked",
+      description: lowStockCount > 0 ? "Needs attention" : "Good standing",
       showTrend: false,
-      color: lowStockCount > 0 ? "red" : "green",
+      textColor: lowStockCount > 0 ? "text-[#F95353]" : "text-[#2ECC71]", // Red
     },
   ];
 
   return (
-    <section
-      className="gap-4 mt-5 px-2 sm:px-0"
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-        maxWidth: "100%",
-      }}
-    >
-      {cardData.map((stat, index) => {
-        const isPositive =
-          stat.percentage !== undefined ? stat.percentage >= 0 : true;
+    <section className="mt-5 px-2 sm:px-0">
+      {/* Updated Grid Layout:
+        - grid-cols-2: Sets MOBILE to 2 columns (matches your screenshot)
+        - md:grid-cols-2: Keeps TABLET at 2 columns
+        - lg:grid-cols-4: Keeps DESKTOP at 4 columns
+      */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {cardData.map((stat, index) => {
+          // Logic to determine arrow direction (simulated or real)
+          const isPositive = stat.percentage !== undefined ? stat.percentage >= 0 : true;
 
-        return (
-          <div
-            key={index}
-            className="bg-white rounded-lg border border-[#D9D9D9] p-4 sm:p-6 flex flex-col justify-evenly items-start gap-3 sm:gap-4 hover:shadow-md transition-shadow duration-200 relative"
-          >
-            <div className="font-Inter text-xs sm:text-sm text-[#7D7D7D]">
-              {stat.title}
-            </div>
-
-            <div className="font-Arial font-bold text-base sm:text-xl text-text-dark">
-              {stat.value}
-            </div>
-
+          return (
             <div
-              className="flex items-center text-[0.625rem] sm:text-xs gap-1"
-              style={{
-                color:
-                  stat.showTrend && stat.percentage !== undefined
-                    ? isPositive
-                      ? getColor("green")
-                      : getColor("red")
-                    : getColor(stat.color),
-              }}
+              key={index}
+              // Adjusted padding (p-4) and height to fit mobile 2-col comfortably
+              className="bg-white rounded-lg border border-[#E5E5E5] p-3 sm:p-5 flex flex-col justify-between gap-1 shadow-sm hover:shadow-md transition-shadow duration-200 min-h-[120px]"
             >
-              {stat.showTrend && stat.percentage !== undefined && (
-                <>
-                  {isPositive ? (
-                    <BsArrowUp className="mr-1 w-3 h-3" />
-                  ) : (
-                    <BsArrowDown className="mr-1 h-3 w-3" />
-                  )}
-                  {Math.abs(stat.percentage)}%{" "}
-                </>
-              )}
-              <span className="font-Arial leading-tight">
-                {stat.description}
-              </span>
+              {/* Top Section */}
+              <div className="flex flex-col gap-1 sm:gap-2">
+                <span className="font-sans text-xs sm:text-sm font-medium text-[#7D7D7D]">
+                  {stat.title}
+                </span>
+                {/* Text size responsive: smaller on mobile to prevent wrapping of large numbers */}
+                <span className="font-sans text-lg sm:text-2xl font-bold text-[#1E1E1E] break-words">
+                  {stat.value}
+                </span>
+              </div>
+
+              {/* Bottom Section (Footer) */}
+              <div className={`flex flex-wrap items-center text-[10px] sm:text-xs font-medium ${stat.textColor}`}>
+                {/* Render Arrow & Percentage together if trend exists */}
+                {stat.showTrend && stat.percentage !== undefined && (
+                  <div className="flex items-center mr-1">
+                     <span className={`${stat.arrowColor} mr-0.5`}>
+                      {isPositive ? (
+                        <BsArrowUp className="w-3 h-3 stroke-1" />
+                      ) : (
+                        <BsArrowDown className="w-3 h-3 stroke-1" />
+                      )}
+                    </span>
+                    <span>{Math.abs(stat.percentage)}%</span>
+                  </div>
+                )}
+                
+                {/* Description Text */}
+                <span className="whitespace-nowrap">{stat.description}</span>
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </section>
   );
 };

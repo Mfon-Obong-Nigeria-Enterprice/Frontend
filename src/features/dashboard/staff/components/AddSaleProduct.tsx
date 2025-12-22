@@ -2,10 +2,7 @@ import React, { useState } from "react";
 import Modal from "@/components/Modal";
 import { toast } from "react-toastify";
 
-//store
-import { useInventoryStore } from "@/stores/useInventoryStore";
-
-// ui
+// ui & components
 import {
   Select,
   SelectTrigger,
@@ -26,13 +23,14 @@ import InputWithSuggestions from "@/components/ui/inputwithsuggestions";
 import { Button } from "@/components/ui/button";
 
 // icons
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 // utils
 import { formatCurrency } from "@/utils/styles";
 
 // type
 import type { Row } from "../NewSales";
+import type { Product } from "@/types/types";
 
 interface AddSaleProductProps {
   rows: Row[];
@@ -42,6 +40,8 @@ interface AddSaleProductProps {
   discountReason?: string;
   globalDiscount: number;
   setGlobalDiscount: React.Dispatch<React.SetStateAction<number>>;
+  products: Product[];
+  salesType: "Retail" | "Wholesale";
 }
 
 const discountReasons = [
@@ -60,9 +60,9 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
   discountReason = "",
   globalDiscount,
   setGlobalDiscount,
+  products,
+  salesType,
 }) => {
-  const { products } = useInventoryStore();
-
   const [modal, setModal] = useState<{
     isOpen: boolean;
     rowIndex: number | null;
@@ -136,19 +136,6 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
 
   // open delete modal with checks
   const openDeleteModal = (index: number) => {
-    // const row = rows[index];
-    // const isRowEmpty =
-    //   !row.productId &&
-    //   row.unitPrice === 0 &&
-    //   row.quantity === 1 &&
-    //   row.discount === 0 &&
-    //   row.total === 0;
-
-    // if (isRowEmpty ) {
-    //   toast.warn("Add a product first");
-    //   return;
-    // }
-
     setModal({ isOpen: true, rowIndex: index });
   };
 
@@ -197,9 +184,140 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
 
   return (
     <div className="bg-white border px-2 py-5">
-      <h6 className="text-[#1E1E1E] text-base font-medium">Add Products</h6>
+      <h6 className="text-[#1E1E1E] text-base font-medium mb-4">Add Product</h6>
 
-      <div className="overflow-x-auto -mx-4 sm:mx-0">
+      {/* ========================================================= */}
+      {/* MOBILE VIEW (STRICTLY MATCHING SCREENSHOT) - md:hidden   */}
+      {/* ========================================================= */}
+      <div className="block md:hidden">
+        {/* Header Row */}
+        <div className="flex items-center gap-2 bg-[#F5F5F5] py-3 px-1 mb-2">
+            <div className="w-[32%] text-[11px] text-[#666] font-medium pl-1">Description</div>
+            <div className="w-[14%] text-[11px] text-[#666] font-medium text-center">Quantity</div>
+            <div className="w-[18%] text-[11px] text-[#666] font-medium text-center">Unit Price</div>
+            <div className="w-[14%] text-[11px] text-[#666] font-medium text-center">Discount</div>
+            <div className="w-[14%] text-[11px] text-[#666] font-medium text-center">Total</div>
+            <div className="w-[8%] text-[11px] text-[#666] font-medium text-center">Action</div>
+        </div>
+
+        {/* Data Rows */}
+        <div className="space-y-3">
+          {rows.map((row, index) => {
+             const selectedProduct = products.find(
+              (p) => p._id === row.productId
+            );
+            const maxQuantity = selectedProduct?.stock || 0;
+
+            return (
+              <div key={index} className="flex items-center gap-2 border-b pb-3 last:border-0 px-1">
+                {/* Product Select */}
+                <div className="w-[32%]">
+                   <Select
+                    value={row.productId}
+                    onValueChange={(value) => handleProductChange(index, value)}
+                  >
+                    <SelectTrigger className="h-[34px] text-[11px] px-2 bg-white border border-[#E5E7EB] rounded w-full">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {products
+                        .filter(
+                          (p) =>
+                            p.isActive &&
+                            p.stock > 0 &&
+                            (p._id === row.productId ||
+                              !rows.some(
+                                (r, i) => r.productId === p._id && i !== index
+                              ))
+                        )
+                        .map((p) => (
+                          <SelectItem key={p._id} value={p._id} className="text-xs">
+                            {p.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Quantity */}
+                <div className="w-[14%]">
+                    <input
+                      type="number"
+                      max={maxQuantity}
+                      value={row.quantity === 0 ? "" : row.quantity}
+                      placeholder="0"
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "") {
+                            updateRow(index, { quantity: 0 });
+                            return;
+                        }
+                        const newQuantity = Number(value);
+                        if (salesType === "Retail" && newQuantity > maxQuantity && maxQuantity > 0) {
+                            toast.warn(`Only ${maxQuantity} available`);
+                            updateRow(index, { quantity: maxQuantity });
+                        } else {
+                            updateRow(index, { quantity: newQuantity });
+                        }
+                      }}
+                      className="w-full h-[34px] border border-[#E5E7EB] rounded text-center text-[11px] outline-none bg-white focus:ring-1 focus:ring-gray-200"
+                    />
+                </div>
+
+                {/* Unit Price */}
+                <div className="w-[18%]">
+                    <div className="w-full h-[34px] border border-[#E5E7EB] rounded flex items-center justify-center bg-white">
+                        <span className="text-[10px] text-gray-600">
+                          {row.unitPrice > 0 ? formatCurrency(row.unitPrice) : "₦0.00"}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Discount */}
+                <div className="w-[14%]">
+                    <div className="w-full h-[34px] border border-[#E5E7EB] rounded flex items-center justify-center bg-white relative">
+                         <input 
+                            type="number"
+                            value={row.discount === 0 ? "" : row.discount}
+                            placeholder="0"
+                            onChange={(e) => {
+                                let newDiscount = Number(e.target.value) || 0;
+                                updateRow(index, { discount: newDiscount });
+                            }}
+                            className="w-full h-full text-center text-[11px] outline-none bg-transparent px-1"
+                         />
+                         <span className="absolute right-1 text-[9px] text-gray-400 pointer-events-none">
+                            {row.discountType === 'percent' ? '%' : ''}
+                         </span>
+                    </div>
+                </div>
+
+                 {/* Total */}
+                 <div className="w-[14%] text-center">
+                    <span className="text-[10px] text-[#333]">
+                         {row.total > 0 ? formatCurrency(row.total) : "₦0.00"}
+                    </span>
+                 </div>
+
+                 {/* Action */}
+                 <div className="w-[8%] flex justify-center">
+                    <button 
+                        onClick={() => openDeleteModal(index)}
+                        className="w-[30px] h-[30px] bg-[#F5F5F5] rounded flex items-center justify-center hover:bg-red-50"
+                    >
+                         <Trash2 className="w-3.5 h-3.5 text-[#666]" />
+                    </button>
+                 </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ========================================================= */}
+      {/* DESKTOP VIEW (PRESERVED) - hidden md:block               */}
+      {/* ========================================================= */}
+      <div className="hidden md:block overflow-x-auto -mx-4 sm:mx-0">
         <div className="min-w-[700px] px-4 sm:px-0">
           <Table className="w-full mt-2 space-y-20">
             <TableHeader className="bg-[#F0F0F3] h-12">
@@ -224,167 +342,175 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                 </TableHead>
               </TableRow>
             </TableHeader>
-        <TableBody>
-          {rows.map((row, index) => {
-            const selectedProduct = products.find(
-              (p) => p._id === row.productId
-            );
-            const maxQuantity = selectedProduct?.stock || 0;
+            <TableBody>
+              {rows.map((row, index) => {
+                const selectedProduct = products.find(
+                  (p) => p._id === row.productId
+                );
+                const maxQuantity = selectedProduct?.stock || 0;
 
-            return (
-              <TableRow key={index} className="!border-b">
-                {/* Product select */}
-                <TableCell className="py-5">
-                  <Select
-                    value={row.productId}
-                    onValueChange={(value) => handleProductChange(index, value)}
-                  >
-                    <SelectTrigger className="!bg-white w-[75px] md:w-[170px]">
-                      <SelectValue placeholder="Select product" />
-                    </SelectTrigger>
-                    <SelectContent position="popper">
-                      {products
-                        .filter(
-                          (p) =>
-                            p.isActive &&
-                            p.stock > 0 &&
-                            // include if its the current row's selected product
-                            (p._id === row.productId ||
-                              // or if its not already seleceted in another row
-                              !rows.some(
-                                (r, i) => r.productId === p._id && i !== index
-                              ))
-                        )
-                        .map((p) => (
-                          <SelectItem key={p._id} value={p._id}>
-                            {p.name} - {p.unit}
-                            {/* - Stock: {p.stock}  */}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-
-                {/* Quantity input */}
-                <TableCell className="w-[75px] md:w-[100px]">
-                  <Input
-                    type="number"
-                    max={maxQuantity}
-                    value={row.quantity === 0 ? "" : row.quantity} // allow clearing zero
-                    onChange={(e) => {
-                      const value = e.target.value;
-
-                      if (value === "") {
-                        // user cleared input
-                        updateRow(index, { quantity: 0 }); // keep store consistent but UI shows empty
-                        return;
-                      }
-
-                      const newQuantity = Number(value);
-
-                      if (newQuantity > maxQuantity && maxQuantity > 0) {
-                        toast.warn(
-                          `Only ${maxQuantity} ${
-                            row.unit || "items"
-                          } available in stock`
-                        );
-                        updateRow(index, { quantity: maxQuantity });
-                      } else {
-                        updateRow(index, { quantity: newQuantity });
-                      }
-                    }}
-                    className="text-center !bg-white"
-                  />
-                </TableCell>
-
-                {/* Unit Price */}
-                <TableCell className="text-center">
-                  <div>{formatCurrency(row.unitPrice)}</div>
-                </TableCell>
-
-                {/* Discount */}
-                <TableCell>
-                  <div className="w-16 md:w-20 mx-auto h-[35.5px] flex items-center border px-2 !rounded-[7.5px]">
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={row.discount === 0 ? "" : row.discount}
-                      onChange={(e) => {
-                        let newDiscount = Number(e.target.value) || 0;
-                        const baseAmount = row.quantity * row.unitPrice;
-
-                        if (
-                          row.discountType === "percent" &&
-                          newDiscount > 100
-                        ) {
-                          toast.warn("Discount percentage cannot exceed 100%");
-                          newDiscount = 100;
-                        } else if (
-                          row.discountType === "amount" &&
-                          newDiscount > baseAmount
-                        ) {
-                          toast.warn(
-                            "Discount cannot exceed total amount of goods"
-                          );
-                          newDiscount = baseAmount;
+                return (
+                  <TableRow key={index} className="!border-b">
+                    {/* Product select */}
+                    <TableCell className="py-5">
+                      <Select
+                        value={row.productId}
+                        onValueChange={(value) =>
+                          handleProductChange(index, value)
                         }
+                      >
+                        <SelectTrigger className="!bg-white w-[75px] md:w-[170px]">
+                          <SelectValue placeholder="Select product" />
+                        </SelectTrigger>
+                        <SelectContent position="popper">
+                          {products
+                            .filter(
+                              (p) =>
+                                p.isActive &&
+                                p.stock > 0 &&
+                                // include if its the current row's selected product
+                                (p._id === row.productId ||
+                                  // or if its not already seleceted in another row
+                                  !rows.some(
+                                    (r, i) =>
+                                      r.productId === p._id && i !== index
+                                  ))
+                            )
+                            .map((p) => (
+                              <SelectItem key={p._id} value={p._id}>
+                                {p.name} - {p.unit}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
 
-                        updateRow(index, {
-                          discount: newDiscount,
-                        });
-                      }}
-                      className="flex-1/3 text-center w-8 md:w-12 outline-0 mr-0.5"
-                    />
-                    <Select
-                      value={row.discountType}
-                      onValueChange={(val) =>
-                        updateRow(index, {
-                          discountType: val as "amount" | "percent",
-                        })
-                      }
-                    >
-                      <SelectTrigger className="w-auto !border-0 !bg-transparent !outline-0 shadow-none -ml-2">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="w-2">
-                        <SelectItem value="amount">₦</SelectItem>
-                        <SelectItem value="percent">%</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </TableCell>
+                    {/* Quantity input */}
+                    <TableCell className="w-[75px] md:w-[100px]">
+                      <Input
+                        type="number"
+                        max={maxQuantity}
+                        value={row.quantity === 0 ? "" : row.quantity} // allow clearing zero
+                        onChange={(e) => {
+                          const value = e.target.value;
 
-                {/* Total */}
-                <TableCell className="text-center">
-                  {formatCurrency(row.total)}
-                </TableCell>
+                          if (value === "") {
+                            // user cleared input
+                            updateRow(index, { quantity: 0 }); // keep store consistent but UI shows empty
+                            return;
+                          }
 
-                {/* Delete */}
-                <TableCell>
-                  <button
-                    onClick={() => openDeleteModal(index)}
-                    className="py-2 px-3 mx-auto bg-[#f5f5f5] hover:bg-[#f5f5f5]/90 rounded flex items-center justify-center"
-                    title="Delete row"
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c0 1 1 2 2 2v2M10 11v6M14 11v6" />
-                    </svg>
-                  </button>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+                          const newQuantity = Number(value);
+
+                          if (
+                            salesType === "Retail" &&
+                            newQuantity > maxQuantity &&
+                            maxQuantity > 0
+                          ) {
+                            toast.warn(
+                              `Only ${maxQuantity} ${
+                                row.unit || "items"
+                              } available in stock`
+                            );
+                            updateRow(index, { quantity: maxQuantity });
+                          } else {
+                            updateRow(index, { quantity: newQuantity });
+                          }
+                        }}
+                        className="text-center !bg-white"
+                      />
+                    </TableCell>
+
+                    {/* Unit Price */}
+                    <TableCell className="text-center">
+                      <div>{formatCurrency(row.unitPrice)}</div>
+                    </TableCell>
+
+                    {/* Discount */}
+                    <TableCell>
+                      <div className="w-16 md:w-20 mx-auto h-[35.5px] flex items-center border px-2 !rounded-[7.5px]">
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={row.discount === 0 ? "" : row.discount}
+                          onChange={(e) => {
+                            let newDiscount = Number(e.target.value) || 0;
+                            const baseAmount = row.quantity * row.unitPrice;
+
+                            if (
+                              row.discountType === "percent" &&
+                              newDiscount > 100
+                            ) {
+                              toast.warn(
+                                "Discount percentage cannot exceed 100%"
+                              );
+                              newDiscount = 100;
+                            } else if (
+                              row.discountType === "amount" &&
+                              newDiscount > baseAmount
+                            ) {
+                              toast.warn(
+                                "Discount cannot exceed total amount of goods"
+                              );
+                              newDiscount = baseAmount;
+                            }
+
+                            updateRow(index, {
+                              discount: newDiscount,
+                            });
+                          }}
+                          className="flex-1/3 text-center w-8 md:w-12 outline-0 mr-0.5"
+                        />
+                        <Select
+                          value={row.discountType}
+                          onValueChange={(val) =>
+                            updateRow(index, {
+                              discountType: val as "amount" | "percent",
+                            })
+                          }
+                        >
+                          <SelectTrigger className="w-auto !border-0 !bg-transparent !outline-0 shadow-none -ml-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="w-2">
+                            <SelectItem value="amount">₦</SelectItem>
+                            <SelectItem value="percent">%</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </TableCell>
+
+                    {/* Total */}
+                    <TableCell className="text-center">
+                      {formatCurrency(row.total)}
+                    </TableCell>
+
+                    {/* Delete */}
+                    <TableCell>
+                      <button
+                        onClick={() => openDeleteModal(index)}
+                        className="py-2 px-3 mx-auto bg-[#f5f5f5] hover:bg-[#f5f5f5]/90 rounded flex items-center justify-center"
+                        title="Delete row"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c0 1 1 2 2 2v2M10 11v6M14 11v6" />
+                        </svg>
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
       </div>
 
@@ -425,14 +551,16 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
       )}
 
       {/* add button */}
-      <Button
-        variant="ghost"
-        onClick={addRow}
-        className="flex justify-center items-center gap-1 py-8 px-2.5 border-2 border-dashed border-[#D9D9D9] my-7 rounded-md w-full"
-      >
-        <Plus className="text-[#2ECC71] w-4" />
-        <span className="text-[#2ECC71]">Add Another Product</span>
-      </Button>
+      {salesType !== "Wholesale" && (
+        <Button
+          variant="ghost"
+          onClick={addRow}
+          className="flex justify-center items-center gap-1 py-8 px-2.5 border-2 border-dashed border-[#D9D9D9] my-7 rounded-md w-full"
+        >
+          <Plus className="text-[#2ECC71] w-4" />
+          <span className="text-[#2ECC71]">Add Another Product</span>
+        </Button>
+      )}
 
       {/* total */}
       <div className="bg-[#F5F5F5] rounded-md overflow-hidden">

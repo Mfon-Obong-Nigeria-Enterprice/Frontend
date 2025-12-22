@@ -1,3 +1,4 @@
+//src\features\dashboard\admin\DashboardOverview.tsx
 /** @format */
 
 import { Link } from "react-router-dom";
@@ -22,7 +23,7 @@ const DashboardOverview: React.FC = () => {
     getActiveClients,
     getActiveClientsPercentage,
     getOutStandingBalanceData,
-    getOutStandingBalancePercentageChange, // New method
+    getOutStandingBalancePercentageChange,
   } = useClientStore();
   const { getTodaysSales, getSalesPercentageChange } = useTransactionsStore();
 
@@ -76,14 +77,14 @@ const DashboardOverview: React.FC = () => {
           ? "Needs attention"
           : "All items well stocked"
       }`,
-      statColor: `${lowStockCount && lowStockCount > 0 ? "red" : "gray"}`,
+      color: lowStockCount && lowStockCount > 0 ? "red" : "blue",
       hideArrow: true,
     },
     {
       heading: "Active Clients",
       salesValue: `${activeClients}`,
       statValue: `${activeClientsPercentage}% of total`,
-      statColor: "green",
+      color: "blue",
     },
   ];
 
@@ -94,7 +95,17 @@ const DashboardOverview: React.FC = () => {
           heading="Dashboard"
           description="Welcome, Admin User! Here's an overview of your business today"
         />
-        <div className="flex gap-5 mx-5">
+        {/* UPDATED: Flex direction logic to swap buttons on Tablet vs Mobile */}
+        <div className="flex flex-row md:flex-row gap-5 mx-5">
+           {/* Mobile: Left | Tablet: Right */}
+           <Link to="/add-prod">
+            <Button className="w-40 bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)] transition-colors duration-200 ease-in-out [&_span]:text-5xl">
+              <Plus className="w-10 h-10 text-white" />
+              Add Product
+            </Button>
+          </Link>
+
+          {/* Mobile: Right | Tablet: Left */}
           <Button
             onClick={() => window.location.reload()}
             className="w-40 bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
@@ -102,17 +113,10 @@ const DashboardOverview: React.FC = () => {
             <VscRefresh />
             Refresh
           </Button>
-
-          <Link to="/add-prod">
-            <Button className="w-40 bg-[#2ECC71] hover:bg-[var(--cl-bg-green-hover)] transition-colors duration-200 ease-in-out [&_span]:text-5xl">
-              <Plus className="w-10 h-10 text-white" />
-              Add Product
-            </Button>
-          </Link>
         </div>
       </div>
       <Stats data={stats} />
-      <div className="grid grid-cols-1 lg:grid-cols-[60fr_40fr] gap-5 mt-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[60fr_40fr] gap-5 mt-5">
         <SalesOverview />
         <RecentSales />
       </div>

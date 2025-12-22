@@ -42,13 +42,11 @@ interface UserTableProps {
   onEditUser?: (userData: any) => void;
 }
 
-
 const filterUsers = (users: any[], currentUserRole: string) => {
- 
   if (currentUserRole !== "SUPER_ADMIN") {
-    return users.filter(user => user.role !== "SUPER_ADMIN");
+    return users.filter((user) => user.role !== "SUPER_ADMIN");
   }
-  
+
   // If current user is SUPER_ADMIN, return all users
   return users;
 };
@@ -60,8 +58,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
   const { openDelete, openStatus } = useModalStore();
 
   // Use React Query hook instead of Zustand store
-  const { getVisibleColumnsInOrder } =
-    useColumnSettingsManager();
+  const { getVisibleColumnsInOrder } = useColumnSettingsManager();
 
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
 
@@ -183,7 +180,9 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
         const userId = `U-${((currentPage - 1) * 10 + index + 1)
           .toString()
           .padStart(3, "0")}`;
-        return <TableCell className="pl-5 whitespace-nowrap">{userId}</TableCell>;
+        return (
+          <TableCell className="pl-5 whitespace-nowrap">{userId}</TableCell>
+        );
       }
 
       case "User Details":
@@ -212,12 +211,11 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
             </div>
             <div className="flex flex-col gap-0.5">
               <span className="text-[#444444] font-medium text-sm truncate max-w-[220px]">
-  {user.name}
-</span>
-<span className="text-[#7D7D7D] text-xs truncate max-w-[220px]">
-  {user.email}
-</span>
-
+                {user.name}
+              </span>
+              <span className="text-[#7D7D7D] text-xs truncate max-w-[220px]">
+                {user.email}
+              </span>
             </div>
           </TableCell>
         );
@@ -270,7 +268,11 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
         );
 
       case "Last Login":
-        return <TableCell className="whitespace-nowrap">{formatRelativeDate(user.lastLogin)}</TableCell>;
+        return (
+          <TableCell className="whitespace-nowrap">
+            {formatRelativeDate(user.lastLogin)}
+          </TableCell>
+        );
 
       case "Location":
         return (
@@ -292,69 +294,68 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
   };
 
   return (
-   <div className="mt-5 w-full overflow-x-auto">
-  <div className="min-w-[780px]"> 
-    <Table className="w-full">
-        <TableHeader>
-          <TableRow className="w-full bg-[#F5F5F5]">
-            {visibleColumns.map((column) => (
-              <TableHead
-                key={column}
-                className="text-[#333] text-sm font-medium xl:font-semibold py-4 px-3 uppercase font-Inter whitespace-nowrap"
-              >
-                {column === "Roles"
-                  ? "ROLE"
-                  : column === "Permission"
-                  ? "PERMISSIONS"
-                  : column.toUpperCase()}
-              </TableHead>
-            ))}
-            <TableHead className="whitespace-nowrap"></TableHead>
-          </TableRow>
-        </TableHeader>
-
-        <TableBody>
-          {currentUserList.length < 1 ? (
-            <TableRow>
-              <TableCell
-                colSpan={visibleColumns.length + 1}
-                className="text-center py-6 text-muted-foreground"
-              >
-                No users found
-              </TableCell>
+    <div className="mt-5 w-full ">
+      <div className="">
+        <Table className="w-full">
+          <TableHeader>
+            <TableRow className="w-full bg-[#F5F5F5]">
+              {visibleColumns.map((column) => (
+                <TableHead
+                  key={column}
+                  className="text-[#333] text-sm font-medium xl:font-semibold py-4 px-3 uppercase font-Inter whitespace-nowrap"
+                >
+                  {column === "Roles"
+                    ? "ROLE"
+                    : column === "Permission"
+                    ? "PERMISSIONS"
+                    : column.toUpperCase()}
+                </TableHead>
+              ))}
+              <TableHead className="whitespace-nowrap"></TableHead>
             </TableRow>
-          ) : (
-            currentUserList.map((user) => (
-              <TableRow
-                key={user._id}
-                className="relative px-4 font-Inter font-medium text-sm whitespace-nowrap"
-              >
-                {visibleColumns.map((column) => (
-                  <React.Fragment key={column}>
-                    {renderTableCell(user, column)}
-                  </React.Fragment>
-                ))}
+          </TableHeader>
 
-                <TableCell className="whitespace-nowrap">
-                  <Popover
-                    open={popoverOpen === user._id}
-                    onOpenChange={(open) =>
-                      setPopoverOpen(open ? user._id : null)
-                    }
-                  >
-                    <PopoverTrigger asChild>
-                      <button
-                        className="ml-12 p-1 rounded hover:bg-muted border border-[#E0E0E0]"
-                        aria-label="User actions"
-                      >
-                        <MoreVertical className="size-4 text-muted-foreground" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent 
-                      align="end"
-                      className="w-56 p-0 rounded-lg shadow-lg border border-[#F0F0F0]"
+          <TableBody>
+            {currentUserList.length < 1 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={visibleColumns.length + 1}
+                  className="text-center py-6 text-muted-foreground"
+                >
+                  No users found
+                </TableCell>
+              </TableRow>
+            ) : (
+              currentUserList.map((user) => (
+                <TableRow
+                  key={user._id}
+                  className="relative px-4 font-Inter font-medium text-sm whitespace-nowrap"
+                >
+                  {visibleColumns.map((column) => (
+                    <React.Fragment key={column}>
+                      {renderTableCell(user, column)}
+                    </React.Fragment>
+                  ))}
+
+                  <TableCell className="whitespace-nowrap pl-2">
+                    <Popover
+                      open={popoverOpen === user._id}
+                      onOpenChange={(open) =>
+                        setPopoverOpen(open ? user._id : null)
+                      }
                     >
-                    
+                      <PopoverTrigger asChild>
+                        <button
+                          className="p-1 rounded hover:bg-muted border border-[#E0E0E0]"
+                          aria-label="User actions"
+                        >
+                          <MoreVertical className="size-4 text-muted-foreground" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        align="end"
+                        className="w-56 p-0 rounded-lg shadow-lg border border-[#F0F0F0]"
+                      >
                         <button
                           className="w-full flex items-center gap-2 px-4 py-3 text-xs hover:bg-[#F5F5F5] font-medium"
                           onClick={() => {
@@ -362,10 +363,10 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                               (u) => u._id === user._id
                             );
 
-                        const url =
-                          currentUser?.role === "MAINTAINER"
-                            ? "maintainer"
-                            : "manager";
+                            const url =
+                              currentUser?.role === "MAINTAINER"
+                                ? "maintainer"
+                                : "manager";
 
                             navigate(
                               `/${url}/dashboard/user-management/${user._id}`,
@@ -400,76 +401,81 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                           <ExternalLink className="size-4 text-muted-foreground" />
                         </button>
 
-                    {user.isBlocked ? (
-                      <button
-                        className="w-full flex items-center gap-2 px-4 py-3 text-xs hover:bg-[#F5F5F5] font-medium"
-                        onClick={() => {
-                          openStatus(user._id, user.name, "enable");
-                          setPopoverOpen(null);
-                        }}
-                      >
-                        <span className="flex-1 text-left">Enable User</span>
-                      </button>
-                    ) : (
-                      <button
-                        className="w-full flex items-center gap-2 px-4 py-3 text-xs hover:bg-[#F5F5F5] font-medium"
-                        onClick={() => {
-                          openStatus(user._id, user.name, "suspend");
-                          setPopoverOpen(null);
-                        }}
-                      >
-                        <span className="flex-1 text-left">Suspend User</span>
-                      </button>
-                    )}
+                        {user.isBlocked ? (
+                          <button
+                            className="w-full flex items-center gap-2 px-4 py-3 text-xs hover:bg-[#F5F5F5] font-medium"
+                            onClick={() => {
+                              openStatus(user._id, user.name, "enable");
+                              setPopoverOpen(null);
+                            }}
+                          >
+                            <span className="flex-1 text-left">
+                              Enable User
+                            </span>
+                          </button>
+                        ) : (
+                          <button
+                            className="w-full flex items-center gap-2 px-4 py-3 text-xs hover:bg-[#F5F5F5] font-medium"
+                            onClick={() => {
+                              openStatus(user._id, user.name, "suspend");
+                              setPopoverOpen(null);
+                            }}
+                          >
+                            <span className="flex-1 text-left">
+                              Suspend User
+                            </span>
+                          </button>
+                        )}
 
-                    <button
-                      className="w-full flex items-center gap-2 px-4 py-3 text-xs hover:bg-[#F5F5F5] font-medium text-red-600"
-                      onClick={() => {
-                        openDelete(user._id, user.name);
-                        setPopoverOpen(null);
-                      }}
-                    >
-                      <span className="flex-1 text-left">Delete User</span>
-                    </button>
-                  </PopoverContent>
-                </Popover>
-              </TableCell>
-            </TableRow>
-          )))}
-        </TableBody>
-      </Table>
+                        <button
+                          className="w-full flex items-center gap-2 px-4 py-3 text-xs hover:bg-[#F5F5F5] font-medium text-red-600"
+                          onClick={() => {
+                            openDelete(user._id, user.name);
+                            setPopoverOpen(null);
+                          }}
+                        >
+                          <span className="flex-1 text-left">Delete User</span>
+                        </button>
+                      </PopoverContent>
+                    </Popover>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
 
-      {/* Pagination */}
-      {usersWithActivities.length > 0 && (
-        <div className="h-12 border-t border-[#D9D9D9] text-sm text-[#7D7D7D] flex justify-center items-center gap-3">
-          <Pagination>
-            <PaginationContent className="!flex !justify-between w-full px-4">
-              <PaginationItem className="whitespace-nowrap">
-                {(() => {
-                  const start = (currentPage - 1) * 10 + 1;
-                  const end = Math.min(
-                    currentPage * 10,
-                    usersWithActivities.length
-                  );
-                  return `Showing ${start}-${end} of ${usersWithActivities.length} users (Page ${currentPage} of ${totalPages})`;
-                })()}
-              </PaginationItem>
-              <div className="flex justify-center gap-2 ">
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={canGoPrevious ? goToPreviousPage : undefined}
-                    className={`border border-[#d9d9d9] ${
-                      !canGoPrevious
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }`}
-                    aria-label="Go to previous page"
-                  />
+        {/* Pagination */}
+        {usersWithActivities.length > 0 && (
+          <div className="h-12 border-t border-[#D9D9D9] text-sm text-[#7D7D7D] flex justify-center items-center gap-3">
+            <Pagination>
+              <PaginationContent className="!flex !justify-between w-full px-4">
+                <PaginationItem className="whitespace-nowrap">
+                  {(() => {
+                    const start = (currentPage - 1) * 10 + 1;
+                    const end = Math.min(
+                      currentPage * 10,
+                      usersWithActivities.length
+                    );
+                    return `Showing ${start}-${end} of ${usersWithActivities.length} users (Page ${currentPage} of ${totalPages})`;
+                  })()}
                 </PaginationItem>
-                <PaginationItem className="flex items-center justify-center bg-[#8C1C1380] w-[30px] h-[30px] rounded px-4 text-lg text-white">
-                  {currentPage}
-                </PaginationItem>
-                <PaginationNext
+                <div className="flex justify-center gap-2 ">
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={canGoPrevious ? goToPreviousPage : undefined}
+                      className={`border border-[#d9d9d9] ${
+                        !canGoPrevious
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }`}
+                      aria-label="Go to previous page"
+                    />
+                  </PaginationItem>
+                  <PaginationItem className="flex items-center justify-center bg-[#8C1C1380] w-[30px] h-[30px] rounded px-4 text-lg text-white">
+                    {currentPage}
+                  </PaginationItem>
+                  <PaginationNext
                     onClick={canGoNext ? goToNextPage : undefined}
                     className={`border border-[#d9d9d9] ${
                       !canGoNext
@@ -478,11 +484,11 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
                     }`}
                     aria-label="Go to next page"
                   />
-              </div>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      )}
+                </div>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -18,7 +18,10 @@ export default function ManagerSettings() {
 
   // Note: Removed fetchSettings() since there's no /settings API endpoint
 
-  const handleAlertSettingChange = (key: keyof AlertAndNotificationSettings, value: boolean) => {
+  const handleAlertSettingChange = (
+    key: keyof AlertAndNotificationSettings,
+    value: boolean
+  ) => {
     setAlertSetting(key, value);
   };
 
@@ -59,7 +62,7 @@ export default function ManagerSettings() {
 
   return (
     <div className="min-h-screen py-8 px-4">
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="  space-y-8">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
@@ -72,11 +75,11 @@ export default function ManagerSettings() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <SystemPreferencesForm 
+          <SystemPreferencesForm
             settings={currentSettings.system}
             onThresholdChange={handleSystemThresholdChange}
           />
-          <ClientAccountSettingsForm 
+          <ClientAccountSettingsForm
             settings={currentSettings.clientAccount}
             onThresholdChange={handleClientAccountChange}
           />
@@ -92,8 +95,6 @@ export default function ManagerSettings() {
             onThresholdChange={handleSystemThresholdChange}
           />
         </div>
-
-        
       </div>
     </div>
   );

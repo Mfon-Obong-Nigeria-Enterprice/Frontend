@@ -18,6 +18,7 @@ import {
   // useSyncClientsWithQuery,
 } from "@/stores/useClientStore";
 import { ChevronDown } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 import type { Client } from "@/types/types";
 
@@ -35,6 +36,7 @@ const ClientSearch = ({
   // useSyncClientsWithQuery(); // Loads all clients initially
 
   const { clients } = useClientStore();
+  console.log("Clients from store:", clients);
   const [open, setOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
   // const hasFetchedInitially = useRef(false);
@@ -67,23 +69,26 @@ const ClientSearch = ({
   // }, [searchText, setClients]);
 
   return (
-    <div className="w-full">
+    <div className="w-full md:max-w-[311px]">
+      <Label className="block text-sm font-medium text-[#1E1E1E] mb-1.5">
+       Select client
+      </Label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-full justify-between"
+            className="w-full justify-between text-sm font-normal"
           >
-            {selectedClient ? selectedClient.name : "Select client..."}
+            {selectedClient ? selectedClient.name : "Search or select clients..."}
             <ChevronDown className="h-4 w-4 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full xl:w-[800px] p-0 -mt-10">
           <Command>
             <CommandInput
-              placeholder="Search clients..."
+              placeholder="Search or select clients..."
               value={searchText}
               onValueChange={setSearchText}
             />

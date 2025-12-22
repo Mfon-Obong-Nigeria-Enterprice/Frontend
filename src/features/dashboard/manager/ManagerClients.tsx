@@ -255,7 +255,7 @@ const ManagerClients = () => {
 
   return (
     <div>
-      <main className="flex flex-col gap-4 mb-7">
+      <main className=" ">
         <DashboardTitle
           heading="Clients"
           description="Manage your client relationships and view outstanding balances"

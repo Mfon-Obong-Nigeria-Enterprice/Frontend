@@ -20,9 +20,9 @@ const ManagerDashboardLayout = () => {
         <Header userRole="manager" />
         <SidebarTrigger className="fixed z-50" />
         <div
-          className={`min-h-screen ${
+          className={`min-h-screen w-full ${
             pathname.pathname.endsWith("/manage-user")
-              ? "bg-[#f5f5f5] xl:bg-white pt-20 md:pt-[5.5rem] p-4 md:p-0 border border-[#D9D9D9]"
+              ? "bg-[#f5f5f5] xl:bg-white pt-20 md:pt-[2rem] p-4 md:p-0 border border-[#D9D9D9]"
               : "bg-[#f5f5f5] p-4 md:p-10 pt-20 md:pt-[5.5rem]"
           }`}
         >

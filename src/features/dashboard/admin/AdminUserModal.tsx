@@ -24,6 +24,7 @@ import { useUser, useUserMutations } from "@/hooks/useUserMutation";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 const passwordSchema = z
   .object({
@@ -57,6 +58,7 @@ type AdminUserModalProps = {
   onProfileUpdate: (updatedData: AdminData) => void;
 };
 
+
 export default function AdminUserModal({
   open,
   onOpenChange,
@@ -64,6 +66,7 @@ export default function AdminUserModal({
   onProfileUpdate,
 }: AdminUserModalProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient(); // Get query client instance
   const [isDragging, setIsDragging] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -148,7 +151,7 @@ export default function AdminUserModal({
         logout();
 
         // Redirect to login page
-        navigate("/login", { replace: true });
+        navigate("/", { replace: true });
       }, 1500);
     } catch (error: any) {
       // Check if error is about password reuse from backend
@@ -188,12 +191,11 @@ export default function AdminUserModal({
     updateProfilePicture.mutate(
       { userId, imageFile: selectedFile },
       {
-        onSuccess: (imageUrl) => {
-          const updatedAdminData: AdminData = {
-            ...adminData,
-            profilePicture: imageUrl,
-          };
-          onProfileUpdate(updatedAdminData);
+        onSuccess: () => {
+          toast.success("Profile picture updated!");
+          // Invalidate the user query to refetch the latest data with the new URL
+          queryClient.invalidateQueries({ queryKey: ["user", userId] });
+          queryClient.invalidateQueries({ queryKey: ["users"] }); // Also invalidate the list of all users
         },
       }
     );
@@ -238,12 +240,11 @@ export default function AdminUserModal({
     updateProfilePicture.mutate(
       { userId, imageFile: file },
       {
-        onSuccess: (imageUrl) => {
-          const updatedAdminData: AdminData = {
-            ...adminData,
-            profilePicture: imageUrl,
-          };
-          onProfileUpdate(updatedAdminData);
+        onSuccess: () => {
+          toast.success("Profile picture updated!");
+          // Invalidate the user query to refetch the latest data with the new URL
+          queryClient.invalidateQueries({ queryKey: ["user", userId] });
+          queryClient.invalidateQueries({ queryKey: ["users"] }); // Also invalidate the list of all users
         },
       }
     );
@@ -252,7 +253,8 @@ export default function AdminUserModal({
   // Current profile picture comes from userProfile or fallback to adminData
   const currentProfilePicture =
     userProfile?.profilePicture || adminData.profilePicture;
-
+console.log("AdminUserModal rendered with adminData:", adminData);
+console.log("Current profile picture URL:", currentProfilePicture);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] font-inter rounded-lg shadow-lg">
@@ -277,8 +279,10 @@ export default function AdminUserModal({
                   alt=""
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    toast.error("Failed to load profile image");
-                    (e.target as HTMLImageElement).style.display = "none";
+                    const target = e.target as HTMLImageElement;
+                    // Prevent an infinite loop if the fallback image also fails
+                    target.onerror = null;
+                    target.src = "https://res.cloudinary.com/startng-slack-com/image/upload/v1751994022/profile_pictures/user_686bb38aebc3f31c75393686.jpg";
                   }}
                 />
               ) : (

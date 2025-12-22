@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 
 // icons imported from react-icons
-import { MdOutlineDashboard} from "react-icons/md";
+import { MdOutlineDashboard } from "react-icons/md";
 import { IoIosPeople, IoIosStats, IoIosNotifications } from "react-icons/io";
 import { RiSettings3Line } from "react-icons/ri";
 import { IoIosLogOut } from "react-icons/io";
@@ -71,6 +71,15 @@ const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
+              {/* <SidebarMenuItem>
+                <SidebarMenuButton
+                  className="cursor-pointer hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all bg-[#F4E8E7] text-[#333333]"
+                  onClick={() => navigate(-1)}
+                >
+                  <IoIosArrowBack />
+                  <span>Back</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem> */}
               {items.map((item) => {
                 const isActive = pathname.startsWith(item.url);
 
@@ -85,11 +94,11 @@ const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
                             : "bg-[#F4E8E7] text-[#333333] "
                         }`}
                     >
-                      <Link to={item.url}>
+                      <NavLink to={item.url}>
                         {/* Render the icon component directly */}
                         <item.icon />
                         <span>{item.title}</span>
-                      </Link>
+                      </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

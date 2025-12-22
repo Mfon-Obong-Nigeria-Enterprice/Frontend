@@ -1,3 +1,4 @@
+//src\features\dashboard\staff\Stock.tsx
 /** @format */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useRef, useMemo } from "react";
@@ -8,7 +9,7 @@ import InventoryTab from "../admin/components/InventoryTab";
 
 import { useInventoryStore } from "@/stores/useInventoryStore";
 
-import { IoIosSearch } from "react-icons/io";
+import { Search } from "lucide-react";
 
 import type { Product } from "@/types/types";
 
@@ -25,6 +26,11 @@ const Stock = () => {
   const debouncedSearch = useDebouncedCallback((value: string) => {
     setSearchQuery(value);
   }, 300);
+
+  const handleRefresh = () => {
+    // Reload the page to get fresh data
+    window.location.reload();
+  };
 
   const getCategoryName = (product: Product): string => {
     if (!product.categoryId) return "Uncategorized";
@@ -82,6 +88,7 @@ const Stock = () => {
       <DashboardTitle
         heading="Stock Levels"
         description="View current inventory and availability"
+        onRefresh={handleRefresh}
       />
       {products.length > 0 ? (
         <section className="bg-white xl:rounded-xl mt-5 w-full overflow-hidden">
@@ -93,7 +100,7 @@ const Stock = () => {
 
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 px-4 md:px-5 py-5 border">
             <div className="relative bg-[#F5F5F5] max-w-lg w-full flex items-center gap-1 md:w-1/2 px-4 rounded-md">
-              <IoIosSearch size={18} />
+              <Search size={18} />
               <input
                 type="search"
                 placeholder="Search products, categories..."
@@ -142,7 +149,6 @@ const Stock = () => {
 };
 
 export default Stock;
-
 // import React from "react";
 // import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
 // import { Button } from "@/components/ui/button";

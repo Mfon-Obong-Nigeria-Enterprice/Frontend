@@ -22,6 +22,7 @@ export interface Product {
   stock: number;
   unit: string;
   unitPrice: number;
+  wholesalePrice?: number;
   priceHistory?: PriceHistoryItem[];
   isActive: boolean;
   createdAt?: string;
@@ -75,7 +76,12 @@ export interface LoginResponse {
   };
 }
 
-export type TransactionType = "PURCHASE" | "PICKUP" | "DEPOSIT";
+export type TransactionType =
+  | "PURCHASE"
+  | "PICKUP"
+  | "DEPOSIT"
+  | "WHOLESALE"
+  | "RETURN";
 
 // ==================== CLIENT TYPES ====================
 export interface TransactionItem {
@@ -94,6 +100,7 @@ export interface Client {
   name: string;
   phone?: string;
   email?: string;
+  salesType?: "Retail" | "Wholesale";
   address?: string;
   balance: number;
   description?: string;
@@ -121,11 +128,13 @@ export interface PaymentTransactionPayload extends BaseTransactionPayload {
 }
 
 export interface ProductTransactionPayload extends BaseTransactionPayload {
-  type: "PURCHASE" | "PICKUP";
+  type: "PURCHASE" | "PICKUP" | "WHOLESALE" | "RETURN";
+  salesType?: "Retail" | "Wholesale";
   items: {
     productId: string;
     quantity: number;
-    unitPrice: number;
+    unitPrice?: number;
+    wholesalePrice?: number;
     discount?: number;
   }[];
 }

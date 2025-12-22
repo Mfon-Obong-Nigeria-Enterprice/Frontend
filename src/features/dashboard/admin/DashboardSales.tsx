@@ -217,7 +217,7 @@ const DashboardSales = () => {
         description="Process orders & manage customer purchases"
       />
       <section className="px-2 md:px-0">
-        <div className="flex gap-[24px] items-end justify-end mb-5">
+        <div className="flex gap-[24px] items-end justify-end md:items-start md:justify-start lg:items-end lg:justify-end mb-5">
           <Button variant="tertiary" onClick={handleExportExcel}>
             Download Excel
           </Button>
@@ -231,13 +231,10 @@ const DashboardSales = () => {
         <Stats data={stats} />
 
         <div className="grid grid-cols-1 lg:grid-cols-5 items-center justify-center gap-5 my-8 ">
-          <div className="lg:col-span-3 h-full p-7">
+          <div className="lg:col-span-3  ">
             <SalesAnalytics />
           </div>
-          <div className="bg-white w-full h-full p-7 border  border-[#d9d9d9] rounded-xl  lg:col-span-2">
-            <h4 className="text-xl font-medium text-[#1E1E1E] pb-4">
-              Sales by Category
-            </h4>
+          <div className="bg-white border border-[#d9d9d9] rounded-xl  lg:col-span-2">
             <SalesByCategoryChart />
           </div>
         </div>

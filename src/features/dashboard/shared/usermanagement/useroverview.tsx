@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/components/UserOverview.tsx
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useUserStore } from "@/stores/useUserStore";
@@ -9,7 +10,7 @@ import { useUserStore } from "@/stores/useUserStore";
 import UserTable from "../usertable";
 import CreateUserModal from "./modals/createusermodal";
 import EditUserModal from "./modals/EditUserModal";
-import UserSearchList from "../UserSearchList"; 
+import UserSearchList from "../UserSearchList";
 import Modal from "@/components/Modal";
 
 // ui components
@@ -21,11 +22,7 @@ import {
 } from "@/components/ui/popover";
 
 // icons
-import {
-  ExternalLink,
-  MoreVertical,
-  Plus,
-} from "lucide-react";
+import { ExternalLink, MoreVertical, Plus } from "lucide-react";
 import { MdOutlineHome } from "react-icons/md";
 import BusinessLocationModal from "./modals/BusinessLocationModal";
 
@@ -52,7 +49,7 @@ type UserDataProps = {
 
 // Add the filterUsers function
 const filterUsers = (users: any[]) => {
-  return users.filter(user => user.role !== "SUPER_ADMIN");
+  return users.filter((user) => user.role !== "SUPER_ADMIN");
 };
 
 const UserOverview = () => {
@@ -61,78 +58,79 @@ const UserOverview = () => {
   const { users } = useUserStore();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedUserData, setSelectedUserData] = useState<UserDataProps | null>(null);
+  const queryClient = useQueryClient();
+  const [selectedUserData, setSelectedUserData] =
+    useState<UserDataProps | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isBusinessModalOpen, setIsBusinessModalOpen] = useState(false);
+  const [enabled, setEnabled] = useState(true);
 
   const [filters, setFilters] = useState({
     role: "all",
     location: "all",
     dateRange: "all",
-    status: "all"
+    status: "all",
   });
+
+  // Auto-refresh logic
+  useEffect(() => {
+    if (!enabled) return;
+    const intervalId = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    }, 5000);
+    return () => clearInterval(intervalId);
+  }, [enabled, queryClient]);
 
   const nonSuperAdminUsers = useMemo(() => filterUsers(users), [users]);
 
-  // Get unique roles and locations from actual user data
   const roles = useMemo(() => {
-    const uniqueRoles = Array.from(new Set(nonSuperAdminUsers.map(user => user.role)));
+    const uniqueRoles = Array.from(
+      new Set(nonSuperAdminUsers.map((user) => user.role))
+    );
     return uniqueRoles;
   }, [nonSuperAdminUsers]);
 
   const locations = useMemo(() => {
-    const uniqueLocations = Array.from(new Set(nonSuperAdminUsers.map(user => user.location || user.branch || "")));
-    return uniqueLocations.filter(loc => loc !== "");
+    const uniqueLocations = Array.from(
+      new Set(
+        nonSuperAdminUsers.map((user) => user.location || user.branch || "")
+      )
+    );
+    return uniqueLocations.filter((loc) => loc !== "");
   }, [nonSuperAdminUsers]);
 
-  // Filter users based on search and filters (excluding SUPER_ADMIN)
   const filteredUsers = useMemo(() => {
-    return nonSuperAdminUsers.filter(user => {
-      // Search filter
+    return nonSuperAdminUsers.filter((user) => {
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        if (!user.name.toLowerCase().includes(query) &&
-            !user.email.toLowerCase().includes(query) &&
-            !user.role.toLowerCase().includes(query) &&
-            !(user.branch && user.branch.toLowerCase().includes(query))) {
+        if (
+          !user.name.toLowerCase().includes(query) &&
+          !user.email.toLowerCase().includes(query) &&
+          !user.role.toLowerCase().includes(query) &&
+          !(user.branch && user.branch.toLowerCase().includes(query))
+        ) {
           return false;
         }
       }
-      
-      // Role filter
-      if (filters.role !== "all" && user.role !== filters.role) {
-        return false;
-      }
-      
-      // Location filter - check both location and branch fields
+
+      if (filters.role !== "all" && user.role !== filters.role) return false;
+
       if (filters.location !== "all") {
         const userLocation = user.location || user.branch || "";
-        if (userLocation !== filters.location) {
-          return false;
-        }
+        if (userLocation !== filters.location) return false;
       }
-      
-      // Status filter
+
       if (filters.status !== "all") {
-        if (filters.status === "active" && (!user.isActive || user.isBlocked)) {
-          return false;
-        }
-        if (filters.status === "inactive" && (user.isActive || user.isBlocked)) {
-          return false;
-        }
-        if (filters.status === "suspended" && !user.isBlocked) {
-          return false;
-        }
+        if (filters.status === "active" && (!user.isActive || user.isBlocked)) return false;
+        if (filters.status === "inactive" && (user.isActive || user.isBlocked)) return false;
+        if (filters.status === "suspended" && !user.isBlocked) return false;
         if (filters.status === "pending") {
-          // For pending status, check if user is neither active nor blocked
           if (user.isActive || user.isBlocked) return false;
         }
       }
-      
-      // Date range filter - REMOVED CUSTOM RANGE SUPPORT
+
       if (filters.dateRange !== "all") {
         if (!user.createdAt) return false;
-        
         const createdDate = new Date(user.createdAt);
         const now = new Date();
         let startDate: Date, endDate: Date;
@@ -156,19 +154,16 @@ const UserOverview = () => {
             return true;
         }
 
-        // Reset times for correct date comparison
         const createdDateOnly = new Date(createdDate);
         createdDateOnly.setHours(0, 0, 0, 0);
-        
         const startDateOnly = new Date(startDate);
         startDateOnly.setHours(0, 0, 0, 0);
-        
         const endDateOnly = new Date(endDate);
         endDateOnly.setHours(23, 59, 59, 999);
 
         return createdDateOnly >= startDateOnly && createdDateOnly <= endDateOnly;
       }
-      
+
       return true;
     });
   }, [nonSuperAdminUsers, searchQuery, filters]);
@@ -177,9 +172,12 @@ const UserOverview = () => {
     setSearchQuery(query);
   }, []);
 
-  const handleFilterChange = useCallback((filterName: string, value: string) => {
-    setFilters(prev => ({ ...prev, [filterName]: value }));
-  }, []);
+  const handleFilterChange = useCallback(
+    (filterName: string, value: string) => {
+      setFilters((prev) => ({ ...prev, [filterName]: value }));
+    },
+    []
+  );
 
   const handleEditUser = (userData: UserDataProps) => {
     setSelectedUserData(userData);
@@ -192,94 +190,133 @@ const UserOverview = () => {
   };
 
   return (
-    <main className="w-full max-w-full overflow-x-auto">
-      {/* heading */}
-      <div className="flex items-center justify-between mt-[30px] md:mt-[39px] xl:mt-[47px] mx-5 md:mx-8 xl:mx-6">
-        <h2 className="text-xl md:text-2xl lg:text-[1.75rem] font-bold font-Arial text-[#333333]">
-          User List
-        </h2>
+    <main className="w-full">
+      {/* HEADER SECTION */}
+      <div className="mt-[30px] md:mt-[39px] xl:mt-[47px] ml-0 mr-5 md:mr-8 xl:mr-3 pl-3">
+        
+        {/* TOP ROW: Title + Controls (Always on one line for Desktop) */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl md:text-2xl lg:text-[1.75rem] font-bold font-Arial text-[#333333]">
+            User List
+          </h2>
 
-        {/* hold refresh and button for maintainer */}
-        <div className="flex flex-col md:flex-row gap-5">
-          <div className="flex items-center gap-1">
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  className="ml-1 p-1 rounded hover:bg-muted border border-[#E0E0E0]"
-                  aria-label="More options"
-                >
-                  <MoreVertical className="size-5 text-muted-foreground" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent
-                align="end"
-                className="w-64 p-0 rounded-lg shadow-lg border border-[#F0F0F0] cursor-pointer"
+          <div className="flex items-center gap-3 md:gap-5 ">
+            {/* Auto Refresh + Menu Group */}
+            <div className="flex items-center gap-2 md:gap-4 pb-4 lg:pb-0">
+              {/* Toggle Button */}
+              <button
+                onClick={() => setEnabled(!enabled)}
+                className={`
+                  relative inline-flex h-[26px] w-[54px] items-center rounded-full transition-colors duration-200 focus:outline-none
+                  ${enabled ? "bg-[#3D80FF]" : "bg-gray-200"}
+                `}
               >
-                <>
-                  <button
-                    className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-t-lg font-medium"
-                  >
-                    <span className="flex-1 text-left">
-                      {">  "} Export All Users
-                    </span>
-                  </button>
-                  <hr className="border-[#F0F0F0]" />
-                  {user?.role === "SUPER_ADMIN" && (
-                    <>
-                      <button
-                        className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] font-medium"
-                        onClick={() => navigate("/manager/dashboard/user-log")}
-                      >
-                        <span className="flex-1 text-left">User Audit Log</span>
-                        <ExternalLink className="size-4 text-muted-foreground" />
-                      </button>
-                      <hr className="border-[#F0F0F0]" />
-                    </>
-                  )}
-                  <Button
-                    variant="ghost"
-                    className="w-full flex items-center gap-2 px-4 py-4 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium min-w-0"
-                    onClick={() => {
-                      const url = user?.role === "SUPER_ADMIN" ? "manager" : "maintainer";
-                      navigate(`/${url}/dashboard/user-management/col-settings`);
-                    }}
-                  >
-                    <span className="flex-1 text-left truncate min-w-0">
-                      Columns Settings
-                    </span>
-                    <ExternalLink className="size-4 text-muted-foreground flex-shrink-0" />
-                  </Button>
+                <span className="sr-only">Enable Auto Refresh</span>
+                <span
+                  className={`
+                    inline-block h-7 w-7 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out
+                    ${enabled ? "translate-x-8" : "translate-x-1"}
+                  `}
+                />
+              </button>
 
-                  {user?.role === "MAINTAINER" && (
-                    <>
-                      <hr className="border-[#F0F0F0]" />
-                      <button
-                        className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium"
-                        onClick={() => setIsBusinessModalOpen(true)}
-                      >
-                        <span className="flex-1 text-left">
-                          Add Business Locations
-                        </span>
-                        <MdOutlineHome className="size-5 text-muted-foreground" />
-                      </button>
-                    </>
-                  )}
-                </>
-              </PopoverContent>
-            </Popover>
+              <span className="text-[16px] font-medium text-[#1E1E1E] font-sans tracking-tight whitespace-nowrap">
+                Auto Refresh
+              </span>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className="p-1 rounded hover:bg-muted border border-[#E0E0E0] ml-2"
+                    aria-label="More options"
+                  >
+                    <MoreVertical className="size-5 text-muted-foreground" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="end"
+                  className="w-64 p-0 rounded-lg shadow-lg border border-[#F0F0F0] cursor-pointer"
+                >
+                  <>
+                    <button className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-t-lg font-medium">
+                      <span className="flex-1 text-left">{">  "} Export All Users</span>
+                    </button>
+                    <hr className="border-[#F0F0F0]" />
+                    {user?.role === "SUPER_ADMIN" && (
+                      <>
+                        <button
+                          className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] font-medium"
+                          onClick={() => navigate("/manager/dashboard/user-log")}
+                        >
+                          <span className="flex-1 text-left">User Audit Log</span>
+                          <ExternalLink className="size-4 text-muted-foreground" />
+                        </button>
+                        <hr className="border-[#F0F0F0]" />
+                      </>
+                    )}
+                    <Button
+                      variant="ghost"
+                      className="w-full flex items-center gap-2 px-4 py-4 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium min-w-0"
+                      onClick={() => {
+                        const url =
+                          user?.role === "SUPER_ADMIN" ? "manager" : "maintainer";
+                        navigate(
+                          `/${url}/dashboard/user-management/col-settings`
+                        );
+                      }}
+                    >
+                      <span className="flex-1 text-left truncate min-w-0">
+                        Columns Settings
+                      </span>
+                      <ExternalLink className="size-4 text-muted-foreground flex-shrink-0" />
+                    </Button>
+
+                    {user?.role === "MAINTAINER" && (
+                      <>
+                        <hr className="border-[#F0F0F0]" />
+                        <button
+                          className="w-full flex items-center gap-2 px-5 py-5 text-sm hover:bg-[#F5F5F5] rounded-b-lg font-medium"
+                          onClick={() => setIsBusinessModalOpen(true)}
+                        >
+                          <span className="flex-1 text-left">
+                            Add Business Locations
+                          </span>
+                          <MdOutlineHome className="size-5 text-muted-foreground" />
+                        </button>
+                      </>
+                    )}
+                  </>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* DESKTOP BUTTON: Hidden on Mobile/Tablet */}
+            {user?.role === "MAINTAINER" && (
+              <div className="hidden lg:block">
+                <Button onClick={() => setIsCreateModalOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" /> Create new User
+                </Button>
+              </div>
+            )}
           </div>
-          {user?.role === "MAINTAINER" && (
-            <Button onClick={() => setIsCreateModalOpen(true)}>
-              <Plus /> Create new User
-            </Button>
-          )}
         </div>
+
+        {/* MOBILE/TABLET BUTTON ROW: Hidden on Desktop */}
+        {user?.role === "MAINTAINER" && (
+          <div className="mt-4 lg:hidden max-w-[195px]">
+            <Button 
+              onClick={() => setIsCreateModalOpen(true)} 
+              className="w-full bg-[#2ECC71] hover:bg-[#27ae60]"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Create new User
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Use the UserSearchList component */}
-      <div className="bg-white mt-8 mx-5 md:mx-8 xl:mx-6">
-        <h2 className="p-3 font-medium">Filter & Controls</h2>
-        <UserSearchList 
+      <div className="bg-white mt-8 ml-0 mr-5 md:mr-8 xl:mr-3">
+        <UserSearchList
           onSearch={handleSearch}
           onFilterChange={handleFilterChange}
           roles={roles}
@@ -289,23 +326,21 @@ const UserOverview = () => {
       </div>
 
       {/* User summary */}
-      <div className="mt-4 px-5 md:px-8 xl:px-6">
+      <div className="mt-4 pl-3 pr-5 md:pr-8 xl:pr-6">
         <p className="text-sm text-gray-600">
-          Showing {filteredUsers.length} users 
-          {filters.dateRange !== 'all' && ` created in ${filters.dateRange}`}
-          {filters.role !== 'all' && ` with role: ${filters.role}`}
-          {filters.location !== 'all' && ` at location: ${filters.location}`}
-          {filters.status !== 'all' && ` with status: ${filters.status}`}
+          Showing {filteredUsers.length} users
+          {filters.dateRange !== "all" && ` created in ${filters.dateRange}`}
+          {filters.role !== "all" && ` with role: ${filters.role}`}
+          {filters.location !== "all" && ` at location: ${filters.location}`}
+          {filters.status !== "all" && ` with status: ${filters.status}`}
         </p>
       </div>
-      
-<div className="w-full px-5 md:px-8 xl:px-6 mt-4">
-  <div className="w-full max-w-full overflow-x-auto">
-  
-    <UserTable users={filteredUsers} onEditUser={handleEditUser} />
-  </div>
-</div>
 
+      <div className="w-full pl-3 pr-0 mt-4">
+        <div className="w-full max-w-full">
+          <UserTable users={filteredUsers} onEditUser={handleEditUser} />
+        </div>
+      </div>
 
       {/* create new user modal */}
       {isCreateModalOpen && (
@@ -339,7 +374,9 @@ const UserOverview = () => {
           isOpen={isBusinessModalOpen}
           onClose={() => setIsBusinessModalOpen(false)}
         >
-          <BusinessLocationModal closeModal={() => setIsBusinessModalOpen(false)} />
+          <BusinessLocationModal
+            closeModal={() => setIsBusinessModalOpen(false)}
+          />
         </Modal>
       )}
     </main>

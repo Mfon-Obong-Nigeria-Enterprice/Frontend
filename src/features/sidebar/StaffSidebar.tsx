@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
 // icons
 import { MdOutlineDashboard, MdOutlineShoppingBag } from "react-icons/md";
 import { BsBoxSeam } from "react-icons/bs";
 import { IoPerson } from "react-icons/io5";
 import { RiFileListLine } from "react-icons/ri"; // Changed from RiLogoutCircleRLine
-import { IoIosLogOut } from "react-icons/io";
+import { IoIosLogOut, IoIosArrowBack } from "react-icons/io";
 
 // hook
 import { useLogout } from "@/hooks/uselogout";
@@ -53,6 +53,7 @@ type StaffSidebarProps = {
 
 function StaffSidebar({ onLogoutClick }: StaffSidebarProps) {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   return (
     <Sidebar className="bg-white">
@@ -62,6 +63,15 @@ function StaffSidebar({ onLogoutClick }: StaffSidebarProps) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  className="cursor-pointer hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all bg-[#F4E8E7] text-[#333333]"
+                  onClick={() => navigate(-1)}
+                >
+                  <IoIosArrowBack />
+                  <span>Back</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               {items.map((item) => {
                 const isActive = pathname.startsWith(item.url);
                 return (
@@ -75,10 +85,10 @@ function StaffSidebar({ onLogoutClick }: StaffSidebarProps) {
                             : "bg-[#F4E8E7] text-[#333333] "
                         }`}
                     >
-                      <Link to={item.url}>
+                      <NavLink to={item.url}>
                         <item.icon />
                         <span>{item.title}</span>
-                      </Link>
+                      </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

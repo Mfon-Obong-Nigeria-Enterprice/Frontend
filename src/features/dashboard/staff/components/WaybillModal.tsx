@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 
 import {
-  generateWaybillNumber,
   assignWaybillToTransaction,
   type WaybillError,
 } from "@/services/waybillService";
@@ -38,30 +37,28 @@ const WaybillModal = ({
 }: WaybillModalProps) => {
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
-  const [generatedWaybillNumber, setGeneratedWaybillNumber] =
-    useState<string>("");
+  const [waybillNumber, setWaybillNumber] = useState<string>("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isGeneratingWaybill, setIsGeneratingWaybill] = useState(false);
 
-  // Get recent transactions (last 20)
   const recentTransactions = transactions
+    .filter((t) => !t.waybillNumber) // Only show transactions without waybill
     .sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
-    .slice(0, 20);
+    .slice(0, 50); // Limit to 50 most recent
 
   // Reset state when modal opens/closes
   useEffect(() => {
     if (!isOpen) {
       setSelectedTransaction(null);
-      setGeneratedWaybillNumber("");
+      setWaybillNumber("");
       setIsDropdownOpen(false);
     }
   }, [isOpen]);
 
-  const handleTransactionSelect = async (transaction: Transaction) => {
+  const handleTransactionSelect = (transaction: Transaction) => {
     // Check if transaction already has a waybill
     if (transaction.waybillNumber) {
       toast.warn("This transaction already has a waybill assigned");
@@ -70,51 +67,68 @@ const WaybillModal = ({
 
     setSelectedTransaction(transaction);
     setIsDropdownOpen(false);
-
-    // Auto-generate waybill number when transaction is selected
-    await generateWaybillForTransaction();
   };
 
-  const generateWaybillForTransaction = async () => {
-    setIsGeneratingWaybill(true);
-    try {
-      const result = await generateWaybillNumber();
-      setGeneratedWaybillNumber(result.waybillNumber);
-    } catch (error) {
-      const waybillError = error as WaybillError;
-      toast.error(waybillError.message || "Failed to generate waybill number");
-      console.error("Error generating waybill number:", error);
-    } finally {
-      setIsGeneratingWaybill(false);
+  const handleWaybillNumberChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    // Remove spaces and convert to uppercase for consistency
+    const value = e.target.value.trim().toUpperCase();
+    setWaybillNumber(value);
+  };
+
+  const validateWaybillNumber = (number: string): boolean => {
+    // Basic validation - you can customize this based on your requirements
+    if (!number || number.length < 3) {
+      toast.error("Waybill number must be at least 3 characters long");
+      return false;
     }
+
+    // Check if it contains only alphanumeric characters and hyphens
+    const waybillPattern = /^[A-Z0-9-]+$/;
+    if (!waybillPattern.test(number)) {
+      toast.error(
+        "Waybill number can only contain letters, numbers, and hyphens"
+      );
+      return false;
+    }
+
+    return true;
   };
 
   const handleSaveWaybill = async () => {
-    if (!selectedTransaction || !generatedWaybillNumber) {
+    if (!selectedTransaction) {
       toast.error("Please select a transaction first");
+      return;
+    }
+
+    if (!waybillNumber) {
+      toast.error("Please enter a waybill number");
+      return;
+    }
+
+    // Validate waybill number format
+    if (!validateWaybillNumber(waybillNumber)) {
       return;
     }
 
     setIsLoading(true);
 
     try {
-      await assignWaybillToTransaction(
-        selectedTransaction._id,
-        generatedWaybillNumber
-      );
+      await assignWaybillToTransaction(selectedTransaction._id, waybillNumber);
 
       // Success - close modal and reset state
-      onClose();
-      setSelectedTransaction(null);
-      setGeneratedWaybillNumber("");
-
-      // Show success message
       toast.success("Waybill assigned successfully");
 
       // Call optional callback with transaction ID and waybill number
       if (onWaybillGenerated) {
-        onWaybillGenerated(selectedTransaction._id, generatedWaybillNumber);
+        onWaybillGenerated(selectedTransaction._id, waybillNumber);
       }
+
+      // Reset state and close
+      setSelectedTransaction(null);
+      setWaybillNumber("");
+      onClose();
     } catch (error) {
       const waybillError = error as WaybillError;
       toast.error(waybillError.message || "Failed to assign waybill");
@@ -125,10 +139,9 @@ const WaybillModal = ({
   };
 
   const handleCancel = () => {
-    // Waybill number is discarded when cancel is clicked
     onClose();
     setSelectedTransaction(null);
-    setGeneratedWaybillNumber("");
+    setWaybillNumber("");
     setIsDropdownOpen(false);
   };
 
@@ -175,7 +188,7 @@ const WaybillModal = ({
           <div className="relative" onClick={handleDropdownClick}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              disabled={isLoading || isGeneratingWaybill}
+              disabled={isLoading}
               className="w-full p-3 border border-[#D9D9D9] rounded-md text-left bg-white hover:border-[#3D80FF] focus:border-[#3D80FF] focus:outline-none flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <span
@@ -196,7 +209,7 @@ const WaybillModal = ({
               />
             </button>
 
-            {isDropdownOpen && !isLoading && !isGeneratingWaybill && (
+            {isDropdownOpen && !isLoading && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#D9D9D9] rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
                 {recentTransactions.length > 0 ? (
                   recentTransactions.map((transaction) => {
@@ -255,7 +268,7 @@ const WaybillModal = ({
           </div>
         </div>
 
-        {/* Waybill Number */}
+        {/* Waybill Number Input */}
         <div className="mb-8">
           <label className="block text-sm font-medium text-[#333333] mb-2">
             Waybill Number
@@ -263,24 +276,22 @@ const WaybillModal = ({
           <div className="relative">
             <input
               type="text"
-              value={generatedWaybillNumber}
-              placeholder={
-                isGeneratingWaybill
-                  ? "Generating..."
-                  : "Select a transaction to generate"
-              }
-              disabled
-              className="w-full p-3 border border-[#D9D9D9] rounded-md bg-[#F9F9F9] text-[#333333] cursor-not-allowed"
+              value={waybillNumber}
+              onChange={handleWaybillNumberChange}
+              placeholder="Enter waybill number (e.g., WB-2024-001)"
+              disabled={!selectedTransaction || isLoading}
+              className="w-full p-3 border border-[#D9D9D9] rounded-md bg-white text-[#333333] placeholder:text-[#999999] focus:border-[#3D80FF] focus:outline-none disabled:bg-[#F9F9F9] disabled:cursor-not-allowed transition-colors"
+              maxLength={50}
             />
-            {isGeneratingWaybill && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#3D80FF]"></div>
-              </div>
-            )}
           </div>
-          {generatedWaybillNumber && (
+          {!selectedTransaction && (
+            <p className="text-sm text-[#999999] mt-1">
+              Please select a transaction first
+            </p>
+          )}
+          {selectedTransaction && waybillNumber && (
             <p className="text-sm text-green-600 mt-1">
-              ✓ Waybill number generated successfully
+              ✓ Ready to assign waybill
             </p>
           )}
         </div>
@@ -297,12 +308,7 @@ const WaybillModal = ({
           </Button>
           <Button
             onClick={handleSaveWaybill}
-            disabled={
-              !selectedTransaction ||
-              !generatedWaybillNumber ||
-              isLoading ||
-              isGeneratingWaybill
-            }
+            disabled={!selectedTransaction || !waybillNumber || isLoading}
             className="flex-1 h-12 bg-[#4CD964] hover:bg-[#45C55A] text-white disabled:bg-[#CCCCCC] disabled:cursor-not-allowed transition-colors"
           >
             {isLoading ? "Assigning..." : "Save Waybill"}
@@ -312,9 +318,9 @@ const WaybillModal = ({
         {/* Help Text */}
         <div className="mt-4 p-3 bg-blue-50 rounded-md">
           <p className="text-sm text-blue-700">
-            <strong>Note:</strong> Waybill numbers are auto-generated when you
-            select a transaction. Transactions that already have waybill numbers
-            cannot be selected again.
+            <strong>Note:</strong> Enter a unique waybill number and assign it
+            to the selected transaction. Transactions that already have waybill
+            numbers cannot be selected again.
           </p>
         </div>
       </div>

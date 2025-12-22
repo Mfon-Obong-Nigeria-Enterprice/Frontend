@@ -10,37 +10,46 @@ const MaintainerDashboard = () => {
   const users = useUserStore((s) => s.users);
   const {
     getTotalActivityToday,
-    // getFailedLoginAttempts,
+    getFailedLoginAttempts,
     getDataModifications,
   } = useActivityLogsStore();
 
+  // Calculate stats
   const activeUsers = users.filter(
     (user) => user.isActive && !user.isBlocked
   ).length;
+
   const totalActivityToday = getTotalActivityToday();
-  // const failedLoginAttempts = getFailedLoginAttempts();
+  // Safe check in case getFailedLoginAttempts is not defined in the store version you have
+  const failedLoginAttempts = getFailedLoginAttempts ? getFailedLoginAttempts() : 0; 
   const dataModifications = getDataModifications();
 
+  // Configuration matching the Figma design
+  // NOTE: Ensure these files exist in your 'public/icons' folder
   const stats: StatCard[] = [
     {
-      salesValue: totalActivityToday.toString(),
       heading: "Total Activity Today",
-      icon: "/icons/total 1.svg",
+      salesValue: totalActivityToday.toString(),
+      icon: "/icons/activity-today.svg",
+      color: "green",
     },
-    // {
-    //   salesValue: failedLoginAttempts.toString(),
-    //   heading: "Failed Login Attempts",
-    //   icon: "/icons/failed 1.svg",
-    // },
     {
-      salesValue: activeUsers.toString(),
+      heading: "Failed Login Attempts",
+      salesValue: failedLoginAttempts.toString(),
+      icon: "/icons/failed-login-attempt.svg",
+      color: "red",
+    },
+    {
       heading: "Active Users",
-      icon: "/icons/active 1.svg",
+      salesValue: activeUsers.toString(),
+      icon: "/icons/active-users.svg",
+      color: "blue", // This is already a valid color name
     },
     {
+      heading: "Data modifications",
       salesValue: dataModifications.toString(),
-      heading: "Data Modifications",
-      icon: "/icons/data 1.svg",
+      icon: "/icons/data-modifications.svg",
+      color: "orange",
     },
   ];
 
@@ -48,11 +57,15 @@ const MaintainerDashboard = () => {
     <main>
       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4 mb-7">
         <DashboardTitle
-          heading="Maintainer's Dashboard"
-          description="Welcome back, Maintainer! Here's an overview of your business"
+          heading="Maintainer Dashboard"
+          description="System administration & User management"
         />
       </div>
+
+      {/* Stats Grid */}
       <Stats data={stats} />
+
+      {/* Main Content Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 mt-2 sm:mt-3 lg:mt-4">
         <div className="h-full min-h-[300px] sm:min-h-[400px] lg:min-h-[500px]">
           <SystemHealth />

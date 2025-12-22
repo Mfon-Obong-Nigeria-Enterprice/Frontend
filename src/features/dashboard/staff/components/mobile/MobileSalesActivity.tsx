@@ -1,8 +1,4 @@
-//type
 import type { Transaction } from "@/types/transactions";
-
-// utils
-import { formatCurrency, balanceTextClass } from "@/utils/styles";
 
 // ui
 import {
@@ -11,9 +7,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 
-//  icons
+// icons
 import { ChevronDown, Package } from "lucide-react";
 
 const MobileSalesActivity = ({
@@ -22,129 +17,96 @@ const MobileSalesActivity = ({
   filteredTransactions: Transaction[];
 }) => {
   return (
-    <div className="md:hidden space-y-2 mt-2">
+    <div className="space-y-4 p-4 md:p-6 bg-[#f9f9f9] min-h-[300px]">
       {filteredTransactions && filteredTransactions?.length > 0 ? (
-        filteredTransactions?.map((transaction, i) => (
-          <Card key={transaction._id + i} className="border-[#D9D9D9]">
-            <CardContent className="py-2 px-4">
-              {/* Client Name */}
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <span className="text-[#444444] text-base font-medium capitalize">
+        filteredTransactions?.map((transaction, i) => {
+          // Logic for Amount Color and Sign based on the screenshot style
+          // Assuming PURCHASE is money owed/spent (Red -), others are money in (Green +)
+          // You can adjust the type check based on your specific business logic
+          const isNegative = transaction.type === "PURCHASE";
+          const sign = isNegative ? "-" : "+";
+          const amountColor = isNegative ? "text-[#F95353]" : "text-[#2ECC71]";
+
+          return (
+            <div
+              key={transaction._id + i}
+              className="bg-white rounded-[10px] p-5 shadow-sm border border-transparent hover:border-gray-200 transition-all"
+            >
+              {/* Row 1: Name and Time */}
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-[#1E1E1E] text-[15px] font-normal capitalize font-Inter">
                   {transaction.clientId?.name || transaction.walkInClientName}
                 </span>
-                <div className="flex items-center gap-1 text-[#666] text-sm">
-                  <span className="uppercase">
-                    {new Date(transaction.createdAt).toLocaleTimeString(
-                      "en-NG",
-                      {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: true,
-                      }
-                    )}
-                  </span>
-                </div>
+                <span className="text-[#888888] text-[13px] uppercase font-Inter">
+                  {new Date(transaction.createdAt).toLocaleTimeString("en-NG", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
+                </span>
               </div>
 
-              {/* Items */}
-              <div className="flex items-start gap-2 mb-3">
-                <Package className="w-4 h-4 text-[#666] mt-0.5" />
-                <div className="text-[#444444] text-base">
+              {/* Row 2: Product and Chevron */}
+              <div className="flex items-center gap-1 mb-2">
+                <div className="text-[#7D7D7D] text-[14px] font-Inter flex items-center">
                   {transaction.items.length > 0 && (
                     <>
                       <span>
                         {transaction.items[0].quantity}x{" "}
                         {transaction.items[0].productName}
                       </span>
-                      {transaction.items.length > 1 && (
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="ml-1 h-auto p-1"
-                            >
-                              <ChevronDown className="w-4 h-4" />
-                              <span className="ml-1 text-sm">
-                                +{transaction.items.length - 1} more
-                              </span>
-                            </Button>
-                          </PopoverTrigger>
+                      
+                      {/* Chevron/Popover Logic */}
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto p-0 ml-2 hover:bg-transparent"
+                          >
+                             <ChevronDown className="w-4 h-4 text-[#999999]" />
+                          </Button>
+                        </PopoverTrigger>
+                        {transaction.items.length > 1 && (
                           <PopoverContent className="text-sm max-w-60">
                             <div className="space-y-1">
-                              {transaction.items.slice(1).map((item, index) => (
-                                <div key={index}>
-                                  {item.quantity}x {item.productName}
-                                </div>
-                              ))}
+                              {transaction.items
+                                .slice(1)
+                                .map((item, index) => (
+                                  <div key={index}>
+                                    {item.quantity}x {item.productName}
+                                  </div>
+                                ))}
                             </div>
                           </PopoverContent>
-                        </Popover>
-                      )}
+                        )}
+                      </Popover>
                     </>
                   )}
                 </div>
               </div>
 
-              {/* Type */}
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[#666] text-sm">Type:</span>
-                <span
-                  className={`text-sm font-medium py-1 px-2 capitalize ${
-                    transaction.type === "PURCHASE"
-                      ? "text-[#F95353]"
-                      : transaction.type === "PICKUP"
-                      ? "text-[#FFA500]"
-                      : "text-[#2ECC71]"
-                  }`}
-                >
-                  {transaction.type}
+              {/* Row 3: Amount with Sign and Color */}
+              <div>
+                <span className={`text-[15px] font-medium ${amountColor} font-Inter`}>
+                  {sign}₦{transaction.total?.toLocaleString()}
                 </span>
               </div>
-
-              {/* Amount and Amount Paid */}
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[#666] text-sm">Amount:</span>
-                <span
-                  className={`text-base font-semibold ${balanceTextClass(
-                    transaction.total
-                  )}`}
-                >
-                  {formatCurrency(transaction.total)}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-[#666] text-sm">Amount Paid:</span>
-                <span
-                  className={`text-base font-semibold ${balanceTextClass(
-                    transaction.amountPaid
-                  )}`}
-                >
-                  ₦{transaction.amountPaid?.toLocaleString()}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        ))
-      ) : (
-        <Card className="border-[#D9D9D9]">
-          <CardContent className="py-16">
-            <div className="flex flex-col items-center justify-center text-center text-[#666]">
-              {/* Icon */}
-              <div className="w-16 h-16 rounded-full bg-[#F5F5F5] flex items-center justify-center mb-4">
-                <Package className="w-8 h-8 text-[#A1A1A1]" />
-              </div>
-              {/* Title */}
-              <p className="text-lg font-medium mb-2">No transactions yet</p>
-              {/* Subtitle */}
-              <p className="text-sm text-[#999] max-w-xs">
-                Your sales activity will appear here once transactions are
-                recorded.
-              </p>
             </div>
-          </CardContent>
-        </Card>
+          );
+        })
+      ) : (
+        <div className="bg-white rounded-[10px] p-10 flex flex-col items-center justify-center text-center">
+          <div className="w-16 h-16 rounded-full bg-[#F5F5F5] flex items-center justify-center mb-4">
+            <Package className="w-8 h-8 text-[#A1A1A1]" />
+          </div>
+          <p className="text-lg font-medium text-[#666] mb-2">
+            No transactions yet
+          </p>
+          <p className="text-sm text-[#999] max-w-xs">
+            Your sales activity will appear here once transactions are recorded.
+          </p>
+        </div>
       )}
     </div>
   );

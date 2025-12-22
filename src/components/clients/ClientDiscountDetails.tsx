@@ -1,3 +1,4 @@
+//src/components/clients/ClientDiscountDetails.tsx
 import type { Transaction } from "@/types/transactions";
 import { formatCurrency } from "@/utils/formatCurrency";
 import {
