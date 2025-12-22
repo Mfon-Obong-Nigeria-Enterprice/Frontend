@@ -1,5 +1,5 @@
 // src/components/SearchAndFilter.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -23,7 +23,7 @@ const UserSearchList: React.FC<SearchAndFilterProps> = ({
   onFilterChange,
   roles = [],
   locations = [],
-  showLocationFilter = true,
+  //showLocationFilter = true,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState("all");
