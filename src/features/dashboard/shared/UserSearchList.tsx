@@ -1,5 +1,5 @@
 // src/components/SearchAndFilter.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -23,29 +23,13 @@ const UserSearchList: React.FC<SearchAndFilterProps> = ({
   onFilterChange,
   roles = [],
   locations = [],
-  showLocationFilter = false,
+  //showLocationFilter = true,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [selectedDateRange, setSelectedDateRange] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
-
-  useEffect(() => {
-    onFilterChange("role", selectedRole);
-    onFilterChange("dateRange", selectedDateRange);
-    onFilterChange("status", selectedStatus);
-    if (showLocationFilter) {
-      onFilterChange("location", selectedLocation);
-    }
-  }, [
-    onFilterChange,
-    selectedRole,
-    selectedDateRange,
-    selectedStatus,
-    selectedLocation,
-    showLocationFilter,
-  ]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
@@ -76,27 +60,28 @@ const UserSearchList: React.FC<SearchAndFilterProps> = ({
   return (
     <div className="flex flex-col lg:flex-row justify-between gap-4 px-4 py-5 font-sans w-full overflow-x-auto">
       {/* Search Input */}
-      <div className="relative w-full lg:w-1/3 min-w-[250px] flex-shrink-0">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+      <div className="relative lg:w-auto md:w-full flex-shrink-0">
+        <span className="absolute left-3 inset-y-0 my-auto flex items-center text-muted-foreground">
           <Search className="size-5" />
         </span>
         <Input
           type="text"
           placeholder="Search activities..."
-          className="pl-10 pr-4 py-5 rounded-lg border border-[#E0E0E0] w-full text-sm bg-[#F9F9F9] text-[#444] placeholder:text-[#B0B0B0]"
+          className="pl-10 pr-4 py-5 rounded-lg border border-[#E0E0E0] w-full text-sm bg-white! text-[#444] placeholder:text-[#B0B0B0]"
           value={searchQuery}
           onChange={handleSearchChange}
         />
       </div>
 
+
       {/* Filters row */}
-      <div className="flex flex-wrap gap-2 items-center justify-start w-full lg:justify-end overflow-x-auto">
+      <div className="flex flex-nowrap gap-2 items-center justify-start md:justify-between w-full lg:justify-auto overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {/* Role Filter */}
         <Select
           value={selectedRole}
           onValueChange={(value) => handleFilterChange("role", value)}
         >
-          <SelectTrigger className="flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-[#F9F9F9] text-[#444] text-sm font-medium w-[150px] flex-shrink-0">
+          <SelectTrigger className="flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-white! text-[#444] text-sm font-medium w-[150px] flex-shrink-0">
             <Users className="size-4 text-muted-foreground" />
             <span className="truncate">
               {selectedRole === "all" ? "All Roles" : selectedRole}
@@ -114,13 +99,12 @@ const UserSearchList: React.FC<SearchAndFilterProps> = ({
           </SelectContent>
         </Select>
 
-        {/* Conditionally rendered Location */}
-        {showLocationFilter && (
+        {/* Location Filter */}
           <Select
             value={selectedLocation}
             onValueChange={(value) => handleFilterChange("location", value)}
           >
-            <SelectTrigger className="flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-[#F9F9F9] text-[#444] text-sm font-medium w-[150px] flex-shrink-0">
+            <SelectTrigger className="flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-white! text-[#444] text-sm font-medium w-[150px] flex-shrink-0">
               <MapPin className="size-4 text-muted-foreground" />
               <span className="truncate">
                 {selectedLocation === "all"
@@ -139,14 +123,13 @@ const UserSearchList: React.FC<SearchAndFilterProps> = ({
               </SelectGroup>
             </SelectContent>
           </Select>
-        )}
 
         {/* Date Filter */}
         <Select
           value={selectedDateRange}
           onValueChange={(value) => handleFilterChange("dateRange", value)}
         >
-          <SelectTrigger className="flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-[#F9F9F9] text-[#444] text-sm font-medium w-[150px] flex-shrink-0">
+          <SelectTrigger className="flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-white! text-[#444] text-sm font-medium w-[150px] flex-shrink-0">
             <CalendarDays className="size-4 text-muted-foreground" />
             <span className="truncate">
               {selectedDateRange === "all"
@@ -172,7 +155,7 @@ const UserSearchList: React.FC<SearchAndFilterProps> = ({
           value={selectedStatus}
           onValueChange={(value) => handleFilterChange("status", value)}
         >
-          <SelectTrigger className="flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-[#F9F9F9] text-[#444] text-sm font-medium w-[150px] flex-shrink-0">
+          <SelectTrigger className="flex items-center gap-2 py-5 px-2 rounded-lg border border-[#E0E0E0] bg-white! text-[#444] text-sm font-medium w-[150px] flex-shrink-0">
             <Zap className="size-4 text-muted-foreground fill-[#7D7D7D]" />
             <span className="truncate">
               {selectedStatus === "all" ? "All Status" : selectedStatus}

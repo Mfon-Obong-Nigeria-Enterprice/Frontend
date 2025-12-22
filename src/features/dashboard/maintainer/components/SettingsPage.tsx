@@ -1,15 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { CheckCircle, Loader2 } from "lucide-react";
+import { Loader2, CheckCircle } from "lucide-react";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 
@@ -30,6 +20,7 @@ export const SettingsPage: React.FC = () => {
   const [loadingMaintenance, setLoadingMaintenance] = useState(false);
   const [loadingSession, setLoadingSession] = useState(false);
 
+  // State for the session form
   const [activeHoursForm, setActiveHoursForm] = useState({
     startTime: "08:00",
     endTime: "22:00",
@@ -37,6 +28,7 @@ export const SettingsPage: React.FC = () => {
   });
 
   const isMaintainer = user?.role === "MAINTAINER";
+  const isMaintOn = maintenanceMode?.isActive || false;
 
   useEffect(() => {
     fetchActiveHours();
@@ -91,92 +83,95 @@ export const SettingsPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="bg-red-100 text-red-700 p-4 rounded-lg">
-          <span>{error}</span>
-        </div>
-        <Button
-          onClick={() => {
-            fetchActiveHours();
-          }}
-          className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white"
+      <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg flex flex-col items-center justify-center gap-3">
+        <span>Error: {error}</span>
+        <button
+          onClick={() => fetchActiveHours()}
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
         >
           Retry
-        </Button>
+        </button>
       </div>
     );
   }
 
-  const isMaintOn = maintenanceMode?.isActive || false;
-
   return (
-    <div className="container mx-auto p-4">
-      {showForceLogoutSuccess && (
-        <div className="bg-green-100 text-green-700 p-4 rounded-lg flex items-center gap-2 mb-6">
+    <div className="space-y-6">
+      {/* Success Messages */}
+      {(showForceLogoutSuccess || isSaved) && (
+        <div className="bg-green-50 text-green-700 px-4 py-3 rounded border border-green-200 flex items-center gap-2">
           <CheckCircle className="h-5 w-5" />
           <span>
-            Active hours updated! Users outside these hours will be logged out.
+            {showForceLogoutSuccess
+              ? "Active hours updated! Users outside these hours will be logged out."
+              : "Settings saved successfully!"}
           </span>
         </div>
       )}
 
-      {isSaved && (
-        <div className="bg-green-100 text-green-700 p-4 rounded-lg flex items-center gap-2 mb-6">
-          <CheckCircle className="h-5 w-5" />
-          <span>Settings saved successfully!</span>
-        </div>
-      )}
-
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Maintenance Mode Card */}
         {isMaintainer && (
-          <Card className="flex-1">
-            <CardContent className="flex flex-col justify-between h-full">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Maintenance Mode</CardTitle>
-                  <CardDescription className="text-sm pt-2">
-                    Temporarily disable system access for maintenance
-                  </CardDescription>
-                </div>
-                <div className="pt-8">
-                  <Switch
-                    checked={isMaintOn}
-                    onCheckedChange={handleMaintenanceToggle}
-                    disabled={loadingMaintenance}
-                    className="data-[state=checked]:bg-green-600"
+          <div className="bg-white p-6 rounded-lg border border-[#E5E7EB] shadow-sm h-full flex flex-col justify-between">
+            <div>
+              <h2 className="text-lg font-medium text-[#333333] mb-6">
+                Maintenance Mode
+              </h2>
+
+              <div className="flex justify-between items-center mb-8">
+                <p className="text-[#4B5563] text-[15px] max-w-[80%] leading-relaxed">
+                  Temporarily disable system access for maintenance
+                </p>
+
+                {/* Custom Toggle Switch */}
+                <button
+                  onClick={handleMaintenanceToggle}
+                  disabled={loadingMaintenance}
+                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none ${
+                    isMaintOn ? "bg-[#3D80FF]" : "bg-gray-200"
+                  } ${loadingMaintenance ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${
+                      isMaintOn ? "translate-x-6" : "translate-x-1"
+                    }`}
                   />
-                </div>
+                </button>
               </div>
-              <Button
-                onClick={handleMaintenanceToggle}
-                className="w-full bg-[#2ECC71] hover:bg-[#2ECC71] text-white mt-auto"
-                disabled={loadingMaintenance}
-              >
-                {loadingMaintenance ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {isMaintOn ? "Deactivating..." : "Activating..."}
-                  </>
-                ) : (
-                  "Save Changes"
-                )}
-              </Button>
-            </CardContent>
-          </Card>
+            </div>
+
+            <button
+              onClick={handleMaintenanceToggle}
+              disabled={loadingMaintenance}
+              className="w-full bg-[#2ECC71] hover:bg-[#27ae60] text-white font-medium py-3 rounded-[6px] transition-colors text-[15px] flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loadingMaintenance ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {isMaintOn ? "Deactivating..." : "Activating..."}
+                </>
+              ) : (
+                "Save Change"
+              )}
+            </button>
+          </div>
         )}
 
-        <Card className="flex-1">
-          <CardHeader className="pb-4">
-            <CardTitle>Session Management</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Active Hours
+        {/* Session Management Card */}
+        <div className="bg-white p-6 rounded-lg border border-[#E5E7EB] shadow-sm h-full flex flex-col justify-between">
+          <div>
+            <h2 className="text-lg font-medium text-[#333333] mb-6">
+              Session Management
+            </h2>
+
+            <div className="mb-8">
+              <label className="block text-[#4B5563] text-[15px] mb-3">
+                Active hours
               </label>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Input
+              <div className="flex items-center gap-3">
+                {/* Start Time Input */}
+                <div className="relative w-full">
+                  <input
                     type="time"
                     value={activeHoursForm.startTime}
                     onChange={(e) =>
@@ -185,10 +180,13 @@ export const SettingsPage: React.FC = () => {
                         startTime: e.target.value,
                       })
                     }
-                    className="w-full"
+                    className="w-full border border-[#D1D5DB] rounded-[6px] py-2.5 px-3 text-[#374151] text-center focus:outline-none focus:ring-1 focus:ring-[#3D80FF]"
                   />
-                  <span className="text-gray-500">to</span>
-                  <Input
+                </div>
+                <span className="text-[#6B7280] text-sm">to</span>
+                {/* End Time Input */}
+                <div className="relative w-full">
+                  <input
                     type="time"
                     value={activeHoursForm.endTime}
                     onChange={(e) =>
@@ -197,28 +195,28 @@ export const SettingsPage: React.FC = () => {
                         endTime: e.target.value,
                       })
                     }
-                    className="w-full"
+                    className="w-full border border-[#D1D5DB] rounded-[6px] py-2.5 px-3 text-[#374151] text-center focus:outline-none focus:ring-1 focus:ring-[#3D80FF]"
                   />
                 </div>
               </div>
             </div>
+          </div>
 
-            <Button
-              className="w-full bg-[#2ECC71] hover:bg-[#2ECC71] text-white"
-              onClick={handleSaveSession}
-              disabled={loadingSession}
-            >
-              {loadingSession ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Force Logout All Users"
-              )}
-            </Button>
-          </CardContent>
-        </Card>
+          <button
+            onClick={handleSaveSession}
+            disabled={loadingSession}
+            className="w-full bg-[#2ECC71] hover:bg-[#27ae60] text-white font-medium py-3 rounded-[6px] transition-colors text-[15px] flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {loadingSession ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Force Logout All Users"
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

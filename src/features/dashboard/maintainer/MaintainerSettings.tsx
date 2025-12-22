@@ -31,7 +31,8 @@ export default function MaintainerSettings() {
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Settings</h1>
+            {/* Updated title to match Figma Screenshot */}
+            <h1 className="text-3xl font-bold text-[#333333] mb-2">Settings & Configurations</h1>
             <p className="text-gray-600">Manage your system preferences</p>
           </div>
         </div>
