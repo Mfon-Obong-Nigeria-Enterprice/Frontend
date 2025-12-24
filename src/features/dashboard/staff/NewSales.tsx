@@ -567,7 +567,7 @@ const NewSales: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [transactionType, setTransactionType] = useState<
     "PURCHASE" | "PICKUP" | "WHOLESALE" | "RETURN"
-  >("PURCHASE");
+  >("PICKUP");
   const [subMethod, setSubMethod] = useState("");
   const [amountPaid, setAmountPaid] = useState("");
   const [notes, setNotes] = useState("");
@@ -620,6 +620,8 @@ const NewSales: React.FC = () => {
   useEffect(() => {
     if (salesType === "Wholesale") {
       setTransactionType("WHOLESALE");
+    } else {
+      setTransactionType("PICKUP");
     }
   }, [salesType]);
 
@@ -897,7 +899,7 @@ const NewSales: React.FC = () => {
     setLoadingOffloading("");
     setLoadingCharge("");
     setDate(getTodayDateString());
-    setTransactionType("PURCHASE");
+    setTransactionType("PICKUP");
   };
 
   const handleSubmit = async () => {
