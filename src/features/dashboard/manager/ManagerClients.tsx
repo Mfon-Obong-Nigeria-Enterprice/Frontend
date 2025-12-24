@@ -14,17 +14,16 @@ import {
   SelectValue,
   SelectContent,
   SelectItem,
-  SelectGroup,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
 import autoTable from "jspdf-autotable";
 import type { Client, TransactionItem } from "@/types/types";
 import jsPDF from "jspdf";
-import { Search } from "lucide-react";
 import Stats from "../shared/Stats";
 import type { StatCard } from "@/types/stats";
 import ClientDirectoryMobile from "../shared/mobile/ClientDirectoryMobile";
+import { Search, MoreVertical } from "lucide-react"; // Import MoreVertical for the 3 dots
 
 const ManagerClients = () => {
   const {
@@ -33,9 +32,13 @@ const ManagerClients = () => {
     getNewClientsPercentageChange,
     getActiveClients, // This uses the 3-month logic
     getTotalClientsPercentageChange, // New function for total client growth
+    getOutStandingBalanceData,
   } = useClientStore();
 
   const [searchTerm, setSearchTerm] = useState("");
+
+  // State to toggle the mobile/tablet action menu
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Get dynamic data from store
   const totalClients = clients.length;
@@ -43,6 +46,9 @@ const ManagerClients = () => {
   const newClientsThisMonth = getNewClientsThisMonth();
   const newClientsChange = getNewClientsPercentageChange();
   const activeClients = getActiveClients(); // 3-month active clients
+  const outstandingBalance = getOutStandingBalanceData
+    ? getOutStandingBalanceData()
+    : { totalDebt: 0, clientsWithDebt: 0 };
 
   // Format change text helper
   const formatChangeText = (
@@ -72,8 +78,8 @@ const ManagerClients = () => {
         totalClientsChange.direction === "increase"
           ? "green"
           : totalClientsChange.direction === "decrease"
-          ? "red"
-          : "blue",
+            ? "red"
+            : "blue",
     },
     {
       heading: "Active clients",
@@ -85,6 +91,16 @@ const ManagerClients = () => {
       color: "blue",
     },
     {
+      heading: "Outstanding Balances",
+      salesValue: outstandingBalance.totalDebt,
+      format: "currency",
+      statValue: formatChangeText(
+        { percentage: 0, direction: "no-change" },
+        "last week"
+      ),
+      color: "orange",
+    },
+    {
       heading: "New clients (This month)",
       salesValue: newClientsThisMonth,
       format: "number",
@@ -93,8 +109,8 @@ const ManagerClients = () => {
         newClientsChange.direction === "increase"
           ? "green"
           : newClientsChange.direction === "decrease"
-          ? "red"
-          : "orange",
+            ? "red"
+            : "orange",
     },
   ];
 
@@ -165,8 +181,8 @@ const ManagerClients = () => {
           client.balance > 0
             ? "DEPOSIT"
             : client.balance < 0
-            ? "PICKUP"
-            : "PURCHASE",
+              ? "PICKUP"
+              : "PURCHASE",
         "Total Transaction": client.transactions
           ? client.transactions.length
           : 0,
@@ -239,8 +255,8 @@ const ManagerClients = () => {
           client.balance > 0
             ? "DEPOSIT"
             : client.balance < 0
-            ? "PICKUP"
-            : "PURCHASE",
+              ? "PICKUP"
+              : "PURCHASE",
         "Total Transaction": client.transactions
           ? client.transactions.length
           : 0,
@@ -252,99 +268,130 @@ const ManagerClients = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Clients");
     XLSX.writeFile(workbook, "clients_export.xlsx");
   };
-
   return (
     <div>
-      <main className=" ">
-        <DashboardTitle
-          heading="Clients"
-          description="Manage your client relationships and view outstanding balances"
-        />
+      <main>
+        <DashboardTitle heading="Clients" description="Manage client accounts & relationships" />
         <Stats data={stats} />
 
-        <section className="bg-white rounded-[0.625rem] pt-4 border border-[#D9D9D9] mt-10 ">
-          <div className="flex items-center justify-between px-7 pt-5 flex-wrap">
-            <div className="pb-4 sm:pb-0">
-              {" "}
-              <h4 className="font-medium text-xl font-Inter text-[#1E1E1E]">
-                Client directory
-              </h4>
-            </div>
-            <div className="flex items-center gap-3 justify-self-end sm:justify-self-auto">
-              <Button
-                className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
-                onClick={handleExportPDF}
-              >
+        <section className="bg-white rounded-[0.625rem] pt-4 border border-[#D9D9D9] mt-10 pb-4">
+
+          {/* --- ROW 1: Header & Actions --- */}
+          <div className="flex justify-between items-center px-4 sm:px-7 pt-2 relative">
+            <h4 className="font-medium text-xl font-Inter text-[#1E1E1E]">
+              Client directory
+            </h4>
+
+            {/* DESKTOP/TABLET: Export Buttons (Hidden on Mobile) */}
+            <div className="hidden sm:flex gap-3">
+              <Button onClick={handleExportPDF} className="bg-white hover:bg-[#f5f5f5] text-[#444444] border border-[#7D7D7D] font-Inter font-medium">
                 Export PDF
               </Button>
-              <Button
-                className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium transition-colors duration-200 ease-in-out"
-                onClick={handleExportExcel}
-              >
+              <Button onClick={handleExportExcel} className="bg-white hover:bg-[#f5f5f5] text-[#444444] border border-[#7D7D7D] font-Inter font-medium">
                 Download Excel
               </Button>
             </div>
+
+            {/* MOBILE ONLY: 3-Dotted Menu */}
+            <div className="sm:hidden relative">
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <MoreVertical size={24} className="text-[#444444]" />
+              </button>
+
+              {/* Mobile Dropdown Menu */}
+              {isMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-[#E5E7EB] shadow-lg rounded-md z-50 flex flex-col p-3 gap-3">
+
+                  {/* Export Actions */}
+                  <button onClick={handleExportPDF} className="text-left text-sm font-medium text-[#444444] py-1">
+                    Export PDF
+                  </button>
+                  <button onClick={handleExportExcel} className="text-left text-sm font-medium text-[#444444] py-1 border-b border-gray-100 pb-2">
+                    Download Excel
+                  </button>
+
+                  {/* Filters inside Menu (Mobile Only) */}
+                  <div className="flex flex-col gap-2 pt-1">
+                    <label className="text-xs text-gray-500 font-semibold">FILTERS</label>
+
+                    {/* Status Select */}
+                    <Select value={clientStatus} onValueChange={handleStatusChange}>
+                      <SelectTrigger className="w-full bg-[#F5F5F5] text-[#444444] border border-[#E5E7EB] h-9 text-xs">
+                        <SelectValue placeholder="All Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All status">All Status</SelectItem>
+                        <SelectItem value="registered">Registered</SelectItem>
+                        <SelectItem value="unregistered">Unregistered</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {/* Balance Select */}
+                    <Select value={clientBalance} onValueChange={handleBalanceChange}>
+                      <SelectTrigger className="w-full bg-[#F5F5F5] text-[#444444] border border-[#E5E7EB] h-9 text-xs">
+                        <SelectValue placeholder="All Balances" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All Balances">All Balances</SelectItem>
+                        <SelectItem value="PURCHASE">Purchase</SelectItem>
+                        <SelectItem value="PICKUP">Pickup</SelectItem>
+                        <SelectItem value="DEPOSIT">Deposit</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Search and filters */}
-          <div className="flex justify-between gap-2 items-center px-4 sm:py-5 my-5 flex-wrap md:flex-nowrap sm:px-2 md:px-8">
-            <div className="bg-[#F5F5F5] flex items-center gap-1 px-4 rounded-md w-full md:w-1/2">
-              <Search size={18} />
+          {/* --- ROW 2 & 3 Combined: Search Bar & Filters --- */}
+          <div className="flex flex-col lg:flex-row px-4 sm:px-7 mt-5 gap-4 lg:items-center">
+            {/* Search Bar */}
+            <div className="bg-[#F5F5F5] flex items-center gap-2 px-4 rounded-md w-full lg:flex-1 border border-transparent focus-within:border-[#D9D9D9]">
+              <Search size={18} className="text-[#7D7D7D]" />
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 type="search"
-                placeholder="Search clients, ID..."
-                className="py-2 outline-0 w-full bg-transparent"
+                placeholder="Search"
+                className="py-2.5 outline-none w-full bg-transparent text-sm placeholder:text-[#7D7D7D]"
               />
             </div>
-            <div className="flex items-center gap-4 pt-4 sm:pt-0 md:gap-3">
-              {/* Client Status */}
 
+            {/* Filters (HIDDEN ON MOBILE, VISIBLE TABLET+) */}
+            <div className="hidden sm:flex gap-3 shrink-0">
               <Select value={clientStatus} onValueChange={handleStatusChange}>
-                <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] p-2 rounded-sm">
-                  <SelectValue placeholder="AllStatus" />
+                <SelectTrigger className="w-auto min-w-[120px] bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] px-3 py-2 h-auto rounded-md text-sm font-medium">
+                  <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#D9D9D9] text-[#444444]">
-                  <SelectGroup>
-                    <SelectItem value="All status">All Status</SelectItem>
-                    <SelectItem value="registered">Registered</SelectItem>
-                    <SelectItem value="unregistered">Unregistered</SelectItem>
-                  </SelectGroup>
+                  <SelectItem value="All status">All Status</SelectItem>
+                  <SelectItem value="registered">Registered</SelectItem>
+                  <SelectItem value="unregistered">Unregistered</SelectItem>
                 </SelectContent>
               </Select>
 
-              {/* Client Balance */}
-
               <Select value={clientBalance} onValueChange={handleBalanceChange}>
-                <SelectTrigger className="w-40 bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] p-2 rounded-sm">
+                <SelectTrigger className="w-auto min-w-[120px] bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] px-3 py-2 h-auto rounded-md text-sm font-medium">
                   <SelectValue placeholder="All Balances" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#D9D9D9] text-[#444444]">
-                  <SelectGroup>
-                    <SelectItem value="All Balances">All Balances</SelectItem>
-                    <SelectItem value="PURCHASE">Purchase</SelectItem>
-                    <SelectItem value="PICKUP">Pickup</SelectItem>
-                    <SelectItem value="DEPOSIT">Deposit</SelectItem>
-                  </SelectGroup>
+                  <SelectItem value="All Balances">All Balances</SelectItem>
+                  <SelectItem value="PURCHASE">Purchase</SelectItem>
+                  <SelectItem value="PICKUP">Pickup</SelectItem>
+                  <SelectItem value="DEPOSIT">Deposit</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <ClientDirectory
-            searchTerm={searchTerm}
-            filteredClientsData={filteredClients}
-            actionLabel="view"
-            isStaffView={false}
-          />
-          <ClientDirectoryMobile
-            searchTerm={searchTerm}
-            filteredClientsData={filteredClients}
-            // onClientAction={onClientAction}
-            actionLabel="view"
-            isStaffView={false}
-          />
+          <div className="mt-6">
+            <ClientDirectory searchTerm={searchTerm} filteredClientsData={filteredClients} actionLabel="view" isStaffView={false} />
+            <ClientDirectoryMobile searchTerm={searchTerm} filteredClientsData={filteredClients} actionLabel="view" isStaffView={false} />
+          </div>
         </section>
       </main>
     </div>
