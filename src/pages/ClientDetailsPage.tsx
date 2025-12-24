@@ -264,9 +264,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     const supplies = sortedTxns.filter(
       (t) => t.type === "PURCHASE" || t.type === "PICKUP"
     );
-    const deductions = sortedTxns.filter(
-      (t) => t.type === "DEPOSIT" || t.type === "RETURN"
-    );
 
     // --- 2. B/F ---
     doc.setFont("helvetica", "bold");
@@ -501,31 +498,49 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     cursorY += lessSectionHeaderHeight;
 
     let totalDeductions = 0;
-    deductions.forEach((txn) => {
+    sortedTxns.forEach((txn) => {
       const rawTxn = mergedTransactions.find((t) => t._id === txn._id) || txn;
       const t = rawTxn as any;
-      const amount = Number(t.total) || 0;
-      totalDeductions += amount;
       const displayItems = [];
-      if (t.type === "RETURN" && t.items && t.items.length > 0) {
-        t.items.forEach((item: any) => {
-          const itemAmount = (item.quantity || 0) * (item.unitPrice || 0);
-          displayItems.push({
-            description: `(${item.quantity}) ${item.productName?.toUpperCase() || "PRODUCT"} (RETURNED): `,
-            value: formatCurrencyForPDF(itemAmount),
-            isReturn: true,
-          });
-        });
-      } else if (t.type === "RETURN") {
-        displayItems.push({
-          description: `(1) ITEM (RETURNED): `,
-          value: formatCurrencyForPDF(amount),
-          isReturn: true,
-        });
-      } else {
+
+      if (t.type === "DEPOSIT") {
+        const amount = Number(t.total) || 0;
+        totalDeductions += amount;
         displayItems.push({
           description: `Deposited: `,
           value: formatCurrencyForPDF(amount),
+          isReturn: false,
+        });
+      } else if (t.type === "RETURN") {
+        const amount = Number(t.total) || 0;
+        totalDeductions += amount;
+        if (t.items && t.items.length > 0) {
+          t.items.forEach((item: any) => {
+            const itemAmount = (item.quantity || 0) * (item.unitPrice || 0);
+            displayItems.push({
+              description: `(${item.quantity}) ${
+                item.productName?.toUpperCase() || "PRODUCT"
+              } (RETURNED): `,
+              value: formatCurrencyForPDF(itemAmount),
+              isReturn: true,
+            });
+          });
+        } else {
+          displayItems.push({
+            description: `(1) ITEM (RETURNED): `,
+            value: formatCurrencyForPDF(amount),
+            isReturn: true,
+          });
+        }
+      } else if (
+        (t.type === "PURCHASE" || t.type === "PICKUP") &&
+        (Number(t.amountPaid) || 0) > 0
+      ) {
+        const paid = Number(t.amountPaid);
+        totalDeductions += paid;
+        displayItems.push({
+          description: `Payment: `,
+          value: formatCurrencyForPDF(paid),
           isReturn: false,
         });
       }
@@ -546,7 +561,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8);
         doc.setTextColor(51, 51, 51);
-        doc.text(`On ${formatDate(getTransactionDate(txn))}`, margin + 7, cursorY + 6);
+        doc.text(
+          `On ${formatDate(getTransactionDate(txn))}`,
+          margin + 7,
+          cursorY + 6
+        );
 
         // Description & Value
         doc.setFontSize(9);
