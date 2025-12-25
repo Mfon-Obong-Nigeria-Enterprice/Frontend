@@ -5,17 +5,15 @@ import { useMemo, useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronLeft, MoreVertical } from "lucide-react";
+import { ChevronLeft, MoreVertical, X } from "lucide-react";
 import {
   useActivityLogsStore,
   type ActivityLogs,
 } from "@/stores/useActivityLogsStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useUserStore } from "@/stores/useUserStore";
-// Use React Query hook instead of Zustand store
 import {
   useColumnSettingsManager,
-  // debugColumnSettings,
 } from "@/hooks/useColumnSettings";
 import { type ColumnType, INITIAL_COLUMNS } from "@/services/columnSettingsAPI";
 import {
@@ -42,8 +40,6 @@ import {
 } from "@/components/ui/table";
 
 type Source = "visible" | "hidden";
-
-// Debug component to show current state
 
 // Memoized table cell renderer for preview
 type PreviewTableCellProps = {
@@ -182,17 +178,14 @@ const DraggableColumnItem = ({
       <div
         draggable
         onDragStart={handleDragStart}
-        className="flex items-center gap-3 p-3 rounded hover:bg-gray-50 cursor-grab border border-transparent hover:border-gray-200 transition-colors"
+        className="flex items-center gap-3 p-3 rounded hover:bg-gray-50 cursor-grab border border-transparent hover:border-gray-100 transition-colors"
       >
         <Checkbox
           checked={true}
           onCheckedChange={handleCheckboxChange}
-          className="border-[#2ECC71]
-    data-[state=checked]:bg-[#2ECC71]
-    data-[state=checked]:border-[#2ECC71]
-    data-[state=checked]:text-white"
+          className="h-5 w-5 rounded-md border-[#D9D9D9] data-[state=checked]:!bg-[#2ECC71] data-[state=checked]:!border-[#2ECC71] data-[state=checked]:text-white"
         />
-        <span className="text-sm font-light text-[#444444]">{col}</span>
+        <span className="text-sm font-normal text-[#333333]">{col}</span>
       </div>
     );
   }
@@ -201,14 +194,14 @@ const DraggableColumnItem = ({
     <div
       draggable
       onDragStart={handleDragStart}
-      className="flex items-center gap-2 px-3 py-1 bg-red-100 text-red-800 rounded-md cursor-grab border border-red-200 hover:bg-red-200 transition-colors"
+      className="flex items-center gap-2 px-3 py-1.5 bg-white text-[#333333] rounded-md cursor-grab border border-[#E0E0E0] hover:border-[#D9D9D9] transition-colors shadow-sm"
     >
-      <span className="text-sm">{col}</span>
+      <span className="text-sm font-normal">{col}</span>
       <button
         onClick={handleRemove}
-        className="text-red-600 hover:text-red-800"
+        className="text-[#7D7D7D] hover:text-[#333333] flex items-center justify-center"
       >
-        ×
+        <X className="w-3.5 h-3.5" />
       </button>
     </div>
   );
@@ -220,7 +213,6 @@ export default function ColumnSettings() {
   const activityLogs = useActivityLogsStore((s) => s.activities);
   const navigate = useNavigate();
 
-  // Use React Query hook for column settings
   const {
     settings,
     visibleColumns,
@@ -239,13 +231,12 @@ export default function ColumnSettings() {
   } | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Initialize local state properly with ALL columns
   const [localVisibleColumns, setLocalVisibleColumns] = useState<ColumnType[]>(
     () => {
       if (visibleColumns && visibleColumns.length > 0) {
         return [...visibleColumns];
       }
-      return [...INITIAL_COLUMNS]; // Default to all columns visible
+      return [...INITIAL_COLUMNS];
     }
   );
 
@@ -254,7 +245,7 @@ export default function ColumnSettings() {
       if (hiddenColumns) {
         return [...hiddenColumns];
       }
-      return []; // Default to no hidden columns
+      return [];
     }
   );
 
@@ -262,15 +253,13 @@ export default function ColumnSettings() {
     if (settings.columnOrder && settings.columnOrder.length > 0) {
       return [...settings.columnOrder];
     }
-    return [...INITIAL_COLUMNS]; // Default order
+    return [...INITIAL_COLUMNS];
   });
 
-  // Update local state when server state changes
   useEffect(() => {
     if (visibleColumns && visibleColumns.length > 0) {
       setLocalVisibleColumns([...visibleColumns]);
     } else {
-      // Ensure all columns are accounted for if visibleColumns is empty
       setLocalVisibleColumns([...INITIAL_COLUMNS]);
     }
 
@@ -289,15 +278,11 @@ export default function ColumnSettings() {
     setHasUnsavedChanges(false);
   }, [visibleColumns, hiddenColumns, settings]);
 
-  // Debug effect
-
-  // Filter users according to current user's role - memoized
   const filteredUsers = useMemo(
     () => filterUsers(users, currentUser?.role || ""),
     [users, currentUser?.role]
   );
 
-  // Create lookup maps for activities - optimized
   const { activityByIdMap, activityByEmailMap } = useMemo(() => {
     const byIdMap: Record<string, ActivityLogs[]> = {};
     const byEmailMap: Record<string, ActivityLogs[]> = {};
@@ -315,13 +300,11 @@ export default function ColumnSettings() {
     return { activityByIdMap: byIdMap, activityByEmailMap: byEmailMap };
   }, [activityLogs]);
 
-  // Merge filtered users with their activities - optimized
   const usersWithActivities = useMemo(() => {
     return filteredUsers.map((user, index) => {
       const logsByUserId = activityByIdMap[user._id] || [];
       const logsByEmail = activityByEmailMap[user.email] || [];
 
-      // Use Map for deduplication (more efficient)
       const allLogsMap = new Map();
       [...logsByUserId, ...logsByEmail].forEach((log) => {
         allLogsMap.set(log._id, log);
@@ -354,7 +337,6 @@ export default function ColumnSettings() {
     });
   }, [filteredUsers, activityByIdMap, activityByEmailMap]);
 
-  // Event handlers with useCallback for performance
   const handleDragStart = useCallback((col: ColumnType, from: Source) => {
     setDragging({ col, from });
   }, []);
@@ -430,10 +412,6 @@ export default function ColumnSettings() {
       columnOrder: localColumnOrder,
     };
 
-    // console.log("Attempting to save:", newSettings);
-    // debugColumnSettings(newSettings, "Attempting to Save");
-
-    // Make sure all columns are accounted for
     const allLocalColumns = [...localVisibleColumns, ...localHiddenColumns];
     const missingColumns = INITIAL_COLUMNS.filter(
       (col) => !allLocalColumns.includes(col)
@@ -441,14 +419,11 @@ export default function ColumnSettings() {
 
     if (missingColumns.length > 0) {
       console.error("Missing columns detected:", missingColumns);
-      // Add missing columns to visible columns
       const fixedSettings = {
         visibleColumns: [...localVisibleColumns, ...missingColumns],
         hiddenColumns: localHiddenColumns,
         columnOrder: localColumnOrder,
       };
-
-      // console.log("Fixed settings:", fixedSettings);
       setLocalVisibleColumns(fixedSettings.visibleColumns);
       saveSettings(fixedSettings);
     } else {
@@ -456,7 +431,12 @@ export default function ColumnSettings() {
     }
 
     setHasUnsavedChanges(false);
-  }, [saveSettings, localVisibleColumns, localHiddenColumns, localColumnOrder]);
+  }, [
+    saveSettings,
+    localVisibleColumns,
+    localHiddenColumns,
+    localColumnOrder,
+  ]);
 
   const handleCancel = useCallback(() => {
     if (hasUnsavedChanges) {
@@ -467,7 +447,6 @@ export default function ColumnSettings() {
   }, [hasUnsavedChanges, navigate]);
 
   const confirmDiscard = useCallback(() => {
-    // Reset local state to server state
     setLocalVisibleColumns(visibleColumns);
     setLocalHiddenColumns(hiddenColumns);
     setLocalColumnOrder(settings.columnOrder);
@@ -479,19 +458,17 @@ export default function ColumnSettings() {
     setOpenDiscardModal(false);
   }, []);
 
-  // Get ordered visible columns - use local state for preview
   const orderedVisibleColumns = useMemo(
-    () => localColumnOrder.filter((col) => localVisibleColumns.includes(col)),
+    () =>
+      localColumnOrder.filter((col) => localVisibleColumns.includes(col)),
     [localColumnOrder, localVisibleColumns]
   );
 
-  // Preview data - only show first 4 users for performance
   const previewData = useMemo(
     () => usersWithActivities.slice(0, 4),
     [usersWithActivities]
   );
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="p-4 lg:p-6 space-y-4 bg-gray-50 min-h-screen w-full">
@@ -506,14 +483,15 @@ export default function ColumnSettings() {
 
   return (
     <div className="p-2 md:p-6 space-y-3 bg-gray-50">
-      {/* HEADER */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg md:text-2xl font-semibold">Columns Settings</h2>
-        <div className="flex gap-2">
+      {/* HEADER: Updated Layout for Mobile/Desktop Match */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 md:gap-4">
+        <h2 className="text-2xl md:text-2xl font-bold text-[#1E1E1E]">Column Settings</h2>
+        <div className="lg:flex gap-2 w-full md:w-auto">
+          {/* Back Button: Full width on mobile (w-full), Auto on desktop (md:w-auto) */}
           <Button
             variant="outline"
             size="sm"
-            className="gap-2 cursor-pointer"
+            className="gap-2 cursor-pointer bg-white  lg:w-auto justify-start lg:justify-center pl-4 border-[#D9D9D9] text-[#333333] h-10 font-medium"
             onClick={() => navigate(-1)}
           >
             <ChevronLeft className="w-4 h-4" />
@@ -523,9 +501,9 @@ export default function ColumnSettings() {
       </div>
 
       {/* TIP BAR */}
-      <Card className="p-4 bg-[#FFFFFF] border-[#D9D9D9]">
-        <p className="text-[16px] font-medium text-[#7D7D7D]">
-          <strong>Tip:</strong> Drag and drop columns to reorder them. Uncheck
+      <Card className="p-4 bg-white border-[#D9D9D9] shadow-sm">
+        <p className="text-base font-normal text-[#7D7D7D]">
+          <strong className="text-[#333333]">Tip:</strong> Drag and drop columns to reorder them. Uncheck
           columns to hide them, or drag them to the "Hidden Columns" area.
           Changes will be saved automatically. You can't hide more than 3
           columns.
@@ -543,20 +521,20 @@ export default function ColumnSettings() {
       )}
 
       {/* MAIN PANELS */}
-      <div className=" grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6 w-full max-w-full">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6 w-full max-w-full">
         {/* LEFT: Visible Columns */}
-        <Card className="py-5">
-          <div className="flex flex-col gap-2 border-b-2 border-gray-200 px-4">
-            <h3 className="font-semibold text-[#333333] text-[18px]">
+        <Card className="py-5 bg-white shadow-sm">
+          <div className="flex flex-col gap-1 border-b border-[#E0E0E0] px-5 pb-3">
+            <h3 className="font-semibold text-[#1E1E1E] text-lg">
               Choose Which Columns to show
             </h3>
-            <p className="text-sm text-gray-500 pb-2">
+            <p className="text-sm text-[#7D7D7D]">
               Drag to reorder • Uncheck to hide • Adjust width
             </p>
           </div>
 
           <div
-            className="space-y-1 px-4"
+            className="space-y-1 px-5 pt-4"
             onDragOver={handleDragOver}
             onDrop={() => handleDrop("visible")}
           >
@@ -574,34 +552,33 @@ export default function ColumnSettings() {
         </Card>
 
         {/* RIGHT: Hidden Columns */}
-        <Card className="p-4 lg:p-5 w-full">
-          <div className="flex flex-col gap-2 border-b-2 border-gray-200 px-4">
-            <h3 className="font-semibold text-[#333333] text-[18px]">
+        <Card className="p-5 w-full bg-white shadow-sm flex flex-col">
+          <div className="flex flex-col gap-1 border-b border-[#E0E0E0] pb-3 mb-4">
+            <h3 className="font-semibold text-[#1E1E1E] text-lg">
               Hidden Columns
             </h3>
-            <p className="text-sm text-gray-500 pb-2">
+            <p className="text-sm text-[#7D7D7D]">
               Drag Columns here to hide them
             </p>
           </div>
 
           {/* Drop area for hidden columns */}
           <div
-            className={`border-2 border-dashed rounded-lg p-4 mb-6 min-h-[200px] transition-colors mx-4 ${
+            className={`border-2 border-dashed rounded-lg p-6 mb-6 flex-1 min-h-[160px] flex items-center justify-center transition-colors ${
               dragging && dragging.from === "visible"
-                ? "border-blue-400 bg-blue-50"
-                : "border-gray-300 bg-gray-50"
+                ? "border-blue-300 bg-blue-50"
+                : "border-[#E0E0E0] bg-[#FAFAFA]"
             }`}
             onDragOver={handleDragOver}
             onDrop={() => handleDrop("hidden")}
           >
             {localHiddenColumns.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-                Drop Columns here to hide them
-                <br />
-                or uncheck them from visible columns
+              <div className="text-center">
+                <p className="text-[#333333] font-medium mb-1">Drop Columns here to hide them</p>
+                <p className="text-xs text-[#7D7D7D]">or click to add from available columns</p>
               </div>
             ) : (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 w-full justify-center">
                 {localHiddenColumns.map((col) => (
                   <DraggableColumnItem
                     key={col}
@@ -617,16 +594,16 @@ export default function ColumnSettings() {
           </div>
 
           {/* Available Columns */}
-          <div className="px-4">
-            <p className="text-sm font-medium mb-3">Available Columns</p>
-            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+          <div>
+            <p className="text-sm font-medium text-[#333333] mb-3">Available Columns</p>
+            <div className="flex flex-wrap gap-2">
               {INITIAL_COLUMNS.map((col) => (
                 <span
                   key={col}
-                  className={`px-3 py-1 rounded-md text-sm border cursor-default ${
+                  className={`px-3 py-1.5 rounded-md text-sm border cursor-default transition-colors ${
                     localVisibleColumns.includes(col)
-                      ? "bg-white border-[#D9D9D9] text-[#7D7D7D] text-sm font-light"
-                      : "bg-green-100 border-green-300 text-green-800 text-sm font-light"
+                      ? "bg-white border-[#E0E0E0] text-[#7D7D7D]"
+                      : "bg-white border-[#2ECC71] text-[#2ECC71]"
                   }`}
                 >
                   {col}
@@ -636,66 +613,68 @@ export default function ColumnSettings() {
           </div>
         </Card>
       </div>
-{/* TABLE PREVIEW */}
-<Card className="p-4 lg:p-5">
-  <h3 className="font-semibold mb-2">Table Preview</h3>
-  <p className="text-sm text-gray-500 mb-4">
-    Preview how your table will look with current settings (showing first 4 users)
-  </p>
 
-  <div className="mt-4 w-full overflow-hidden">
-    <div className="overflow-x-auto w-full border rounded-lg">
-      <Table className="w-full">
-        <TableHeader className="bg-gray-100">
-          <TableRow>
-            {orderedVisibleColumns.map((col) => (
-              <TableHead
-                key={col}
-                className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase whitespace-nowrap"
-              >
-                {col}
-              </TableHead>
-            ))}
-            <TableHead className="px-3 py-2 w-12"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {previewData.map((user) => (
-            <TableRow key={user._id} className="border-t hover:bg-gray-50">
-              {orderedVisibleColumns.map((col) => (
-                <PreviewTableCell
-                  key={`${user._id}-${col}`}
-                  user={user}
-                  column={col}
-                />
-              ))}
-              <TableCell className="px-3 py-2">
-                <button className="p-1 rounded hover:bg-gray-200">
-                  <MoreVertical className="w-4 h-4 text-gray-500" />
-                </button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  </div>
-</Card>
+      {/* TABLE PREVIEW */}
+      <Card className="p-5 bg-white shadow-sm">
+        <h3 className="font-semibold text-[#1E1E1E] mb-1">Table Preview</h3>
+        <p className="text-sm text-[#7D7D7D] mb-4">
+          Preview how your table will look with current settings (showing first 4 users)
+        </p>
+
+        <div className="w-full overflow-hidden border border-[#E0E0E0] rounded-lg">
+          <div className="overflow-x-auto w-full">
+            <Table className="w-full">
+              <TableHeader className="bg-[#F9FAFB]">
+                <TableRow>
+                  {orderedVisibleColumns.map((col) => (
+                    <TableHead
+                      key={col}
+                      className="px-4 py-3 text-left text-xs font-semibold text-[#4B5563] uppercase tracking-wider whitespace-nowrap"
+                    >
+                      {col}
+                    </TableHead>
+                  ))}
+                  <TableHead className="px-4 py-3 w-10"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {previewData.map((user) => (
+                  <TableRow key={user._id} className="border-t border-[#E5E7EB] hover:bg-gray-50">
+                    {orderedVisibleColumns.map((col) => (
+                      <PreviewTableCell
+                        key={`${user._id}-${col}`}
+                        user={user}
+                        column={col}
+                      />
+                    ))}
+                    <TableCell className="px-4 py-3 text-right">
+                      <button className="p-1.5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100">
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </Card>
 
       {/* ACTION BUTTONS */}
-      <div className="flex flex-col sm:flex-row justify-end gap-3 w-full">
+      <div className="flex flex-col sm:flex-row justify-end gap-3 w-full mt-4">
         <Button
           variant="outline"
           onClick={handleResetToDefault}
           disabled={isResetting}
+          className="bg-white border-[#D9D9D9] text-[#333333]"
         >
           {isResetting ? "Resetting..." : "Reset to Default"}
         </Button>
-        <Button variant="outline" onClick={handleCancel}>
+        <Button variant="outline" onClick={handleCancel} className="bg-white border-[#D9D9D9] text-[#333333]">
           Cancel
         </Button>
         <Button
-          className="bg-green-600 hover:bg-green-700"
+          className="bg-[#2ECC71] hover:bg-[#27ae60] text-white"
           onClick={handleSaveChanges}
           disabled={isSaving || !hasUnsavedChanges}
         >
@@ -703,7 +682,6 @@ export default function ColumnSettings() {
         </Button>
       </div>
 
-      {/* Modal for discard confirmation */}
       <Dialog open={openDiscardModal} onOpenChange={setOpenDiscardModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -717,7 +695,7 @@ export default function ColumnSettings() {
               Cancel
             </Button>
             <Button
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 text-white"
               onClick={confirmDiscard}
             >
               Discard

@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import useTransactionWithCategories from "@/hooks/useTransactionWithCategories";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { isCategoryObject } from "@/utils/helpers";
 import { TrendingUp, BarChart3 } from "lucide-react";
 
-const COLORS = ["#4285F4", "#FBBC05", "#EA4335", "#2ECC71", "#8C1C1380"];
+// Colors matched from the Figma screenshots
+const COLORS = ["#3B82F6", "#FFA500", "#EF4444", "#2ECC71", "#8C1C13"];
 
 function useCategoryChartData() {
   const transactionsWithCategories = useTransactionWithCategories();
@@ -36,7 +37,7 @@ function useCategoryChartData() {
 // Empty State Component
 function EmptyChartState() {
   return (
-    <div className="w-full h-full min-h-[200px] flex flex-col items-center justify-center p-6">
+    <div className="w-full h-full min-h-[200px] flex flex-col items-center justify-center p-6 bg-white rounded-[10px] border border-[#E5E7EB]">
       <div className="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
         <BarChart3 className="w-8 h-8 text-gray-400" />
       </div>
@@ -58,88 +59,106 @@ function EmptyChartState() {
 export default function SalesByCategoryChart() {
   const data = useCategoryChartData();
 
-  // Check if we have any data
   const hasData = data.length > 0 && data.some((item) => item.value > 0);
 
-  // If no data, show empty state
   if (!hasData) {
     return <EmptyChartState />;
   }
 
-  // Calculate total once
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
-  // Add percentage field
-  const chartData = data.map((item) => ({
-    ...item,
-    percent: total > 0 ? (item.value / total) * 100 : 0,
-  }));
+  const chartData = data
+    .map((item) => ({
+      ...item,
+      percent: total > 0 ? (item.value / total) * 100 : 0,
+    }))
+    .sort((a, b) => b.value - a.value);
 
   return (
-    // Main container uses flex to arrange chart and legend side-by-side on large screens
-    <div className="py-7 px-2">
-      <h4 className="text-xl font-medium text-[#1E1E1E] px-5 ">
+    <div className="w-full bg-white rounded-[10px] border border-[#E5E7EB] p-5 h-full">
+      <h4 className="text-[16px] md:text-lg font-medium text-[#1F2937] mb-4">
         Sales by Category
       </h4>
-      {/* Pie Chart Container: Takes up more space (lg:w-3/5) to be larger */}
-      <div className="w-full  h-[300px] lg:h-[250px] flex items-center justify-center">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={chartData}
-              nameKey="name"
-              dataKey="value"
-              cx="50%" // Center the pie chart within its container
-              cy="50%"
-              outerRadius="80%" // Make the pie chart even bigger
-            >
-              {chartData.map((_, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(_value, name, props) => [
-                `${props.payload.percent.toFixed(2)}%`,
-                name,
-              ]}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
 
-      <div className=" ">
-        {/* ul list box container - adjusted max-width for containment */}
-        <ul className=" flex flex-wrap justify-start items-center gap-2">
-          {chartData.map((entry, index) => {
-            // Format the category name (45%)
-            const legendText = `${entry.name} (${
-              entry.percent?.toFixed(0) ?? 0
-            }%)`;
-            return (
-              <li
-                key={`item-${index}`}
-                // Use smaller font size (text-sm) for the legend
-                className="flex items-center text-sm"
+      {/* LAYOUT CONTAINER:
+         - Mobile & Tablet: flex-col (Stacked)
+         - Desktop: flex-row (Side-by-Side)
+      */}
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+        
+        {/* CHART SECTION */}
+        <div className="w-full lg:w-1/2 h-[220px] flex items-center justify-center relative">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                innerRadius={0} 
+                outerRadius="80%" 
+                paddingAngle={0}
+                dataKey="value"
+                stroke="none"
               >
-                {/* Color Box: Increased size (w-5 h-5) for better prominence */}
-                <span
-                  className="w-3 h-3"
-                  style={{
-                    backgroundColor: COLORS[index % COLORS.length],
-                    marginRight: "0px", // Adjusted space
-                  }}
-                />
+                {chartData.map((_, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value: number) => `₦${value.toLocaleString()}`} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
 
-                <span className="text-gray-800 font-normal pl-1">
-                  {legendText}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+        {/* LEGEND SECTION */}
+        <div className="w-full lg:w-1/2">
+          <ul className="flex flex-col gap-4">
+            {chartData.map((entry, index) => {
+              const percentageStr = `(${entry.percent?.toFixed(0)}%)`;
+              
+              return (
+                <li
+                  key={`item-${index}`}
+                  className="flex items-center w-full text-sm text-[#4B5563]"
+                >
+                  {/* Color Box (Always visible) */}
+                  <span
+                    className="w-4 h-4 rounded-[2px] mr-3 shrink-0"
+                    style={{
+                      backgroundColor: COLORS[index % COLORS.length],
+                    }}
+                  />
+
+                  {/* --- 1. MOBILE VIEW (Visible ONLY on Mobile) --- 
+                      Text and Percentage are INLINE (no gap) 
+                  */}
+                  <div className="flex items-center md:hidden">
+                    <span className="text-[#1F2937] mr-1">
+                        {entry.name}
+                    </span>
+                    <span className="text-[#6B7280] font-normal">
+                        {percentageStr}
+                    </span>
+                  </div>
+
+                  {/* --- 2. TABLET & DESKTOP VIEW (Visible on md and up) --- 
+                      Name on Left, Percentage on Right (Space between)
+                  */}
+                  <div className="hidden md:flex flex-1 items-center justify-between">
+                    <span className="text-[#1F2937] truncate" title={entry.name}>
+                        {entry.name}
+                    </span>
+                    <span className="text-[#6B7280] font-normal ml-auto">
+                        {percentageStr}
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </div>
     </div>
   );

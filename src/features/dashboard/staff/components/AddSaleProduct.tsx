@@ -182,6 +182,33 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
     }
   };
 
+  const handleTotalChange = (index: number, value: string) => {
+    if (value === "") {
+      updateRow(index, { unitPrice: 0 });
+      return;
+    }
+
+    const newTotal = parseFloat(value);
+    if (isNaN(newTotal)) return;
+
+    const row = rows[index];
+    const quantity = row.quantity > 0 ? row.quantity : 1;
+
+    let newUnitPrice = 0;
+
+    // Reverse calculate unit price from total to keep total consistent with user input
+    if (row.discountType === "percent") {
+      const factor = 1 - (row.discount || 0) / 100;
+      if (factor !== 0) {
+        newUnitPrice = newTotal / (quantity * factor);
+      }
+    } else {
+      newUnitPrice = (newTotal + (row.discount || 0)) / quantity;
+    }
+
+    updateRow(index, { unitPrice: newUnitPrice });
+  };
+
   return (
     <div className="bg-white border px-2 py-5">
       <h6 className="text-[#1E1E1E] text-base font-medium mb-4">Add Product</h6>
@@ -294,9 +321,18 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
 
                  {/* Total */}
                  <div className="w-[14%] text-center">
-                    <span className="text-[10px] text-[#333]">
-                         {row.total > 0 ? formatCurrency(row.total) : "₦0.00"}
-                    </span>
+                    {salesType === "Wholesale" ? (
+                      <input
+                        type="number"
+                        value={row.total === 0 ? "" : row.total}
+                        onChange={(e) => handleTotalChange(index, e.target.value)}
+                        className="w-[90%] mx-auto h-[34px] border border-[#E5E7EB] rounded text-center text-[11px] outline-none bg-white focus:ring-1 focus:ring-gray-200"
+                      />
+                    ) : (
+                      <span className="text-[10px] text-[#333]">
+                        {row.total > 0 ? formatCurrency(row.total) : "₦0.00"}
+                      </span>
+                    )}
                  </div>
 
                  {/* Action */}
@@ -482,7 +518,16 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
 
                     {/* Total */}
                     <TableCell className="text-center">
-                      {formatCurrency(row.total)}
+                      {salesType === "Wholesale" ? (
+                        <Input
+                          type="number"
+                          value={row.total === 0 ? "" : row.total}
+                          onChange={(e) => handleTotalChange(index, e.target.value)}
+                          className="text-center !bg-white w-[100px] mx-auto"
+                        />
+                      ) : (
+                        formatCurrency(row.total)
+                      )}
                     </TableCell>
 
                     {/* Delete */}

@@ -39,7 +39,7 @@ type ActivityWithUser = ActivityLogs & {
     name: string;
     profilePicture: string;
     role?: string;
-  };
+   };
 };
 
 const ActivityLog = () => {
@@ -184,7 +184,7 @@ const ActivityLog = () => {
     }
 
     return result;
-  }, [activities, users, searchQuery, filters]); // REMOVED customDateRange dependency
+  }, [activities, users, searchQuery, filters]); 
 
   const {
     currentPage,
@@ -207,7 +207,6 @@ const ActivityLog = () => {
 
   const handleFilterChange = useCallback((filterName: string, value: string) => {
     setFilters(prev => ({ ...prev, [filterName]: value }));
-    // REMOVED custom date picker logic
   }, []);
 
   // Extract unique roles for filter dropdown
@@ -234,7 +233,6 @@ const ActivityLog = () => {
           showLocationFilter={false} 
         />
         
-        {/* REMOVED Custom Date Range Picker entirely */}
       </div>
 
       {/* Activity summary */}
@@ -244,13 +242,20 @@ const ActivityLog = () => {
           {filters.dateRange !== 'all' && ` for ${filters.dateRange}`}
           {filters.role !== 'all' && ` with role: ${filters.role}`}
           {filters.status !== 'all' && ` with status: ${filters.status}`}
-          {/* REMOVED custom date range display */}
         </p>
       </div>
 
       {/* activity log table */}
       <div className="bg-white border border-[#d9d9d9] rounded-[10px] mt-[20px] overflow-hidden shadow-lg">
-        <Table>
+        {/* FIX APPLIED HERE:
+            1. overflow-x-auto: Enables horizontal scroll on mobile.
+            2. md:overflow-visible: Removes scroll container on tablet/desktop (keeps your request).
+            3. [&::-webkit-scrollbar]:w-0 + h-0: Sets scrollbar dimensions to 0 (fixes the mobile view issue).
+            4. [&::-webkit-scrollbar]:hidden: Fallback hide.
+            5. [-ms-overflow-style:none] & [scrollbar-width:none]: Support for Edge/Firefox.
+        */}
+        <div className="overflow-x-auto md:overflow-visible [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <Table className="">
           <TableHeader>
             <TableRow className="bg-[#F5F5F5]">
               <TableHead className="py-3 px-4 text-[#333333] text-sm font-medium">
@@ -350,6 +355,7 @@ const ActivityLog = () => {
             )}
           </TableBody>
         </Table>
+        </div>
 
         {/* Pagination */}
         {filteredActivities.length > 0 && (
