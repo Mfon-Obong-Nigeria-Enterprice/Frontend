@@ -1,19 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-
-// icons
-import { MdOutlineShoppingBag } from "react-icons/md";
-// Corrected imports to use lucide-react and react-icons for component-based icons
-import {
-  LayoutDashboard,
-  Book,
-  CreditCard,
-  Settings,
-  Bell,
-  ChevronLeft,
-} from "lucide-react";
-import { IoIosLogOut } from "react-icons/io";
-import { IoPerson } from "react-icons/io5";
+import { Icon } from "@iconify/react";
 
 // hooks
 import { useLogout } from "@/hooks/uselogout";
@@ -35,29 +22,42 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 
+// SIDEBAR ITEMS — ICONIFY ONLY
 const items = [
   {
     title: "Dashboard",
     url: "/admin/dashboard/overview",
-    icon: LayoutDashboard, // Replaced Vector
+    icon: "material-symbols:dashboard-outline",
   },
-  { title: "Inventory", url: "/admin/dashboard/inventory", icon: Book }, // Replaced Vector with a relevant icon
-  { title: "Clients", url: "/admin/dashboard/clients", icon: IoPerson },
-  { title: "Sales", url: "/admin/dashboard/sales", icon: MdOutlineShoppingBag },
+  {
+    title: "Inventory",
+    url: "/admin/dashboard/inventory",
+    icon: "material-symbols:inventory-2-outline-sharp",
+  },
+  {
+    title: "Clients",
+    url: "/admin/dashboard/clients",
+    icon: "material-symbols:groups-outline",
+  },
+  {
+    title: "Sales",
+    url: "/admin/dashboard/sales",
+    icon: "material-symbols:shopping-bag-outline-sharp",
+  },
   {
     title: "Transactions",
     url: "/admin/dashboard/transactions",
-    icon: CreditCard, // Replaced Transaction
+    icon: "material-symbols:send-money",
   },
   {
     title: "Notifications",
     url: "/admin/dashboard/admin-notifications",
-    icon: Bell, // Replaced notification
+    icon: "material-symbols:notifications-outline",
   },
   {
     title: "Settings",
     url: "/admin/dashboard/settings",
-    icon: Settings, // Replaced Settings
+    icon: "material-symbols:settings-outline-rounded",
   },
 ];
 
@@ -73,33 +73,47 @@ function AdminSidebar({ onLogoutClick }: AdminSidebarProps) {
     <Sidebar>
       <SidebarHeader />
       <Logo />
+
       <SidebarContent className="pt-8">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
+              {/* Back Button */}
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  className="cursor-pointer hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all text-[#333333]"
                   onClick={() => navigate(-1)}
+                  className="cursor-pointer rounded-sm p-6 my-1 flex items-center gap-3 transition-all
+                  bg-[#F4E8E7] text-[#333333] hover:bg-[#8C1C1380] hover:text-white"
                 >
-                  <ChevronLeft />
+                  <Icon icon="material-symbols:arrow-back" width={20} />
+                  <span>Back</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              {/* Menu Items */}
               {items.map((item) => {
                 const isActive = pathname.startsWith(item.url);
+
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       asChild
-                      className={`hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all
+                      className={`rounded-sm p-6 my-1 flex items-center gap-3 transition-all
                         ${
                           isActive
                             ? "bg-[#8C1C1380] text-white"
-                            : "bg-[#F4E8E7] text-[#333333] "
-                        }`}
+                            : "bg-[#F4E8E7] text-[#333333]"
+                        }
+                        hover:bg-[#8C1C1380] hover:text-white
+                      `}
                     >
                       <NavLink to={item.url}>
-                        <item.icon />
+                        <Icon
+                          icon={item.icon}
+                          width={20}
+                          height={20}
+                          className="shrink-0"
+                        />
                         <span>{item.title}</span>
                       </NavLink>
                     </SidebarMenuButton>
@@ -110,9 +124,13 @@ function AdminSidebar({ onLogoutClick }: AdminSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
       <SidebarFooter>
-        <SidebarMenuButton className="cursor-pointer" onClick={onLogoutClick}>
-          <IoIosLogOut />
+        <SidebarMenuButton
+          className="cursor-pointer flex items-center gap-3"
+          onClick={onLogoutClick}
+        >
+          <Icon icon="material-symbols:logout" width={20} />
           <span>Logout</span>
         </SidebarMenuButton>
       </SidebarFooter>
@@ -120,18 +138,14 @@ function AdminSidebar({ onLogoutClick }: AdminSidebarProps) {
   );
 }
 
+// WRAPPER WITH LOGOUT MODAL
 export const AdminSidebarWithModal = () => {
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const logoutMutation = useLogout();
 
-  const handleLogoutClick = () => {
-    setShowModal(true);
-  };
-
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     setIsLoading(true);
-
     setTimeout(() => {
       logoutMutation.mutate();
       setIsLoading(false);
@@ -141,7 +155,7 @@ export const AdminSidebarWithModal = () => {
 
   return (
     <>
-      <AdminSidebar onLogoutClick={handleLogoutClick} />
+      <AdminSidebar onLogoutClick={() => setShowModal(true)} />
       <LogoutConfirmModal
         isOpen={showModal}
         onClose={() => !isLoading && setShowModal(false)}

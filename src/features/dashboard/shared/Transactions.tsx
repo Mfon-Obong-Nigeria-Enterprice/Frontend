@@ -479,17 +479,7 @@ const Transactions = () => {
             </SelectGroup>
           </SelectContent>
         </Select>
-      </div>
-
-      {/* Transaction table */}
-      <div className="my-4 xl:shadow-lg rounded-xl overflow-hidden">
-        <div className="xl:bg-white xl:border">
-          <div className="flex gap-3 justify-between items-center px-8 bg-white md:bg-transparent rounded-xl md:rounded-none py-3 my-4 ">
-            <h5 className=" text-[#1E1E1E] text-xl font-medium   ">
-              All Transactions
-            </h5>
-            {/* filter by branch (only for SUPER_ADMIN) */}
-            {user?.role === "SUPER_ADMIN" && (
+        {user?.role === "SUPER_ADMIN" && (
               <Select value={branchFilter} onValueChange={setBranchFilter}>
                 <SelectTrigger className=" h-10 w-46 text-[#444444] border-[#7D7D7D]">
                   <SelectValue placeholder="Branch Location" />
@@ -506,6 +496,15 @@ const Transactions = () => {
                 </SelectContent>
               </Select>
             )}
+      </div>
+
+      {/* Transaction table */}
+      <div className="my-4 xl:shadow-lg rounded-xl overflow-hidden">
+        <div className="xl:bg-white xl:border">
+          <div className="flex gap-3 justify-between items-center px-8 bg-white md:bg-transparent rounded-xl md:rounded-none py-3 my-4 ">
+            <h5 className=" text-[#1E1E1E] text-xl font-medium   ">
+              All Transactions
+            </h5>
           </div>
           <TransactionTable currentTransaction={currentTransaction} />
           <TransactionsTableMobile currentTransaction={currentTransaction} />

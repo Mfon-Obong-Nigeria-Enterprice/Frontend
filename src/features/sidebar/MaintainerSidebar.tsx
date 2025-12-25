@@ -1,11 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-
-// icons imported from react-icons
-import { MdOutlineDashboard } from "react-icons/md";
-import { IoIosPeople, IoIosStats, IoIosNotifications } from "react-icons/io";
-import { RiSettings3Line } from "react-icons/ri";
-import { IoIosLogOut } from "react-icons/io";
+import { Icon } from "@iconify/react";
 
 // hooks
 import { useLogout } from "@/hooks/uselogout";
@@ -27,32 +22,32 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 
-// Updated items array to use imported icon components
+// SIDEBAR ITEMS — ICONIFY ONLY
 const items = [
   {
     title: "Overview",
     url: "/maintainer/dashboard/overview",
-    icon: MdOutlineDashboard,
+    icon: "material-symbols:overview-key-outline-rounded",
   },
   {
     title: "User Management",
     url: "/maintainer/dashboard/user-management",
-    icon: IoIosPeople,
+    icon: "mingcute:user-setting-line",
   },
   {
     title: "Activity log",
     url: "/maintainer/dashboard/log",
-    icon: IoIosStats,
+    icon: "material-symbols:search-activity-rounded",
   },
   {
     title: "Notification",
     url: "/maintainer/dashboard/maintainer-notifications",
-    icon: IoIosNotifications,
+    icon: "material-symbols:notifications-outline",
   },
   {
     title: "Settings",
     url: "/maintainer/dashboard/settings",
-    icon: RiSettings3Line,
+    icon: "material-symbols:settings-outline-rounded",
   },
 ];
 
@@ -64,22 +59,14 @@ const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
   const { pathname } = useLocation();
 
   return (
-    <Sidebar>
+    <Sidebar className="w-[280px] md:w-[300px] lg:w-[320px]">
       <SidebarHeader />
       <Logo />
+
       <SidebarContent className="pt-8">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* <SidebarMenuItem>
-                <SidebarMenuButton
-                  className="cursor-pointer hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all bg-[#F4E8E7] text-[#333333]"
-                  onClick={() => navigate(-1)}
-                >
-                  <IoIosArrowBack />
-                  <span>Back</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem> */}
               {items.map((item) => {
                 const isActive = pathname.startsWith(item.url);
 
@@ -87,16 +74,22 @@ const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
                   <SidebarMenuItem key={item.title} className="font-bold">
                     <SidebarMenuButton
                       asChild
-                      className={`hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all
+                      className={`rounded-sm p-6 my-1 flex items-center gap-3 transition-all
                         ${
                           isActive
                             ? "bg-[#8C1C1380] text-white"
-                            : "bg-[#F4E8E7] text-[#333333] "
-                        }`}
+                            : "bg-[#F4E8E7] text-[#333333]"
+                        }
+                        hover:bg-[#8C1C1380] hover:text-white
+                      `}
                     >
                       <NavLink to={item.url}>
-                        {/* Render the icon component directly */}
-                        <item.icon />
+                        <Icon
+                          icon={item.icon}
+                          width={20}
+                          height={20}
+                          className="shrink-0"
+                        />
                         <span>{item.title}</span>
                       </NavLink>
                     </SidebarMenuButton>
@@ -107,13 +100,13 @@ const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
       <SidebarFooter>
         <SidebarMenuButton
-          className="cursor-pointer"
-          onClick={() => onLogoutClick()}
+          className="cursor-pointer flex items-center gap-3"
+          onClick={onLogoutClick}
         >
-          {/* Use the imported React icon component for logout */}
-          <IoIosLogOut />
+          <Icon icon="material-symbols:logout" width={20} />
           <span>Logout</span>
         </SidebarMenuButton>
       </SidebarFooter>
@@ -121,16 +114,13 @@ const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
   );
 };
 
+// WRAPPER WITH LOGOUT MODAL
 const MaintainerSidebarWithModal = () => {
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const logoutMutation = useLogout();
 
-  const handleLogoutClick = () => {
-    setShowModal(true);
-  };
-
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     setIsLoading(true);
     setTimeout(() => {
       logoutMutation.mutate();
@@ -141,7 +131,7 @@ const MaintainerSidebarWithModal = () => {
 
   return (
     <>
-      <MaintainerSidebar onLogoutClick={handleLogoutClick} />
+      <MaintainerSidebar onLogoutClick={() => setShowModal(true)} />
       <LogoutConfirmModal
         isOpen={showModal}
         onClose={() => !isLoading && setShowModal(false)}
