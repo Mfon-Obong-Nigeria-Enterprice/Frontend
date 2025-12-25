@@ -90,16 +90,23 @@ const ManagerDashboardOverview = () => {
           </h2>
           <RecentTransactionsMobile />
           <RecentTransactions />
-          <div className="bg-white w-full flex items-center justify-between px-4 my-5 xl:py-2 border shadow xl:shadow-none">
-            <Button
-              onClick={() => navigate("/manager/dashboard/manage-transactions")}
-              variant="link"
-              className="text-blue-600 hover:text-blue-800 font-medium mt-4 flex justify-between w-full"
-            >
-              View All Transactions
-              <ChevronRight size={10} className="text-gray-500 w-4 h-4" />
-            </Button>
-          </div>
+       <div className="bg-white w-full flex items-center justify-between px-4 my-5 py-3 border shadow xl:shadow-none">
+  {/* Left text (mobile & tablet) */}
+  <span className="text-sm font-semibold text-gray-800 xl:hidden">
+    Recent Transactions
+  </span>
+
+  {/* Right button */}
+  <Button
+    onClick={() => navigate("/manager/dashboard/manage-transactions")}
+    variant="link"
+    className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 p-0"
+  >
+    View all sales
+    <ChevronRight size={14} className="text-gray-500" />
+  </Button>
+</div>
+
         </div>
       </div>
       {/* <OutstandingBalance /> */}

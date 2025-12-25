@@ -1,16 +1,7 @@
 import { useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Icon } from "@iconify/react";
 
-// icons
-import {
-  MdOutlineDashboard,
-  MdInventory2,
-  MdBarChart,
-  MdManageAccounts,
-} from "react-icons/md";
-import { FiUsers, FiSettings, FiLogOut, FiChevronLeft } from "react-icons/fi";
-import { IoNotificationsOutline } from "react-icons/io5";
-import { CgArrowsExchangeAlt } from "react-icons/cg";
 // hooks
 import { useLogout } from "@/hooks/uselogout";
 
@@ -31,46 +22,47 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 
+// SIDEBAR ITEMS — ICONIFY ONLY
 const items = [
   {
     title: "Dashboard",
     url: "/manager/dashboard/m-overview",
-    icon: MdOutlineDashboard,
+    icon: "material-symbols:dashboard-outline",
   },
   {
     title: "Business Report",
     url: "/manager/dashboard/business-report",
-    icon: MdInventory2,
+    icon: "material-symbols:business-center-outline-rounded",
   },
   {
     title: "Clients",
     url: "/manager/dashboard/manage-clients",
-    icon: FiUsers,
+    icon: "material-symbols:groups-outline",
   },
   {
     title: "Transaction",
     url: "/manager/dashboard/manage-transactions",
-    icon: CgArrowsExchangeAlt,
+    icon: "material-symbols:send-money",
   },
   {
     title: "Revenue Analytics",
     url: "/manager/dashboard/revenue-analytics",
-    icon: MdBarChart,
+    icon: "material-symbols:analytics-outline-rounded",
   },
   {
     title: "User Management",
     url: "/manager/dashboard/manage-user",
-    icon: MdManageAccounts,
+    icon: "mingcute:user-setting-line",
   },
   {
     title: "Notifications",
     url: "/manager/dashboard/manager-notifications",
-    icon: IoNotificationsOutline,
+    icon: "material-symbols:notifications-outline",
   },
   {
     title: "Settings",
     url: "/manager/dashboard/manager-settings",
-    icon: FiSettings,
+    icon: "material-symbols:settings-outline-rounded",
   },
 ];
 
@@ -86,34 +78,46 @@ const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
     <Sidebar>
       <SidebarHeader />
       <Logo />
-      <SidebarContent className="pt-8 z-100">
+
+      <SidebarContent className="pt-8">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
+              {/* Back Button */}
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  className="cursor-pointer hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all bg-[#F4E8E7] text-[#333333]"
                   onClick={() => navigate(-1)}
+                  className="cursor-pointer rounded-sm p-6 my-1 flex items-center gap-3 bg-[#F4E8E7] hover:bg-[#8C1C1380] hover:text-white transition-all"
                 >
-                  <FiChevronLeft />
+                  <Icon icon="material-symbols:arrow-back" width={20} />
                   <span>Back</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              {/* Menu Items */}
               {items.map((item) => {
                 const isActive = pathname.startsWith(item.url);
+
                 return (
-                  <SidebarMenuItem key={item.title} className="">
+                  <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       asChild
-                      className={`hover:bg-[#8C1C1380] hover:text-white rounded-sm p-6 my-1 flex items-center gap-3 transition-all
+                      className={`rounded-sm p-6 my-1 flex items-center gap-3 transition-all
                         ${
                           isActive
                             ? "bg-[#8C1C1380] text-white"
-                            : "bg-[#F4E8E7] text-[#333333] "
-                        }`}
+                            : "bg-[#F4E8E7] text-[#333]"
+                        }
+                        hover:bg-[#8C1C1380] hover:text-white
+                      `}
                     >
                       <NavLink to={item.url}>
-                        <item.icon />
+                        <Icon
+                          icon={item.icon}
+                          width={28}
+                          height={28}
+                          className="shrink-0 font-bold"
+                        />
                         <span>{item.title}</span>
                       </NavLink>
                     </SidebarMenuButton>
@@ -124,12 +128,13 @@ const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
       <SidebarFooter>
         <SidebarMenuButton
-          className="cursor-pointer"
-          onClick={() => onLogoutClick()}
+          onClick={onLogoutClick}
+          className="flex items-center gap-3"
         >
-          <FiLogOut />
+          <Icon icon="material-symbols:logout" width={20} />
           <span>Logout</span>
         </SidebarMenuButton>
       </SidebarFooter>
@@ -137,17 +142,13 @@ const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
   );
 };
 
-// Wrapper component that handles the modal
+// WRAPPER WITH MODAL
 const ManagerSidebarWithModal = () => {
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const logoutMutation = useLogout();
 
-  const handleLogoutClick = () => {
-    setShowModal(true);
-  };
-
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     setIsLoading(true);
     setTimeout(() => {
       logoutMutation.mutate();
@@ -158,7 +159,7 @@ const ManagerSidebarWithModal = () => {
 
   return (
     <>
-      <ManagerSidebar onLogoutClick={handleLogoutClick} />
+      <ManagerSidebar onLogoutClick={() => setShowModal(true)} />
       <LogoutConfirmModal
         isOpen={showModal}
         onClose={() => !isLoading && setShowModal(false)}
