@@ -8,6 +8,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+import { ArrowUp, ArrowDown, Minus } from "lucide-react"; // Assuming lucide-react, replace with your icon lib if different
 
 interface StatsProps {
   data: StatCard[];
@@ -62,7 +63,9 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-sm font-bold text-gray-700">{Math.round(clamped)}%</span>
+        <span className="text-sm font-bold text-gray-700">
+          {Math.round(clamped)}%
+        </span>
       </div>
     </div>
   );
@@ -73,112 +76,146 @@ const getColor = (color?: string) => {
     return color;
   }
   switch (color) {
-    case "green": return "#2ECC71";
-    case "red": return "#F95353";
-    case "blue": return "#3D80FF";
-    case "orange": return "#FFA500";
-    default: return "#6b7280";
+    case "green":
+      return "#2ECC71";
+    case "red":
+      return "#F95353";
+    case "blue":
+      return "#3D80FF";
+    case "orange":
+      return "#FFA500";
+    default:
+      return "#6b7280";
   }
 };
 
 const Stats: React.FC<StatsProps> = ({ data }) => {
   const revenueStore = useRevenueStore();
-  const monthlyRevenue = revenueStore.getMOMRevenue && revenueStore.getMOMRevenue();
+  const monthlyRevenue =
+    revenueStore.getMOMRevenue && revenueStore.getMOMRevenue();
 
-  // Explicit border colors based on index position
   const borderColors = ["#2ECC71", "#F95353", "#3D80FF", "#FFA500"];
 
- return (
-  <section
-    className={`
+  return (
+    <section
+      className={`
       grid gap-4 mt-2
-
-      /* Mobile + Tablet: ALWAYS 1 column */
       grid-cols-1
-
-      /* Desktop (XL+): Split dynamically */
-      ${data.length <= 2
-        ? "xl:grid-cols-2"
-        : data.length === 3
+      /* Dynamic Grid for Desktop based on data length */
+      ${
+        data.length <= 2
+          ? "xl:grid-cols-2"
+          : data.length === 3
           ? "xl:grid-cols-3"
           : "xl:grid-cols-4"
       }
     `}
-  >
-    {data.map((stat, index) => {
-      const rawSeries = Array.isArray(stat.chartData) ? stat.chartData : [];
-      const numericSeries = rawSeries.map((v) =>
-        Number.isFinite(v as number) ? Number(v) : 0
-      );
-      const chartData = numericSeries.map((v, i) => ({
-        name: `${i}`,
-        value: v,
-      }));
+    >
+      {data.map((stat, index) => {
+        const rawSeries = Array.isArray(stat.chartData) ? stat.chartData : [];
+        const numericSeries = rawSeries.map((v) =>
+          Number.isFinite(v as number) ? Number(v) : 0
+        );
+        const chartData = numericSeries.map((v, i) => ({
+          name: `${i}`,
+          value: v,
+        }));
 
-      const color = getColor(stat.color);
-      const borderColor = borderColors[index % borderColors.length];
+        const color = getColor(stat.color);
+        const borderColor = borderColors[index % borderColors.length];
 
-      const isCircularCard = stat.displayType === "circular";
-      const showArea =
-        stat.chartType === "line" && chartData.length > 0 && !isCircularCard;
-      const showBar =
-        stat.chartType === "bar" && chartData.length > 0 && !isCircularCard;
-      const showIcon = !!stat.icon;
+        const isCircularCard = stat.displayType === "circular";
+        const showArea =
+          stat.chartType === "line" && chartData.length > 0 && !isCircularCard;
+        const showBar =
+          stat.chartType === "bar" && chartData.length > 0 && !isCircularCard;
+        const showIcon = !!stat.icon;
 
-      const computedCircularPercent =
-        typeof stat.percentage === "number"
-          ? stat.percentage
-          : monthlyRevenue?.percentageChange ?? 0;
+        const computedCircularPercent =
+          typeof stat.percentage === "number"
+            ? stat.percentage
+            : monthlyRevenue?.percentageChange ?? 0;
 
-      const renderSales = () => {
-        if (stat.format === "currency") {
-          if (typeof stat.salesValue === "number")
-            return `₦${stat.salesValue.toLocaleString()}`;
-          if (
-            typeof stat.salesValue === "string" &&
-            stat.salesValue.trim().length > 0
-          )
-            return stat.salesValue;
-          return "₦0";
-        }
-        if (stat.format === "number" || stat.format === "text") {
-          return typeof stat.salesValue === "number"
-            ? Number(stat.salesValue).toLocaleString()
-            : String(stat.salesValue ?? "");
-        }
-        return String(stat.salesValue ?? "");
-      };
+        const renderSales = () => {
+          if (stat.format === "currency") {
+            if (typeof stat.salesValue === "number")
+              return `₦${stat.salesValue.toLocaleString()}`;
+            if (
+              typeof stat.salesValue === "string" &&
+              stat.salesValue.trim().length > 0
+            )
+              return stat.salesValue;
+            return "₦0";
+          }
+          if (stat.format === "number" || stat.format === "text") {
+            return typeof stat.salesValue === "number"
+              ? Number(stat.salesValue).toLocaleString()
+              : String(stat.salesValue ?? "");
+          }
+          return String(stat.salesValue ?? "");
+        };
 
-      const PercentageBadge = () =>
-        stat.statValue ? (
-          <span
-            className="text-xs sm:text-sm font-medium flex items-center gap-1 whitespace-nowrap"
-            style={{ color }}
+        // Reusable Badge Component to ensure consistency across layouts
+        const Badge = () => {
+          if (!stat.statValue) return null;
+          return (
+             <div className="flex items-center gap-1 whitespace-nowrap" style={{ color }}>
+                {/* Simple arrow logic - replace with your actual icon logic if needed */}
+                <ArrowUp className="w-4 h-4" />
+                <span className="text-xs sm:text-sm font-medium">
+                  {stat.statValue}
+                </span>
+             </div>
+          );
+        };
+
+        return (
+          <div
+            key={index}
+            className="bg-white relative rounded-lg border border-[#D9D9D9] p-6 hover:shadow-md transition-shadow duration-200 flex items-center justify-between min-h-[140px]"
           >
-            {stat.statValue}
-          </span>
-        ) : null;
+            {/* LEFT SECTION: Title, Value, and Mobile/Desktop Badge */}
+            <div className="flex flex-col justify-between h-full gap-2 z-10">
+              <div>
+                <div className="text-xs sm:text-sm text-[#7D7D7D] whitespace-nowrap mb-1">
+                  {stat.heading}
+                </div>
+                <div className="lg:mt-4 mt-8 text-xl sm:text-2xl md:text-3xl font-bold text-text-dark leading-none truncate">
+                  {renderSales()}
+                </div>
+              </div>
 
-      return (
-        <div
-          key={index}
-          className="bg-white rounded-lg border border-[#D9D9D9] p-4 sm:p-6 hover:shadow-md transition-shadow duration-200 flex flex-col justify-between min-h-[120px]"
-        >
-          {/* Top Row */}
-          <div className="flex justify-between items-center">
-            <div className="text-lg sm:text-xl md:text-2xl font-bold text-text-dark leading-none truncate">
-              {renderSales()}
+              {/* BADGE POSITION 1: Bottom Left 
+                  - Visible on Mobile (default)
+                  - Hidden on Tablet (md:hidden)
+                  - Visible on Desktop (xl:block)
+              */}
+              <div className="block md:hidden xl:block mt-2">
+                <Badge />
+              </div>
             </div>
 
-            {(isCircularCard || showArea || showBar || showIcon) && (
-              <div className="flex items-center justify-end ml-2">
-                <div className="w-16 h-10 sm:w-20 sm:h-12">
+            {/* BADGE POSITION 2: Absolute Center 
+                - Hidden on Mobile (hidden)
+                - Visible on Tablet (md:block)
+                - Hidden on Desktop (xl:hidden)
+                - Absolute centered coordinates
+            */}
+            <div className="hidden md:block xl:hidden absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                <Badge />
+            </div>
+
+            {/* RIGHT SECTION: Chart */}
+            <div className="flex items-end justify-end h-full">
+               <div className="w-24 h-12 sm:w-28 sm:h-16"> 
                   {isCircularCard ? (
-                    <CircularProgress
-                      percentage={computedCircularPercent}
-                      size={40}
-                      strokeColor={color}
-                    />
+                    <div className="flex justify-end">
+                       <CircularProgress
+                        percentage={computedCircularPercent}
+                        size={60}
+                        strokeColor={color}
+                      />
+                    </div>
                   ) : showArea ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={chartData}>
@@ -190,8 +227,16 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
                             y1="0"
                             y2="1"
                           >
-                            <stop offset="0%" stopColor={color} stopOpacity={0.2} />
-                            <stop offset="100%" stopColor={color} stopOpacity={0} />
+                            <stop
+                              offset="0%"
+                              stopColor={color}
+                              stopOpacity={0.2}
+                            />
+                            <stop
+                              offset="100%"
+                              stopColor={color}
+                              stopOpacity={0}
+                            />
                           </linearGradient>
                         </defs>
                         <Area
@@ -218,7 +263,7 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
                     </ResponsiveContainer>
                   ) : showIcon ? (
                     <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center border"
+                      className="w-10 h-10 rounded-full flex items-center justify-center border ml-auto"
                       style={{ borderColor }}
                     >
                       <img
@@ -228,25 +273,13 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
                       />
                     </div>
                   ) : null}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Bottom Row */}
-          <div className="mt-auto pt-2">
-            <div className="text-xs sm:text-sm text-[#7D7D7D] whitespace-nowrap">
-              {stat.heading}
-            </div>
-            <div className="mt-1">
-              <PercentageBadge />
+               </div>
             </div>
           </div>
-        </div>
-      );
-    })}
-  </section>
-);
+        );
+      })}
+    </section>
+  );
 };
 
 export default Stats;
