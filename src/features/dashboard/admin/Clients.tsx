@@ -30,6 +30,12 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { getTransactionDate } from "@/utils/transactions";
 
 interface ClientProps {
@@ -44,6 +50,7 @@ export const Clients: React.FC<ClientProps> = ({
   const { clients } = useClientStore();
 
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showPdfConfirmDialog, setShowPdfConfirmDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   const {
@@ -63,7 +70,9 @@ export const Clients: React.FC<ClientProps> = ({
   };
 
   // --- PDF Export Logic ---
-  const handleExportPDF = () => {
+  const executeExportPDF = () => {
+    setShowPdfConfirmDialog(false);
+
     const doc = new jsPDF();
     const columns = [
       { header: "Client Name", dataKey: "Name" },
@@ -77,9 +86,11 @@ export const Clients: React.FC<ClientProps> = ({
 
     const rows = filteredClients.map((client) => {
       const getLatestTransaction = (client: Client): TransactionItem | null => {
-        if (!client.transactions || !Array.isArray(client.transactions)) return null;
+        if (!client.transactions || !Array.isArray(client.transactions))
+          return null;
         const sortedTransactions = [...client.transactions].sort(
-          (a, b) => getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
+          (a, b) =>
+            getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
         );
         return sortedTransactions[0] || null;
       };
@@ -90,10 +101,19 @@ export const Clients: React.FC<ClientProps> = ({
         Name: client.name,
         Phone: client.phone || "N/A",
         Email: client.email || "N/A",
-        "Last Transaction Type": latestTransaction ? latestTransaction.type : "No Transaction",
+        "Last Transaction Type": latestTransaction
+          ? latestTransaction.type
+          : "No Transaction",
         Amount: client.balance,
-        "Balance Status": client.balance > 0 ? "DEPOSIT" : client.balance < 0 ? "PURCHASE" : "PICKUP",
-        "Total Transaction": client.transactions ? client.transactions.length : 0,
+        "Balance Status":
+          client.balance > 0
+            ? "DEPOSIT"
+            : client.balance < 0
+            ? "PURCHASE"
+            : "PICKUP",
+        "Total Transaction": client.transactions
+          ? client.transactions.length
+          : 0,
       };
     });
 
@@ -101,11 +121,13 @@ export const Clients: React.FC<ClientProps> = ({
     doc.text("Client Summary", 14, 16);
     doc.setFontSize(10);
     doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 26);
-    
+
     autoTable(doc, {
       startY: 30,
       head: [columns.map((col) => col.header)],
-      body: rows.map((row) => columns.map((col) => row[col.dataKey as keyof typeof row])),
+      body: rows.map((row) =>
+        columns.map((col) => row[col.dataKey as keyof typeof row])
+      ),
       styles: { fontSize: 9 },
       headStyles: { fillColor: [44, 204, 113] },
       alternateRowStyles: { fillColor: [245, 245, 245] },
@@ -117,9 +139,11 @@ export const Clients: React.FC<ClientProps> = ({
   const handleExportExcel = () => {
     const data = filteredClients.map((client) => {
       const getLatestTransaction = (client: Client): TransactionItem | null => {
-        if (!client.transactions || !Array.isArray(client.transactions)) return null;
+        if (!client.transactions || !Array.isArray(client.transactions))
+          return null;
         const sortedTransactions = [...client.transactions].sort(
-          (a, b) => getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
+          (a, b) =>
+            getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
         );
         return sortedTransactions[0] || null;
       };
@@ -135,12 +159,25 @@ export const Clients: React.FC<ClientProps> = ({
         "Last Transaction Date": latestTransaction
           ? new Date(latestTransaction.date).toLocaleDateString()
           : new Date(client.createdAt).toLocaleDateString(),
-        "Registration Status": client.isRegistered ? "Registered" : "Unregistered",
-        "Last Transaction Type": latestTransaction ? latestTransaction.type : "No Transaction",
-        "Last Transaction Amount": latestTransaction ? latestTransaction.amount : 0,
+        "Registration Status": client.isRegistered
+          ? "Registered"
+          : "Unregistered",
+        "Last Transaction Type": latestTransaction
+          ? latestTransaction.type
+          : "No Transaction",
+        "Last Transaction Amount": latestTransaction
+          ? latestTransaction.amount
+          : 0,
         Amount: client.balance,
-        "Balance Status": client.balance > 0 ? "DEPOSIT" : client.balance < 0 ? "PURCHASE" : "PICKUP",
-        "Total Transaction": client.transactions ? client.transactions.length : 0,
+        "Balance Status":
+          client.balance > 0
+            ? "DEPOSIT"
+            : client.balance < 0
+            ? "PURCHASE"
+            : "PICKUP",
+        "Total Transaction": client.transactions
+          ? client.transactions.length
+          : 0,
       };
     });
 
@@ -161,21 +198,18 @@ export const Clients: React.FC<ClientProps> = ({
 
       {/* Client Directory Section */}
       <section className="bg-white rounded-[0.625rem] pt-4 border border-[#D9D9D9] mt-10 mx-3 md:mx-0">
-        
-        {/* Header Row */}
         <div className="flex justify-between items-center px-4 sm:px-7 pt-2">
-          {/* Screenshot matches 'Clients Directory' (plural) */}
           <h4 className="font-medium text-xl font-Inter text-[#1E1E1E]">
             Clients Directory
           </h4>
 
           {showExportButtons !== false && (
             <>
-              {/* Desktop Buttons (Hidden on Tablet/Mobile) */}
+              {/* Desktop Buttons */}
               <div className="hidden lg:flex items-center gap-3">
                 <Button
                   className="bg-white hover:bg-[#f5f5f5] text-[#333333] border border-[var(--cl-secondary)] font-Inter font-medium"
-                  onClick={handleExportPDF}
+                  onClick={() => setShowPdfConfirmDialog(true)}
                 >
                   Export PDF
                 </Button>
@@ -194,7 +228,7 @@ export const Clients: React.FC<ClientProps> = ({
                 </Button>
               </div>
 
-              {/* Tablet/Mobile Menu (Visible < lg) */}
+              {/* Tablet/Mobile Menu */}
               <div className="lg:hidden">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -206,8 +240,13 @@ export const Clients: React.FC<ClientProps> = ({
                       <MoreVertical className="w-6 h-6" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 bg-white border border-[#D9D9D9]">
-                    <DropdownMenuItem onClick={handleExportPDF}>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48 bg-white border border-[#D9D9D9]"
+                  >
+                    <DropdownMenuItem
+                      onClick={() => setShowPdfConfirmDialog(true)}
+                    >
                       Export PDF
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleExportExcel}>
@@ -223,10 +262,8 @@ export const Clients: React.FC<ClientProps> = ({
           )}
         </div>
 
-        {/* Controls Section: Stacked on Tablet/Mobile, Row on Desktop */}
+        {/* Controls Section */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-4 sm:px-7 py-5">
-          
-          {/* Search Bar - Full width on Tablet */}
           <div className="bg-[#F5F5F5] flex items-center gap-2 px-4 rounded-md w-full lg:w-1/2 h-10 border border-transparent focus-within:border-[#D9D9D9]">
             <Search size={18} className="text-[#7D7D7D]" />
             <input
@@ -238,9 +275,7 @@ export const Clients: React.FC<ClientProps> = ({
             />
           </div>
 
-          {/* Filters - Below search on Tablet, Left Aligned */}
           <div className="flex items-center gap-3 w-full lg:w-auto">
-            {/* Status Filter */}
             <Select value={clientStatus} onValueChange={handleStatusChange}>
               <SelectTrigger className="w-[140px] bg-[#E0E0E0] text-[#1E1E1E] border border-[#C0C0C0] h-9 rounded-md text-sm font-medium">
                 <SelectValue placeholder="All Status" />
@@ -252,7 +287,6 @@ export const Clients: React.FC<ClientProps> = ({
               </SelectContent>
             </Select>
 
-            {/* Balance Filter */}
             <Select value={clientBalance} onValueChange={handleBalanceChange}>
               <SelectTrigger className="w-[150px] bg-[#E0E0E0] text-[#1E1E1E] border border-[#C0C0C0] h-9 rounded-md text-sm font-medium">
                 <SelectValue placeholder="All Balances" />
@@ -267,7 +301,6 @@ export const Clients: React.FC<ClientProps> = ({
           </div>
         </div>
 
-        {/* Desktop View: Table */}
         <div className="hidden lg:block">
           <ClientDirectory
             searchTerm={searchTerm}
@@ -278,7 +311,6 @@ export const Clients: React.FC<ClientProps> = ({
           />
         </div>
 
-        {/* Tablet/Mobile View: List/Cards (Matches screenshot) */}
         <div className="block lg:hidden">
           <ClientDirectoryMobile
             searchTerm={searchTerm}
@@ -291,6 +323,47 @@ export const Clients: React.FC<ClientProps> = ({
       </section>
 
       <AddClientDialog open={showAddDialog} onOpenChange={setShowAddDialog} />
+
+      {/* --- REVISED CONFIRMATION MODAL --- */}
+      <Dialog
+        open={showPdfConfirmDialog}
+        onOpenChange={setShowPdfConfirmDialog}
+      >
+        <DialogContent
+          className="w-[379px] max-w-[379px] rounded-[10px] p-0 border-none outline-none bg-white gap-0 flex flex-col items-center"
+          // Override default close button styling if needed, usually default is fine but can interact with custom padding
+        >
+          {/* Inner Container using correct padding specs: 30px vertical, 48px horizontal */}
+          <div className="flex flex-col items-center w-full pt-[30px] px-[48px] pb-[30px]">
+            <DialogHeader className="p-0 m-0 space-y-0 text-center w-full">
+              <DialogTitle className="text-[20px] font-bold text-[#1E1E1E] text-center">
+                Export PDF
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="text-center text-[#555555] text-[15px] leading-relaxed mt-[10px] mb-[24px]">
+              Are you sure you want to export client management data as PDF?
+            </div>
+
+            {/* Buttons Container: Flex with gap-10px */}
+            <div className="flex w-full items-center justify-between gap-[10px]">
+              <Button
+                variant="outline"
+                onClick={() => setShowPdfConfirmDialog(false)}
+                className="flex-1 h-[40px] rounded-[6px] border border-[#C0C0C0] text-[#333333] font-medium hover:bg-gray-50"
+              >
+                Back
+              </Button>
+              <Button
+                onClick={executeExportPDF}
+                className="flex-1 h-[40px] rounded-[6px] bg-[#2ECC71] hover:bg-[#27ae60] text-white font-medium"
+              >
+                Confirm
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 };
