@@ -80,7 +80,7 @@ const RecentSalesActivity: React.FC = () => {
   return (
     <div className="w-full bg-white border border-[#D9D9D9] rounded-lg shadow-sm mt-4">
       {/* Header */}
-      <div className="flex justify-between items-center px-4 md:px-6 py-4 border-b border-[#F3F4F6]">
+      <div className="md:hidden flex justify-between items-center px-4 md:px-6 py-4 border-b border-[#F3F4F6]">
         <h2 className="text-[#111] text-base font-semibold">Your Recent Sales Activity</h2>
         <a href="#" className="text-[#3D80FF] text-sm flex items-center font-medium hover:underline">
           View all Sales <ChevronRight className="w-4 h-4 ml-1" />

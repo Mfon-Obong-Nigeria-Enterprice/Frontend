@@ -79,9 +79,14 @@ const StaffDashboardOverview: React.FC = () => {
         </div>
 
         {/* ===== MOBILE VIEW (cards) ===== */}
+        <div className="md:hidden">
         <RecentSalesMobile />
+
+        </div>
         {/* ===== DESKTOP VIEW (table) ===== */}
-        <RecentSalesActivity />
+          <div className="hidden md:block">
+                    <RecentSalesActivity />
+        </div>
       </div>
     </main>
   );
