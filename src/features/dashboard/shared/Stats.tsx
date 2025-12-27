@@ -8,7 +8,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import { ArrowUp, ArrowDown, Minus } from "lucide-react"; // Assuming lucide-react, replace with your icon lib if different
+import { ArrowUp} from "lucide-react"; // Assuming lucide-react, replace with your icon lib if different
 
 interface StatsProps {
   data: StatCard[];

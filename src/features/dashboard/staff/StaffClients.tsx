@@ -95,7 +95,7 @@ const StaffClients: React.FC = () => {
         <Button
           onClick={() => window.location.reload()}
           variant="outline"
-          className="h-[40px] md:h-[44px] w-full md:w-[213px] px-6 bg-white hover:bg-gray-50 text-[#333333] border border-[#7D7D7D] rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm"
+          className="md:hidden h-[40px] md:h-[44px] w-[155px] md:w-[213px] px-6 bg-white hover:bg-gray-50 text-[#333333] border border-[#7D7D7D] rounded-lg font-medium lg:flex items-center lg:justify-center gap-2 shadow-sm"
         >
           <img
             src="/icons/refresh_icon.svg"
@@ -108,25 +108,40 @@ const StaffClients: React.FC = () => {
         </Button>
       </div>
 
+      <Button
+        onClick={() => window.location.reload()}
+        variant="outline"
+        className="lg:hidden hidden h-[40px] md:h-[44px] w-[155px] md:w-[213px] px-6 mb-8 bg-white hover:bg-gray-50 text-[#333333] border border-[#7D7D7D] rounded-lg font-medium md:flex items-center lg:justify-center gap-2 shadow-sm"
+      >
+        <img
+          src="/icons/refresh_icon.svg"
+          width={16}
+          height={16}
+          className="text-[#333333]"
+          alt="Refresh icon"
+        />
+        Refresh
+      </Button>
+
       {/* Main Content Card */}
       <section className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm overflow-hidden">
         {/* MOBILE CARD HEADER (Matches Screenshot) */}
         <div className="md:hidden p-4 border-b border-gray-100">
-           <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium text-[#1F1F1F]">Clients Directory</h2>
-              <MoreVertical size={20} className="text-gray-400" />
-           </div>
-           {/* Mobile Search */}
-           <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]" size={18} />
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-[#F5F5F5] border-none rounded-md py-2.5 pl-10 pr-4 text-sm outline-none placeholder:text-gray-400"
-              />
-           </div>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-medium text-[#1F1F1F]">Clients Directory</h2>
+            <MoreVertical size={20} className="text-gray-400" />
+          </div>
+          {/* Mobile Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]" size={18} />
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-[#F5F5F5] border-none rounded-md py-2.5 pl-10 pr-4 text-sm outline-none placeholder:text-gray-400"
+            />
+          </div>
         </div>
 
         {/* Card Header & Filters - Desktop */}
@@ -216,8 +231,8 @@ const StaffClients: React.FC = () => {
                       <td className="py-4 px-6 md:px-2 lg:px-6 text-sm text-[#444444]">
                         {client.lastTransactionDate
                           ? new Date(
-                              client.lastTransactionDate
-                            ).toLocaleDateString()
+                            client.lastTransactionDate
+                          ).toLocaleDateString()
                           : new Date(client.createdAt).toLocaleDateString()}
                       </td>
                       <td className="py-4 px-6 md:px-2 lg:px-6 text-sm text-[#444444]">
@@ -305,9 +320,9 @@ const StaffClients: React.FC = () => {
                   <div className="flex items-center justify-between">
                     {/* Amount */}
                     <span className={`text-sm font-medium ${getAmountColor(client.transactions[0]?.type || "")}`}>
-                        {client.transactions[0]?.type === "DEPOSIT" ? "+" : "-"}
-                        ₦
-                        {client.transactions[0]?.total?.toLocaleString() || "0"}
+                      {client.transactions[0]?.type === "DEPOSIT" ? "+" : "-"}
+                      ₦
+                      {client.transactions[0]?.total?.toLocaleString() || "0"}
                     </span>
 
                     {/* Balance */}
