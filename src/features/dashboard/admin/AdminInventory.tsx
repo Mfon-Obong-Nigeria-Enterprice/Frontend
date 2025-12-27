@@ -387,7 +387,7 @@ const AdminInventory = () => {
 
             {/* Search & Filters */}
             <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-wrap gap-5">
-              <div className="relative md:flex-1 w-full md:w-auto">
+              <div className="relative lg:flex-1 w-full lg:w-auto">
                 <div className="relative">
                   <IoIosSearch
                     className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -397,7 +397,7 @@ const AdminInventory = () => {
                     type="search"
                     placeholder="Search products, categories..."
                     onChange={(e) => debouncedSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="lg:w-full md:max-w-[699px] w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
 

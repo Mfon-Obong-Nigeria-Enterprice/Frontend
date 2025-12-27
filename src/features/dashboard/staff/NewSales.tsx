@@ -1384,19 +1384,20 @@ const NewSales: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col  gap-3">
-          <Button
-            variant="outline"
-            onClick={handleResetClient}
-            className="w-full sm:w-auto"
-          >
-            Cancel
-          </Button>
+          
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || !canSubmit()}
             className="text-white w-full sm:w-auto"
           >
             {isSubmitting ? "Processing..." : "Complete Sales"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleResetClient}
+            className="w-full sm:w-auto"
+          >
+            Cancel
           </Button>
         </div>
       </section>
