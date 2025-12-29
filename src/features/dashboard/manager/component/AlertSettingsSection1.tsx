@@ -46,79 +46,79 @@ export const AlertSettingsSection1: React.FC<AlertSettingsSectionProps> = ({
   };
 
    return (
-    <div className="space-y-4">
-      {/* Main container with responsive wrapping */}
-      <div className="flex flex-col sm:flex-row flex-wrap items-start gap-4">
+    <div className="">
+      {/* Layout Logic:
+         - Mobile: flex-col (vertical stack), gap-4
+         - Desktop (md+): flex-row (horizontal line), gap-6, items-center
+      */}
+      <div className="flex flex-col md:flex-row md:flex-wrap lg:flex-nowrap md:items-center gap-4">
         
-        {/* First column for Clients Debts and Custom Threshold */}
-        <div className="flex flex-col sm:flex-row items-start gap-4 flex-1 min-w-[200px]">
-          {/* Clients Debts Alert */}
-          <div className="flex items-center space-x-3  flex-1">
-            <Checkbox
-              id="clientsDebtsAlert"
-              checked={alerts.clientsDebtsAlert || false}
-              onCheckedChange={(checked) => onSettingChange('clientsDebtsAlert', checked as boolean)}
-              disabled={isReadOnly}
-              className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-            />
-            <Label htmlFor="clientsDebtsAlert" className="text-gray-700 text-xs font-normal whitespace-nowrap">
-              Clients Debts Alerts
-            </Label>
-          </div>
-
-          {/* Custom Threshold Alerts */}
-          <div className="flex items-center space-x-3  flex-1">
-            <Checkbox
-              id="CustomThresholdAlerts"
-              checked={alerts.CustomThresholdAlerts || false}
-              onCheckedChange={(checked) => onSettingChange('CustomThresholdAlerts', checked as boolean)}
-              disabled={isReadOnly}
-              className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-            />
-            <Label htmlFor="CustomThresholdAlerts" className="text-gray-700 text-xs font-normal whitespace-nowrap">
-              Custom Threshold Alerts
-            </Label>
-          </div>
+        {/* 1. Clients Debts Alerts */}
+        <div className="flex items-center space-x-[5px]">
+          <Checkbox
+            id="clientsDebtsAlert"
+            checked={alerts.clientsDebtsAlert || false}
+            onCheckedChange={(checked) => onSettingChange('clientsDebtsAlert', checked as boolean)}
+            disabled={isReadOnly}
+            className="h-5 w-5 rounded border-gray-300 data-[state=checked]:!bg-[#2ECC71] data-[state=checked]:!border-[#2ECC71] data-[state=checked]:text-white"
+          />
+          <Label htmlFor="clientsDebtsAlert" className="text-[#444444] font-normal text-sm whitespace-nowrap cursor-pointer">
+            Clients Debts Alerts
+          </Label>
         </div>
 
-        
-        <div className="flex items-center space-x-3 w-full sm:w-auto">
+        {/* 2. Custom Threshold Alerts */}
+        <div className="flex items-center space-x-[5px]">
+          <Checkbox
+            id="CustomThresholdAlerts"
+            checked={alerts.CustomThresholdAlerts || false}
+            onCheckedChange={(checked) => onSettingChange('CustomThresholdAlerts', checked as boolean)}
+            disabled={isReadOnly}
+            className="h-5 w-5 rounded border-gray-300 data-[state=checked]:!bg-[#2ECC71] data-[state=checked]:!border-[#2ECC71] data-[state=checked]:text-white"
+          />
+          <Label htmlFor="CustomThresholdAlerts" className="text-[#444444] font-normal text-sm whitespace-nowrap cursor-pointer">
+            Custom Threshold Alerts
+          </Label>
+        </div>
+
+        {/* 3. Large Balance Alert Threshold & Input */}
+        <div className="flex items-center space-x-[5px]">
           <Checkbox
             id="LargeBalanceAlertThreshold"
             checked={alerts.LargeBalanceAlertThreshold || false}
             onCheckedChange={(checked) => onSettingChange('LargeBalanceAlertThreshold', checked as boolean)}
             disabled={isReadOnly}
-            className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+            className="h-5 w-5 rounded border-gray-300 data-[state=checked]:!bg-[#2ECC71] data-[state=checked]:!border-[#2ECC71] data-[state=checked]:text-white"
           />
-          <Label htmlFor="LargeBalanceAlertThreshold" className="text-gray-700 text-xs font-normal whitespace-nowrap">
+          <Label htmlFor="LargeBalanceAlertThreshold" className="text-[#444444] font-normal text-sm whitespace-nowrap cursor-pointer">
             Large Balance Alert Threshold
           </Label>
-          
           <Input
             type="number"
             value={localThreshold}
             onChange={handleThresholdChange}
-            className="w-28"
+            // Styled to match the screenshot: smaller height, limited width
+            className="w-24 md:w-20 lg:w-24 h-8 text-sm px-2 border-gray-300 bg-white"
             min="0"
             step="1"
-            placeholder="Enter amount"
             disabled={isReadOnly}
           />
         </div>
 
-        {/* Price Change Notification - Full width on mobile, then normal */}
-        <div className="flex items-center space-x-3 w-full sm:w-auto">
+        {/* 4. Price Change Notifications */}
+        <div className="flex items-center space-x-[5px]">
           <Checkbox
             id="PriceChangeNotification"
             checked={alerts.PriceChangeNotification || false}
             onCheckedChange={(checked) => onSettingChange('PriceChangeNotification', checked as boolean)}
             disabled={isReadOnly}
-            className="h-5 w-5 border-gray-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+            className="h-5 w-5 rounded border-gray-300 data-[state=checked]:!bg-[#2ECC71] data-[state=checked]:!border-[#2ECC71] data-[state=checked]:text-white"
           />
-          <Label htmlFor="PriceChangeNotification" className="text-gray-700 text-xs font-normal whitespace-nowrap">
-            Price Change Notification
+          <Label htmlFor="PriceChangeNotification" className="text-[#444444] font-normal text-sm whitespace-nowrap cursor-pointer">
+            Price Change Notifications
           </Label>
         </div>
+
       </div>
     </div>
   );

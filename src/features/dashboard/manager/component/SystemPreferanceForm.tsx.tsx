@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { systemPreferencesSchema, type SystemPreferences } from "@/schemas/SettingsSchemas";
@@ -80,7 +80,7 @@ export function SystemPreferencesForm({ settings, onThresholdChange }: SystemPre
               )}
             />
 
-            <FormField
+            {/* <FormField
               control={form.control}
               name="bulkDiscountThreshold"
               render={({ field }) => (
@@ -99,9 +99,9 @@ export function SystemPreferencesForm({ settings, onThresholdChange }: SystemPre
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            /> */}
           
-            <FormField
+            {/* <FormField
               control={form.control}
               name="minimumPurchaseForBulkDiscount"
               render={({ field }) => (
@@ -117,7 +117,7 @@ export function SystemPreferencesForm({ settings, onThresholdChange }: SystemPre
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            /> */}
 
             <div className="flex items-center gap-6">
               <div>

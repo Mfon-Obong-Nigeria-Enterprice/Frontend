@@ -49,7 +49,7 @@ const UserAccountDetails = ({
 
   return (
     <>
-      <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 w-full mt-10">
+      <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 w-full md:mt-10 mt-0">
         {/* Account details */}
         <div className="bg-white rounded-xl shadow py-6 border border-[#F0F0F0] w-full">
           <h6 className="text-lg font-semibold mb-4 text-[#333] px-6">
@@ -163,7 +163,7 @@ const UserAccountDetails = ({
 
       {/* tab for mobile */}
       {/* buttons to navigate tab */}
-      <div className="h-[44px] bg-white mt-5 p-[4px] grid grid-cols-2 md:hidden rounded-[0.625rem] shadow-2xs my-10">
+      <div className="h-[44px] bg-white mt-5 p-[4px] grid grid-cols-2 md:hidden rounded-[0.625rem] shadow-2xs md:my-10 my-6">
         <Button
           variant="ghost"
           onClick={() => setActiveTab("details")}
