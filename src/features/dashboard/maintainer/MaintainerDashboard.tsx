@@ -54,7 +54,7 @@ const MaintainerDashboard = () => {
   ];
 
   return (
-    <main>
+    <main className="p-4 md:p-6 ">
       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4 mb-7">
         <DashboardTitle
           heading="Maintainer Dashboard"

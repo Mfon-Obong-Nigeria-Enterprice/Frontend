@@ -59,7 +59,7 @@ const MaintainerSidebar = ({ onLogoutClick }: MaintainerSidebarProps) => {
   const { pathname } = useLocation();
 
   return (
-    <Sidebar className="w-[280px] md:w-[300px] lg:w-[320px]">
+    <Sidebar className="w-[280px] md:w-[300px] lg:w-[288px]">
       <SidebarHeader />
       <Logo />
 

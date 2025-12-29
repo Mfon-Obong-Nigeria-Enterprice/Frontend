@@ -105,7 +105,7 @@ const SingleStatItem: React.FC<SingleStatItemProps> = ({
   const borderColor = borderColors[index % borderColors.length];
   const isCircularCard = stat.displayType === "circular";
   const showArea =
-    stat.chartType === "line" && chartData.length > 0 && !isCircularCard;
+    (stat.chartType === "line" || stat.chartType === "area") && chartData.length > 0 && !isCircularCard;
   const showBar =
     stat.chartType === "bar" && chartData.length > 0 && !isCircularCard;
   const showIcon = !!stat.icon;

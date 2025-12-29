@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 
 // hooks
@@ -72,7 +72,7 @@ interface ManagerSidebarProps {
 
 const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
   const { pathname } = useLocation();
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
 
   return (
     <Sidebar>
@@ -84,7 +84,7 @@ const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
           <SidebarGroupContent>
             <SidebarMenu>
               {/* Back Button */}
-              <SidebarMenuItem>
+              {/* <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => navigate(-1)}
                   className="cursor-pointer rounded-sm p-6 my-1 flex items-center gap-3 bg-[#F4E8E7] hover:bg-[#8C1C1380] hover:text-white transition-all"
@@ -92,7 +92,7 @@ const ManagerSidebar = ({ onLogoutClick }: ManagerSidebarProps) => {
                   <Icon icon="material-symbols:arrow-back" width={20} />
                   <span>Back</span>
                 </SidebarMenuButton>
-              </SidebarMenuItem>
+              </SidebarMenuItem> */}
 
               {/* Menu Items */}
               {items.map((item) => {

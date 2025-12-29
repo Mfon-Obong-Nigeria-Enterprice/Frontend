@@ -23,21 +23,19 @@ import jsPDF from "jspdf";
 import Stats from "../shared/Stats";
 import type { StatCard } from "@/types/stats";
 import ClientDirectoryMobile from "../shared/mobile/ClientDirectoryMobile";
-import { Search, MoreVertical } from "lucide-react"; // Import MoreVertical for the 3 dots
+import { Search, MoreVertical } from "lucide-react"; 
 
 const ManagerClients = () => {
   const {
     clients,
     getNewClientsThisMonth,
     getNewClientsPercentageChange,
-    getActiveClients, // This uses the 3-month logic
-    getTotalClientsPercentageChange, // New function for total client growth
+    getActiveClients, 
+    getTotalClientsPercentageChange, 
     getOutStandingBalanceData,
   } = useClientStore();
 
   const [searchTerm, setSearchTerm] = useState("");
-
-  // State to toggle the mobile/tablet action menu
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Get dynamic data from store
@@ -45,7 +43,7 @@ const ManagerClients = () => {
   const totalClientsChange = getTotalClientsPercentageChange();
   const newClientsThisMonth = getNewClientsThisMonth();
   const newClientsChange = getNewClientsPercentageChange();
-  const activeClients = getActiveClients(); // 3-month active clients
+  const activeClients = getActiveClients();
   const outstandingBalance = getOutStandingBalanceData
     ? getOutStandingBalanceData()
     : { totalDebt: 0, clientsWithDebt: 0 };
@@ -141,7 +139,7 @@ const ManagerClients = () => {
   // PDF export function
   const handleExportPDF = () => {
     const doc = new jsPDF();
-
+    
     const columns = [
       { header: "Client Name", dataKey: "Name" },
       { header: "Phone", dataKey: "Phone" },
@@ -209,7 +207,7 @@ const ManagerClients = () => {
       headStyles: { fillColor: [44, 204, 113] },
       alternateRowStyles: { fillColor: [245, 245, 245] },
     });
-
+    
     doc.save("Client_Summary.pdf");
   };
 
@@ -268,6 +266,7 @@ const ManagerClients = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Clients");
     XLSX.writeFile(workbook, "clients_export.xlsx");
   };
+
   return (
     <div>
       <main>
@@ -284,10 +283,10 @@ const ManagerClients = () => {
 
             {/* DESKTOP/TABLET: Export Buttons (Hidden on Mobile) */}
             <div className="hidden sm:flex gap-3">
-              <Button onClick={handleExportPDF} className="bg-white hover:bg-[#f5f5f5] text-[#444444] border border-[#7D7D7D] font-Inter font-medium">
+              <Button onClick={handleExportPDF} className="bg-white hover:bg-[#f5f5f5] text-[#444444] border border-[#7D7D7D] font-Inter font-medium lg:w-[150px]">
                 Export PDF
               </Button>
-              <Button onClick={handleExportExcel} className="bg-white hover:bg-[#f5f5f5] text-[#444444] border border-[#7D7D7D] font-Inter font-medium">
+              <Button onClick={handleExportExcel} className="bg-white hover:bg-[#f5f5f5] text-[#444444] border border-[#7D7D7D] font-Inter font-medium lg:w-[170px]">
                 Download Excel
               </Button>
             </div>
@@ -301,56 +300,26 @@ const ManagerClients = () => {
                 <MoreVertical size={24} className="text-[#444444]" />
               </button>
 
-              {/* Mobile Dropdown Menu */}
+              {/* Mobile Dropdown Menu (REDUCED CONTENT) */}
               {isMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-[#E5E7EB] shadow-lg rounded-md z-50 flex flex-col p-3 gap-3">
-
-                  {/* Export Actions */}
-                  <button onClick={handleExportPDF} className="text-left text-sm font-medium text-[#444444] py-1">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-[#E5E7EB] shadow-lg rounded-md z-50 flex flex-col p-2 gap-1">
+                  <button onClick={handleExportPDF} className="text-left text-sm font-medium text-[#444444] py-2 px-2 hover:bg-gray-50 rounded">
                     Export PDF
                   </button>
-                  <button onClick={handleExportExcel} className="text-left text-sm font-medium text-[#444444] py-1 border-b border-gray-100 pb-2">
+                  <button onClick={handleExportExcel} className="text-left text-sm font-medium text-[#444444] py-2 px-2 hover:bg-gray-50 rounded">
                     Download Excel
                   </button>
-
-                  {/* Filters inside Menu (Mobile Only) */}
-                  <div className="flex flex-col gap-2 pt-1">
-                    <label className="text-xs text-gray-500 font-semibold">FILTERS</label>
-
-                    {/* Status Select */}
-                    <Select value={clientStatus} onValueChange={handleStatusChange}>
-                      <SelectTrigger className="w-full bg-[#F5F5F5] text-[#444444] border border-[#E5E7EB] h-9 text-xs">
-                        <SelectValue placeholder="All Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="All status">All Status</SelectItem>
-                        <SelectItem value="registered">Registered</SelectItem>
-                        <SelectItem value="unregistered">Unregistered</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    {/* Balance Select */}
-                    <Select value={clientBalance} onValueChange={handleBalanceChange}>
-                      <SelectTrigger className="w-full bg-[#F5F5F5] text-[#444444] border border-[#E5E7EB] h-9 text-xs">
-                        <SelectValue placeholder="All Balances" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="All Balances">All Balances</SelectItem>
-                        <SelectItem value="PURCHASE">Purchase</SelectItem>
-                        <SelectItem value="PICKUP">Pickup</SelectItem>
-                        <SelectItem value="DEPOSIT">Deposit</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* --- ROW 2 & 3 Combined: Search Bar & Filters --- */}
-          <div className="flex flex-col lg:flex-row px-4 sm:px-7 mt-5 gap-4 lg:items-center">
+          {/* --- ROW 2 & 3: Search Bar & Filters --- */}
+          {/* Changed 'lg' to 'md' here to fix Tablet view */}
+          <div className="flex flex-col md:flex-row px-4 sm:px-7 mt-5 gap-4 items-stretch md:items-center">
+            
             {/* Search Bar */}
-            <div className="bg-[#F5F5F5] flex items-center gap-2 px-4 rounded-md w-full lg:flex-1 border border-transparent focus-within:border-[#D9D9D9]">
+            <div className="bg-[#F5F5F5] flex items-center gap-2 px-4 rounded-md w-full md:flex-1 border border-transparent focus-within:border-[#D9D9D9]">
               <Search size={18} className="text-[#7D7D7D]" />
               <input
                 value={searchTerm}
@@ -361,10 +330,13 @@ const ManagerClients = () => {
               />
             </div>
 
-            {/* Filters (HIDDEN ON MOBILE, VISIBLE TABLET+) */}
-            <div className="hidden sm:flex gap-3 shrink-0">
+            {/* Filters */}
+            {/* - Mobile (<768px): Grid (2 cols)
+                - Tablet (>=768px): Flex Row (Side by side with Search)
+             */}
+            <div className="grid grid-cols-2 md:flex gap-3 shrink-0 w-full md:w-auto">
               <Select value={clientStatus} onValueChange={handleStatusChange}>
-                <SelectTrigger className="w-auto min-w-[120px] bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] px-3 py-2 h-auto rounded-md text-sm font-medium">
+                <SelectTrigger className="w-full md:w-[150px] bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] px-3 py-2 h-auto rounded-md text-sm font-medium">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#D9D9D9] text-[#444444]">
@@ -375,7 +347,7 @@ const ManagerClients = () => {
               </Select>
 
               <Select value={clientBalance} onValueChange={handleBalanceChange}>
-                <SelectTrigger className="w-auto min-w-[120px] bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] px-3 py-2 h-auto rounded-md text-sm font-medium">
+                <SelectTrigger className="w-full md:w-[170px] bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] px-3 py-2 h-auto rounded-md text-sm font-medium">
                   <SelectValue placeholder="All Balances" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#D9D9D9] text-[#444444]">
