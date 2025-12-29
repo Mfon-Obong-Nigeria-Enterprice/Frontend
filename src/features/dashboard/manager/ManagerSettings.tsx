@@ -61,7 +61,7 @@ export default function ManagerSettings() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="min-h-screen py-8 px-4 lg:px-0 w-full">
       <div className="  space-y-8">
         <div className="flex justify-between items-center mb-8">
           <div>
