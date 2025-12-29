@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
-
 // components
 import UserAccountDetails from "./useraccountdetails";
 
@@ -182,7 +181,7 @@ const UserDetailsPage = () => {
       </div>
 
       {/* top user info */}
-      <article className="bg-white rounded-[10px] py-4 px-2 md:p-7 backdrop-blur-2xl mt-[36px]">
+      <article className="bg-white rounded-[10px] py-4 px-2 md:p-7 backdrop-blur-2xl md:mt-[36px] mt-[18px]">
         {/*  user profile */}
         <div className="flex gap-3 md:gap-10">
           {/* image */}
@@ -246,6 +245,11 @@ const UserDetailsPage = () => {
         <div className="flex justify-between items-center mt-8 md:ml-[94px]">
           {/* left side roles */}
           <div className="flex gap-5">
+            {/* user id */}
+            <div className="flex items-center-safe gap-1">
+              <img src="/images/icons/user-id-shield.svg" alt="id-icon" className="size-2.5 " />
+              <span className="text-[#333333] text-xs">User ID: {user._id.slice(0, 5)}...</span>
+            </div>
             {/* user role */}
             <div className="flex items-center-safe gap-1 text-[#333333] text-xs">
               <FaRegUser className="size-2.5" />
