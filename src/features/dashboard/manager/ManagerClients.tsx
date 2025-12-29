@@ -139,7 +139,6 @@ const ManagerClients = () => {
   // PDF export function
   const handleExportPDF = () => {
     const doc = new jsPDF();
-    
     const columns = [
       { header: "Client Name", dataKey: "Name" },
       { header: "Phone", dataKey: "Phone" },
@@ -189,7 +188,6 @@ const ManagerClients = () => {
 
     doc.setFontSize(16);
     doc.text("Client Summary", 14, 16);
-
     doc.setFontSize(10);
     doc.text(
       `Generated: ${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
@@ -281,8 +279,10 @@ const ManagerClients = () => {
               Client directory
             </h4>
 
-            {/* DESKTOP/TABLET: Export Buttons (Hidden on Mobile) */}
-            <div className="hidden sm:flex gap-3">
+            {/* DESKTOP ONLY: Export Buttons */}
+            {/* CHANGED: 'hidden sm:flex' -> 'hidden lg:flex' 
+                This hides buttons on Tablet and shows them ONLY on Desktop */}
+            <div className="hidden lg:flex gap-3">
               <Button onClick={handleExportPDF} className="bg-white hover:bg-[#f5f5f5] text-[#444444] border border-[#7D7D7D] font-Inter font-medium lg:w-[150px]">
                 Export PDF
               </Button>
@@ -291,8 +291,10 @@ const ManagerClients = () => {
               </Button>
             </div>
 
-            {/* MOBILE ONLY: 3-Dotted Menu */}
-            <div className="sm:hidden relative">
+            {/* MOBILE & TABLET: 3-Dotted Menu */}
+            {/* CHANGED: 'sm:hidden' -> 'lg:hidden'
+                This ensures the menu shows up on Tablet now */}
+            <div className="lg:hidden relative">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -300,7 +302,7 @@ const ManagerClients = () => {
                 <MoreVertical size={24} className="text-[#444444]" />
               </button>
 
-              {/* Mobile Dropdown Menu (REDUCED CONTENT) */}
+              {/* Dropdown Menu */}
               {isMenuOpen && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-[#E5E7EB] shadow-lg rounded-md z-50 flex flex-col p-2 gap-1">
                   <button onClick={handleExportPDF} className="text-left text-sm font-medium text-[#444444] py-2 px-2 hover:bg-gray-50 rounded">
@@ -315,7 +317,7 @@ const ManagerClients = () => {
           </div>
 
           {/* --- ROW 2 & 3: Search Bar & Filters --- */}
-          {/* Changed 'lg' to 'md' here to fix Tablet view */}
+          {/* Layout: Mobile (Stack) | Tablet (Side-by-side) */}
           <div className="flex flex-col md:flex-row px-4 sm:px-7 mt-5 gap-4 items-stretch md:items-center">
             
             {/* Search Bar */}
@@ -331,9 +333,6 @@ const ManagerClients = () => {
             </div>
 
             {/* Filters */}
-            {/* - Mobile (<768px): Grid (2 cols)
-                - Tablet (>=768px): Flex Row (Side by side with Search)
-             */}
             <div className="grid grid-cols-2 md:flex gap-3 shrink-0 w-full md:w-auto">
               <Select value={clientStatus} onValueChange={handleStatusChange}>
                 <SelectTrigger className="w-full md:w-[150px] bg-[#D9D9D9] text-[#444444] border border-[#7d7d7d] px-3 py-2 h-auto rounded-md text-sm font-medium">

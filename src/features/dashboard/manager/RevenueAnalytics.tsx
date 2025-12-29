@@ -18,6 +18,11 @@ import {
   TrendingUp,
   TrendingDown,
 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import DashboardTitle from "../shared/DashboardTitle";
@@ -27,7 +32,7 @@ import type { StatCard } from "@/types/stats";
 import { getAllTransactions } from "@/services/transactionService";
 import { getPreviousMonthName } from "@/utils/helpersfunction";
 import { getAllProducts } from "@/services/productService";
-import { useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { formatCurrency } from "@/utils/formatCurrency";
 
 export default function RevenueAnalytics() {
@@ -47,6 +52,8 @@ export default function RevenueAnalytics() {
     getPaymentMethodRevenue,
   } = useRevenueStore();
 
+  const [selectedBranch, setSelectedBranch] = useState<string>("All Branches");
+
   // Fetch transactions using useQuery
   const {
     data: transactionData,
@@ -58,6 +65,22 @@ export default function RevenueAnalytics() {
     staleTime: 1 * 60 * 1000, // 1 minutes
     retry: 2,
   });
+
+  // Extract unique branches
+  const branches = useMemo(() => {
+    if (!transactionData) return [];
+    const uniqueBranches = new Set<string>();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    transactionData.forEach((t: any) => {
+      const branchName =
+        t.branchId?.name ||
+        t.branch?.name ||
+        (typeof t.branch === "string" ? t.branch : null) ||
+        (typeof t.branchId === "string" ? t.branchId : null);
+      if (branchName) uniqueBranches.add(branchName);
+    });
+    return Array.from(uniqueBranches);
+  }, [transactionData]);
 
   // Fetch products using useQuery
   const {
@@ -74,9 +97,22 @@ export default function RevenueAnalytics() {
   // Update store when data is fetched
   useEffect(() => {
     if (transactionData) {
-      setTransactions(transactionData);
+      if (selectedBranch === "All Branches") {
+        setTransactions(transactionData);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const filtered = transactionData.filter((t: any) => {
+          const branchName =
+            t.branchId?.name ||
+            t.branch?.name ||
+            (typeof t.branch === "string" ? t.branch : null) ||
+            (typeof t.branchId === "string" ? t.branchId : null);
+          return branchName === selectedBranch;
+        });
+        setTransactions(filtered);
+      }
     }
-  }, [transactionData, setTransactions]);
+  }, [transactionData, setTransactions, selectedBranch]);
 
   useEffect(() => {
     if (productData) {
@@ -257,7 +293,44 @@ export default function RevenueAnalytics() {
                   <h3 className="text-lg font-semibold text-gray-900">
                     Monthly Revenue Trend
                   </h3>
-                  <MoreVertical className="w-5 h-5 text-gray-400 cursor-pointer" />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="p-1 hover:bg-gray-100 rounded-full transition-colors outline-none">
+                        <MoreVertical className="w-5 h-5 text-gray-400 cursor-pointer" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-56 p-2" align="end">
+                      <div className="space-y-1">
+                        <h4 className="font-medium text-sm px-2 py-1.5 text-gray-900">
+                          Filter by Branch
+                        </h4>
+                        <div className="h-px bg-gray-200 my-1" />
+                        <button
+                          onClick={() => setSelectedBranch("All Branches")}
+                          className={`w-full text-left px-2 py-1.5 text-sm rounded-md transition-colors ${
+                            selectedBranch === "All Branches"
+                              ? "bg-blue-50 text-blue-700 font-medium"
+                              : "text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          All Branches
+                        </button>
+                        {branches.map((branch) => (
+                          <button
+                            key={branch}
+                            onClick={() => setSelectedBranch(branch)}
+                            className={`w-full text-left px-2 py-1.5 text-sm rounded-md transition-colors ${
+                              selectedBranch === branch
+                                ? "bg-blue-50 text-blue-700 font-medium"
+                                : "text-gray-700 hover:bg-gray-50"
+                            }`}
+                          >
+                            {branch}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 {isLoading ? (
