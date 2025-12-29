@@ -5,7 +5,7 @@ import { useMemo, useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronLeft, MoreVertical, X } from "lucide-react";
+import { ChevronLeft, MoreVertical, X, Menu } from "lucide-react";
 import {
   useActivityLogsStore,
   type ActivityLogs,
@@ -38,6 +38,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 type Source = "visible" | "hidden";
 
@@ -482,10 +487,49 @@ export default function ColumnSettings() {
   }
 
   return (
-    <div className="p-2 md:p-6 space-y-3 bg-gray-50">
+    <div className="lg:scale-90 lg:-translate-x-20 p-2 md:p-6 space-y-3 bg-gray-50">
       {/* HEADER: Updated Layout for Mobile/Desktop Match */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 md:gap-4">
-        <h2 className="text-2xl md:text-2xl font-bold text-[#1E1E1E]">Column Settings</h2>
+        <div className="flex items-center justify-between w-full lg:w-auto">
+          <h2 className="text-2xl md:text-2xl font-bold text-[#1E1E1E]">Column Settings</h2>
+          
+          {/* Mobile Action Menu */}
+          <div className="md:hidden">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6 text-[#333333]" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-56 p-2 bg-white">
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="ghost"
+                    onClick={handleResetToDefault}
+                    disabled={isResetting}
+                    className="justify-start w-full text-[#333333]"
+                  >
+                    {isResetting ? "Resetting..." : "Reset to Default"}
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    onClick={handleCancel} 
+                    className="justify-start w-full text-[#333333]"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="bg-[#2ECC71] hover:bg-[#27ae60] text-white w-full"
+                    onClick={handleSaveChanges}
+                    disabled={isSaving || !hasUnsavedChanges}
+                  >
+                    {isSaving ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
         <div className="lg:flex gap-2 w-full md:w-auto">
           {/* Back Button: Full width on mobile (w-full), Auto on desktop (md:w-auto) */}
           <Button
@@ -661,7 +705,7 @@ export default function ColumnSettings() {
       </Card>
 
       {/* ACTION BUTTONS */}
-      <div className="flex flex-col sm:flex-row justify-end gap-3 w-full mt-4">
+      <div className="hidden md:flex flex-col sm:flex-row justify-end gap-3 w-full mt-4">
         <Button
           variant="outline"
           onClick={handleResetToDefault}

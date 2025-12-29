@@ -855,7 +855,6 @@ export const useRevenueStore = create<RevenueState>((set, get) => ({
 
     // Calculate margins and convert to pie chart format
     const colors = ["#10B981", "#F59E0B", "#EF4444", "#3B82F6", "#8B5CF6"];
-    let colorIndex = 0;
 
     const totalRevenue = Object.values(categoryRevenue).reduce(
       (sum, cat) => sum + cat.revenue,
@@ -872,13 +871,16 @@ export const useRevenueStore = create<RevenueState>((set, get) => ({
         return {
           name: name.charAt(0).toUpperCase() + name.slice(1),
           value: Math.round(percentage),
-          color: colors[colorIndex++ % colors.length],
           percentage: Math.round(percentage * 100) / 100,
         };
       })
       .filter((item) => item.value > 0) // Only include categories with revenue
       .sort((a, b) => b.value - a.value)
-      .slice(0, 5); // Top 5 categories
+      .slice(0, 5) // Top 5 categories
+      .map((item, index) => ({
+        ...item,
+        color: colors[index % colors.length],
+      }));
   },
 
   getAverageDiscount: () => {
