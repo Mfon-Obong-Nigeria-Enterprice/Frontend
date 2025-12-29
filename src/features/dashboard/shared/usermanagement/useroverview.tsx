@@ -190,7 +190,7 @@ const UserOverview = () => {
   };
 
   return (
-    <main className="w-full">
+    <main className="w-full lg:max-w-7xl lg:mx-6">
       {/* HEADER SECTION */}
       <div className="mt-[30px] md:mt-[39px] xl:mt-[47px] ml-0 mr-5 md:mr-8 xl:mr-3 pl-3">
         
@@ -336,8 +336,8 @@ const UserOverview = () => {
         </p>
       </div>
 
-      <div className="w-full pl-3 pr-0 mt-4">
-        <div className="w-full max-w-full">
+      <div className="w-full lg:max-w-7xl pl-3 pr-0 mt-4">
+        <div className="w-full lg:max-w-7xl">
           <UserTable users={filteredUsers} onEditUser={handleEditUser} />
         </div>
       </div>

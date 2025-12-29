@@ -187,7 +187,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
 
       case "User Details":
         return (
-          <TableCell className="flex items-center gap-2 whitespace-nowrap">
+          <TableCell className="lg:max-w-7xl flex items-center gap-2 whitespace-nowrap">
             <div className="w-9 h-9 rounded-full overflow-hidden">
               {user.profilePicture ? (
                 <img
