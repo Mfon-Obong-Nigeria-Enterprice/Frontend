@@ -1,7 +1,6 @@
 // features/dashboard/manager/components/ManagerSettings.tsx
 import { SystemPreferencesForm } from "./component/SystemPreferanceForm.tsx";
 import { ClientAccountSettingsForm } from "./component/ClientAccountSettingsForm";
-// import { NotificationSettingsSection1 } from "./component/NotificationSettings1";
 import { AlertSettingsSection1 } from "./component/AlertSettingsSection1";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import type { AlertAndNotificationSettings } from "@/schemas/SettingsSchemas";
@@ -15,8 +14,6 @@ export default function ManagerSettings() {
     setSystemPreferences,
     setClientAccountSettings,
   } = useSettingsStore();
-
-  // Note: Removed fetchSettings() since there's no /settings API endpoint
 
   const handleAlertSettingChange = (
     key: keyof AlertAndNotificationSettings,
@@ -62,7 +59,7 @@ export default function ManagerSettings() {
 
   return (
     <div className="min-h-screen py-8 px-4 lg:px-0 w-full">
-      <div className="  space-y-8">
+      <div className="space-y-8">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
@@ -74,7 +71,11 @@ export default function ManagerSettings() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* CHANGE: 'md:grid-cols-2' -> 'lg:grid-cols-2'
+            This ensures Tablet (md) sees 1 column (Stacked), 
+            and only large Desktops (lg) see 2 columns.
+        */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <SystemPreferencesForm
             settings={currentSettings.system}
             onThresholdChange={handleSystemThresholdChange}

@@ -36,48 +36,59 @@ export function ClientAccountSettingsForm({ settings, onThresholdChange }: Clien
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold border-b border-gray-300 pb-2">Clients Account Settings</CardTitle>
+        <CardTitle className="text-lg font-semibold border-b border-gray-300 pb-2">
+            Clients Account Settings
+        </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="defaultCreditLimit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-normal">Default Credit Limit</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      value={field.value}
-                      onChange={(e) => handleNumberChange(field, 'defaultCreditLimit', e.target.value)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            
+            {/* Grid for Inputs: Side-by-side layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="defaultCreditLimit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-normal text-gray-700">Default Credit Limit</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        className="bg-white border-gray-200"
+                        value={field.value}
+                        onChange={(e) => handleNumberChange(field, 'defaultCreditLimit', e.target.value)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="inactivePeriodDays"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-normal">Inactive Period (Days)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      value={field.value}
-                      onChange={(e) => handleNumberChange(field, 'inactivePeriodDays', e.target.value)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="inactivePeriodDays"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-normal text-gray-700">Inactive Period (Days)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        className="bg-white border-gray-200"
+                        value={field.value}
+                        onChange={(e) => handleNumberChange(field, 'inactivePeriodDays', e.target.value)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-            <Button type="submit" className="w-full">
+            <Button 
+              type="submit" 
+              className="w-full bg-[#22C55E] hover:bg-[#22C55E]/90 text-white font-medium"
+            >
               {isSaved ? "Saved!" : "Save Changes"}
             </Button>
           </form>
