@@ -106,7 +106,8 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   //get Clients
   const client = useMemo(() => {
     if (!clients || !clientId) return null;
-    return clients.find((c) => c._id === clientId) || null;
+    const c = clients.find((c) => c._id === clientId) || null;
+    return c;
   }, [clients, clientId]);
   //
 
@@ -197,6 +198,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   }, [clientTransactions, client]);
 
   // --- PDF GENERATION LOGIC ---
+// --- PDF GENERATION LOGIC ---
   const handleExportPDF = () => {
     const doc = new jsPDF({
       orientation: "portrait",
@@ -243,42 +245,89 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(80, 80, 80);
-    doc.text("Materials Supply Record", pageWidth / 2, cursorY, { align: "center" });
+    doc.text("Materials Supply Record", pageWidth / 2, cursorY, {
+      align: "center",
+    });
     cursorY += 5;
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.2);
     doc.line(margin, cursorY, pageWidth - margin, cursorY);
     cursorY += 10;
 
-    // --- DATA ---
+    // --- DATA PREPARATION ---
+    // 1. Sort the filtered transactions we want to display (Oldest to Newest)
     const sortedTxns = [...transactionsWithBalance].sort(
       (a, b) =>
         getTransactionDate(a).getTime() - getTransactionDate(b).getTime()
     );
 
-    const firstTxn = sortedTxns[0];
-    const initialBalance = firstTxn
-      ? (firstTxn.balanceBefore as number) ?? 0
-      : client?.balance || 0;
+    // 2. ROBUST INITIAL BALANCE CALCULATION (Unwinding Method)
+    let initialBalance = client?.balance || 0;
+
+    // FILTER FIX: Use Optional Chaining (?.) to prevent crash on null clients
+    const allClientTxns = mergedTransactions
+      .filter((t) => t.client?._id === clientId) 
+      .sort(
+        (a, b) =>
+          getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
+      ); 
+
+    // Determine the Start Date of our report
+    const reportStartDate =
+      sortedTxns.length > 0
+        ? getTransactionDate(sortedTxns[0])
+        : dateRangeFilter.from || new Date();
+
+    // Start unwinding from the current balance back to the report start date
+    let calculatedBf = client?.balance || 0;
+
+    if (allClientTxns.length > 0) {
+        for (const txn of allClientTxns) {
+            const txnDate = getTransactionDate(txn);
+            
+            // If this transaction happened AFTER or ON the start date, we must "undo" it 
+            if (txnDate >= reportStartDate) {
+                const total = Number(txn.total) || 0;
+                const paid = Number(txn.amountPaid) || 0;
+
+                if (txn.type === "DEPOSIT" || txn.type === "RETURN") {
+                    calculatedBf -= total;
+                } else {
+                    // Purchase/Pickup: Prev = Balance + Total - Paid
+                    calculatedBf = calculatedBf + total - paid;
+                }
+            }
+        }
+        initialBalance = calculatedBf;
+    }
+
+    // LOGIC: Determine polarity
+    // Negative = Debt, Positive = Credit (User Balance)
+    const isDebt = initialBalance < 0;
+    const isCredit = initialBalance > 0;
+    const absInitialBalance = Math.abs(initialBalance);
 
     const supplies = sortedTxns.filter(
       (t) => t.type === "PURCHASE" || t.type === "PICKUP"
     );
 
-    // --- 2. B/F ---
+    // --- 2. B/F SECTION (HEADER) ---
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(51, 51, 51);
-
-    // Insert UserName on the far right
-    doc.text(client?.name || "", pageWidth - margin, cursorY, { align: "right" });
+    doc.text(client?.name || "", pageWidth - margin, cursorY, {
+      align: "right",
+    });
 
     cursorY += 6;
 
-    // Transaction History text
     let dateRangeText = "";
-    const startDate = dateRangeFilter.from || (sortedTxns.length > 0 ? getTransactionDate(sortedTxns[0]) : new Date());
-    const endDate = dateRangeFilter.to || (sortedTxns.length > 0 ? getTransactionDate(sortedTxns[sortedTxns.length - 1]) : new Date());
+    const startDate = reportStartDate;
+    const endDate =
+      dateRangeFilter.to ||
+      (sortedTxns.length > 0
+        ? getTransactionDate(sortedTxns[sortedTxns.length - 1])
+        : new Date());
 
     const startYear = startDate.getFullYear();
     const endYear = endDate.getFullYear();
@@ -286,7 +335,10 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     const endMonth = endDate.toLocaleDateString("en-US", { month: "long" });
 
     if (startYear === endYear) {
-      dateRangeText = startMonth === endMonth ? `${startMonth}, ${startYear}` : `${startMonth} - ${endMonth}, ${startYear}`;
+      dateRangeText =
+        startMonth === endMonth
+          ? `${startMonth}, ${startYear}`
+          : `${startMonth} - ${endMonth}, ${startYear}`;
     } else {
       dateRangeText = `${startMonth} ${startYear} - ${endMonth} ${endYear}`;
     }
@@ -294,6 +346,10 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     doc.text(`Transaction History, ${dateRangeText}`, margin, cursorY);
     cursorY += 10;
 
+    // --- B/F DEBT DISPLAY ---
+    let runningTotalForGrand = isDebt ? absInitialBalance : 0;
+
+    // Draw the B/F Box (Always Visible)
     doc.setFillColor(248, 235, 235);
     doc.rect(margin, cursorY, pageWidth - margin * 2, 10, "F");
     doc.setFillColor(231, 76, 60);
@@ -302,30 +358,25 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(51, 51, 51);
-    const bfDate = dateRangeFilter.from
-      ? formatDate(dateRangeFilter.from)
-      : sortedTxns.length > 0
-      ? formatDate(getTransactionDate(sortedTxns[0]))
-      : formatDate(new Date());
+    
+    // If Debt, show amount. If Credit/Zero, show N0.
+    const displayBFAmount = isDebt ? absInitialBalance : 0;
+    
     doc.text(
-      `B/F Debt - ${bfDate}: ${formatCurrencyForPDF(initialBalance)}`,
+      `B/F Debt - ${formatDate(startDate)}: ${formatCurrencyForPDF(displayBFAmount)}`,
       margin + 4,
       cursorY + 6.5
     );
     cursorY += 18;
 
     // --- 3. SUPPLIES LOOP ---
-    let runningTotalForGrand = initialBalance;
-
     supplies.forEach((txn) => {
-      // Lookup raw transaction to ensure fields exist
       const rawTxn = mergedTransactions.find((t) => t._id === txn._id) || txn;
       const t = rawTxn as any;
 
       const transactionTotal = Number(t.total) || 0;
       runningTotalForGrand += transactionTotal;
 
-      // Calculate Items Subtotal
       let itemsTotal = 0;
       if (t.items && t.items.length > 0) {
         itemsTotal = t.items.reduce(
@@ -337,32 +388,30 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         itemsTotal = Number(t.subtotal) || transactionTotal;
       }
 
-      // Identify Specific Charges
       const charges = [];
       const loading = Number(t.loading) || 0;
       const transport = Number(t.transportFare) || 0;
       const loadingOffloading = Number(t.loadingAndOffloading) || 0;
 
       if (loading > 0) charges.push({ label: "Loading", amount: loading });
-      if (transport > 0) charges.push({ label: "Transport", amount: transport });
+      if (transport > 0)
+        charges.push({ label: "Transport", amount: transport });
       if (loadingOffloading > 0)
-        charges.push({ label: "Loading/Offloading", amount: loadingOffloading });
+        charges.push({
+          label: "Loading/Offloading",
+          amount: loadingOffloading,
+        });
 
       const discount = Number(t.discount) || 0;
-
-      // --- DISCREPANCY CHECK ---
-      // We calculate what the total *should* be:
-      const calculatedExpectedTotal = itemsTotal + loading + transport + loadingOffloading - discount;
-      
-      // We compare it to the actual total stored in DB
+      const calculatedExpectedTotal =
+        itemsTotal + loading + transport + loadingOffloading - discount;
       const discrepancy = transactionTotal - calculatedExpectedTotal;
 
-      // If there is a meaningful difference (positive), we treat it as "Other Charges"
       if (discrepancy > 1) {
-         charges.push({ label: "Other Charges", amount: discrepancy });
+        charges.push({ label: "Other Charges", amount: discrepancy });
       }
 
-      // --- RENDERING ---
+      // Block Height Calculation
       const headerHeight = 8;
       const itemLineHeight = 6;
       const chargesLineHeight = 6;
@@ -404,10 +453,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         txn.items.forEach((item) => {
           const qty = item.quantity || 0;
           const price = item.unitPrice || 0;
-          const itemText = `(${qty}) ${
-            item.productName?.toUpperCase() || "ITEM"
-          } @ ${formatCurrencyForPDF(price)}`;
-          doc.text(itemText, margin + 4, cursorY);
+          doc.text(
+            `(${qty}) ${item.productName?.toUpperCase() || "ITEM"} @ ${formatCurrencyForPDF(price)}`,
+            margin + 4,
+            cursorY
+          );
           doc.text(
             formatCurrencyForPDF(qty * price),
             pageWidth - margin - 4,
@@ -427,8 +477,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         cursorY += itemLineHeight;
       }
 
-      // Charges (Loading, Transport, Other Charges)
-      doc.setTextColor(80, 80, 80);
+      // Charges
       charges.forEach((charge) => {
         doc.text(charge.label, margin + 4, cursorY);
         doc.text(
@@ -442,7 +491,6 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
       // Discount
       if (discount > 0) {
-        doc.setTextColor(80, 80, 80); 
         doc.text("Discount", margin + 4, cursorY);
         doc.text(
           `-${formatCurrencyForPDF(discount)}`,
@@ -487,7 +535,13 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     checkPageBreak(lessSectionHeaderHeight + 5);
 
     doc.setFillColor(249, 249, 249);
-    doc.rect(margin, cursorY, pageWidth - margin * 2, lessSectionHeaderHeight, "F");
+    doc.rect(
+      margin,
+      cursorY,
+      pageWidth - margin * 2,
+      lessSectionHeaderHeight,
+      "F"
+    );
     doc.setFillColor(150, 150, 150);
     doc.rect(margin, cursorY, 1.5, lessSectionHeaderHeight, "F");
 
@@ -498,6 +552,45 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     cursorY += lessSectionHeaderHeight;
 
     let totalDeductions = 0;
+
+    // LOGIC: If user has Positive Balance (Credit), render it here in 'Less'
+    if (isCredit) {
+      totalDeductions += absInitialBalance;
+      const itemHeight = 18;
+      checkPageBreak(itemHeight);
+
+      doc.setFillColor(224, 224, 224);
+      doc.rect(margin, cursorY, pageWidth - margin * 2, itemHeight, "F");
+      doc.setFillColor(150, 150, 150);
+      doc.rect(margin, cursorY, 1.5, itemHeight, "F");
+
+      doc.setFillColor(224, 224, 224);
+      doc.rect(margin + 5, cursorY + 2, 35, 6, "F");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(51, 51, 51);
+      doc.text(`On ${formatDate(startDate)}`, margin + 7, cursorY + 6);
+
+      doc.setFontSize(9);
+      const description = "Opening Balance (User Credit): ";
+      const valStr = formatCurrencyForPDF(absInitialBalance);
+      
+      const descriptionWidth =
+        (doc.getStringUnitWidth(description) * doc.getFontSize()) /
+        doc.internal.scaleFactor;
+      const startX = margin + 7;
+      const textY = cursorY + 12;
+
+      doc.setTextColor(68, 68, 68);
+      doc.text(description, startX, textY);
+      doc.setTextColor(46, 204, 113);
+      doc.text(valStr, startX + descriptionWidth, textY);
+
+      doc.setDrawColor(230, 230, 230);
+      doc.line(margin + 5, cursorY + 16, pageWidth - margin - 5, cursorY + 16);
+      cursorY += itemHeight;
+    }
+
     sortedTxns.forEach((txn) => {
       const rawTxn = mergedTransactions.find((t) => t._id === txn._id) || txn;
       const t = rawTxn as any;
@@ -515,23 +608,23 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         const amount = Number(t.total) || 0;
         totalDeductions += amount;
         if (t.items && t.items.length > 0) {
-          t.items.forEach((item: any) => {
-            const itemAmount = (item.quantity || 0) * (item.unitPrice || 0);
+            t.items.forEach((item: any) => {
+              const itemAmount = (item.quantity || 0) * (item.unitPrice || 0);
+              displayItems.push({
+                description: `(${item.quantity}) ${
+                  item.productName?.toUpperCase() || "PRODUCT"
+                } (RETURNED): `,
+                value: formatCurrencyForPDF(itemAmount),
+                isReturn: true,
+              });
+            });
+          } else {
             displayItems.push({
-              description: `(${item.quantity}) ${
-                item.productName?.toUpperCase() || "PRODUCT"
-              } (RETURNED): `,
-              value: formatCurrencyForPDF(itemAmount),
+              description: `(Returned items): `,
+              value: formatCurrencyForPDF(amount),
               isReturn: true,
             });
-          });
-        } else {
-          displayItems.push({
-            description: `(1) ITEM (RETURNED): `,
-            value: formatCurrencyForPDF(amount),
-            isReturn: true,
-          });
-        }
+          }
       } else if (
         (t.type === "PURCHASE" || t.type === "PICKUP") &&
         (Number(t.amountPaid) || 0) > 0
@@ -549,13 +642,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         const itemHeight = 18;
         checkPageBreak(itemHeight);
 
-        // Background for item
         doc.setFillColor(224, 224, 224);
         doc.rect(margin, cursorY, pageWidth - margin * 2, itemHeight, "F");
         doc.setFillColor(150, 150, 150);
         doc.rect(margin, cursorY, 1.5, itemHeight, "F");
 
-        // Date Pill
         doc.setFillColor(224, 224, 224);
         doc.rect(margin + 5, cursorY + 2, 35, 6, "F");
         doc.setFont("helvetica", "normal");
@@ -567,26 +658,25 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
           cursorY + 6
         );
 
-        // Description & Value
         doc.setFontSize(9);
-        const descriptionWidth = (doc.getStringUnitWidth(item.description) * doc.getFontSize()) / doc.internal.scaleFactor;
+        const descriptionWidth =
+          (doc.getStringUnitWidth(item.description) * doc.getFontSize()) /
+          doc.internal.scaleFactor;
         const startX = margin + 7;
         const textY = cursorY + 12;
 
-        if (item.isReturn) {
-          doc.setTextColor(68, 68, 68);
-          doc.text(item.description, startX, textY);
-          doc.setTextColor(231, 76, 60);
-          doc.text(item.value, startX + descriptionWidth, textY);
-        } else {
-          doc.setTextColor(68, 68, 68);
-          doc.text(item.description, startX, textY);
-          doc.setTextColor(46, 204, 113);
-          doc.text(item.value, startX + descriptionWidth, textY);
-        }
+        doc.setTextColor(68, 68, 68);
+        doc.text(item.description, startX, textY);
+        doc.setTextColor(item.isReturn ? 231 : 46, item.isReturn ? 76 : 204, item.isReturn ? 60 : 113);
+        doc.text(item.value, startX + descriptionWidth, textY);
 
         doc.setDrawColor(230, 230, 230);
-        doc.line(margin + 5, cursorY + 16, pageWidth - margin - 5, cursorY + 16);
+        doc.line(
+          margin + 5,
+          cursorY + 16,
+          pageWidth - margin - 5,
+          cursorY + 16
+        );
         cursorY += itemHeight;
       });
     });
@@ -594,7 +684,13 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
     // --- 6. BALANCE ---
     checkPageBreak(12);
+    // Calculation: Grand Total (Debt+Purchases) - Deductions (Credit+Payments)
     const finalBalance = runningTotalForGrand - totalDeductions;
+
+    let balanceLabel = "BALANCE";
+    if (finalBalance > 0) balanceLabel = "BALANCE (DEBT)";
+    else if (finalBalance < 0) balanceLabel = "BALANCE (CREDIT)";
+    
     doc.setFillColor(248, 235, 235);
     doc.rect(margin, cursorY, pageWidth - margin * 2, 12, "F");
     doc.setFillColor(231, 76, 60);
@@ -602,7 +698,12 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.setTextColor(51, 51, 51);
-    doc.text(`BALANCE: ${formatCurrencyForPDF(finalBalance)}`, pageWidth - margin - 4, cursorY + 8, { align: "right" });
+    doc.text(
+      `${balanceLabel}: ${formatCurrencyForPDF(finalBalance)}`,
+      pageWidth - margin - 4,
+      cursorY + 8,
+      { align: "right" }
+    );
 
     // --- FOOTER ---
     const footerY = pageHeight - 15;
