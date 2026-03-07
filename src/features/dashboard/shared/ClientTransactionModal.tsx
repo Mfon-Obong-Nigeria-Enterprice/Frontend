@@ -170,7 +170,7 @@ const ClientTransactionModal = () => {
                                 )
                               : formatCurrency(
                                   selectedTransaction.total +
-                                    (selectedTransaction.client?.balance ?? 0)
+                                    (selectedTransaction.clientBalanceAfterTransaction ?? selectedTransaction.client?.balance ?? 0)
                                 )}
                           </span>
 
@@ -184,7 +184,7 @@ const ClientTransactionModal = () => {
                                     0
                                 )
                               : formatCurrency(
-                                  selectedTransaction.client?.balance ?? 0
+                                  selectedTransaction.clientBalanceAfterTransaction ?? selectedTransaction.client?.balance ?? 0
                                 )}
                           </span>
                         </div>

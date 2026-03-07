@@ -136,11 +136,11 @@ const RecentTransactions = () => {
 
                   <td
                     className={`text-sm text-start pl-1 ${balanceClassT(
-                      transaction.client?.balance
+                      transaction.clientBalanceAfterTransaction ?? transaction.client?.balance
                     )} 
                       `}
                   >
-                    {formatCurrency(transaction.client?.balance ?? 0)}
+                    {formatCurrency(transaction.clientBalanceAfterTransaction ?? transaction.client?.balance ?? 0)}
                   </td>
                 </tr>
               ))}

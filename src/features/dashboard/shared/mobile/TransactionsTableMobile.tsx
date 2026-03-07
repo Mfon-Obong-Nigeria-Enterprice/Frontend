@@ -137,14 +137,14 @@ const TransactionsTableMobile = ({
                   Balance:{" "}
                   <span
                     className={`${
-                      (transaction.client?.balance ?? 0) < 0
+                      (transaction.clientBalanceAfterTransaction ?? transaction.client?.balance ?? 0) < 0
                         ? "text-[#F95353]"
-                        : (transaction.client?.balance ?? 0) > 0
+                        : (transaction.clientBalanceAfterTransaction ?? transaction.client?.balance ?? 0) > 0
                         ? "text-[#2ECC71]"
                         : "text-[#444444]"
                     }`}
                   >
-                    {formatCurrency(transaction.client?.balance ?? 0)}
+                    {formatCurrency(transaction.clientBalanceAfterTransaction ?? transaction.client?.balance ?? 0)}
                   </span>
                 </p>
 

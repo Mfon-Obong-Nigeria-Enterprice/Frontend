@@ -120,7 +120,7 @@ const RecentTransactionsMobile = () => {
                   <p>{transaction.branchName}</p>
 
                   {/* balance */}
-                  <p>{formatCurrency(transaction.client?.balance ?? 0)}</p>
+                  <p>{formatCurrency(transaction.clientBalanceAfterTransaction ?? transaction.client?.balance ?? 0)}</p>
                 </div>
               </li>
             ))}
