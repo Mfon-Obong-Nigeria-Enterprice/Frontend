@@ -475,7 +475,7 @@ const Transactions = () => {
             <SelectGroup>
               <SelectItem value="allType">All Transaction Types</SelectItem>
               <SelectItem value="PURCHASE">Purchase</SelectItem>
-              <SelectItem value="PICKUP">Pick Up</SelectItem>
+              {/* PICKUP filter removed - deprecated type, but historical data still displays */}
             </SelectGroup>
           </SelectContent>
         </Select>

@@ -1264,7 +1264,7 @@ const NewSales: React.FC = () => {
                   value={transactionType}
                   onValueChange={(value: string) =>
                     setTransactionType(
-                      value as "PURCHASE" | "PICKUP" | "WHOLESALE" | "RETURN"
+                      value as "PURCHASE" | "WHOLESALE" | "RETURN"
                     )
                   }
                 >
@@ -1275,9 +1275,7 @@ const NewSales: React.FC = () => {
                     <SelectItem value="PURCHASE">Purchase</SelectItem>
                     <SelectItem value="WHOLESALE">Wholesale</SelectItem>
                     {/* <SelectItem value="RETURN">Return</SelectItem> */}
-                    {!isWalkIn && selectedClient && (
-                      <SelectItem value="PICKUP">Pickup</SelectItem>
-                    )}
+                    {/* PICKUP deprecated - removed from new transaction creation */}
                   </SelectContent>
                 </Select>
               </div>

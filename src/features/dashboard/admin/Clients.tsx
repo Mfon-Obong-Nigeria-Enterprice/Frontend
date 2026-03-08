@@ -294,7 +294,7 @@ export const Clients: React.FC<ClientProps> = ({
               <SelectContent className="bg-white">
                 <SelectItem value="All Balances">All Balances</SelectItem>
                 <SelectItem value="PURCHASE">Purchase</SelectItem>
-                <SelectItem value="PICKUP">Pickup</SelectItem>
+                {/* PICKUP filter removed - deprecated type */}
                 <SelectItem value="DEPOSIT">Deposit</SelectItem>
               </SelectContent>
             </Select>

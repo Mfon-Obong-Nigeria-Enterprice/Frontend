@@ -123,7 +123,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
             return (
               <div
                 key={`${txn._id}-${getTransactionDateString(txn)}-${i}`}
-                className="bg-white p-4 md:p-6"
+                className="bg-white border border-gray-200 rounded-lg p-4 md:p-6"
               >
                 {/* --- HEADER --- */}
                 <div className="border-b border-[#D9D9D9] pb-4 flex flex-wrap justify-between items-start md:items-center mb-6 gap-4">

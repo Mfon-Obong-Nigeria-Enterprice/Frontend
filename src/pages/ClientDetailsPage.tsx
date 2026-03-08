@@ -881,7 +881,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                     <SelectContent className="text-[#444444]">
                       <SelectItem value="all">All transactions</SelectItem>
                       <SelectItem value="purchase">Purchase</SelectItem>
-                      <SelectItem value="pick-up">Pick-up</SelectItem>
+                      {/* Pick-up filter removed - deprecated type */}
                       <SelectItem value="deposit">Deposit</SelectItem>
                     </SelectContent>
                   </Select>
