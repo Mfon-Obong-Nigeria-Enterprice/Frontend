@@ -224,10 +224,6 @@ export const syncSupportNotifications = async (): Promise<void> => {
         syncedCount++;
       }
     });
-
-    console.log(
-      `Successfully synced ${syncedCount} new support notifications for maintainer`
-    );
   } catch (error) {
     console.error("Error syncing support notifications:", error);
   }

@@ -55,11 +55,6 @@ export const validateTransaction = (transaction: any): boolean => {
   const hasClientRef = transaction.client?._id || transaction.clientId;
 
   if (!hasRequired || !hasClientRef) {
-    console.warn("Invalid transaction structure:", {
-      hasRequired,
-      hasClientRef,
-      transaction,
-    });
     return false;
   }
 
@@ -74,14 +69,5 @@ export const debugTransactionFlow = (
   transaction: any,
   additionalData?: any
 ) => {
-  if (process.env.NODE_ENV === "development") {
-    console.log(`🔍 Transaction Debug [${stage}]:`, {
-      transactionId: transaction._id,
-      type: transaction.type,
-      amount: transaction.amount,
-      clientId: transaction.client?._id || transaction.clientId,
-      createdAt: transaction.createdAt,
-      ...additionalData,
-    });
-  }
+  // Debug logging removed for production security
 };

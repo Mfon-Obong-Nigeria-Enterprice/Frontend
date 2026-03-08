@@ -194,7 +194,6 @@ export class WebSocketNotificationService {
     };
 
     const url = this.getServerUrl();
-    console.debug("Connecting socket to", url, socketConfig);
     this.socket = io(url, socketConfig);
 
     this.setupEventListeners();

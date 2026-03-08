@@ -253,8 +253,7 @@ export default function AdminUserModal({
   // Current profile picture comes from userProfile or fallback to adminData
   const currentProfilePicture =
     userProfile?.profilePicture || adminData.profilePicture;
-console.log("AdminUserModal rendered with adminData:", adminData);
-console.log("Current profile picture URL:", currentProfilePicture);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] font-inter rounded-lg shadow-lg">

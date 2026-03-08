@@ -101,12 +101,10 @@ const Transactions = () => {
   }, [transactions, user?.branchId, isAdmin]);
 
   const handleWaybillAssigned = (
-    transactionId: string,
-    waybillNumber: string
+    _transactionId: string,
+    _waybillNumber: string
   ) => {
-    console.log(
-      `Waybill ${waybillNumber} assigned to transaction ${transactionId}`
-    );
+    // Waybill assigned successfully
   };
 
   const outstandingBalance = getOutStandingBalanceData() || {

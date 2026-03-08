@@ -34,8 +34,7 @@ try {
     api.defaults.headers.common["Authorization"] = `Bearer ${localAccess}`;
   }
 } catch (e) {
-  console.warn(e);
-  // ignore
+  // ignore localStorage errors
 }
 
 type FailedRequest = {

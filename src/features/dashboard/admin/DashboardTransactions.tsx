@@ -49,13 +49,10 @@ const DashboardTransactions: React.FC<DashboardTransactionProps> = ({
 
   // Handle waybill assignment success
   const handleWaybillAssigned = (
-    transactionId: string,
-    waybillNumber: string
+    _transactionId: string,
+    _waybillNumber: string
   ) => {
-    console.log(
-      `Waybill ${waybillNumber} assigned to transaction ${transactionId}`
-    );
-    // You can add additional logic here if needed, like refreshing data
+    // Waybill assigned successfully - data will refresh automatically
   };
 
   return (

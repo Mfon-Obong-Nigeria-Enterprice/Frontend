@@ -646,7 +646,6 @@ const NewSales: React.FC = () => {
     if (!user?.branchId) return;
 
     const url = getServerUrl();
-    console.debug("[NewSales] connecting socket to:", url);
 
     const s = io(url, {
       path: "/socket.io",
@@ -657,7 +656,7 @@ const NewSales: React.FC = () => {
     });
 
     s.on("connect", () => {
-      console.debug("[NewSales][WS] connected, id:", s.id);
+      // WebSocket connected
     });
 
     s.on("connect_error", (err: any) => {

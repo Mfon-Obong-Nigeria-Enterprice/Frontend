@@ -95,7 +95,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       // Longer delay to ensure all stores and auth are properly initialized
       const timer = setTimeout(() => {
         try {
-          console.log("NotificationProvider: Starting services for user:", user.email);
           activityNotifications.startPolling(30000);
           // Start WebSocket connection for real-time updates (using cookie authentication)
           webSocketNotifications.connect();

@@ -35,10 +35,6 @@ const ManagerDashboardOverview = () => {
   const outstandingBalance = getOutStandingBalanceData();
   const dailyChange = getSalesPercentageChange();
 
-  useEffect(() => {
-    console.log("useTransactionsStore transactions:", transactions);
-  }, [transactions]);
-
   const stats: StatCard[] = [
     {
       heading: "Total Sales (Today)",

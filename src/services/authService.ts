@@ -27,7 +27,6 @@ export const login = async (
       api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
     } catch (e) {
       // ignore storage errors
-      console.warn("Failed to persist tokens locally", e);
     }
   }
 
@@ -57,7 +56,7 @@ export const refreshToken = async (
     localStorage.setItem(LOCAL_REFRESH_KEY, newRefreshToken);
     api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
   } catch (e) {
-    console.warn("Failed to persist refreshed tokens locally", e);
+    // ignore storage errors
   }
 
   return { accessToken, refreshToken: newRefreshToken, user };
@@ -68,14 +67,13 @@ export const logout = async (): Promise<void> => {
     await api.post("/auth/logout");
   } catch (e) {
     // ignore logout errors but continue clearing local tokens
-    console.warn("Logout request failed", e);
   } finally {
     try {
       localStorage.removeItem(LOCAL_ACCESS_KEY);
       localStorage.removeItem(LOCAL_REFRESH_KEY);
       delete api.defaults.headers.common["Authorization"];
     } catch (e) {
-      console.warn("Failed to clear local tokens", e);
+      // ignore cleanup errors
     }
   }
 };

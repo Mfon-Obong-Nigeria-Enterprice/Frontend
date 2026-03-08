@@ -36,7 +36,6 @@ const ClientSearch = ({
   // useSyncClientsWithQuery(); // Loads all clients initially
 
   const { clients } = useClientStore();
-  console.log("Clients from store:", clients);
   const [open, setOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
   // const hasFetchedInitially = useRef(false);

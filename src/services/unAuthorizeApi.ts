@@ -22,11 +22,8 @@ const publicApi: AxiosInstance = axios.create({
   timeout: 30000,
 });
 
-// Optional: Add basic request/response logging
+// Request interceptor
 publicApi.interceptors.request.use((config) => {
-  console.log(
-    `Public API Request: ${config.method?.toUpperCase()} ${config.url}`
-  );
   return config;
 });
 

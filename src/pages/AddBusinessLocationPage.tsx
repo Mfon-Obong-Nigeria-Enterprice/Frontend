@@ -10,7 +10,7 @@ const AddBusinessLocationPage = () => {
     email: string;
     phone: string;
   }) => {
-    console.log("Business location submitted:", data);
+    // Handle business location submission
   };
 
   return (
