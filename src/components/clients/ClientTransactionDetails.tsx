@@ -68,12 +68,23 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
     });
   }, [clientTransactions, client]);
 
+  // Filter RETURN transactions for this client
+  const returnedProducts = useMemo(() => {
+    return clientTransactions
+      .filter((txn) => txn.type === "RETURN")
+      .sort((a, b) => {
+        const dateA = getTransactionDate(a).getTime();
+        const dateB = getTransactionDate(b).getTime();
+        return dateB - dateA;
+      });
+  }, [clientTransactions]);
+
   return (
     <div className="font-sans text-[#333333]">
 
       {/* --- 1. FILTERS SECTION (New) --- */}
 
-      {/* --- 2. RETURNED PRODUCTS SECTION (New) --- */}
+      {/* --- 2. RETURNED PRODUCTS SECTION (Client-Specific) --- */}
       <div className="mb-10 border-b border-[#D9D9D9] pb-4 rounded-lg">
         <h2 className="text-[#333333] font-normal text-base mb-4">Returned Products</h2>
         <div className="bg-[#F9FAFB] rounded-lg overflow-hidden">
@@ -90,15 +101,55 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                 </tr>
               </thead>
               <tbody>
-                {/* Static Row from Screenshot - Data not available in API response yet */}
-                <tr className="bg-[#FFE9E9]">
-                  <td className="px-2 py-4 text-sm text-[#666666]">10 units</td>
-                  <td className="px-2 py-4 text-sm text-[#666666]">₦8600/bags</td>
-                  <td className="px-2 py-4 text-sm text-[#666666]">₦28,000</td>
-                  <td className="px-2 py-4 text-sm text-[#666666]">Roofing Sheet</td>
-                  <td className="px-2 py-4 text-sm text-[#666666]">Damaged</td>
-                  <td className="px-2 py-4 text-sm text-[#666666]">May 27, 2025</td>
-                </tr>
+                {returnedProducts.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-2 py-8 text-sm text-[#7D7D7D] text-center">
+                      No returned products for this client
+                    </td>
+                  </tr>
+                ) : (
+                  returnedProducts.map((returnTxn) => (
+                    returnTxn.items && returnTxn.items.length > 0 ? (
+                      returnTxn.items.map((item, idx) => (
+                        <tr key={`${returnTxn._id}-${idx}`} className="bg-[#FFE9E9]">
+                          <td className="px-2 py-4 text-sm text-[#666666]">
+                            {item.quantity} {item.unit || 'units'}
+                          </td>
+                          <td className="px-2 py-4 text-sm text-[#666666]">
+                            {formatCurrency(item.unitPrice)}/{item.unit || 'unit'}
+                          </td>
+                          <td className="px-2 py-4 text-sm text-[#666666]">
+                            {formatCurrency(item.quantity * item.unitPrice)}
+                          </td>
+                          <td className="px-2 py-4 text-sm text-[#666666]">
+                            {item.productName || 'Product'}
+                          </td>
+                          <td className="px-2 py-4 text-sm text-[#666666]">
+                            {returnTxn.description || 'Return'}
+                          </td>
+                          <td className="px-2 py-4 text-sm text-[#666666]">
+                            {getTransactionDateString(returnTxn)}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr key={returnTxn._id} className="bg-[#FFE9E9]">
+                        <td className="px-2 py-4 text-sm text-[#666666]">-</td>
+                        <td className="px-2 py-4 text-sm text-[#666666]">-</td>
+                        <td className="px-2 py-4 text-sm text-[#666666]">
+                          {formatCurrency(returnTxn.total || 0)}
+                        </td>
+                        <td className="px-2 py-4 text-sm text-[#666666]">
+                          {returnTxn.description || 'Returned items'}
+                        </td>
+                        <td className="px-2 py-4 text-sm text-[#666666]">Return</td>
+                        <td className="px-2 py-4 text-sm text-[#666666]">
+                          {getTransactionDateString(returnTxn)}
+                        </td>
+                      </tr>
+                    )
+                  ))
+                )}
               </tbody>
             </table>
           </div>

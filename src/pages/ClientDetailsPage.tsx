@@ -130,6 +130,36 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   }, [clientId]); //reruns when clientId changes
 
   //
+  // Derive current balance from most recent transaction snapshot
+  const currentBalance = useMemo(() => {
+    if (!client || !clientId) return 0;
+    
+    // Get all transactions for this client (unfiltered)
+    const allClientTransactions = mergedTransactions
+      .filter((t) => t.client?._id === clientId)
+      .sort(
+        (a, b) =>
+          getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
+      );
+
+    // Use the most recent transaction's snapshot, fallback to client.balance
+    if (allClientTransactions.length > 0) {
+      const mostRecent = allClientTransactions[0];
+      return mostRecent.clientBalanceAfterTransaction ?? client.balance;
+    }
+
+    return client.balance;
+  }, [client, clientId, mergedTransactions]);
+
+  // Create display client with current balance from snapshot
+  const displayClient = useMemo(() => {
+    if (!client) return null;
+    return {
+      ...client,
+      balance: currentBalance,
+    };
+  }, [client, currentBalance]);
+
   const clientTransactions = useMemo(() => {
     if (!clientId) return [];
     let filtered = mergedTransactions.filter(
@@ -193,9 +223,9 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   const transactionsWithBalance = useMemo(() => {
     if (!client) return [];
     return calculateTransactionsWithBalance(clientTransactions, {
-      balance: client.balance,
+      balance: currentBalance,
     });
-  }, [clientTransactions, client]);
+  }, [clientTransactions, client, currentBalance]);
 
   // --- PDF GENERATION LOGIC ---
 // --- PDF GENERATION LOGIC ---
@@ -262,7 +292,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     );
 
     // 2. ROBUST INITIAL BALANCE CALCULATION (Unwinding Method)
-    let initialBalance = client?.balance || 0;
+    let initialBalance = currentBalance || 0;
 
     // FILTER FIX: Use Optional Chaining (?.) to prevent crash on null clients
     const allClientTxns = mergedTransactions
@@ -279,7 +309,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         : dateRangeFilter.from || new Date();
 
     // Start unwinding from the current balance back to the report start date
-    let calculatedBf = client?.balance || 0;
+    let calculatedBf = currentBalance || 0;
 
     if (allClientTxns.length > 0) {
         for (const txn of allClientTxns) {
@@ -844,7 +874,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       <main className="grid gap-3 bg-[#F5F5F5] py-5 px-3 md:px-9 grid-cols-1 lg:grid-cols-5">
         {/* section by the left */}
         <div className=" lg:col-span-2">
-          <ClientDetailInfo client={client} />
+          {displayClient && <ClientDetailInfo client={displayClient} />}
         </div>
 
         {/* section by the right */}
@@ -926,7 +956,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
               <ClientTransactionDetails
                 clientTransactions={transactionsWithBalance}
-                client={{ balance: client.balance }}
+                client={{ balance: currentBalance }}
               />
             </TabsContent>
             <TabsContent value="clientDiscount">

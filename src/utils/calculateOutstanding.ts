@@ -18,48 +18,28 @@ export function calculateTransactionsWithBalance(
     return [];
   }
 
-  // Ensure oldest → newest
-  const sorted = [...transactions].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  );
+  // Use snapshot-based approach: each transaction already stores the correct balance after
+  // No need to sort since we're using snapshots - preserve the caller's desired order
+  return transactions.map((txn) => {
+    // Use the snapshot stored in the transaction
+    const balanceAfter = txn.clientBalanceAfterTransaction ?? client.balance;
 
-  // Calculate the initial balance by working backwards from current balance
-  // Current balance = initial balance + all transaction effects
-  let initialBalance = client.balance;
+    // Calculate balanceBefore by reversing the transaction effect
+    let balanceBefore: number;
 
-  // Work backwards through transactions to find the starting balance
-  for (let i = sorted.length - 1; i >= 0; i--) {
-    const txn = sorted[i];
-
-    if (txn.type === "DEPOSIT") {
-      // If deposit increased balance, subtract it to go back
-      initialBalance -= txn.amount ?? txn.amountPaid ?? txn.total ?? 0;
+    if (txn.type === "DEPOSIT" || txn.type === "RETURN") {
+      // Deposits/returns reduce debt (increase balance)
+      // Before deposit: balance was lower
+      const depositAmount = txn.amount ?? txn.amountPaid ?? txn.total ?? 0;
+      balanceBefore = balanceAfter - depositAmount;
     } else {
-      // If purchase/pickup decreased balance, add it back
-      const total = txn.total ?? 0;
-      const paid = txn.amountPaid ?? 0;
-      const outstanding = total - paid;
-      initialBalance += outstanding;
-    }
-  }
-
-  // Now calculate forward with the correct initial balance
-  let runningBalance = initialBalance;
-
-  return sorted.map((txn) => {
-    const balanceBefore = runningBalance;
-
-    if (txn.type === "DEPOSIT") {
-      // Deposits reduce debt (increase balance)
-      runningBalance =
-        balanceBefore + (txn.amount ?? txn.amountPaid ?? txn.total ?? 0);
-    } else {
-      // Purchases/Pickups increase debt (decrease balance)
+      // Purchases/Pickups/Wholesale/Retail increase debt (decrease balance)
+      // Before purchase: balance was higher
       const total = txn.total ?? 0;
       const paid = txn.amountPaid ?? 0;
       const outstanding = total - paid;
 
-      runningBalance = balanceBefore - outstanding;
+      balanceBefore = balanceAfter + outstanding;
     }
 
     return {
@@ -68,7 +48,7 @@ export function calculateTransactionsWithBalance(
       loadingAndOffloading: 0, // Default or calculate if available
       transportFare: 0, // Default or calculate if available
       balanceBefore,
-      balanceAfter: runningBalance,
+      balanceAfter,
     };
   });
 }

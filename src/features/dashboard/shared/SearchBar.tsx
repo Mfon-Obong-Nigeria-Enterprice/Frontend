@@ -82,7 +82,7 @@ export default function SearchBar({
             <Input
               placeholder={placeholder || `Search by ${type}`}
               value={query}
-              // onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => setQuery(e.target.value)}
               onClick={() => setOpen(true)}
               className="w-full pl-8 !bg-white"
             />

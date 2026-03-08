@@ -146,7 +146,9 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
       <div className="bg-[#F5F5F5] border border-[#D9D9D9] rounded-lg p-2 mb-8">
         <h3 className="text-xs text-[#7D7D7D] mb-2">Client Description</h3>
         <p className="text-[10px] text-[#444444] ">
-            {client.description || "Major construction company specializing in residential and commercial buildings. Long-term client with multiple ongoing projects. Prefers bulk material orders and has established credit terms. Primary contact: Mr. Okoro (Site Manager)."}
+            {client.description && client.description.trim().length > 0
+  ? client.description
+  : "No description provided for this client."}
         </p>
       </div>
 
@@ -155,7 +157,7 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
         {/* Total Order */}
         <div className="bg-[#F5F5F5] rounded-lg p-6 flex flex-col items-center justify-center gap-1">
           <span className="text-xl md:text-2xl font-semibold text-[#333333]">
-            {formatLargeNumber(totalOrders > 0 ? totalOrders : 24)}
+            {formatLargeNumber(totalOrders)}
           </span>
           <span className="text-xs text-[#444444]">Total order</span>
         </div>
@@ -163,20 +165,20 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
         {/* Lifetime Value */}
         <div className="bg-[#F5F5F5] rounded-lg p-6 flex flex-col items-center justify-center gap-1">
              <span className="text-xl md:text-2xl font-semibold text-[#333333]">
-               {lifetimeValue !== "₦0" ? lifetimeValue : "₦1.8M"}
+               {lifetimeValue}
              </span>
              <span className="text-xs text-[#444444]">Lifetime value</span>
         </div>
 
         {/* Days Overdue */}
         <div className="bg-[#F5F5F5] rounded-lg p-6 flex flex-col items-center justify-center gap-1">
-             <span className="text-xl md:text-2xl font-semibold text-[#333333]">{daysOverdue > 0 ? daysOverdue : 30}</span>
+             <span className="text-xl md:text-2xl font-semibold text-[#333333]">{daysOverdue}</span>
              <span className="text-xs text-[#444444]">Days overdue</span>
         </div>
 
         {/* Pending Invoices */}
         <div className="bg-[#F5F5F5] rounded-lg p-6 flex flex-col items-center justify-center gap-1">
-             <span className="text-xl md:text-2xl font-semibold text-[#333333]">{pendingInvoices > 0 ? pendingInvoices : 2}</span>
+             <span className="text-xl md:text-2xl font-semibold text-[#333333]">{pendingInvoices}</span>
              <span className="text-xs text-[#444444]">Pending invoices</span>
         </div>
       </div>

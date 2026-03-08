@@ -20,9 +20,9 @@ export const mergeTransactionsWithClients = (
   });
 };
 
-//Prefer backend-provided date over createdAt when present
+//Prefer createdAt, fallback to date field if unavailable
 export const getTransactionDate = (tx: Partial<Transaction>): Date => {
-  const raw = (tx as any)?.date ?? tx.createdAt;
+  const raw = tx.createdAt ?? (tx as any)?.date;
 
   if (!raw) {
     return new Date(); // fallback if no date
