@@ -765,6 +765,12 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     // Filters are applied automatically via useMemo
   };
 
+  const handleResetFilters = () => {
+    setTransactionTypeFilter("all");
+    setStaffFilter("all-staff");
+    setDateRangeFilter({ from: undefined, to: undefined });
+  };
+
   // Loading states
   if (transactionsLoading || !clients || clients.length === 0) {
     return (
@@ -851,8 +857,8 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
             <TabsContent value="clientTransaction">
               {/* data */}
-              <div className="flex overflow-x-auto md:overflow-visible justify-start items-center w-full gap-4 md:gap-1 lg:gap-2 mb-10 pb-2 md:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                <div className="flex flex-col justify-end transition-all min-w-[250px] md:min-w-0 w-auto md:w-full h-full flex-shrink-0 md:shrink">
+              <div className="flex flex-wrap justify-start items-end w-full gap-3 mb-10">
+                <div className="flex flex-col justify-end min-w-[250px]">
                   <DateFromToPicker
                     date={dateRangeFilter}
                     onDateChange={(range) =>
@@ -861,7 +867,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                   />
                 </div>
 
-                <div className="flex flex-col w-[179px] sm:w-[179px] md:w-[179px] transition-all flex-shrink-0 md:shrink">
+                <div className="flex flex-col w-[179px]">
                   <label className="mb-2 text-xs font-medium text-[#7D7D7D]">
                     Transaction type
                   </label>
@@ -869,7 +875,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                     value={transactionTypeFilter}
                     onValueChange={setTransactionTypeFilter}
                   >
-                    <SelectTrigger className="sm:w-[179px] md:w-[179px] transition-all w-full">
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="All Transactions" />
                     </SelectTrigger>
                     <SelectContent className="text-[#444444]">
@@ -881,12 +887,12 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                   </Select>
                 </div>
 
-                <div className="flex flex-col w-[230px] sm:w-[230px] md:w-[210px] transition-all flex-shrink-0 md:shrink">
+                <div className="flex flex-col w-[180px]">
                   <label className="mb-2 text-xs font-medium text-[#7D7D7D]">
                     Staff member
                   </label>
                   <Select value={staffFilter} onValueChange={setStaffFilter}>
-                    <SelectTrigger className="sm:w-[126px] md:w-[126px] transition-all w-full">
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="All Staff" />
                     </SelectTrigger>
                     <SelectContent>
@@ -900,15 +906,23 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                   </Select>
                 </div>
 
-                <div className="flex flex-col md:items-center w-[101px] sm:w-[101px] md:w-[101px] lg:w-[101px] transition-all flex-shrink-0 md:shrink">
+                <div className="flex flex-col justify-end">
                   <Button
-                    className="mt-6 max-w-[101px]  bg-[#2ECC71] hover:bg-[#27ae60] text-white font-medium  sm:w-[230px] md:w-[210px] transition-all w-full "
+                    className="bg-[#2ECC71] hover:bg-[#27ae60] text-white font-medium px-4"
                     onClick={handleApplyFilters}
                   >
                     Apply filters
                   </Button>
                 </div>
-              </div>
+
+                <div className="flex flex-col justify-end">
+                  <Button
+                    className="bg-white hover:bg-gray-100 text-text-dark border border-[#7D7D7D] font-medium px-4"
+                    onClick={handleResetFilters}
+                  >
+                    Reset filters
+                  </Button>
+                </div>              </div>
 
               <ClientTransactionDetails
                 clientTransactions={transactionsWithBalance}
