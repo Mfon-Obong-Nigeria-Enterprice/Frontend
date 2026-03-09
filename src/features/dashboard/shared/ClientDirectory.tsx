@@ -74,6 +74,8 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
     return sortedTransaction[0] || null;
   };
 
+  const ITEMS_PER_PAGE = 10;
+
   const {
     currentPage,
     totalPages,
@@ -81,11 +83,11 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
     goToNextPage,
     canGoPrevious,
     canGoNext,
-  } = usePagination(filteredClients.length, 3);
+  } = usePagination(filteredClients.length, ITEMS_PER_PAGE);
 
   const currentClient = useMemo(() => {
-    const startIndex = (currentPage - 1) * 3;
-    const endIndex = startIndex + 3;
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
     return filteredClients.slice(startIndex, endIndex);
   }, [filteredClients, currentPage]);
 
