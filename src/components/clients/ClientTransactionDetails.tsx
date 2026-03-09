@@ -162,7 +162,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
           No transactions found for this client
         </p>
       ) : (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-8">
           {transactionWithBalance.map((txn, i) => {
             const styles = getTypeStyles(txn.type);
             const isCredit = txn.type === "DEPOSIT";
@@ -174,7 +174,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
             return (
               <div
                 key={`${txn._id}-${getTransactionDateString(txn)}-${i}`}
-                className="bg-white border border-gray-200 rounded-lg p-4 md:p-6"
+                className="bg-white border border-gray-300 rounded-lg p-4 md:p-6 shadow-sm"
               >
                 {/* --- HEADER --- */}
                 <div className="border-b border-[#D9D9D9] pb-4 flex flex-wrap justify-between items-start md:items-center mb-6 gap-4">
@@ -268,6 +268,14 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                         </span>
                         {txn.paymentMethod || "N/A"}
                       </li>
+                      {txn.amountPaid && txn.amountPaid > 0 && (
+                        <li className="text-sm text-[#444444]">
+                          <span className="font-medium text-[#444444]">
+                            Amount Paid:{" "}
+                          </span>
+                          {formatCurrency(txn.amountPaid)}
+                        </li>
+                      )}
                       {txn.transportFare > 0 && (
                         <li className="text-sm text-[#444444]">
                           <span className="font-medium text-[#444444]">
@@ -290,6 +298,15 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                             Loading:{" "}
                           </span>
                           {formatCurrency(txn.loading)}
+                        </li>
+                      )}
+                      {/* Amount Paid duplicate removed */}
+                      {txn.amountPaid && txn.total && txn.amountPaid > txn.total && (
+                        <li className="text-sm text-[#2ECC71]">
+                          <span className="font-medium">
+                            Credit Added:{" "}
+                          </span>
+                          {formatCurrency(txn.amountPaid - txn.total)}
                         </li>
                       )}
                     </ul>

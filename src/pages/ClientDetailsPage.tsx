@@ -160,6 +160,17 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     };
   }, [client, currentBalance]);
 
+  // Get all transactions for this client (unfiltered - used for metrics)
+  const allClientTransactions = useMemo(() => {
+    if (!clientId) return [];
+    return mergedTransactions
+      .filter((t) => t.client?._id === clientId)
+      .sort(
+        (a, b) =>
+          getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
+      );
+  }, [clientId, mergedTransactions]);
+
   const clientTransactions = useMemo(() => {
     if (!clientId) return [];
     let filtered = mergedTransactions.filter(
@@ -874,7 +885,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       <main className="grid gap-3 bg-[#F5F5F5] py-5 px-3 md:px-9 grid-cols-1 lg:grid-cols-5">
         {/* section by the left */}
         <div className=" lg:col-span-2">
-          {displayClient && <ClientDetailInfo client={displayClient} />}
+          {displayClient && <ClientDetailInfo client={displayClient} transactions={allClientTransactions} />}
         </div>
 
         {/* section by the right */}

@@ -1,4 +1,5 @@
 import type { Client } from "@/types/types";
+import type { Transaction } from "@/types/transactions";
 import { getDaysSince } from "@/utils/helpersfunction";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -6,7 +7,13 @@ import {
 } from "@/utils/formatCurrency";
 import { formatLargeNumber, formatLargeMonetaryNumber } from "@/utils/formatLargeNumber";
 
-const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
+const ClientDetailInfo = ({ 
+  client: initialClient, 
+  transactions 
+}: { 
+  client: Client;
+  transactions: Transaction[];
+}) => {
   const [client, setClient] = useState(initialClient);
 
   useEffect(() => {
@@ -19,40 +26,38 @@ const ClientDetailInfo = ({ client: initialClient }: { client: Client }) => {
   }, [client.balance, client.lastTransactionDate]);
 
   const totalOrders = useMemo(() => {
-    if (!client.transactions || client.transactions.length === 0) return 0;
-    return client.transactions.filter(
-      (txn) => txn.type === "PICKUP" || txn.type === "PURCHASE"
+    if (!transactions || transactions.length === 0) return 0;
+    return transactions.filter(
+      (txn) => txn.type === "PURCHASE"
     ).length;
-  }, [client.transactions]);
+  }, [transactions]);
 
   const lifetimeValue = useMemo(() => {
-    if (!client.transactions || client.transactions.length === 0) return "₦0";
-    const total = client.transactions.reduce((sum, txn) => {
-      if (
-        txn.type === "PURCHASE" ||
-        txn.type === "DEPOSIT" ||
-        txn.type === "PICKUP"
-      ) {
-        return sum + Math.abs(txn.amount ?? txn.amountPaid ?? 0);
+    if (!transactions || transactions.length === 0) return "₦0";
+    const total = transactions.reduce((sum, txn) => {
+      if (txn.type === "PURCHASE") {
+        return sum + Math.abs(txn.total ?? 0);
       }
       return sum;
     }, 0);
     return `${formatLargeMonetaryNumber(total)}`;
-  }, [client.transactions]);
+  }, [transactions]);
 
   // Calculate pending invoices or fallback to UI screenshot value
   const pendingInvoices = useMemo(() => {
-    if (!client.transactions) return 2; // Fallback to match screenshot if no data
-    const pending = client.transactions.filter(
-      (txn) =>
-        "status" in txn &&
-        (txn.type === "PICKUP" || txn.type === "PURCHASE") &&
-        txn.status === "PENDING"
-    );
-    // If logic yields 0 but this is for UI demo matching the screenshot, we prioritize the prop/data
-    // but default to 2 if the array is empty (assuming the screenshot data is static for this view)
-    return pending.length > 0 ? pending.length : 0; 
-  }, [client.transactions]);
+    if (!transactions || transactions.length === 0) return 0;
+
+    const pending = transactions.filter((txn) => {
+      if (txn.type !== "PURCHASE") return false;
+
+      const total = txn.total ?? 0;
+      const paid = txn.amountPaid ?? 0;
+
+      return paid < total;
+    });
+
+    return pending.length;
+  }, [transactions]);
 
   // Determine visual status
   const isOverdue = client.balance < 0;
