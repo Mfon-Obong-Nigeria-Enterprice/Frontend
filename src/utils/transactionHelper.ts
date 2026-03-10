@@ -65,9 +65,9 @@ export const validateTransaction = (transaction: any): boolean => {
  * Debug helper to log transaction flow
  */
 export const debugTransactionFlow = (
-  stage: string,
-  transaction: any,
-  additionalData?: any
+  _stage: string,
+  _transaction: any,
+  _additionalData?: any
 ) => {
   // Debug logging removed for production security
 };

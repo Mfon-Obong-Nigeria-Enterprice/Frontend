@@ -60,7 +60,6 @@ const ClientDetailInfo = ({
   }, [transactions]);
 
   // Determine visual status
-  const isOverdue = client.balance < 0;
   const accountStatus = useMemo(() => {
     if (client.balance > 0) return { text: "Credit", class: "text-[#2ECC71]" };
     if (client.balance < 0) return { text: "Overdue", class: "text-[#EF4444]" };
@@ -80,25 +79,39 @@ const ClientDetailInfo = ({
       
       <div 
   className={`relative flex flex-col justify-center px-6 py-7 rounded-lg mb-8 overflow-hidden ${
-    isOverdue ? "bg-[#FFE9E9]" : "bg-[#FFE9E9]"
+    client.balance > 0
+      ? "bg-[#E2F3EB]"
+      : client.balance < 0
+      ? "bg-[#FFE9E9]"
+      : "bg-[#F5F5F5]"
   }`}
 >
   {/* This div acts as the "Border" */}
   <div 
     className={`absolute left-0 top-0 bottom-0 w-[5px] ${
-       isOverdue ? "bg-[#EF4444]" : "bg-[#DA251C]"
+      client.balance > 0
+        ? "bg-[#2ECC71]"
+        : client.balance < 0
+        ? "bg-[#EF4444]"
+        : "bg-[#7D7D7D]"
     }`} 
   />
 
   <div className="flex justify-between items-start w-full">
     <div className="flex flex-col gap-2">
       <span className="text-[15px] text-[#333333]">Current balance</span>
-      <span className={`text-[28px] font-bold ${isOverdue ? "text-[#F95353]" : "text-black"}`}>
+      <span className={`text-[28px] font-bold ${
+        client.balance > 0
+          ? "text-[#2ECC71]"
+          : client.balance < 0
+          ? "text-[#F95353]"
+          : "text-[#444444]"
+      }`}>
         {formatCurrency(client.balance)}
       </span>
     </div>
     
-    {isOverdue && daysOverdue > 0 && (
+    {client.balance < 0 && daysOverdue > 0 && (
       <div className="bg-[#FDE68A] text-[#92400E] text-[10px] md:text-xs font-medium px-3 py-1.5 rounded flex items-center">
         {daysOverdue} days overdue
       </div>

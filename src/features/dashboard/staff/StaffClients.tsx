@@ -208,7 +208,7 @@ const StaffClients: React.FC = () => {
                     Type
                   </th>
                   <th className="text-left py-4 px-6 md:px-2 lg:px-6 text-sm font-medium text-[#333333]">
-                    Amount
+                    Transaction
                   </th>
                   <th className="text-left py-4 px-6 md:px-2 lg:px-6 text-sm font-medium text-[#333333]">
                     Balance
@@ -220,58 +220,67 @@ const StaffClients: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-[#E5E7EB]">
                 {paginatedClients.length > 0 ? (
-                  paginatedClients.map((client, index) => (
-                    <tr
-                      key={client._id || index}
-                      className="hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() =>
-                        (window.location.href = `/staff/clients/${client._id}`)
-                      }
-                    >
-                      <td className="py-4 px-6 md:px-2 lg:px-6 text-sm text-[#444444]">
-                        {client.lastTransactionDate
-                          ? new Date(
-                            client.lastTransactionDate
-                          ).toLocaleDateString()
-                          : new Date(client.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="py-4 px-6 md:px-2 lg:px-6 text-sm text-[#444444]">
-                        {client.name}
-                      </td>
-                      <td className="py-4 px-6 md:px-2 lg:px-6">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${getTypeBadgeStyles(
-                            client.transactions[0]?.type || "N/A"
+                  paginatedClients.map((client, index) => {
+                    const latestTransaction = client.transactions?.[client.transactions.length - 1];
+                    return (
+                      <tr
+                        key={client._id || index}
+                        className="hover:bg-blue-50 hover:shadow-sm transition-all duration-200 cursor-pointer border-l-4 border-transparent hover:border-l-blue-500"
+                        onClick={() =>
+                          (window.location.href = `/clients/${client._id}`)
+                        }
+                      >
+                        <td className="py-4 px-6 md:px-2 lg:px-6 text-sm text-[#444444]">
+                          {client.lastTransactionDate
+                            ? new Date(
+                              client.lastTransactionDate
+                            ).toLocaleDateString()
+                            : new Date(client.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="py-4 px-6 md:px-2 lg:px-6 text-sm text-[#444444]">
+                          {client.name}
+                        </td>
+                        <td className="py-4 px-6 md:px-2 lg:px-6">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${getTypeBadgeStyles(
+                              latestTransaction?.type || "N/A"
+                            )}`}
+                          >
+                            {latestTransaction?.type || "N/A"}
+                          </span>
+                        </td>
+                        <td
+                          className={`py-4 px-6 md:px-2 lg:px-6 text-sm font-medium ${getAmountColor(
+                            latestTransaction?.type || ""
                           )}`}
                         >
-                          {client.transactions[0]?.type || "N/A"}
-                        </span>
-                      </td>
-                      <td
-                        className={`py-4 px-6 md:px-2 lg:px-6 text-sm font-medium ${getAmountColor(
-                          client.transactions[0]?.type || ""
-                        )}`}
-                      >
-                        {client.transactions[0]?.type === "DEPOSIT" ? "+" : "-"}
-                        ₦
-                        {client.transactions[0]?.total?.toLocaleString() || "0"}
-                      </td>
-                      <td className="py-4 px-6 md:px-2 lg:px-6 text-sm font-medium text-[#2ECC71]">
-                        +₦{client.balance.toLocaleString()}
-                      </td>
-                      <td className="py-4 px-6 md:px-2 lg:px-6">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleProcessPayment(client);
-                          }}
-                          className="px-4 py-1.5 text-[#3B82F6] border border-[#3B82F6] rounded-md text-xs font-medium hover:bg-blue-50 transition-colors"
+                          {latestTransaction?.type === "DEPOSIT" ? "+" : "-"}
+                          ₦
+                          {Math.abs(latestTransaction?.amount ?? 0).toLocaleString()}
+                        </td>
+                        <td
+                          className={`py-4 px-6 md:px-2 lg:px-6 text-sm font-medium ${
+                            client.balance < 0 ? "text-[#F95353]" : "text-[#2ECC71]"
+                          }`}
                         >
-                          Deposit
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                          {client.balance < 0
+                            ? `-₦${Math.abs(client.balance).toLocaleString()}`
+                            : `₦${client.balance.toLocaleString()}`}
+                        </td>
+                        <td className="py-4 px-6 md:px-2 lg:px-6">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleProcessPayment(client);
+                            }}
+                            className="px-4 py-1.5 text-[#3B82F6] border border-[#3B82F6] rounded-md text-xs font-medium hover:bg-blue-50 transition-colors"
+                          >
+                            Deposit
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
                     <td
@@ -289,60 +298,72 @@ const StaffClients: React.FC = () => {
           {/* 2. MOBILE CARD LIST VIEW (Matches Screenshot Layout) */}
           <div className="md:hidden flex flex-col divide-y divide-[#E5E7EB]">
             {paginatedClients.length > 0 ? (
-              paginatedClients.map((client, index) => (
-                <div
-                  key={client._id || index}
-                  className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => (window.location.href = `/staff/clients/${client._id}`)}
-                >
-                  {/* Row 1: Name & Badge */}
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className="text-[15px] font-medium text-[#333333]">
-                      {client.name}
-                    </h3>
-                    <span
-                      className={`px-3 py-0.5 rounded-full text-[11px] font-normal border ${getTypeBadgeStyles(
-                        client.transactions[0]?.type || "N/A"
-                      )}`}
-                    >
-                      {client.transactions[0]?.type || "N/A"}
-                    </span>
+              paginatedClients.map((client, index) => {
+                const latestTransaction = client.transactions?.[client.transactions.length - 1];
+                return (
+                  <div
+                    key={client._id || index}
+                    className="p-4 hover:bg-blue-50 hover:shadow-md transition-all duration-200 cursor-pointer border-l-4 border-transparent hover:border-l-blue-500 rounded-lg"
+                    onClick={() => (window.location.href = `/clients/${client._id}`)}
+                  >
+                    {/* Row 1: Name & Badge */}
+                    <div className="flex justify-between items-start mb-1">
+                      <h3 className="text-[15px] font-medium text-[#333333]">
+                        {client.name}
+                      </h3>
+                      <span
+                        className={`px-3 py-0.5 rounded-full text-[11px] font-normal border ${getTypeBadgeStyles(
+                          latestTransaction?.type || "N/A"
+                        )}`}
+                      >
+                        {latestTransaction?.type || "N/A"}
+                      </span>
+                    </div>
+
+                    {/* Row 2: Date */}
+                    <div className="text-xs text-[#9CA3AF] mb-3">
+                      {client.lastTransactionDate
+                        ? new Date(client.lastTransactionDate).toLocaleDateString()
+                        : new Date(client.createdAt).toLocaleDateString()}
+                    </div>
+
+                    {/* Row 3: Amount - Balance - Action Button */}
+                    <div className="flex items-center justify-between">
+                      {/* Amount */}
+                      <span className={`text-sm font-medium ${getAmountColor(latestTransaction?.type || "")}`}>
+                        {latestTransaction?.type === "DEPOSIT" ? "+" : "-"}
+                        ₦
+                        {Math.abs(latestTransaction?.amount ?? 0).toLocaleString()}
+                      </span>
+
+                      {/* Balance */}
+                      <span className="text-xs text-[#333333]">
+                        Balance: 
+                        <span
+                          className={`font-medium ${
+                            client.balance < 0 ? "text-[#F95353]" : "text-[#2ECC71]"
+                          }`}
+                        >
+                          {client.balance < 0
+                            ? `-₦${Math.abs(client.balance).toLocaleString()}`
+                            : `₦${client.balance.toLocaleString()}`}
+                        </span>
+                      </span>
+
+                      {/* Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleProcessPayment(client);
+                        }}
+                        className="px-3 py-1 text-[#3B82F6] border border-[#3B82F6] rounded-md text-xs font-medium hover:bg-blue-50 bg-white"
+                      >
+                        Deposit
+                      </button>
+                    </div>
                   </div>
-
-                  {/* Row 2: Date */}
-                  <div className="text-xs text-[#9CA3AF] mb-3">
-                    {client.lastTransactionDate
-                      ? new Date(client.lastTransactionDate).toLocaleDateString()
-                      : new Date(client.createdAt).toLocaleDateString()}
-                  </div>
-
-                  {/* Row 3: Amount - Balance - Action Button */}
-                  <div className="flex items-center justify-between">
-                    {/* Amount */}
-                    <span className={`text-sm font-medium ${getAmountColor(client.transactions[0]?.type || "")}`}>
-                      {client.transactions[0]?.type === "DEPOSIT" ? "+" : "-"}
-                      ₦
-                      {client.transactions[0]?.total?.toLocaleString() || "0"}
-                    </span>
-
-                    {/* Balance */}
-                    <span className="text-xs text-[#333333]">
-                      Balance: <span className="text-[#2ECC71] font-medium">+₦{client.balance.toLocaleString()}</span>
-                    </span>
-
-                    {/* Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleProcessPayment(client);
-                      }}
-                      className="px-3 py-1 text-[#3B82F6] border border-[#3B82F6] rounded-md text-xs font-medium hover:bg-blue-50 bg-white"
-                    >
-                      Deposit
-                    </button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="py-8 text-center text-gray-500 text-sm">
                 No clients found matching your search.

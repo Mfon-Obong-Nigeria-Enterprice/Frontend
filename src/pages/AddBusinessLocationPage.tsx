@@ -4,7 +4,7 @@ import BusinessLocationModal from "@/components/BusinessLocationModal";
 const AddBusinessLocationPage = () => {
   const [isOpen, setIsOpen] = useState(true);
 
-  const handleSubmit = (data: {
+  const handleSubmit = (_data: {
     locationType: string;
     address: string;
     email: string;

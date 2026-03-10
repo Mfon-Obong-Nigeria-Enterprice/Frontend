@@ -266,14 +266,22 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                         <span className="font-medium text-[#444444]">
                           Method:{" "}
                         </span>
-                        {txn.paymentMethod || "N/A"}
+                        {(txn.amountPaid ?? 0) > 0 ? (txn.paymentMethod || "N/A") : "No payment"}
                       </li>
-                      {txn.amountPaid && txn.amountPaid > 0 && (
+                      {(txn.amountPaid ?? 0) > 0 && (
                         <li className="text-sm text-[#444444]">
                           <span className="font-medium text-[#444444]">
                             Amount Paid:{" "}
                           </span>
-                          {formatCurrency(txn.amountPaid)}
+                          {formatCurrency(txn.amountPaid ?? 0)}
+                        </li>
+                      )}
+                      {txn.total && (txn.amountPaid ?? 0) < txn.total && (
+                        <li className="text-sm text-[#F95353]">
+                          <span className="font-medium">
+                            Outstanding:{" "}
+                          </span>
+                          {formatCurrency(txn.total - (txn.amountPaid ?? 0))}
                         </li>
                       )}
                       {txn.transportFare > 0 && (
@@ -301,12 +309,12 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                         </li>
                       )}
                       {/* Amount Paid duplicate removed */}
-                      {txn.amountPaid && txn.total && txn.amountPaid > txn.total && (
+                      {(txn.amountPaid ?? 0) > (txn.total ?? 0) && (
                         <li className="text-sm text-[#2ECC71]">
                           <span className="font-medium">
                             Credit Added:{" "}
                           </span>
-                          {formatCurrency(txn.amountPaid - txn.total)}
+                          {formatCurrency((txn.amountPaid ?? 0) - (txn.total ?? 0))}
                         </li>
                       )}
                     </ul>
@@ -318,11 +326,13 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                       Process By
                     </h3>
                     <ul className="space-y-2">
-                      <li className="text-sm text-[#444444]">
+                      <li className="text-sm text-[#444444] flex flex-col max-w-full">
                         <span className="font-medium text-[#444444]">
-                          Staff:{" "}
+                          Staff:
                         </span>
-                        {txn.userId?.name || "Unknown"}
+                        <span className="break-all whitespace-normal">
+                          {txn.userId?.name || "Unknown"}
+                        </span>
                       </li>
                       {txn.invoiceNumber && (
                         <li>

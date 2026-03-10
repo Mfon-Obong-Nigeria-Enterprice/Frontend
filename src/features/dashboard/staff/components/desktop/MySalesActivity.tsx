@@ -85,7 +85,7 @@ const MySalesActivity = ({
                 }`}
                 onClick={() => {
                   if (transaction.clientId?._id) {
-                    window.location.href = `/staff/dashboard/clients/${transaction.clientId._id}`;
+                    window.location.href = `/clients/${transaction.clientId._id}`;
                   }
                 }}
               >

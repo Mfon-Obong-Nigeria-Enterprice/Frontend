@@ -1,5 +1,4 @@
 // src/features/dashboard/manager/ManagerDashboardOverview.tsx
-import { useEffect } from "react";
 import DashboardTitle from "../shared/DashboardTitle";
 import Stats from "../shared/Stats";
 import { SalesOverview } from "./component/SalesOverview";
