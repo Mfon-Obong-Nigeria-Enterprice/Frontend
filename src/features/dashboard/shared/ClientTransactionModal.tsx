@@ -226,7 +226,12 @@ const ClientTransactionModal = () => {
                         Process By
                       </h6>
                       <p className="font-medium text-[#444444] text-[13px]">
-                        Staff:
+                        {selectedTransaction?.userId.role
+                          ? selectedTransaction.userId.role
+                              .split("_")
+                              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                              .join(" ")
+                          : "Staff"}:
                         <span className="font-normal ml-1">
                           {selectedTransaction?.userId.name}
                         </span>

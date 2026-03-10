@@ -14,6 +14,15 @@ interface clientTrasactionDetailsProps {
   client: { balance: number };
 }
 
+// Helper to format role for display
+const formatRole = (role: string | undefined): string => {
+  if (!role) return "Staff";
+  return role
+    .split("_")
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
+
 // Helper to get styles based on transaction type matching the screenshots
 const getTypeStyles = (type: string) => {
   switch (type) {
@@ -328,7 +337,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                     <ul className="space-y-2">
                       <li className="text-sm text-[#444444] flex flex-col max-w-full">
                         <span className="font-medium text-[#444444]">
-                          Staff:
+                          {formatRole(txn.userId?.role)}:
                         </span>
                         <span className="break-all whitespace-normal">
                           {txn.userId?.name || "Unknown"}

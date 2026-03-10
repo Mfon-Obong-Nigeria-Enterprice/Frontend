@@ -36,6 +36,7 @@ export interface Transaction {
   userId: {
     _id: string;
     name: string;
+    role?: string;
   };
   userName?: string;
   items: Item[];
