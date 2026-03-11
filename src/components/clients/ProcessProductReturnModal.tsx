@@ -206,8 +206,9 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       handleClose();
     },
-    onError: (error) => {
-      toast.error(`Failed to process return: ${error.message}`);
+    onError: (error: any) => {
+      const message = error.response?.data?.message || error.message || 'Failed to process return';
+      toast.error(message);
     }
   });
 
