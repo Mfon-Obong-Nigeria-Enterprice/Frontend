@@ -41,8 +41,8 @@ export const SalesOverview = ({ transactions }: SalesOverviewProps) => {
     const latestTransactionDate = validTransactions.length > 0 
       ? new Date(
           validTransactions.sort((a, b) => 
-            new Date(b.date!).getTime() - new Date(a.date!).getTime()
-          )[0].date!
+            new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
+          )[0].createdAt!
         )
       : new Date();
 

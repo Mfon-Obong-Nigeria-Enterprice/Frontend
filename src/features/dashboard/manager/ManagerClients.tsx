@@ -159,7 +159,7 @@ const ManagerClients = () => {
           return null;
 
         const sortedTransactions = [...client.transactions].sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
         return sortedTransactions[0] || null;
       };
@@ -221,7 +221,7 @@ const ManagerClients = () => {
           return null;
 
         const sortedTransactions = [...client.transactions].sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
         return sortedTransactions[0] || null;
       };

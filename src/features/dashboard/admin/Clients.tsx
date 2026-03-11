@@ -36,7 +36,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getTransactionDate } from "@/utils/transactions";
 
 interface ClientProps {
   showExportButtons?: boolean;
@@ -90,7 +89,7 @@ export const Clients: React.FC<ClientProps> = ({
           return null;
         const sortedTransactions = [...client.transactions].sort(
           (a, b) =>
-            getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
         return sortedTransactions[0] || null;
       };
@@ -143,7 +142,7 @@ export const Clients: React.FC<ClientProps> = ({
           return null;
         const sortedTransactions = [...client.transactions].sort(
           (a, b) =>
-            getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
         return sortedTransactions[0] || null;
       };

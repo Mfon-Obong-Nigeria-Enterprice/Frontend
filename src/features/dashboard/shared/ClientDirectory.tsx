@@ -27,7 +27,6 @@ import { formatCurrency } from "@/utils/formatCurrency";
 import { useNavigate } from "react-router-dom";
 import { getTypeDisplay } from "@/utils/helpersfunction";
 import {
-  getTransactionDate,
   getTransactionDateString,
 } from "@/utils/transactions";
 
@@ -69,7 +68,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
 
     const sortedTransaction = [...client.transactions].sort(
       (a, b) =>
-        getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     return sortedTransaction[0] || null;
   };

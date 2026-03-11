@@ -49,9 +49,9 @@ export function calculateTransactionsWithBalance(
 
     return {
       ...txn,
-      loading: 0, // Default or calculate if available
-      loadingAndOffloading: 0, // Default or calculate if available
-      transportFare: 0, // Default or calculate if available
+      loading: txn.loading ?? 0,
+      loadingAndOffloading: txn.loadingAndOffloading ?? 0,
+      transportFare: txn.transportFare ?? 0,
       balanceBefore,
       balanceAfter,
     };

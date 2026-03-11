@@ -42,6 +42,9 @@ export interface Transaction {
   items: Item[];
   subtotal?: number;
   discount?: number;
+  transportFare?: number;
+  loading?: number;
+  loadingAndOffloading?: number;
   total: number;
   amountPaid?: number;
   paymentMethod?: string;

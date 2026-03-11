@@ -254,6 +254,7 @@ export const useClientStore = create<clientStore>()(
                     type: "DEPOSIT" as const,
                     amount: paymentAmount,
                     date: currentTime,
+                    createdAt: currentTime,
                     description: `Payment received - Balance updated from ${client.balance.toFixed(
                       2
                     )} to ${newBalance.toFixed(2)}`,
@@ -283,6 +284,7 @@ export const useClientStore = create<clientStore>()(
                       type: "DEPOSIT" as const,
                       amount: paymentAmount,
                       date: currentTime,
+                      createdAt: currentTime,
                       description: `Payment received - Balance updated from ${debtor.balance.toFixed(
                         2
                       )} to ${newBalance.toFixed(2)}`,

@@ -139,7 +139,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       .filter((t) => t.client?._id === clientId)
       .sort(
         (a, b) =>
-          getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
 
     // Use the most recent transaction's snapshot, fallback to client.balance
@@ -167,7 +167,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       .filter((t) => t.client?._id === clientId)
       .sort(
         (a, b) =>
-          getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
   }, [clientId, mergedTransactions]);
 
@@ -221,7 +221,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
     return filtered.sort(
       (a, b) =>
-        getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [
     clientId,
@@ -299,7 +299,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     // 1. Sort the filtered transactions we want to display (Oldest to Newest)
     const sortedTxns = [...transactionsWithBalance].sort(
       (a, b) =>
-        getTransactionDate(a).getTime() - getTransactionDate(b).getTime()
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
 
     // 2. ROBUST INITIAL BALANCE CALCULATION (Unwinding Method)
@@ -310,7 +310,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       .filter((t) => t.client?._id === clientId) 
       .sort(
         (a, b) =>
-          getTransactionDate(b).getTime() - getTransactionDate(a).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       ); 
 
     // Determine the Start Date of our report

@@ -2,9 +2,7 @@ import type { Transaction } from "@/types/transactions";
 import { calculateTransactionsWithBalance } from "@/utils/calculateOutstanding";
 import { formatCurrency } from "@/utils/formatCurrency";
 import {
-  getTransactionDate,
   getTransactionDateString,
-  getTransactionTimeString,
 } from "@/utils/transactions";
 import { useMemo, useState } from "react";
 import ProcessProductReturnModal from "./ProcessProductReturnModal";
@@ -69,10 +67,10 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
       client
     );
 
-    // Sort by date - NEWEST FIRST
+    // Sort by createdAt - NEWEST FIRST
     return transactionsWithBalance.sort((a, b) => {
-      const dateA = getTransactionDate(a).getTime();
-      const dateB = getTransactionDate(b).getTime();
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
       return dateB - dateA;
     });
   }, [clientTransactions, client]);
@@ -82,8 +80,8 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
     return clientTransactions
       .filter((txn) => txn.type === "RETURN")
       .sort((a, b) => {
-        const dateA = getTransactionDate(a).getTime();
-        const dateB = getTransactionDate(b).getTime();
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
         return dateB - dateA;
       });
   }, [clientTransactions]);
@@ -200,9 +198,6 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                       <span className="text-[#333333] text-sm font-medium">
                         {getTransactionDateString(txn)}
                       </span>
-                      <span className="text-[#7D7D7D] text-[10px] md:text-xs">
-                        {getTransactionTimeString(txn)}
-                      </span>
                     </div>
                   </div>
 
@@ -301,28 +296,28 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                           {formatCurrency(txn.total - (txn.amountPaid ?? 0))}
                         </li>
                       )}
-                      {txn.transportFare > 0 && (
+                      {Number(txn.transportFare || 0) > 0 && (
                         <li className="text-sm text-[#444444]">
                           <span className="font-medium text-[#444444]">
                             Transport:{" "}
                           </span>
-                          {formatCurrency(txn.transportFare)}
+                          {formatCurrency(Number(txn.transportFare || 0))}
                         </li>
                       )}
-                      {txn.loadingAndOffloading > 0 && (
+                      {Number(txn.loadingAndOffloading || 0) > 0 && (
                         <li className="text-sm text-[#444444]">
                           <span className="font-medium text-[#444444]">
                             Loading/Offloading:{" "}
                           </span>
-                          {formatCurrency(txn.loadingAndOffloading)}
+                          {formatCurrency(Number(txn.loadingAndOffloading || 0))}
                         </li>
                       )}
-                      {txn.loading > 0 && (
+                      {Number(txn.loading || 0) > 0 && (
                         <li className="text-sm text-[#444444]">
                           <span className="font-medium text-[#444444]">
                             Loading:{" "}
                           </span>
-                          {formatCurrency(txn.loading)}
+                          {formatCurrency(Number(txn.loading || 0))}
                         </li>
                       )}
                       {/* Amount Paid duplicate removed */}
@@ -428,6 +423,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                               )}
                             </div>
                           ))}
+                          {/* Subtotal */}
                           <div className="bg-[#F5F5F5] flex justify-end px-4 gap-4 items-center py-3 border-t border-gray-100">
                             <span className="text-xs md:text-sm text-[#333333] font-medium">
                               Subtotal:
@@ -439,6 +435,76 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                                   0
                                 )
                               )}
+                            </span>
+                          </div>
+
+                          {/* Transport */}
+                          {(() => {
+                            const transport = Number(txn.transportFare || 0);
+                            return transport > 0 ? (
+                              <div className="bg-[#F5F5F5] flex justify-end px-4 gap-4 items-center py-3">
+                                <span className="text-xs md:text-sm text-[#333333] font-medium">
+                                  Transport:
+                                </span>
+                                <span className="text-xs md:text-sm text-[#333333] font-bold">
+                                  {formatCurrency(transport)}
+                                </span>
+                              </div>
+                            ) : null;
+                          })()}
+
+                          {/* Loading */}
+                          {(() => {
+                            const loading = Number(txn.loading || 0);
+                            return loading > 0 ? (
+                              <div className="bg-[#F5F5F5] flex justify-end px-4 gap-4 items-center py-3">
+                                <span className="text-xs md:text-sm text-[#333333] font-medium">
+                                  Loading:
+                                </span>
+                                <span className="text-xs md:text-sm text-[#333333] font-bold">
+                                  {formatCurrency(loading)}
+                                </span>
+                              </div>
+                            ) : null;
+                          })()}
+
+                          {/* Loading & Offloading */}
+                          {(() => {
+                            const loadingOff = Number(txn.loadingAndOffloading || 0);
+                            return loadingOff > 0 ? (
+                              <div className="bg-[#F5F5F5] flex justify-end px-4 gap-4 items-center py-3">
+                                <span className="text-xs md:text-sm text-[#333333] font-medium">
+                                  Loading & Offloading:
+                                </span>
+                                <span className="text-xs md:text-sm text-[#333333] font-bold">
+                                  {formatCurrency(loadingOff)}
+                                </span>
+                              </div>
+                            ) : null;
+                          })()}
+
+                          {/* Discount */}
+                          {(() => {
+                            const discount = Number(txn.discount || 0);
+                            return discount > 0 ? (
+                              <div className="bg-[#F5F5F5] flex justify-end px-4 gap-4 items-center py-3">
+                                <span className="text-xs md:text-sm text-[#333333] font-medium">
+                                  Discount:
+                                </span>
+                                <span className="text-xs md:text-sm text-[#333333] font-bold">
+                                  -{formatCurrency(discount)}
+                                </span>
+                              </div>
+                            ) : null;
+                          })()}
+
+                          {/* Total */}
+                          <div className="bg-[#F5F5F5] flex justify-end px-4 gap-4 items-center py-3 border-t-2 border-gray-300">
+                            <span className="text-xs md:text-sm text-[#333333] font-bold">
+                              Total:
+                            </span>
+                            <span className="text-xs md:text-sm text-[#333333] font-bold">
+                              {formatCurrency(txn.total || 0)}
                             </span>
                           </div>
                         </div>

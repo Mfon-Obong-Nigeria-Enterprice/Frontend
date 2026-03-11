@@ -90,6 +90,7 @@ export interface TransactionItem {
   amount: number;
   description?: string;
   date: string;
+  createdAt: string;
   reference: string;
   total?: number;
   amountPaid?: number;

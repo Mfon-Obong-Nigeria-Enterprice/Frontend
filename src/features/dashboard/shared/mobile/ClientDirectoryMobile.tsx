@@ -47,7 +47,7 @@ const ClientDirectoryMobile: React.FC<ClientDirectoryProps> = ({
     }
 
     const sortedTransaction = [...client.transactions].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     return sortedTransaction[0] || null;
   };

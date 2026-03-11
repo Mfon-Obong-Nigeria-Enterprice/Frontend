@@ -28,7 +28,6 @@ import { useTransactionsStore } from "@/stores/useTransactionStore";
 
 // utils
 import { balanceClassT, toSentenceCaseName } from "@/utils/styles";
-import { getTransactionTimeString } from "@/utils/transactions";
 
 // types
 import type { Transaction } from "@/types/transactions";
@@ -145,7 +144,7 @@ const SalesTableData = ({
                     id={`invoice-${transaction.invoiceNumber}`}
                   >
                     <TableCell className="text-sm text-gray-600">
-                      {getTransactionTimeString(transaction)}
+                      {new Date(transaction.createdAt).toLocaleTimeString()}
                     </TableCell>
                     <TableCell>
                       {toSentenceCaseName(

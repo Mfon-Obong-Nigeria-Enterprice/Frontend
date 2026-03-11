@@ -22,7 +22,7 @@ export const mergeTransactionsWithClients = (
 
 //Prefer createdAt, fallback to date field if unavailable
 export const getTransactionDate = (tx: Partial<Transaction>): Date => {
-  const raw = tx.createdAt ?? (tx as any)?.date;
+  const raw = tx.date ?? tx.createdAt;
 
   if (!raw) {
     return new Date(); // fallback if no date
@@ -44,42 +44,6 @@ export const getTransactionDateString = (
 ): string => {
   const d = getTransactionDate(tx);
   return d.toLocaleDateString(locale);
-};
-
-export const getTransactionTimeString = (
-  tx: Partial<Transaction>,
-  locale: string = "en-GB"
-): string => {
-  // Always use createdAt for the time to get the actual creation timestamp
-  const raw = tx.createdAt;
-
-  if (!raw) {
-    return new Date().toLocaleTimeString(locale, {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  }
-
-  const date = new Date(raw as string);
-
-  // Check if the parsed date is valid
-  if (isNaN(date.getTime())) {
-    return new Date().toLocaleTimeString(locale, {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  }
-
-  // Format time
-  const timeString = date.toLocaleTimeString(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
-
-  return timeString;
 };
 
 export function getClientsWithDebt(mergedTransaction: MergedTransaction[]) {
