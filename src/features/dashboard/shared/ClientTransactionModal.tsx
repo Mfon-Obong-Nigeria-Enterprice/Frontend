@@ -200,7 +200,11 @@ const ClientTransactionModal = () => {
                         <p className="font-medium text-[#444444] text-[13px]">
                           Amount:{" "}
                           <span className="font-normal">
-                            {formatCurrency(selectedTransaction.total ?? 0)}
+                            {formatCurrency(
+                              selectedTransaction.type === "RETURN" && selectedTransaction.actualAmountReturned !== undefined
+                                ? selectedTransaction.actualAmountReturned
+                                : selectedTransaction.total ?? 0
+                            )}
                           </span>
                         </p>
                         <p className="font-medium text-[#444444] text-[13px]">

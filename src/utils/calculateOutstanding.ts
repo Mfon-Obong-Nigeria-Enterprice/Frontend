@@ -27,13 +27,18 @@ export function calculateTransactionsWithBalance(
     // Calculate balanceBefore by reversing the transaction effect
     let balanceBefore: number;
 
-    if (txn.type === "DEPOSIT" || txn.type === "RETURN") {
-      // Deposits/returns reduce debt (increase balance)
+    if (txn.type === "RETURN") {
+      // Returns credit the client balance
+      // Before return: balance was lower (more debt or less credit)
+      const returnAmount = txn.actualAmountReturned ?? txn.total ?? 0;
+      balanceBefore = balanceAfter - returnAmount;
+    } else if (txn.type === "DEPOSIT") {
+      // Deposits reduce debt (increase balance)
       // Before deposit: balance was lower
-      const depositAmount = txn.amount ?? txn.amountPaid ?? txn.total ?? 0;
+      const depositAmount = txn.amountPaid ?? txn.amount ?? txn.total ?? 0;
       balanceBefore = balanceAfter - depositAmount;
     } else {
-      // Purchases/Pickups/Wholesale/Retail increase debt (decrease balance)
+      // Purchases/Pickups/Wholesale increase debt (decrease balance)
       // Before purchase: balance was higher
       const total = txn.total ?? 0;
       const paid = txn.amountPaid ?? 0;

@@ -216,7 +216,11 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                         className={`text-lg text-[#444444] md:text-xl font-bold ${styles.amount}`}
                       >
                         {isCredit ? "+" : ""}
-                        {formatCurrency(txn.total || 0)}
+                        {formatCurrency(
+                          txn.type === "RETURN" && txn.actualAmountReturned !== undefined
+                            ? txn.actualAmountReturned
+                            : txn.total || 0
+                        )}
                       </span>
                     </div>
                     {/* Only show Return button for tangible transactions */}
@@ -269,7 +273,11 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                         <span className="font-medium text-[#444444]">
                           Amount:{" "}
                         </span>
-                        {formatCurrency(txn.total || 0)}
+                        {formatCurrency(
+                          txn.type === "RETURN" && txn.actualAmountReturned !== undefined
+                            ? txn.actualAmountReturned
+                            : txn.total || 0
+                        )}
                       </li>
                       <li className="text-sm text-[#444444]">
                         <span className="font-medium text-[#444444]">
@@ -285,7 +293,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                           {formatCurrency(txn.amountPaid ?? 0)}
                         </li>
                       )}
-                      {txn.total && (txn.amountPaid ?? 0) < txn.total && (
+                      {txn.type !== "RETURN" && txn.total && (txn.amountPaid ?? 0) < txn.total && (
                         <li className="text-sm text-[#F95353]">
                           <span className="font-medium">
                             Outstanding:{" "}
@@ -318,7 +326,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                         </li>
                       )}
                       {/* Amount Paid duplicate removed */}
-                      {(txn.amountPaid ?? 0) > (txn.total ?? 0) && (
+                      {txn.type !== "RETURN" && (txn.amountPaid ?? 0) > (txn.total ?? 0) && (
                         <li className="text-sm text-[#2ECC71]">
                           <span className="font-medium">
                             Credit Added:{" "}

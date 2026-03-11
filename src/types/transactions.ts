@@ -56,6 +56,7 @@ export interface Transaction {
   branchName?: string;
   reference?: string;
   clientBalanceAfterTransaction?: number;
+  actualAmountReturned?: number;
 }
 
 export type MergedTransaction = Transaction & {
