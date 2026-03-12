@@ -9,16 +9,27 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 
-// Helper for currency formatting
+// Helper for currency formatting (neutral, no signs or colors)
 const formatAmount = (amount: number) => {
-  const absVal = Math.abs(amount);
-  const formatted = new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(absVal);
-  return amount < 0 ? `-${formatted}` : `+${formatted}`;
+  return `₦${Math.abs(amount).toLocaleString()}`;
+};
+
+// Helper for transaction type badge styles
+const getTypeBadgeStyles = (type: string) => {
+  switch (type?.toUpperCase()) {
+    case "DEPOSIT":
+      return "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]";
+    case "RETURN":
+      return "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]";
+    case "PICKUP":
+      return "bg-[#FFF8E1] text-[#FFA500] border border-[#FFA500]";
+    case "PURCHASE":
+      return "bg-[#FFECEC] text-[#F95353] border border-[#F95353]";
+    case "WHOLESALE":
+      return "bg-[#FFECEC] text-[#F95353] border border-[#F95353]";
+    default:
+      return "bg-gray-100 text-gray-600 border border-gray-300";
+  }
 };
 
 const RecentSalesActivity: React.FC = () => {
@@ -94,9 +105,8 @@ const RecentSalesActivity: React.FC = () => {
       <div className="block md:hidden">
         <div className="flex flex-col divide-y divide-[#F3F4F6]">
           {recentSales.map((sale, i) => {
-            const isPositive = sale.total >= 0;
             return (
-              <div key={i} className="flex flex-col gap-1 p-4">
+              <div key={i} className="flex flex-col gap-2 p-4">
                 <div className="flex justify-between items-center">
                   <span className="text-[#1F2937] font-medium text-sm">
                     {sale.clientName || sale.walkInClientName || "Walk-in client"}
@@ -105,9 +115,15 @@ const RecentSalesActivity: React.FC = () => {
                     {new Date(sale.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })}
                   </span>
                 </div>
-                <div className="flex justify-between items-center mt-1">
+                <div className="flex justify-between items-center">
                   <div className="flex-1">{renderProductList(sale.items)}</div>
-                  <span className={`text-sm font-bold ${isPositive ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${getTypeBadgeStyles(sale.type)}`}>
+                    {sale.type || "N/A"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">Amount:</span>
+                  <span className="text-sm font-medium text-[#444444]">
                     {formatAmount(sale.total)}
                   </span>
                 </div>
@@ -124,7 +140,6 @@ const RecentSalesActivity: React.FC = () => {
       <div className="hidden md:block xl:hidden">
         <div className="flex flex-col divide-y divide-[#F3F4F6]">
           {recentSales.map((sale, i) => {
-            const isPositive = sale.total >= 0;
             return (
               <div key={i} className="p-5 hover:bg-gray-50 transition-colors">
                 {/* Row 1: Name and Time */}
@@ -142,9 +157,14 @@ const RecentSalesActivity: React.FC = () => {
                   {renderProductList(sale.items)}
                 </div>
 
-                {/* Row 3: Amount (Left Aligned, Red/Green) */}
-                <div className={`text-sm font-bold ${isPositive ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-                  {formatAmount(sale.total)}
+                {/* Row 3: Type and Amount */}
+                <div className="flex justify-between items-center">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getTypeBadgeStyles(sale.type)}`}>
+                    {sale.type || "N/A"}
+                  </span>
+                  <span className="text-sm font-medium text-[#444444]">
+                    {formatAmount(sale.total)}
+                  </span>
                 </div>
               </div>
             );
@@ -162,20 +182,25 @@ const RecentSalesActivity: React.FC = () => {
             <tr>
               <th className="py-4 px-6 text-sm font-medium">Clients</th>
               <th className="py-4 px-6 text-sm font-medium">Products</th>
+              <th className="py-4 px-6 text-sm font-medium">Type</th>
               <th className="py-4 px-6 text-sm font-medium">Amount</th>
               <th className="py-4 px-6 text-sm font-medium text-right">Time</th>
             </tr>
           </thead>
           <tbody className="text-sm text-[#333]">
             {recentSales.map((sale, i) => {
-              const isPositive = sale.total >= 0;
               return (
                 <tr key={i} className="border-b border-[#E4E4E7] last:border-b-0 hover:bg-gray-50">
                   <td className="py-5 px-6 font-normal">
                     {sale.clientName || sale.walkInClientName || "Walk-in client"}
                   </td>
                   <td className="py-5 px-6">{renderProductList(sale.items)}</td>
-                  <td className={`py-5 px-6 font-medium ${isPositive ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
+                  <td className="py-5 px-6">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getTypeBadgeStyles(sale.type)}`}>
+                      {sale.type || "N/A"}
+                    </span>
+                  </td>
+                  <td className="py-5 px-6 font-medium text-[#444444]">
                     {formatAmount(sale.total)}
                   </td>
                   <td className="py-5 px-6 text-[#555] text-right">

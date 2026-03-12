@@ -18,16 +18,22 @@ import {
 } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { getAllClients } from "@/services/clientService";
+import { getAllTransactions } from "@/services/transactionService";
+import type { Transaction } from "@/types/transactions";
 
 // Helper for badge styles based on type
 const getTypeBadgeStyles = (type: string) => {
   switch (type.toLowerCase()) {
     case "deposit":
       return "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]";
+    case "return":
+      return "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]";
     case "pickup":
       return "bg-[#FFF8E1] text-[#FFA500] border border-[#FFA500]";
     case "purchase":
     case "puchase": // Handling typo from screenshot if data has it
+      return "bg-[#FFECEC] text-[#F95353] border border-[#F95353]";
+    case "wholesale":
       return "bg-[#FFECEC] text-[#F95353] border border-[#F95353]";
     default:
       return "bg-gray-100 text-gray-600 border border-gray-300";
@@ -36,7 +42,8 @@ const getTypeBadgeStyles = (type: string) => {
 
 // Helper for amount coloring
 const getAmountColor = (type: string) => {
-  if (type.toLowerCase() === "deposit") return "text-[#2ECC71]";
+  const lowerType = type.toLowerCase();
+  if (lowerType === "deposit" || lowerType === "return") return "text-[#2ECC71]";
   return "text-[#F95353]";
 };
 
@@ -46,6 +53,34 @@ const StaffClients: React.FC = () => {
     queryFn: getAllClients,
     staleTime: 5 * 60 * 1000,
   });
+
+  const { data: allTransactions } = useQuery({
+    queryKey: ["transactions"],
+    queryFn: getAllTransactions,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Map clientId -> latest transaction from Transaction collection
+  const latestTransactionMap = useMemo(() => {
+    if (!allTransactions) return new Map();
+    
+    const map = new Map<string, Transaction>();
+    
+    // Sort all transactions by date (newest first)
+    const sorted = [...allTransactions].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    
+    // For each transaction, if we haven't seen this clientId yet, it's the latest
+    sorted.forEach(txn => {
+      const clientId = typeof txn.clientId === 'string' ? txn.clientId : txn.clientId?._id;
+      if (clientId && !map.has(clientId)) {
+        map.set(clientId, txn);
+      }
+    });
+    
+    return map;
+  }, [allTransactions]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -221,7 +256,7 @@ const StaffClients: React.FC = () => {
               <tbody className="divide-y divide-[#E5E7EB]">
                 {paginatedClients.length > 0 ? (
                   paginatedClients.map((client, index) => {
-                    const latestTransaction = client.transactions?.[client.transactions.length - 1];
+                    const latestTransaction = latestTransactionMap.get(client._id);
                     return (
                       <tr
                         key={client._id || index}
@@ -254,9 +289,9 @@ const StaffClients: React.FC = () => {
                             latestTransaction?.type || ""
                           )}`}
                         >
-                          {latestTransaction?.type === "DEPOSIT" ? "+" : "-"}
+                          {latestTransaction?.type === "DEPOSIT" || latestTransaction?.type === "RETURN" ? "+" : "-"}
                           ₦
-                          {Math.abs(latestTransaction?.amount ?? 0).toLocaleString()}
+                          {Math.abs(latestTransaction?.total ?? 0).toLocaleString()}
                         </td>
                         <td
                           className={`py-4 px-6 md:px-2 lg:px-6 text-sm font-medium ${
@@ -299,7 +334,7 @@ const StaffClients: React.FC = () => {
           <div className="md:hidden flex flex-col divide-y divide-[#E5E7EB]">
             {paginatedClients.length > 0 ? (
               paginatedClients.map((client, index) => {
-                const latestTransaction = client.transactions?.[client.transactions.length - 1];
+                const latestTransaction = latestTransactionMap.get(client._id);
                 return (
                   <div
                     key={client._id || index}
@@ -331,9 +366,9 @@ const StaffClients: React.FC = () => {
                     <div className="flex items-center justify-between">
                       {/* Amount */}
                       <span className={`text-sm font-medium ${getAmountColor(latestTransaction?.type || "")}`}>
-                        {latestTransaction?.type === "DEPOSIT" ? "+" : "-"}
+                        {latestTransaction?.type === "DEPOSIT" || latestTransaction?.type === "RETURN" ? "+" : "-"}
                         ₦
-                        {Math.abs(latestTransaction?.amount ?? 0).toLocaleString()}
+                        {Math.abs(latestTransaction?.total ?? 0).toLocaleString()}
                       </span>
 
                       {/* Balance */}

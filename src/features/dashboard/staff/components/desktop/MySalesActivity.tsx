@@ -15,6 +15,24 @@ import {
 // icons
 import { ChevronDown, Receipt, TrendingUp } from "lucide-react";
 
+// Helper for transaction type badge styles
+const getTypeBadgeStyles = (type: string) => {
+  switch (type?.toUpperCase()) {
+    case "DEPOSIT":
+      return "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]";
+    case "RETURN":
+      return "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]";
+    case "PICKUP":
+      return "bg-[#FFF8E1] text-[#FFA500] border border-[#FFA500]";
+    case "PURCHASE":
+      return "bg-[#FFECEC] text-[#F95353] border border-[#F95353]";
+    case "WHOLESALE":
+      return "bg-[#FFECEC] text-[#F95353] border border-[#F95353]";
+    default:
+      return "bg-gray-100 text-gray-600 border border-gray-300";
+  }
+};
+
 const MySalesActivity = ({
   filteredTransactions,
 }: {
@@ -58,9 +76,9 @@ const MySalesActivity = ({
             <th className="text-left text-[#333333] font-Inter font-medium text-base">
               Products
             </th>
-            {/* <th className="text-left text-[#333333] font-Inter font-medium text-base">
+            <th className="text-left text-[#333333] font-Inter font-medium text-base">
               Type
-            </th> */}
+            </th>
             <th className="text-left text-[#333333] font-Inter font-medium text-base">
               Amount
             </th>
@@ -131,32 +149,14 @@ const MySalesActivity = ({
                   )}
                 </td>
 
-                {/* <td
-                  className={`text-sm py-1 px-2 capitalize ${
-                    transaction.type === "PURCHASE"
-                      ? "text-[#F95353]"
-                      : transaction.type === "PICKUP"
-                      ? "text-[#FFA500]"
-                      : "text-[#2ECC71]"
-                  }`}
-                >
-                  {transaction.type}
-                </td> */}
+                <td className="text-base">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getTypeBadgeStyles(transaction.type)}`}>
+                    {transaction.type || "N/A"}
+                  </span>
+                </td>
 
-                {/* <td className={balanceTextClass(transaction.total)}>
-                  {formatCurrency(transaction.total)}
-                </td> */}
-
-                <td
-                  className={`
-                    ${transaction.type === "PURCHASE"
-                      ? "text-[#F95353]"
-                      : transaction.type === "PICKUP"
-                      ? "text-[#FFA500]"
-                      : "text-[#2ECC71]"
-                    }`}
-                >
-                  ₦{transaction.amountPaid?.toLocaleString()}
+                <td className="text-[#444444] font-medium text-base">
+                  ₦{Math.abs(transaction.total ?? 0).toLocaleString()}
                 </td>
 
                 <td className="uppercase text-[#444444] text-base text-right pr-5 md:pr-10">

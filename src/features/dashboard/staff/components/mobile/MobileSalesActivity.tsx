@@ -11,6 +11,24 @@ import { Button } from "@/components/ui/button";
 // icons
 import { ChevronDown, Package } from "lucide-react";
 
+// Helper for transaction type badge styles
+const getTypeBadgeStyles = (type: string) => {
+  switch (type?.toUpperCase()) {
+    case "DEPOSIT":
+      return "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]";
+    case "RETURN":
+      return "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]";
+    case "PICKUP":
+      return "bg-[#FFF8E1] text-[#FFA500] border border-[#FFA500]";
+    case "PURCHASE":
+      return "bg-[#FFECEC] text-[#F95353] border border-[#F95353]";
+    case "WHOLESALE":
+      return "bg-[#FFECEC] text-[#F95353] border border-[#F95353]";
+    default:
+      return "bg-gray-100 text-gray-600 border border-gray-300";
+  }
+};
+
 const MobileSalesActivity = ({
   filteredTransactions,
 }: {
@@ -20,13 +38,6 @@ const MobileSalesActivity = ({
     <div className="space-y-4 p-4 md:p-6 bg-[#f9f9f9] min-h-[300px]">
       {filteredTransactions && filteredTransactions?.length > 0 ? (
         filteredTransactions?.map((transaction, i) => {
-          // Logic for Amount Color and Sign based on the screenshot style
-          // Assuming PURCHASE is money owed/spent (Red -), others are money in (Green +)
-          // You can adjust the type check based on your specific business logic
-          const isNegative = transaction.type === "PURCHASE";
-          const sign = isNegative ? "-" : "+";
-          const amountColor = isNegative ? "text-[#F95353]" : "text-[#2ECC71]";
-
           return (
             <div
               key={transaction._id + i}
@@ -86,10 +97,13 @@ const MobileSalesActivity = ({
                 </div>
               </div>
 
-              {/* Row 3: Amount with Sign and Color */}
-              <div>
-                <span className={`text-[15px] font-medium ${amountColor} font-Inter`}>
-                  {sign}₦{transaction.total?.toLocaleString()}
+              {/* Row 3: Type and Amount */}
+              <div className="flex justify-between items-center">
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${getTypeBadgeStyles(transaction.type)}`}>
+                  {transaction.type || "N/A"}
+                </span>
+                <span className="text-[15px] font-medium text-[#444444] font-Inter">
+                  ₦{transaction.total?.toLocaleString()}
                 </span>
               </div>
             </div>
