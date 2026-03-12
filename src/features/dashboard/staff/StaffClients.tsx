@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 //import DashboardTitle from "@/features/dashboard/shared/DashboardTitle";
 import type { Client } from "@/types/types";
 import { Search, ChevronLeft, ChevronRight, MoreVertical } from "lucide-react";
-import PaymentModal from "./components/PaymentModal";
+import PaymentModal from "@/components/shared/PaymentModal";
 import useClientFiltering, {
   type clientBalance,
 } from "@/hooks/useClientFiltering";

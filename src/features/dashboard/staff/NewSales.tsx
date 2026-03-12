@@ -460,6 +460,9 @@ import ClientSalesTypes from "./components/ClientSalesTypes";
 import AddSaleProduct from "./components/AddSaleProduct";
 import ClientDisplayBox from "./components/ClientDisplayBox";
 import WalkinClientDetailBox from "./components/WalkinClientDetailBox";
+import TransactionConfirmationModal, {
+  type TransactionConfirmationData,
+} from "@/components/modals/TransactionConfirmationModal";
 
 // store
 import { useInventoryStore } from "@/stores/useInventoryStore";
@@ -586,6 +589,10 @@ const NewSales: React.FC = () => {
 
   const [bankSearch, setBankSearch] = useState("");
   const [date, setDate] = useState<string>(() => getTodayDateString());
+
+  // Confirmation Modal State
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [confirmationData, setConfirmationData] = useState<TransactionConfirmationData | null>(null);
 
   const productsForSale = useMemo(() => {
     if (salesType === "Wholesale") {
@@ -899,6 +906,75 @@ const NewSales: React.FC = () => {
     setLoadingCharge("");
     setDate(getTodayDateString());
     setTransactionType("PICKUP");
+    setShowConfirmationModal(false);
+    setConfirmationData(null);
+  };
+
+  // Open confirmation modal with transaction summary
+  const handleOpenConfirmationModal = () => {
+    if (!validateSales()) return;
+
+    const { subtotal, discountTotal, total } = calculateTotals();
+    const effectiveAmountPaid = getAmountPaid() || 0;
+
+    // Build items array for modal display
+    const transactionItems = rows
+      .filter((row) => row.productId)
+      .map((row) => {
+        const product = products.find((p) => p._id === row.productId);
+        const isWholesale = transactionType === "WHOLESALE";
+        const price = isWholesale
+          ? product?.wholesalePrice || product?.unitPrice || 0
+          : product?.unitPrice || 0;
+        
+        return {
+          productName: product?.name || row.productName || "Unknown Product",
+          quantity: row.quantity,
+          unitPrice: price,
+          unit: product?.unit || "pcs",
+        };
+      });
+
+    // Determine client name
+    const clientName = isWalkIn
+      ? walkInData.name || "Walk-in Customer"
+      : selectedClient?.name || "Unknown Client";
+
+    // Calculate balance change
+    const currentBalance = !isWalkIn && selectedClient?.balance ? selectedClient.balance : 0;
+    const balanceChange = transactionType === "RETURN" || transactionType === "PICKUP"
+      ? total // Credit increases balance
+      : -total; // Debit decreases balance
+    const newBalance = currentBalance + balanceChange;
+
+    // Format payment method for display
+    let paymentMethodDisplay = paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1);
+    if (paymentMethod === "bank" || paymentMethod === "transfer") {
+      paymentMethodDisplay = subMethod ? `Transfer from ${subMethod}` : "Bank Transfer";
+    } else if (paymentMethod === "pos") {
+      paymentMethodDisplay = subMethod ? `POS - ${subMethod}` : "POS";
+    }
+
+    const data: TransactionConfirmationData = {
+      clientName,
+      transactionType,
+      items: transactionItems,
+      subtotal,
+      transportCost: parseFloat(transportFare) || 0,
+      loadingOffloading: parseFloat(loadingOffloading) || 0,
+      loadingCharge: parseFloat(loadingCharge) || 0,
+      discount: discountTotal,
+      total,
+      amountPaid: effectiveAmountPaid,
+      paymentMethod: paymentMethodDisplay,
+      previousBalance: currentBalance,
+      newBalance: newBalance,
+      processedBy: user?.name || "Unknown Staff",
+      transactionDate: date,
+    };
+
+    setConfirmationData(data);
+    setShowConfirmationModal(true);
   };
 
   const handleSubmit = async () => {
@@ -1383,7 +1459,7 @@ const NewSales: React.FC = () => {
         <div className="flex flex-col  gap-3">
           
           <Button
-            onClick={handleSubmit}
+            onClick={handleOpenConfirmationModal}
             disabled={isSubmitting || !canSubmit()}
             className="text-white w-full sm:w-auto"
           >
@@ -1398,6 +1474,17 @@ const NewSales: React.FC = () => {
           </Button>
         </div>
       </section>
+
+      {/* Transaction Confirmation Modal */}
+      {showConfirmationModal && confirmationData && (
+        <TransactionConfirmationModal
+          isOpen={showConfirmationModal}
+          onClose={() => setShowConfirmationModal(false)}
+          onConfirm={handleSubmit}
+          data={confirmationData}
+          isProcessing={isSubmitting}
+        />
+      )}
     </main>
   );
 };
