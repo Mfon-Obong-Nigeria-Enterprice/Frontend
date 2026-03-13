@@ -283,10 +283,10 @@ const ManagerClients = () => {
             {/* CHANGED: 'hidden sm:flex' -> 'hidden lg:flex' 
                 This hides buttons on Tablet and shows them ONLY on Desktop */}
             <div className="hidden lg:flex gap-3">
-              <Button onClick={handleExportPDF} className="bg-white hover:bg-[#f5f5f5] text-[#444444] border border-[#7D7D7D] font-Inter font-medium lg:w-[150px]">
+              <Button onClick={handleExportPDF} className="bg-white hover:bg-[#f5f5f5] text-[#444444] border border-[#7D7D7D] font-Inter font-medium lg:w-[150px] hover:shadow-sm hover:-translate-y-[1px]">
                 Export PDF
               </Button>
-              <Button onClick={handleExportExcel} className="bg-white hover:bg-[#f5f5f5] text-[#444444] border border-[#7D7D7D] font-Inter font-medium lg:w-[170px]">
+              <Button onClick={handleExportExcel} className="bg-white hover:bg-[#f5f5f5] text-[#444444] border border-[#7D7D7D] font-Inter font-medium lg:w-[170px] hover:shadow-sm hover:-translate-y-[1px]">
                 Download Excel
               </Button>
             </div>

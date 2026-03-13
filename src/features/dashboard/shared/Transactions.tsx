@@ -413,7 +413,7 @@ const Transactions = () => {
           <Button
             onClick={handleExportExcel}
             variant="secondary"
-            className="w-42 md:w-50 h-10 bg-white text-base text-[#444444] border border-[#7d7d7d] shrink-0"
+            className="w-42 md:w-50 h-10 bg-white text-base text-[#444444] border border-[#7d7d7d] shrink-0 hover:bg-gray-100 hover:text-[#2E6EF7] hover:shadow-sm hover:-translate-y-[1px]"
           >
             Download Excel
           </Button>

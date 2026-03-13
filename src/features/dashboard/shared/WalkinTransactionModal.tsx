@@ -194,7 +194,7 @@ const WalkinTransactionModal = () => {
                     onClick={handleExportExcel}
                     className="cursor-pointer hover:bg-[#f5f5f5] focus:bg-[#f5f5f5] p-3 rounded-md"
                   >
-                    <span className="text-[#333333] font-Inter font-medium">
+                    <span className="text-[#333333] font-Inter font-medium hover:text-[#2E6EF7] hover:shadow-sm hover:-translate-y-[1px]">
                       Download Excel
                     </span>
                   </DropdownMenuItem>

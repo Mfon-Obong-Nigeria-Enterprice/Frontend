@@ -855,7 +855,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         </div>
         <div className="flex justify-end gap-4 my-2 md:mx-7 col-span-3 md:col-span-3 border-t-[#D9D9D9] md:border-none border-t-2 pt-2 md:pt-0 transition-all px-5 md:px-0">
           <Button
-            className="bg-white hover:bg-gray-100 text-text-dark border border-[#7D7D7D]"
+            className="bg-white hover:bg-gray-100 text-text-dark border border-[#7D7D7D] font-medium px-4 hover:text-[#2E6EF7] hover:shadow-sm hover:-translate-y-[1px]"
             onClick={handleExportPDF}
           >
             <ChevronUp />

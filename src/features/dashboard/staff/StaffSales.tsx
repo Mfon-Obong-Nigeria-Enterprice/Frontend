@@ -121,7 +121,7 @@ const StaffSales = () => {
             Refresh
           </Button>
           <Button
-            className="min-w-40"
+            className="min-w-40 hover:bg-[#f5f5f5] text-[#444444] border border-[#7D7D7D] font-medium hover:text-[#2E6EF7] hover:shadow-sm hover:-translate-y-[1px]"
             onClick={() => setIsWaybillModalOpen(true)} // Open modal on click
           >
             <img src="/icons/brick.svg" alt="" className="w-4" />
