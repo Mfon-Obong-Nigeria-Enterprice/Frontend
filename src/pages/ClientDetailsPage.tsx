@@ -958,7 +958,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
                 <div className="flex flex-col justify-end">
                   <Button
-                    className="bg-white hover:bg-gray-100 text-text-dark border border-[#7D7D7D] font-medium px-4"
+                    className="bg-white hover:bg-gray-100 text-text-dark border border-[#7D7D7D] font-medium px-4 hover:text-[#2E6EF7] hover:shadow-sm hover:-translate-y-[1px]"
                     onClick={handleResetFilters}
                   >
                     Reset filters

@@ -4,7 +4,7 @@ import { formatCurrency } from "@/utils/formatCurrency";
 import {
   getTransactionDateString,
 } from "@/utils/transactions";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ProcessProductReturnModal from "./ProcessProductReturnModal";
 
 interface clientTrasactionDetailsProps {
@@ -74,6 +74,27 @@ const resolveReturnReasonText = (txn: Transaction): string => {
   return "Return";
 };
 
+const getReferenceTransactionId = (txn: Transaction): string | null => {
+  const rawReference = (
+    txn as Transaction & { referenceTransactionId?: string | { _id?: string } }
+  ).referenceTransactionId;
+
+  if (typeof rawReference === "string" && rawReference.trim()) {
+    return rawReference;
+  }
+
+  if (
+    rawReference &&
+    typeof rawReference === "object" &&
+    typeof rawReference._id === "string" &&
+    rawReference._id.trim()
+  ) {
+    return rawReference._id;
+  }
+
+  return null;
+};
+
 // Helper to get styles based on transaction type matching the screenshots
 const getTypeStyles = (type: string) => {
   switch (type) {
@@ -106,6 +127,9 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
 }) => {
   const [isReturnModalOpen, setReturnModalOpen] = useState(false);
   const [selectedTxnForReturn, setSelectedTxnForReturn] = useState<Transaction | null>(null);
+  const [highlightedTransactionId, setHighlightedTransactionId] = useState<string | null>(null);
+  const transactionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleOpenReturnModal = (transaction: Transaction) => {
     setSelectedTxnForReturn(transaction);
@@ -113,6 +137,34 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
   };
 
   const handleCloseReturnModal = () => setReturnModalOpen(false);
+
+  const scrollToReferencedTransaction = (transactionId: string | null) => {
+    if (!transactionId) return;
+
+    const target = transactionRefs.current[transactionId];
+    if (!target) return;
+
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    setHighlightedTransactionId(transactionId);
+
+    if (highlightTimeoutRef.current) {
+      clearTimeout(highlightTimeoutRef.current);
+    }
+
+    highlightTimeoutRef.current = setTimeout(() => {
+      setHighlightedTransactionId((current) =>
+        current === transactionId ? null : current
+      );
+    }, 3000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const transactionWithBalance = useMemo(() => {
     const transactionsWithBalance = calculateTransactionsWithBalance(
@@ -169,8 +221,10 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                     </td>
                   </tr>
                 ) : (
-                  returnedProducts.map((returnTxn) => (
-                    returnTxn.items && returnTxn.items.length > 0 ? (() => {
+                  returnedProducts.map((returnTxn) => {
+                    const referencedTransactionId = getReferenceTransactionId(returnTxn);
+
+                    return returnTxn.items && returnTxn.items.length > 0 ? (() => {
                       const metadata = parseReturnPricingMetadata(returnTxn.notes);
                       const metadataMap = new Map(
                         (metadata?.items || []).map((m) => [m.productId, m])
@@ -185,7 +239,12 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                           !Number.isNaN(meta.returnUnitPrice);
 
                         return (
-                          <tr key={`${returnTxn._id}-${idx}`} className="bg-[#FFE9E9]">
+                          <tr
+                            key={`${returnTxn._id}-${idx}`}
+                            className={`bg-[#FFE9E9] ${referencedTransactionId ? "cursor-pointer hover:bg-[#FFDCDC] transition-colors" : ""}`}
+                            onClick={() => scrollToReferencedTransaction(referencedTransactionId)}
+                            title={referencedTransactionId ? "Click to view original purchase" : undefined}
+                          >
                             <td className="px-2 py-4 text-sm text-[#666666]">
                               {item.quantity} {item.unit || "units"}
                             </td>
@@ -217,7 +276,12 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                         );
                       });
                     })() : (
-                      <tr key={returnTxn._id} className="bg-[#FFE9E9]">
+                      <tr
+                        key={returnTxn._id}
+                        className={`bg-[#FFE9E9] ${referencedTransactionId ? "cursor-pointer hover:bg-[#FFDCDC] transition-colors" : ""}`}
+                        onClick={() => scrollToReferencedTransaction(referencedTransactionId)}
+                        title={referencedTransactionId ? "Click to view original purchase" : undefined}
+                      >
                         <td className="px-2 py-4 text-sm text-[#666666]">-</td>
                         <td className="px-2 py-4 text-sm text-[#666666]">-</td>
                         <td className="px-2 py-4 text-sm text-[#666666]">-</td>
@@ -232,8 +296,8 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                           {getTransactionDateString(returnTxn)}
                         </td>
                       </tr>
-                    )
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -251,6 +315,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
           {transactionWithBalance.map((txn, i) => {
             const styles = getTypeStyles(txn.type);
             const isCredit = txn.type === "DEPOSIT";
+            const referenceTxnId = getReferenceTransactionId(txn);
             const isPartialPayment =
               (txn.type === "PURCHASE" || txn.type === "PICKUP") &&
               (txn.amountPaid ?? 0) > 0 &&
@@ -259,7 +324,14 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
             return (
               <div
                 key={`${txn._id}-${getTransactionDateString(txn)}-${i}`}
-                className="bg-white border border-gray-300 rounded-lg p-4 md:p-6 shadow-sm"
+                ref={(element) => {
+                  transactionRefs.current[txn._id] = element;
+                }}
+                className={`bg-white border border-gray-300 rounded-lg p-4 md:p-6 shadow-sm transition-all duration-700 ${
+                  highlightedTransactionId === txn._id
+                    ? "transaction-highlight ring-2 ring-[#3D80FF] bg-[#F5FAFF]"
+                    : ""
+                }`}
               >
                 {/* --- HEADER --- */}
                 <div className="border-b border-[#D9D9D9] pb-4 flex flex-wrap justify-between items-start md:items-center mb-6 gap-4">
@@ -300,9 +372,17 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                     {(txn.type === "PURCHASE" || txn.type === "PICKUP") && (
                       <button
                         onClick={() => handleOpenReturnModal(txn)}
-                        className="border border-gray-300 text-[#444444] px-4 py-1.5 rounded-md text-sm font-medium hover:bg-gray-50 bg-white"
+                        className="border border-gray-300 text-[#444444] px-4 py-1.5 rounded-md text-sm font-medium bg-white transition-all duration-200 hover:bg-[#F3F7FF] hover:border-[#3D80FF] hover:text-[#2E6EF7] hover:shadow-sm hover:-translate-y-[1px]"
                       >
                         Return
+                      </button>
+                    )}
+                    {txn.type === "RETURN" && referenceTxnId && (
+                      <button
+                        onClick={() => scrollToReferencedTransaction(referenceTxnId)}
+                        className="border border-[#3D80FF] text-[#3D80FF] px-4 py-1.5 rounded-md text-sm font-medium hover:bg-[#EFF5FF] bg-white hover:shadow-sm hover:-translate-y-[1px]"
+                      >
+                        View Original
                       </button>
                     )}
                   </div>
@@ -372,30 +452,6 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                             Outstanding:{" "}
                           </span>
                           {formatCurrency(txn.total - (txn.amountPaid ?? 0))}
-                        </li>
-                      )}
-                      {Number(txn.transportFare || 0) > 0 && (
-                        <li className="text-sm text-[#444444]">
-                          <span className="font-medium text-[#444444]">
-                            Transport:{" "}
-                          </span>
-                          {formatCurrency(Number(txn.transportFare || 0))}
-                        </li>
-                      )}
-                      {Number(txn.loadingAndOffloading || 0) > 0 && (
-                        <li className="text-sm text-[#444444]">
-                          <span className="font-medium text-[#444444]">
-                            Loading/Offloading:{" "}
-                          </span>
-                          {formatCurrency(Number(txn.loadingAndOffloading || 0))}
-                        </li>
-                      )}
-                      {Number(txn.loading || 0) > 0 && (
-                        <li className="text-sm text-[#444444]">
-                          <span className="font-medium text-[#444444]">
-                            Loading:{" "}
-                          </span>
-                          {formatCurrency(Number(txn.loading || 0))}
                         </li>
                       )}
                       {/* Amount Paid duplicate removed */}

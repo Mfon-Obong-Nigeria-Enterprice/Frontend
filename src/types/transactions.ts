@@ -58,6 +58,7 @@ export interface Transaction {
   branchId?: string;
   branchName?: string;
   reference?: string;
+  referenceTransactionId?: string | { _id?: string };
   reason?: string;
   clientBalanceAfterTransaction?: number;
   actualAmountReturned?: number;
