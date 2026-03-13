@@ -95,6 +95,10 @@ const getReferenceTransactionId = (txn: Transaction): string | null => {
   return null;
 };
 
+const formatSignedCurrency = (value: number): string => {
+  return `${value >= 0 ? "+" : ""}${formatCurrency(value).trim()}`;
+};
+
 // Helper to get styles based on transaction type matching the screenshots
 const getTypeStyles = (type: string) => {
   switch (type) {
@@ -401,7 +405,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                           Previous
                         </span>
                         <span className="text-[#444444] text-[13px] font-medium">
-                          {formatCurrency(txn.balanceBefore)}
+                          {formatSignedCurrency(txn.balanceBefore)}
                         </span>
                       </div>
                       <img src="/icons/forward-arrow.svg" alt="arrow right" className="mt-4 w-[13px] h-[9px]"/>
@@ -410,7 +414,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                           New
                         </span>
                         <span className="text-[#444444] text-[13px] font-medium">
-                          {formatCurrency(txn.balanceAfter)}
+                          {formatSignedCurrency(txn.balanceAfter)}
                         </span>
                       </div>
                     </div>

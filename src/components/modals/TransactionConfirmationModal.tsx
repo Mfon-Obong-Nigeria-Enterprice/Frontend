@@ -77,6 +77,11 @@ const TransactionConfirmationModal: React.FC<TransactionConfirmationModalProps> 
     })}`;
   };
 
+  const formatSignedCurrency = (amount: number) => {
+    const sign = amount < 0 ? "-" : "+";
+    return `${sign}${formatCurrency(amount)}`;
+  };
+
   const getTypeBadgeStyles = (type: string) => {
     switch (type?.toUpperCase()) {
       case "DEPOSIT":
@@ -308,7 +313,7 @@ const TransactionConfirmationModal: React.FC<TransactionConfirmationModalProps> 
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Previous Balance</span>
                   <span className={`font-semibold ${data.previousBalance >= 0 ? "text-green-600" : "text-red-600"}`}>
-                    {formatCurrency(data.previousBalance)}
+                    {formatSignedCurrency(data.previousBalance)}
                   </span>
                 </div>
                 <div className="flex items-center justify-center py-1">
@@ -319,7 +324,7 @@ const TransactionConfirmationModal: React.FC<TransactionConfirmationModalProps> 
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-700">New Balance</span>
                   <span className={`font-bold text-lg ${data.newBalance >= 0 ? "text-green-600" : "text-red-600"}`}>
-                    {formatCurrency(data.newBalance)}
+                    {formatSignedCurrency(data.newBalance)}
                   </span>
                 </div>
               </div>
