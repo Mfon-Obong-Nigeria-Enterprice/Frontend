@@ -12,6 +12,43 @@ interface clientTrasactionDetailsProps {
   client: { balance: number };
 }
 
+type ReturnPricingItem = {
+  productId: string;
+  returnUnitPrice: number;
+  returnAmount: number;
+};
+
+type ReturnPricingMetadata = {
+  version: 1;
+  items: ReturnPricingItem[];
+};
+
+const parseReturnPricingMetadata = (
+  notes?: string
+): ReturnPricingMetadata | null => {
+  if (!notes) return null;
+
+  try {
+    const parsed = JSON.parse(notes) as Partial<ReturnPricingMetadata>;
+    if (!parsed || !Array.isArray(parsed.items)) return null;
+
+    const items = parsed.items
+      .filter((item) => item && typeof item.productId === "string")
+      .map((item) => ({
+        productId: item.productId as string,
+        returnUnitPrice: Number(item.returnUnitPrice ?? 0),
+        returnAmount: Number(item.returnAmount ?? 0),
+      }));
+
+    return {
+      version: 1,
+      items,
+    };
+  } catch {
+    return null;
+  }
+};
+
 // Helper to format role for display
 const formatRole = (role: string | undefined): string => {
   if (!role) return "Staff";
@@ -19,6 +56,22 @@ const formatRole = (role: string | undefined): string => {
     .split("_")
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
+};
+
+const formatReturnReason = (value?: string): string => {
+  if (!value) return "Return";
+
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+};
+
+const resolveReturnReasonText = (txn: Transaction): string => {
+  const reasonFromTxn = (txn as Transaction & { reason?: string }).reason;
+  if (reasonFromTxn) return formatReturnReason(reasonFromTxn);
+  if (txn.description) return txn.description;
+  return "Return";
 };
 
 // Helper to get styles based on transaction type matching the screenshots
@@ -101,6 +154,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                 <tr className="bg-[#F5F5F5]">
                   <th className="px-2 py-4 text-sm font-normal text-[#333333]">Quantity</th>
                   <th className="px-2 py-4 text-sm font-normal text-[#333333]">Unit Price</th>
+                  <th className="px-2 py-4 text-sm font-normal text-[#333333]">Return Unit Price</th>
                   <th className="px-2 py-4 text-sm font-normal text-[#333333]">Amount Return</th>
                   <th className="px-2 py-4 text-sm font-normal text-[#333333]">Product</th>
                   <th className="px-2 py-4 text-sm font-normal text-[#333333]">Reason</th>
@@ -110,46 +164,70 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
               <tbody>
                 {returnedProducts.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-2 py-8 text-sm text-[#7D7D7D] text-center">
+                    <td colSpan={7} className="px-2 py-8 text-sm text-[#7D7D7D] text-center">
                       No returned products for this client
                     </td>
                   </tr>
                 ) : (
                   returnedProducts.map((returnTxn) => (
-                    returnTxn.items && returnTxn.items.length > 0 ? (
-                      returnTxn.items.map((item, idx) => (
-                        <tr key={`${returnTxn._id}-${idx}`} className="bg-[#FFE9E9]">
-                          <td className="px-2 py-4 text-sm text-[#666666]">
-                            {item.quantity} {item.unit || 'units'}
-                          </td>
-                          <td className="px-2 py-4 text-sm text-[#666666]">
-                            {formatCurrency(item.unitPrice)}/{item.unit || 'unit'}
-                          </td>
-                          <td className="px-2 py-4 text-sm text-[#666666]">
-                            {formatCurrency(item.quantity * item.unitPrice)}
-                          </td>
-                          <td className="px-2 py-4 text-sm text-[#666666]">
-                            {item.productName || 'Product'}
-                          </td>
-                          <td className="px-2 py-4 text-sm text-[#666666]">
-                            {returnTxn.description || 'Return'}
-                          </td>
-                          <td className="px-2 py-4 text-sm text-[#666666]">
-                            {getTransactionDateString(returnTxn)}
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
+                    returnTxn.items && returnTxn.items.length > 0 ? (() => {
+                      const metadata = parseReturnPricingMetadata(returnTxn.notes);
+                      const metadataMap = new Map(
+                        (metadata?.items || []).map((m) => [m.productId, m])
+                      );
+
+                      return returnTxn.items.map((item, idx) => {
+                        const meta = metadataMap.get(item.productId);
+                        const hasExactLineData =
+                          meta?.returnAmount !== undefined &&
+                          !Number.isNaN(meta.returnAmount) &&
+                          meta?.returnUnitPrice !== undefined &&
+                          !Number.isNaN(meta.returnUnitPrice);
+
+                        return (
+                          <tr key={`${returnTxn._id}-${idx}`} className="bg-[#FFE9E9]">
+                            <td className="px-2 py-4 text-sm text-[#666666]">
+                              {item.quantity} {item.unit || "units"}
+                            </td>
+                            <td className="px-2 py-4 text-sm text-[#666666]">
+                              {formatCurrency(item.unitPrice)}/{item.unit || "unit"}
+                            </td>
+                            <td className="px-2 py-4 text-sm text-[#666666]">
+                              {hasExactLineData
+                                ? `${formatCurrency(meta.returnUnitPrice)}/${item.unit || "unit"}`
+                                : "-"}
+                            </td>
+                            <td className="px-2 py-4 text-sm text-[#666666]">
+                              {hasExactLineData
+                                ? formatCurrency(meta.returnAmount)
+                                : idx === 0 && returnTxn.actualAmountReturned !== undefined
+                                  ? formatCurrency(returnTxn.actualAmountReturned)
+                                  : "-"}
+                            </td>
+                            <td className="px-2 py-4 text-sm text-[#666666]">
+                              {item.productName || "Product"}
+                            </td>
+                            <td className="px-2 py-4 text-sm text-[#666666]">
+                              {resolveReturnReasonText(returnTxn)}
+                            </td>
+                            <td className="px-2 py-4 text-sm text-[#666666]">
+                              {getTransactionDateString(returnTxn)}
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })() : (
                       <tr key={returnTxn._id} className="bg-[#FFE9E9]">
                         <td className="px-2 py-4 text-sm text-[#666666]">-</td>
                         <td className="px-2 py-4 text-sm text-[#666666]">-</td>
+                        <td className="px-2 py-4 text-sm text-[#666666]">-</td>
                         <td className="px-2 py-4 text-sm text-[#666666]">
-                          {formatCurrency(returnTxn.total || 0)}
+                          {formatCurrency(returnTxn.actualAmountReturned ?? returnTxn.total ?? 0)}
                         </td>
                         <td className="px-2 py-4 text-sm text-[#666666]">
                           {returnTxn.description || 'Returned items'}
                         </td>
-                        <td className="px-2 py-4 text-sm text-[#666666]">Return</td>
+                        <td className="px-2 py-4 text-sm text-[#666666]">{resolveReturnReasonText(returnTxn)}</td>
                         <td className="px-2 py-4 text-sm text-[#666666]">
                           {getTransactionDateString(returnTxn)}
                         </td>

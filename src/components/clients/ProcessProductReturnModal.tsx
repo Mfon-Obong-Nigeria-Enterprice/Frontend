@@ -274,6 +274,15 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
       return;
     }
 
+    const returnPricingNotes = JSON.stringify({
+      version: 1,
+      items: Object.values(returnedItems).map((item) => ({
+        productId: item.productId,
+        returnUnitPrice: item.returnPrice,
+        returnAmount: item.returnAmount,
+      })),
+    });
+
     returnMutation.mutate({
       clientId: transaction.clientId._id,
       type: "RETURN",
@@ -281,7 +290,7 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
       referenceTransactionId: transaction._id,
       items: itemsToSubmit,
       actualAmountReturned: actualAmountReturned,
-      notes: '', 
+      notes: returnPricingNotes,
     });
   };
 
