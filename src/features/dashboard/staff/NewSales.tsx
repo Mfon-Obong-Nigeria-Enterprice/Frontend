@@ -916,6 +916,7 @@ const NewSales: React.FC = () => {
 
     const { subtotal, discountTotal, total } = calculateTotals();
     const effectiveAmountPaid = getAmountPaid() || 0;
+    const balancePreview = getBalanceInfo();
 
     // Build items array for modal display
     const transactionItems = rows
@@ -924,7 +925,7 @@ const NewSales: React.FC = () => {
         const product = products.find((p) => p._id === row.productId);
         const isWholesale = transactionType === "WHOLESALE";
         const price = isWholesale
-          ? product?.wholesalePrice || product?.unitPrice || 0
+          ? Number(row.unitPrice) || 0
           : product?.unitPrice || 0;
         
         return {
@@ -940,12 +941,9 @@ const NewSales: React.FC = () => {
       ? walkInData.name || "Walk-in Customer"
       : selectedClient?.name || "Unknown Client";
 
-    // Calculate balance change
-    const currentBalance = !isWalkIn && selectedClient?.balance ? selectedClient.balance : 0;
-    const balanceChange = transactionType === "RETURN" || transactionType === "PICKUP"
-      ? total // Credit increases balance
-      : -total; // Debit decreases balance
-    const newBalance = currentBalance + balanceChange;
+    // Keep confirmation balance preview in sync with on-form balance calculation
+    const currentBalance = !isWalkIn ? balancePreview.clientBalance : 0;
+    const newBalance = !isWalkIn ? balancePreview.newBalance : 0;
 
     // Format payment method for display
     let paymentMethodDisplay = paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1);
@@ -968,7 +966,7 @@ const NewSales: React.FC = () => {
       amountPaid: effectiveAmountPaid,
       paymentMethod: paymentMethodDisplay,
       previousBalance: currentBalance,
-      newBalance: newBalance,
+      newBalance,
       processedBy: user?.name || "Unknown Staff",
       transactionDate: date,
     };
@@ -991,12 +989,21 @@ const NewSales: React.FC = () => {
           const product = products.find((p) => p._id === row.productId)!;
           const isWholesale = transactionType === "WHOLESALE";
           const price = isWholesale
-            ? product.wholesalePrice || product.unitPrice
+            ? Number(row.unitPrice) || 0
             : product.unitPrice;
+
+          if (isWholesale && price <= 0) {
+            throw new Error(
+              `Please enter a valid wholesale unit price for ${product.name}`
+            );
+          }
+
           return {
             productId: row.productId,
             quantity: row.quantity,
-            ...(isWholesale ? { wholesalePrice: price } : { unitPrice: price }),
+            ...(isWholesale
+              ? { unitPrice: price, wholesalePrice: price }
+              : { unitPrice: price }),
             unit: product?.unit || "pcs",
             discount: 0,
           };
