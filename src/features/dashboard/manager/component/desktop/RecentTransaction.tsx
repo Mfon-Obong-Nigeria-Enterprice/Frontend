@@ -18,6 +18,7 @@ import {
   getTransactionDate,
   getTransactionDateString,
 } from "@/utils/transactions";
+import { getTransactionTypeBadgeStyles } from "@/utils/transactionTypeStyles";
 
 const RecentTransactions = () => {
   const { transactions } = useTransactionsStore();
@@ -108,13 +109,7 @@ const RecentTransactions = () => {
 
                   <td className="text-start pl-1">
                     <p
-                      className={`border text-[0.625rem] py-1.5 px-3 rounded-[6.25rem] max-w-18 text-center ${
-                        transaction.type === "PURCHASE"
-                          ? "border-[#F95353] bg-[#FFCACA] text-[#F95353]"
-                          : transaction.type === "PICKUP"
-                          ? "border-[#FFA500] bg-[#FFE7A4] text-[#FFA500]"
-                          : " border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71]"
-                      }`}
+                      className={`border text-[0.625rem] py-1.5 px-3 rounded-[6.25rem] max-w-18 text-center ${getTransactionTypeBadgeStyles(transaction.type)}`}
                     >
                       {transaction.type}
                     </p>

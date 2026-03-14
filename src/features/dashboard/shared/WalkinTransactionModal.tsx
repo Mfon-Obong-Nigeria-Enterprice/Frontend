@@ -5,6 +5,7 @@ import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { Button } from "@/components/ui/button";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { getTransactionTypeBadgeStyles } from "@/utils/transactionTypeStyles";
 import { balanceClassT } from "@/utils/styles";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -279,11 +280,7 @@ const WalkinTransactionModal = () => {
               <p className="flex justify-between items-center text-xs text-[#7D7D7D]  border-b border-[#d9d9d9] py-1 px-3">
                 <span className="font-medium">Transaction Type:</span>
                 <span
-                  className={`font-light text-[0.625rem] px-2 py-1 rounded-[0.625rem] capitalize ${
-                    selectedTransaction.type === "PURCHASE"
-                      ? "border-[#F95353] bg-[#FFCACA] text-[#F95353]"
-                      : "border-[#FFA500] bg-[#FFE7A4] text-[#FFA500]"
-                  }`}
+                  className={`font-light text-[0.625rem] px-2 py-1 rounded-[0.625rem] capitalize ${getTransactionTypeBadgeStyles(selectedTransaction.type)}`}
                 >
                   {typeof selectedTransaction?.type === "string"
                     ? selectedTransaction.type.toLowerCase()

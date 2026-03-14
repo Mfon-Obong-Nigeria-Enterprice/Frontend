@@ -1,6 +1,7 @@
 import type { Transaction } from "@/types/transactions";
 import { calculateTransactionsWithBalance } from "@/utils/calculateOutstanding";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { getTransactionTypeBadgeStyles } from "@/utils/transactionTypeStyles";
 import {
   getTransactionDateString,
 } from "@/utils/transactions";
@@ -101,28 +102,10 @@ const formatSignedCurrency = (value: number): string => {
 
 // Helper to get styles based on transaction type matching the screenshots
 const getTypeStyles = (type: string) => {
-  switch (type) {
-    case "PURCHASE":
-      return {
-        badge: "bg-[#FFCACA] text-[#F95353] border border-[#F95353]",
-        amount: "text-[#333333]", // Standard
-      };
-    case "DEPOSIT":
-      return {
-        badge: "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]",
-        amount: "text-[#2ECC71]", // Green text for positive impact
-      };
-    case "PICKUP":
-      return {
-        badge: "bg-[#FFF8E1] text-[#FFA500] border border-[#FFA500]",
-        amount: "text-[#333333]",
-      };
-    default:
-      return {
-        badge: "bg-gray-100 text-gray-600",
-        amount: "text-[#333333]",
-      };
-  }
+  return {
+    badge: getTransactionTypeBadgeStyles(type),
+    amount: type === "DEPOSIT" ? "text-[#2ECC71]" : "text-[#333333]",
+  };
 };
 
 export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = ({

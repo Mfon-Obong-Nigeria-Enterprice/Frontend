@@ -7,6 +7,7 @@ import { getDaysSince } from "@/utils/helpersfunction";
 import { formatCurrency } from "@/utils/styles";
 import { useMemo } from "react";
 import { calculateTransactionsWithBalance } from "@/utils/calculateOutstanding";
+import { getTransactionTypeBadgeStyles } from "@/utils/transactionTypeStyles";
 
 const ClientTransactionModal = () => {
   const navigate = useNavigate();
@@ -101,13 +102,7 @@ const ClientTransactionModal = () => {
                 <div className="flex gap-6 items-center">
                   {selectedTransaction.type && (
                     <span
-                      className={`border text-xs rounded-3xl py-1 px-2 capitalize ${
-                        selectedTransaction.type === "PURCHASE"
-                          ? "border-[#F95353] bg-[#FFCACA] text-[#F95353]"
-                          : selectedTransaction.type === "PICKUP"
-                          ? "border-[#FFA500] bg-[#FFE7A4] text-[#FFA500]"
-                          : " border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71]"
-                      }`}
+                      className={`border text-xs rounded-3xl py-1 px-2 capitalize ${getTransactionTypeBadgeStyles(selectedTransaction.type)}`}
                     >
                       {typeof selectedTransaction?.type === "string"
                         ? selectedTransaction.type.toLowerCase()

@@ -8,28 +8,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { getTransactionTypeBadgeStyles } from "@/utils/transactionTypeStyles";
 
 // Helper for currency formatting (neutral, no signs or colors)
 const formatAmount = (amount: number) => {
   return `₦${Math.abs(amount).toLocaleString()}`;
-};
-
-// Helper for transaction type badge styles
-const getTypeBadgeStyles = (type: string) => {
-  switch (type?.toUpperCase()) {
-    case "DEPOSIT":
-      return "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]";
-    case "RETURN":
-      return "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]";
-    case "PICKUP":
-      return "bg-[#FFF8E1] text-[#FFA500] border border-[#FFA500]";
-    case "PURCHASE":
-      return "bg-[#FFECEC] text-[#F95353] border border-[#F95353]";
-    case "WHOLESALE":
-      return "bg-[#FFECEC] text-[#F95353] border border-[#F95353]";
-    default:
-      return "bg-gray-100 text-gray-600 border border-gray-300";
-  }
 };
 
 const RecentSalesActivity: React.FC = () => {
@@ -117,7 +100,7 @@ const RecentSalesActivity: React.FC = () => {
                 </div>
                 <div className="flex justify-between items-center">
                   <div className="flex-1">{renderProductList(sale.items)}</div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${getTypeBadgeStyles(sale.type)}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${getTransactionTypeBadgeStyles(sale.type)}`}>
                     {sale.type || "N/A"}
                   </span>
                 </div>
@@ -159,7 +142,7 @@ const RecentSalesActivity: React.FC = () => {
 
                 {/* Row 3: Type and Amount */}
                 <div className="flex justify-between items-center">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getTypeBadgeStyles(sale.type)}`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getTransactionTypeBadgeStyles(sale.type)}`}>
                     {sale.type || "N/A"}
                   </span>
                   <span className="text-sm font-medium text-[#444444]">
@@ -196,7 +179,7 @@ const RecentSalesActivity: React.FC = () => {
                   </td>
                   <td className="py-5 px-6">{renderProductList(sale.items)}</td>
                   <td className="py-5 px-6">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getTypeBadgeStyles(sale.type)}`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getTransactionTypeBadgeStyles(sale.type)}`}>
                       {sale.type || "N/A"}
                     </span>
                   </td>

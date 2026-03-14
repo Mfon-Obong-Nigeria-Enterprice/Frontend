@@ -20,25 +20,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getAllClients } from "@/services/clientService";
 import { getAllTransactions } from "@/services/transactionService";
 import type { Transaction } from "@/types/transactions";
-
-// Helper for badge styles based on type
-const getTypeBadgeStyles = (type: string) => {
-  switch (type.toLowerCase()) {
-    case "deposit":
-      return "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]";
-    case "return":
-      return "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]";
-    case "pickup":
-      return "bg-[#FFF8E1] text-[#FFA500] border border-[#FFA500]";
-    case "purchase":
-    case "puchase": // Handling typo from screenshot if data has it
-      return "bg-[#FFECEC] text-[#F95353] border border-[#F95353]";
-    case "wholesale":
-      return "bg-[#FFECEC] text-[#F95353] border border-[#F95353]";
-    default:
-      return "bg-gray-100 text-gray-600 border border-gray-300";
-  }
-};
+import { getTransactionTypeBadgeStyles } from "@/utils/transactionTypeStyles";
 
 // Helper for amount coloring
 const getAmountColor = (type: string) => {
@@ -277,7 +259,7 @@ const StaffClients: React.FC = () => {
                         </td>
                         <td className="py-4 px-6 md:px-2 lg:px-6">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${getTypeBadgeStyles(
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${getTransactionTypeBadgeStyles(
                               latestTransaction?.type || "N/A"
                             )}`}
                           >
@@ -347,7 +329,7 @@ const StaffClients: React.FC = () => {
                         {client.name}
                       </h3>
                       <span
-                        className={`px-3 py-0.5 rounded-full text-[11px] font-normal border ${getTypeBadgeStyles(
+                        className={`px-3 py-0.5 rounded-full text-[11px] font-normal border ${getTransactionTypeBadgeStyles(
                           latestTransaction?.type || "N/A"
                         )}`}
                       >

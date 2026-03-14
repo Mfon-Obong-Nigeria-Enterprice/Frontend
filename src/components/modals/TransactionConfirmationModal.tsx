@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, AlertTriangle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getTransactionTypeBadgeStyles } from "@/utils/transactionTypeStyles";
 
 export type TransactionItem = {
   productName: string;
@@ -82,21 +83,6 @@ const TransactionConfirmationModal: React.FC<TransactionConfirmationModalProps> 
     return `${sign}${formatCurrency(amount)}`;
   };
 
-  const getTypeBadgeStyles = (type: string) => {
-    switch (type?.toUpperCase()) {
-      case "DEPOSIT":
-      case "RETURN":
-        return "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]";
-      case "PICKUP":
-        return "bg-[#FFF8E1] text-[#FFA500] border border-[#FFA500]";
-      case "PURCHASE":
-      case "WHOLESALE":
-        return "bg-[#FFECEC] text-[#F95353] border border-[#F95353]";
-      default:
-        return "bg-gray-100 text-gray-600 border border-gray-300";
-    }
-  };
-
   const additionalCharges = 
     (data.transportCost || 0) + 
     (data.loadingOffloading || 0) + 
@@ -142,7 +128,7 @@ const TransactionConfirmationModal: React.FC<TransactionConfirmationModalProps> 
             </div>
             <div>
               <p className="text-sm text-gray-500 mb-1">Transaction Type</p>
-              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium border ${getTypeBadgeStyles(data.transactionType)}`}>
+              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium border ${getTransactionTypeBadgeStyles(data.transactionType)}`}>
                 {data.transactionType}
               </span>
             </div>

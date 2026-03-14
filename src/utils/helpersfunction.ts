@@ -1,4 +1,5 @@
 import { formatCurrency } from "./formatCurrency";
+import { getTransactionTypeBadgeStyles } from "./transactionTypeStyles";
 
 export function getDaysSince(dateString: string) {
   const created = new Date(dateString);
@@ -47,16 +48,7 @@ export const getTypeDisplay = (type: string) => {
 
 // Helper to get type styling
 export const getTypeStyles = (type: string) => {
-  switch (type) {
-    case "PURCHASE":
-      return "border border-[#F95353] bg-[#FFCACA] text-[#F95353]";
-    case "PICKUP":
-      return "border border-[#FFA500] bg-[#FFE7A4] text-[#FFA500]";
-    case "DEPOSIT":
-      return "border border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71]";
-    default:
-      return "bg-gray-100 text-gray-300 border border-gray-300";
-  }
+  return getTransactionTypeBadgeStyles(type);
 };
 
 // Helper function to create change text

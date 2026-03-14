@@ -7,27 +7,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { getTransactionTypeBadgeStyles } from "@/utils/transactionTypeStyles";
 
 // icons
 import { ChevronDown, Package } from "lucide-react";
-
-// Helper for transaction type badge styles
-const getTypeBadgeStyles = (type: string) => {
-  switch (type?.toUpperCase()) {
-    case "DEPOSIT":
-      return "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]";
-    case "RETURN":
-      return "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]";
-    case "PICKUP":
-      return "bg-[#FFF8E1] text-[#FFA500] border border-[#FFA500]";
-    case "PURCHASE":
-      return "bg-[#FFECEC] text-[#F95353] border border-[#F95353]";
-    case "WHOLESALE":
-      return "bg-[#FFECEC] text-[#F95353] border border-[#F95353]";
-    default:
-      return "bg-gray-100 text-gray-600 border border-gray-300";
-  }
-};
 
 const MobileSalesActivity = ({
   filteredTransactions,
@@ -99,7 +82,7 @@ const MobileSalesActivity = ({
 
               {/* Row 3: Type and Amount */}
               <div className="flex justify-between items-center">
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${getTypeBadgeStyles(transaction.type)}`}>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${getTransactionTypeBadgeStyles(transaction.type)}`}>
                   {transaction.type || "N/A"}
                 </span>
                 <span className="text-[15px] font-medium text-[#444444] font-Inter">

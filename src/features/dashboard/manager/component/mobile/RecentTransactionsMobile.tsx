@@ -14,6 +14,7 @@ import { useMergedTransactions } from "@/hooks/useMergedTransactions";
 // utils
 import { formatCurrency } from "@/utils/styles";
 import {} from "@/utils/styles";
+import { getTransactionTypeBadgeStyles } from "@/utils/transactionTypeStyles";
 
 const RecentTransactionsMobile = () => {
   const { transactions } = useTransactionsStore();
@@ -40,13 +41,7 @@ const RecentTransactionsMobile = () => {
                     <span className="ml-0.5">{transaction.invoiceNumber}</span>
                   </p>
                   <span
-                    className={`border text-[0.625rem] py-1.5 px-3 rounded-[6.25rem] ${
-                      transaction.type === "PURCHASE"
-                        ? "border-[#F95353] bg-[#FFCACA] text-[#F95353]"
-                        : transaction.type === "PICKUP"
-                        ? "border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71]"
-                        : "border-[#FFA500] bg-[#FFE7A4] text-[#FFA500]"
-                    }`}
+                    className={`border text-[0.625rem] py-1.5 px-3 rounded-[6.25rem] ${getTransactionTypeBadgeStyles(transaction.type)}`}
                   >
                     {transaction.type}
                   </span>

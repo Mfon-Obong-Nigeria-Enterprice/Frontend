@@ -11,27 +11,10 @@ import { Button } from "@/components/ui/button";
 import {
   getTransactionDateString,
 } from "@/utils/transactions";
+import { getTransactionTypeBadgeStyles } from "@/utils/transactionTypeStyles";
 
 // icons
 import { ChevronDown, Receipt, TrendingUp } from "lucide-react";
-
-// Helper for transaction type badge styles
-const getTypeBadgeStyles = (type: string) => {
-  switch (type?.toUpperCase()) {
-    case "DEPOSIT":
-      return "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]";
-    case "RETURN":
-      return "bg-[#E2F3EB] text-[#2ECC71] border border-[#2ECC71]";
-    case "PICKUP":
-      return "bg-[#FFF8E1] text-[#FFA500] border border-[#FFA500]";
-    case "PURCHASE":
-      return "bg-[#FFECEC] text-[#F95353] border border-[#F95353]";
-    case "WHOLESALE":
-      return "bg-[#FFECEC] text-[#F95353] border border-[#F95353]";
-    default:
-      return "bg-gray-100 text-gray-600 border border-gray-300";
-  }
-};
 
 const MySalesActivity = ({
   filteredTransactions,
@@ -150,7 +133,7 @@ const MySalesActivity = ({
                 </td>
 
                 <td className="text-base">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getTypeBadgeStyles(transaction.type)}`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getTransactionTypeBadgeStyles(transaction.type)}`}>
                     {transaction.type || "N/A"}
                   </span>
                 </td>
