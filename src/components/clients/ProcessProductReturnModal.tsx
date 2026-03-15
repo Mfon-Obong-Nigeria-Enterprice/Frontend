@@ -25,6 +25,17 @@ interface ProductReturnCardProps {
 const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedInfo, onReturnInfoChange }) => {
   const { quantity: returnedQuantity, returnPrice, returnAmount } = returnedInfo;
 
+  const formatMoneyInput = (value: number) => {
+    if (!value || value <= 0) return "";
+    return `₦${Math.round(value).toLocaleString("en-US")}`;
+  };
+
+  const parseMoneyInput = (value: string) => {
+    const digitsOnly = value.replace(/\D/g, "");
+    if (!digitsOnly) return 0;
+    return Number(digitsOnly);
+  };
+
   const handleIncrement = () => {
     const newQuantity = Math.min(returnedQuantity + 1, item.quantity);
     onReturnInfoChange({
@@ -59,9 +70,8 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedInf
     });
   };
 
-  const handleReturnPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value === '' ? 0 : parseFloat(e.target.value);
-    if (isNaN(val)) val = 0;
+  const handleReturnPriceChange = (rawValue: string) => {
+    const val = parseMoneyInput(rawValue);
 
     onReturnInfoChange({
       quantity: returnedQuantity,
@@ -150,9 +160,9 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedInf
   <div className="text-left">
     <label className="block text-xs text-gray-500 mb-1.5">Return Price</label>
     <input
-      type="number"
-      value={returnPrice}
-      onChange={handleReturnPriceChange}
+      type="text"
+      value={formatMoneyInput(returnPrice)}
+      onChange={(e) => handleReturnPriceChange(e.target.value)}
       disabled={returnedQuantity === 0}
       className="bg-white h-[34px] px-3 rounded text-sm font-medium w-[100px] border border-gray-300 text-left disabled:bg-gray-100"
       placeholder="₦0"
@@ -163,10 +173,10 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedInf
   <div className="text-right">
     <label className="block text-xs text-gray-500 mb-1.5">Return Amount:</label>
     <input
-      type="number"
-      value={returnAmount}
+      type="text"
+      value={formatMoneyInput(returnAmount)}
       onChange={(e) => {
-        const value = Number(e.target.value);
+        const value = parseMoneyInput(e.target.value);
         const maxAmount = returnPrice * returnedQuantity;
         if (value > maxAmount) {
           toast.warn(`Amount cannot exceed ₦${maxAmount.toLocaleString()}`);
@@ -195,6 +205,17 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
   const [returnedItems, setReturnedItems] = useState<Record<string, ReturnedItemInfo>>({});
   const [reason, setReason] = useState('');
   const [actualAmountReturned, setActualAmountReturned] = useState(0);
+
+  const formatMoneyInput = (value: number) => {
+    if (!value || value <= 0) return "";
+    return `₦${Math.round(value).toLocaleString("en-US")}`;
+  };
+
+  const parseMoneyInput = (value: string) => {
+    const digitsOnly = value.replace(/\D/g, "");
+    if (!digitsOnly) return 0;
+    return Number(digitsOnly);
+  };
 
   const returnMutation = useMutation({
     mutationFn: createReturnTransaction,
@@ -376,10 +397,10 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
              <div className="flex flex-col gap-1 text-right">
                 <span className="text-xs text-[#333333]">{totalItemsSelected} item(s)</span>
                 <input
-                  type="number"
-                  value={actualAmountReturned}
+                  type="text"
+                  value={formatMoneyInput(actualAmountReturned)}
                   onChange={(e) => {
-                    const value = Number(e.target.value);
+                    const value = parseMoneyInput(e.target.value);
                     // Prevent amount from exceeding the calculated total
                     if (value > calculatedTotalReturn) {
                       toast.warn(`Return amount cannot exceed ₦${calculatedTotalReturn.toLocaleString()}`);

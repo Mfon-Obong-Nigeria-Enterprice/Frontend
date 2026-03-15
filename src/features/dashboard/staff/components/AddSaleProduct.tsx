@@ -209,6 +209,17 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
     updateRow(index, { unitPrice: newUnitPrice });
   };
 
+  const formatMoneyInput = (value: number) => {
+    if (!value || value <= 0) return "";
+    return `₦${Math.round(value).toLocaleString("en-US")}`;
+  };
+
+  const parseMoneyInput = (value: string) => {
+    const digitsOnly = value.replace(/\D/g, "");
+    if (!digitsOnly) return 0;
+    return Number(digitsOnly);
+  };
+
   return (
     <div className="bg-white border px-2 py-5">
       <h6 className="text-[#1E1E1E] text-base font-medium mb-4">Add Product</h6>
@@ -323,9 +334,12 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                  <div className="w-[14%] text-center">
                     {salesType === "Wholesale" ? (
                       <input
-                        type="number"
-                        value={row.total === 0 ? "" : row.total}
-                        onChange={(e) => handleTotalChange(index, e.target.value)}
+                        type="text"
+                        value={formatMoneyInput(row.total)}
+                        onChange={(e) =>
+                          handleTotalChange(index, String(parseMoneyInput(e.target.value)))
+                        }
+                        placeholder="₦0"
                         className="w-[90%] mx-auto h-[34px] border border-[#E5E7EB] rounded text-center text-[11px] outline-none bg-white focus:ring-1 focus:ring-gray-200"
                       />
                     ) : (
@@ -520,9 +534,12 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                     <TableCell className="text-center">
                       {salesType === "Wholesale" ? (
                         <Input
-                          type="number"
-                          value={row.total === 0 ? "" : row.total}
-                          onChange={(e) => handleTotalChange(index, e.target.value)}
+                          type="text"
+                          value={formatMoneyInput(row.total)}
+                          onChange={(e) =>
+                            handleTotalChange(index, String(parseMoneyInput(e.target.value)))
+                          }
+                          placeholder="₦0"
                           className="text-center !bg-white w-[100px] mx-auto"
                         />
                       ) : (
@@ -627,8 +644,9 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
               <span className="absolute left-2 top-2 text-sm">₦</span>
               <Input
                 className="w-24 border !bg-white py-1 pl-6 pr-2"
-                value={globalDiscount === 0 ? "" : globalDiscount}
-                onChange={(e) => setGlobalDiscount(Number(e.target.value) || 0)}
+                value={formatMoneyInput(globalDiscount)}
+                onChange={(e) => setGlobalDiscount(parseMoneyInput(e.target.value))}
+                placeholder="₦0"
               />
             </div>
           )}
