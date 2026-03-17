@@ -239,8 +239,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   }, [clientTransactions, client, currentBalance]);
 
   // --- PDF GENERATION LOGIC ---
-// --- PDF GENERATION LOGIC ---
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     const doc = new jsPDF({
       orientation: "portrait",
       unit: "mm",
@@ -250,7 +249,22 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
     const margin = 15;
-    let cursorY = 20;
+    let cursorY = 15;
+
+    // Load company logo
+    let logoBase64: string | null = null;
+    try {
+      const response = await fetch("/logo.png");
+      const blob = await response.blob();
+      logoBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      // Logo failed to load — continue without it
+    }
 
     const formatCurrencyForPDF = (amount: number) => {
       const val = new Intl.NumberFormat("en-NG", {
@@ -278,79 +292,56 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     };
 
     // --- 1. HEADER ---
+    const logoSize = 20;
+    if (logoBase64) {
+      doc.addImage(logoBase64, "PNG", margin, cursorY, logoSize, logoSize);
+    }
+
+    // Title & subtitle centred vertically in the logo area
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
+    doc.setFontSize(15);
     doc.setTextColor(33, 33, 33);
-    doc.text("Account Statement", pageWidth / 2, cursorY, { align: "center" });
-    cursorY += 6;
+    doc.text("Account Statement", pageWidth / 2, cursorY + 8, { align: "center" });
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(80, 80, 80);
-    doc.text("Materials Supply Record", pageWidth / 2, cursorY, {
-      align: "center",
-    });
-    cursorY += 5;
+    doc.text("Materials Supply Record", pageWidth / 2, cursorY + 14, { align: "center" });
+
+    cursorY += logoSize + 5;
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.2);
     doc.line(margin, cursorY, pageWidth - margin, cursorY);
-    cursorY += 10;
+    cursorY += 8;
 
     // --- DATA PREPARATION ---
-    // 1. Sort the filtered transactions we want to display (Oldest to Newest)
+    // Sort the filtered transactions (Oldest to Newest)
     const sortedTxns = [...transactionsWithBalance].sort(
       (a, b) =>
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
 
-    // 2. ROBUST INITIAL BALANCE CALCULATION (Unwinding Method)
-    let initialBalance = currentBalance || 0;
+    const supplies = sortedTxns.filter(
+      (t) => t.type === "PURCHASE" || t.type === "PICKUP"
+    );
 
-    // FILTER FIX: Use Optional Chaining (?.) to prevent crash on null clients
-    const allClientTxns = mergedTransactions
-      .filter((t) => t.client?._id === clientId) 
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      ); 
+    // B/F: read balanceBefore directly from the first transaction in the filtered period
+    const firstTxn = sortedTxns[0];
+    const bfBalance = firstTxn ? firstTxn.balanceBefore : 0;
+    const isDebt = bfBalance < 0;
+    const isCredit = bfBalance > 0;
+    const absInitialBalance = Math.abs(bfBalance);
 
-    // Determine the Start Date of our report
+    // Report date range
     const reportStartDate =
       sortedTxns.length > 0
         ? getTransactionDate(sortedTxns[0])
         : dateRangeFilter.from || new Date();
-
-    // Start unwinding from the current balance back to the report start date
-    let calculatedBf = currentBalance || 0;
-
-    if (allClientTxns.length > 0) {
-        for (const txn of allClientTxns) {
-            const txnDate = getTransactionDate(txn);
-            
-            // If this transaction happened AFTER or ON the start date, we must "undo" it 
-            if (txnDate >= reportStartDate) {
-                const total = Number(txn.total) || 0;
-                const paid = Number(txn.amountPaid) || 0;
-
-                if (txn.type === "DEPOSIT" || txn.type === "RETURN") {
-                    calculatedBf -= total;
-                } else {
-                    // Purchase/Pickup: Prev = Balance + Total - Paid
-                    calculatedBf = calculatedBf + total - paid;
-                }
-            }
-        }
-        initialBalance = calculatedBf;
-    }
-
-    // LOGIC: Determine polarity
-    // Negative = Debt, Positive = Credit (User Balance)
-    const isDebt = initialBalance < 0;
-    const isCredit = initialBalance > 0;
-    const absInitialBalance = Math.abs(initialBalance);
-
-    const supplies = sortedTxns.filter(
-      (t) => t.type === "PURCHASE" || t.type === "PICKUP"
-    );
+    const startDate = reportStartDate;
+    const endDate =
+      dateRangeFilter.to ||
+      (sortedTxns.length > 0
+        ? getTransactionDate(sortedTxns[sortedTxns.length - 1])
+        : new Date());
 
     // --- 2. B/F SECTION (HEADER) ---
     doc.setFont("helvetica", "bold");
@@ -359,17 +350,9 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     doc.text(client?.name || "", pageWidth - margin, cursorY, {
       align: "right",
     });
-
     cursorY += 6;
 
     let dateRangeText = "";
-    const startDate = reportStartDate;
-    const endDate =
-      dateRangeFilter.to ||
-      (sortedTxns.length > 0
-        ? getTransactionDate(sortedTxns[sortedTxns.length - 1])
-        : new Date());
-
     const startYear = startDate.getFullYear();
     const endYear = endDate.getFullYear();
     const startMonth = startDate.toLocaleDateString("en-US", { month: "long" });
@@ -387,28 +370,26 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     doc.text(`Transaction History, ${dateRangeText}`, margin, cursorY);
     cursorY += 10;
 
-    // --- B/F DEBT DISPLAY ---
+    // Running total starts with BF debt if applicable
     let runningTotalForGrand = isDebt ? absInitialBalance : 0;
 
-    // Draw the B/F Box (Always Visible)
-    doc.setFillColor(248, 235, 235);
-    doc.rect(margin, cursorY, pageWidth - margin * 2, 10, "F");
-    doc.setFillColor(231, 76, 60);
-    doc.rect(margin, cursorY, 1.5, 10, "F");
+    // Only draw B/F box if there is a debt before the filter period
+    if (isDebt) {
+      doc.setFillColor(248, 235, 235);
+      doc.rect(margin, cursorY, pageWidth - margin * 2, 10, "F");
+      doc.setFillColor(231, 76, 60);
+      doc.rect(margin, cursorY, 1.5, 10, "F");
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(51, 51, 51);
-    
-    // If Debt, show amount. If Credit/Zero, show N0.
-    const displayBFAmount = isDebt ? absInitialBalance : 0;
-    
-    doc.text(
-      `B/F Debt - ${formatDate(startDate)}: ${formatCurrencyForPDF(displayBFAmount)}`,
-      margin + 4,
-      cursorY + 6.5
-    );
-    cursorY += 18;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(51, 51, 51);
+      doc.text(
+        `B/F Debt - ${formatDate(startDate)}: ${formatCurrencyForPDF(absInitialBalance)}`,
+        margin + 4,
+        cursorY + 6.5
+      );
+      cursorY += 18;
+    }
 
     // --- 3. SUPPLIES LOOP ---
     supplies.forEach((txn) => {
@@ -646,26 +627,58 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
           isReturn: false,
         });
       } else if (t.type === "RETURN") {
-        const amount = Number(t.total) || 0;
-        totalDeductions += amount;
         if (t.items && t.items.length > 0) {
-            t.items.forEach((item: any) => {
-              const itemAmount = (item.quantity || 0) * (item.unitPrice || 0);
-              displayItems.push({
-                description: `(${item.quantity}) ${
-                  item.productName?.toUpperCase() || "PRODUCT"
-                } (RETURNED): `,
-                value: formatCurrencyForPDF(itemAmount),
-                isReturn: true,
-              });
-            });
-          } else {
-            displayItems.push({
-              description: `(Returned items): `,
-              value: formatCurrencyForPDF(amount),
-              isReturn: true,
-            });
-          }
+          // Use actualAmountReturned for deductions — this is the real amount credited to the client
+          const returnTotal = Number(t.actualAmountReturned) || 0;
+          totalDeductions += returnTotal;
+
+          // Render one unified block for all returned items under one date badge
+          const dateBadgeHeight = 8;
+          const itemLineHeight = 7;
+          const blockHeight = dateBadgeHeight + t.items.length * itemLineHeight + 4;
+
+          checkPageBreak(blockHeight);
+
+          doc.setFillColor(224, 224, 224);
+          doc.rect(margin, cursorY, pageWidth - margin * 2, blockHeight, "F");
+          doc.setFillColor(150, 150, 150);
+          doc.rect(margin, cursorY, 1.5, blockHeight, "F");
+
+          // Date badge
+          doc.setFillColor(200, 200, 200);
+          doc.rect(margin + 5, cursorY + 2, 35, 6, "F");
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8);
+          doc.setTextColor(51, 51, 51);
+          doc.text(`On ${formatDate(getTransactionDate(txn))}`, margin + 7, cursorY + 6);
+          cursorY += dateBadgeHeight;
+
+          // Each returned item on its own line
+          t.items.forEach((item: any) => {
+            const itemAmount = Number(item.subtotal) || (item.quantity || 0) * (item.unitPrice || 0);
+            const desc = `(${item.quantity}) ${item.productName?.toUpperCase() || "PRODUCT"} (RETURNED): `;
+            doc.setFontSize(9);
+            const descWidth = (doc.getStringUnitWidth(desc) * doc.getFontSize()) / doc.internal.scaleFactor;
+            doc.setTextColor(68, 68, 68);
+            doc.text(desc, margin + 7, cursorY + 5);
+            doc.setTextColor(231, 76, 60);
+            doc.text(formatCurrencyForPDF(itemAmount), margin + 7 + descWidth, cursorY + 5);
+            cursorY += itemLineHeight;
+          });
+
+          doc.setDrawColor(230, 230, 230);
+          doc.line(margin + 5, cursorY + 2, pageWidth - margin - 5, cursorY + 2);
+          cursorY += 6;
+        } else {
+          // Fallback: no items stored, show total
+          const amount = Number(t.total) || 0;
+          totalDeductions += amount;
+          displayItems.push({
+            description: `(Returned items): `,
+            value: formatCurrencyForPDF(amount),
+            isReturn: true,
+          });
+        }
       } else if (
         (t.type === "PURCHASE" || t.type === "PICKUP") &&
         (Number(t.amountPaid) || 0) > 0
