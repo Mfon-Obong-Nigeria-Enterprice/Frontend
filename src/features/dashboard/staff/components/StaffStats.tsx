@@ -152,7 +152,7 @@ const StaffStats: React.FC = () => {
 
       <div className="">
 
-      <Stats data={stats}/>
+      <Stats data={stats} columns={3} />
       </div>
      
     </div>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 
 // hook
@@ -57,7 +57,6 @@ type StaffSidebarProps = {
 
 function StaffSidebar({ onLogoutClick }: StaffSidebarProps) {
   const { pathname } = useLocation();
-  const navigate = useNavigate();
 
   return (
     <Sidebar className="bg-white">
@@ -68,18 +67,6 @@ function StaffSidebar({ onLogoutClick }: StaffSidebarProps) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* Back Button */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => navigate(-1)}
-                  className="cursor-pointer rounded-sm p-6 my-1 flex items-center gap-3 transition-all
-                  bg-[#F4E8E7] text-[#333333] hover:bg-[#8C1C1380] hover:text-white"
-                >
-                  <Icon icon="material-symbols:arrow-back" width={20} />
-                  <span>Back</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
               {/* Menu Items */}
               {items.map((item) => {
                 const isActive = pathname.startsWith(item.url);

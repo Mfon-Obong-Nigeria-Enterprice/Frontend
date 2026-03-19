@@ -167,132 +167,11 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
     });
   }, [clientTransactions, client]);
 
-  // Filter RETURN transactions for this client
-  const returnedProducts = useMemo(() => {
-    return clientTransactions
-      .filter((txn) => txn.type === "RETURN")
-      .sort((a, b) => {
-        const dateA = new Date(a.createdAt).getTime();
-        const dateB = new Date(b.createdAt).getTime();
-        return dateB - dateA;
-      });
-  }, [clientTransactions]);
 
   return (
     <div className="font-sans text-[#333333]">
 
-      {/* --- 1. FILTERS SECTION (New) --- */}
-
-      {/* --- 2. RETURNED PRODUCTS SECTION (Client-Specific) --- */}
-      <div className="mb-10 border-b border-[#D9D9D9] pb-4 rounded-lg">
-        <h2 className="text-[#333333] font-normal text-base mb-4">Returned Products</h2>
-        <div className="bg-[#F9FAFB] rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left ">
-              <thead>
-                <tr className="bg-[#F5F5F5]">
-                  <th className="px-2 py-4 text-sm font-normal text-[#333333]">Quantity</th>
-                  <th className="px-2 py-4 text-sm font-normal text-[#333333]">Unit Price</th>
-                  <th className="px-2 py-4 text-sm font-normal text-[#333333]">Return Unit Price</th>
-                  <th className="px-2 py-4 text-sm font-normal text-[#333333]">Amount Return</th>
-                  <th className="px-2 py-4 text-sm font-normal text-[#333333]">Product</th>
-                  <th className="px-2 py-4 text-sm font-normal text-[#333333]">Reason</th>
-                  <th className="px-2 py-4 text-sm font-normal text-[#333333]">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {returnedProducts.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-2 py-8 text-sm text-[#7D7D7D] text-center">
-                      No returned products for this client
-                    </td>
-                  </tr>
-                ) : (
-                  returnedProducts.map((returnTxn) => {
-                    const referencedTransactionId = getReferenceTransactionId(returnTxn);
-
-                    return returnTxn.items && returnTxn.items.length > 0 ? (() => {
-                      const metadata = parseReturnPricingMetadata(returnTxn.notes);
-                      const metadataMap = new Map(
-                        (metadata?.items || []).map((m) => [m.productId, m])
-                      );
-
-                      return returnTxn.items.map((item, idx) => {
-                        const meta = metadataMap.get(item.productId);
-                        const hasExactLineData =
-                          meta?.returnAmount !== undefined &&
-                          !Number.isNaN(meta.returnAmount) &&
-                          meta?.returnUnitPrice !== undefined &&
-                          !Number.isNaN(meta.returnUnitPrice);
-
-                        return (
-                          <tr
-                            key={`${returnTxn._id}-${idx}`}
-                            className={`bg-[#FFE9E9] ${referencedTransactionId ? "cursor-pointer hover:bg-[#FFDCDC] transition-colors" : ""}`}
-                            onClick={() => scrollToReferencedTransaction(referencedTransactionId)}
-                            title={referencedTransactionId ? "Click to view original purchase" : undefined}
-                          >
-                            <td className="px-2 py-4 text-sm text-[#666666]">
-                              {item.quantity} {item.unit || "units"}
-                            </td>
-                            <td className="px-2 py-4 text-sm text-[#666666]">
-                              {formatCurrency(item.unitPrice)}/{item.unit || "unit"}
-                            </td>
-                            <td className="px-2 py-4 text-sm text-[#666666]">
-                              {hasExactLineData
-                                ? `${formatCurrency(meta.returnUnitPrice)}/${item.unit || "unit"}`
-                                : "-"}
-                            </td>
-                            <td className="px-2 py-4 text-sm text-[#666666]">
-                              {hasExactLineData
-                                ? formatCurrency(meta.returnAmount)
-                                : idx === 0 && returnTxn.actualAmountReturned !== undefined
-                                  ? formatCurrency(returnTxn.actualAmountReturned)
-                                  : "-"}
-                            </td>
-                            <td className="px-2 py-4 text-sm text-[#666666]">
-                              {item.productName || "Product"}
-                            </td>
-                            <td className="px-2 py-4 text-sm text-[#666666]">
-                              {resolveReturnReasonText(returnTxn)}
-                            </td>
-                            <td className="px-2 py-4 text-sm text-[#666666]">
-                              {getTransactionDateString(returnTxn)}
-                            </td>
-                          </tr>
-                        );
-                      });
-                    })() : (
-                      <tr
-                        key={returnTxn._id}
-                        className={`bg-[#FFE9E9] ${referencedTransactionId ? "cursor-pointer hover:bg-[#FFDCDC] transition-colors" : ""}`}
-                        onClick={() => scrollToReferencedTransaction(referencedTransactionId)}
-                        title={referencedTransactionId ? "Click to view original purchase" : undefined}
-                      >
-                        <td className="px-2 py-4 text-sm text-[#666666]">-</td>
-                        <td className="px-2 py-4 text-sm text-[#666666]">-</td>
-                        <td className="px-2 py-4 text-sm text-[#666666]">-</td>
-                        <td className="px-2 py-4 text-sm text-[#666666]">
-                          {formatCurrency(returnTxn.actualAmountReturned ?? returnTxn.total ?? 0)}
-                        </td>
-                        <td className="px-2 py-4 text-sm text-[#666666]">
-                          {returnTxn.description || 'Returned items'}
-                        </td>
-                        <td className="px-2 py-4 text-sm text-[#666666]">{resolveReturnReasonText(returnTxn)}</td>
-                        <td className="px-2 py-4 text-sm text-[#666666]">
-                          {getTransactionDateString(returnTxn)}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {/* --- 3. TRANSACTION LIST (Existing Logic) --- */}
+      {/* --- TRANSACTION LIST --- */}
       {transactionWithBalance.length === 0 ? (
         <p className="text-center text-sm text-[#7D7D7D] py-10">
           No transactions found for this client
@@ -356,7 +235,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                       </span>
                     </div>
                     {/* Only show Return button for tangible transactions */}
-                    {(txn.type === "PURCHASE" || txn.type === "PICKUP") && (
+                    {(txn.type === "PURCHASE" || txn.type === "PICKUP" || txn.type === "WHOLESALE") && (
                       <button
                         onClick={() => handleOpenReturnModal(txn)}
                         className="border border-gray-300 text-[#444444] px-4 py-1.5 rounded-md text-sm font-medium bg-white transition-all duration-200 hover:bg-[#F3F7FF] hover:border-[#3D80FF] hover:text-[#2E6EF7] hover:shadow-sm hover:-translate-y-[1px]"
@@ -494,7 +373,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                 {/* --- FOOTER SECTIONS (Conditional) --- */}
 
                 {/* A. Product Purchase Table */}
-                {(txn.type === "PURCHASE" || txn.type === "PICKUP") &&
+                {(txn.type === "PURCHASE" || txn.type === "PICKUP" || txn.type === "WHOLESALE") &&
                   txn.items &&
                   txn.items.length > 0 && (
                     <div className="border-t border-gray-100 pt-6">
@@ -547,7 +426,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                           {/* Subtotal */}
                           <div className="bg-[#F5F5F5] flex justify-end px-4 gap-4 items-center py-3 border-t border-gray-100">
                             <span className="text-xs md:text-sm text-[#333333] font-medium">
-                              Subtotal:
+                              Materials Total Cost:
                             </span>
                             <span className="text-xs md:text-sm text-[#333333] font-bold">
                               {formatCurrency(
@@ -622,7 +501,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                           {/* Total */}
                           <div className="bg-[#F5F5F5] flex justify-end px-4 gap-4 items-center py-3 border-t-2 border-gray-300">
                             <span className="text-xs md:text-sm text-[#333333] font-bold">
-                              Total:
+                              Subtotal:
                             </span>
                             <span className="text-xs md:text-sm text-[#333333] font-bold">
                               {formatCurrency(txn.total || 0)}
@@ -633,6 +512,70 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                     </div>
                   )}
 
+
+                {/* B. Returned Items Table — inline for RETURN transactions */}
+                {txn.type === "RETURN" && txn.items && txn.items.length > 0 && (() => {
+                  const metadata = parseReturnPricingMetadata(txn.notes);
+                  const metadataMap = new Map(
+                    (metadata?.items || []).map((m) => [m.productId, m])
+                  );
+                  return (
+                    <div className="border-t border-gray-100 pt-6">
+                      <h3 className="text-[#333333] text-[16px] mb-4">Returned Products:</h3>
+                      <div className="bg-[#F9FAFB] overflow-hidden">
+                        <div className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-4 p-4 bg-[#F5F5F5] border-b border-gray-100">
+                          <span className="text-xs md:text-sm text-[#333333]">Quantity</span>
+                          <span className="text-xs md:text-sm text-[#333333]">Unit Price</span>
+                          <span className="text-xs md:text-sm text-[#333333]">Return Price</span>
+                          <span className="text-xs md:text-sm text-[#333333]">Product</span>
+                          <span className="text-xs md:text-sm text-[#333333] text-right">Amount</span>
+                        </div>
+                        <div className="bg-white border border-[#F5F5F5] pt-4 grid grid-cols-1 gap-2">
+                          {txn.items.map((item, idx) => {
+                            const meta = metadataMap.get(item.productId);
+                            const hasExactLineData =
+                              meta?.returnAmount !== undefined && !Number.isNaN(meta.returnAmount) &&
+                              meta?.returnUnitPrice !== undefined && !Number.isNaN(meta.returnUnitPrice);
+                            return (
+                              <div key={`${item.productId}-${idx}`}>
+                                <div className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] px-4 gap-4 items-center">
+                                  <span className="text-xs md:text-sm text-[#444444]">
+                                    {item.quantity} {item.unit?.split(" ")[0]?.toLowerCase() || "units"}
+                                  </span>
+                                  <span className="text-xs md:text-sm text-[#444444]">
+                                    {formatCurrency(item.unitPrice)}/{item.unit?.split(" ")[0]?.toLowerCase() || "unit"}
+                                  </span>
+                                  <span className="text-xs md:text-sm text-[#444444]">
+                                    {hasExactLineData ? `${formatCurrency(meta.returnUnitPrice)}/${item.unit?.split(" ")[0]?.toLowerCase() || "unit"}` : "-"}
+                                  </span>
+                                  <span className="text-xs md:text-sm text-[#444444]">{item.productName}</span>
+                                  <span className="text-xs md:text-sm text-[#444444] text-right">
+                                    {hasExactLineData
+                                      ? formatCurrency(meta.returnAmount)
+                                      : idx === 0 && txn.actualAmountReturned !== undefined
+                                      ? formatCurrency(txn.actualAmountReturned)
+                                      : "-"}
+                                  </span>
+                                </div>
+                                {idx < txn.items.length - 1 && <div className="h-[1px] bg-gray-100 my-2" />}
+                              </div>
+                            );
+                          })}
+                          <div className="bg-[#F5F5F5] flex justify-end px-4 gap-4 items-center py-3 border-t border-gray-100">
+                            <span className="text-xs md:text-sm text-[#333333] font-medium">Reason:</span>
+                            <span className="text-xs md:text-sm text-[#333333]">{resolveReturnReasonText(txn)}</span>
+                          </div>
+                          <div className="bg-[#F5F5F5] flex justify-end px-4 gap-4 items-center py-3 border-t-2 border-gray-300">
+                            <span className="text-xs md:text-sm text-[#333333] font-bold">Total Returned:</span>
+                            <span className="text-xs md:text-sm text-[#333333] font-bold">
+                              {formatCurrency(txn.actualAmountReturned ?? txn.total ?? 0)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* --- FOOTER: PARTIAL PAYMENT BANNER --- */}
                 {isPartialPayment && (

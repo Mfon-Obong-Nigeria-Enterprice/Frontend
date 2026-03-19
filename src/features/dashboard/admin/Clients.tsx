@@ -1,6 +1,7 @@
 /** @format */
 
 import React, { useState } from "react";
+import PaymentModal from "@/components/shared/PaymentModal";
 import DashboardTitle from "../shared/DashboardTitle";
 import { Button } from "@/components/ui/button";
 import { MoreVertical, Plus, Search } from "lucide-react";
@@ -51,6 +52,13 @@ export const Clients: React.FC<ClientProps> = ({
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showPdfConfirmDialog, setShowPdfConfirmDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+  const handleProcessPayment = (client: Client) => {
+    setSelectedClient(client);
+    setShowPaymentModal(true);
+  };
 
   const {
     filteredClients,
@@ -305,6 +313,7 @@ export const Clients: React.FC<ClientProps> = ({
             searchTerm={searchTerm}
             filteredClientsData={filteredClients}
             onClientAction={onClientAction}
+            onDepositAction={handleProcessPayment}
             actionLabel="view"
             isStaffView={false}
           />
@@ -315,6 +324,7 @@ export const Clients: React.FC<ClientProps> = ({
             searchTerm={searchTerm}
             filteredClientsData={filteredClients}
             onClientAction={onClientAction}
+            onDepositAction={handleProcessPayment}
             actionLabel="view"
             isStaffView={false}
           />
@@ -322,6 +332,20 @@ export const Clients: React.FC<ClientProps> = ({
       </section>
 
       <AddClientDialog open={showAddDialog} onOpenChange={setShowAddDialog} />
+
+      {showPaymentModal && selectedClient && (
+        <PaymentModal
+          client={selectedClient}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedClient(null);
+          }}
+          onPaymentSuccess={() => {
+            setShowPaymentModal(false);
+            setSelectedClient(null);
+          }}
+        />
+      )}
 
       {/* --- REVISED CONFIRMATION MODAL --- */}
       <Dialog

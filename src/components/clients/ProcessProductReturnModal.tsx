@@ -312,6 +312,7 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
       items: itemsToSubmit,
       actualAmountReturned: actualAmountReturned,
       notes: returnPricingNotes,
+      skipStockRestore: transaction.type === "WHOLESALE",
     });
   };
 

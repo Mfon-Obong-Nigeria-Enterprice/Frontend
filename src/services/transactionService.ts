@@ -96,6 +96,7 @@ export interface ReturnTransactionCreate {
   items: ReturnTransactionItem[];
   actualAmountReturned: number;
   notes?: string;
+  skipStockRestore?: boolean;
 }
 
 export const createReturnTransaction = async (data: ReturnTransactionCreate): Promise<Transaction> => {

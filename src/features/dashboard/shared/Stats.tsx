@@ -231,9 +231,10 @@ const SingleStatItem: React.FC<SingleStatItemProps> = ({
 
 interface StatsProps {
   data: StatCard[];
+  columns?: 3 | 4;
 }
 
-const Stats: React.FC<StatsProps> = ({ data }) => {
+const Stats: React.FC<StatsProps> = ({ data, columns = 4 }) => {
   const revenueStore = useRevenueStore();
   const monthlyRevenue = revenueStore.getMOMRevenue && revenueStore.getMOMRevenue();
   const borderColors = ["#2ECC71", "#F95353", "#3D80FF", "#FFA500"];
@@ -241,13 +242,10 @@ const Stats: React.FC<StatsProps> = ({ data }) => {
   return (
     <section
       className={`
-        mt-2 grid 
-        /* Mobile: 2 Columns (Requested Change) with slightly tighter gap */
+        mt-2 grid
         grid-cols-2 gap-3
-        /* Tablet: 2 Columns with standard gap */
         sm:gap-4
-        /* Desktop: 4 Columns */
-        xl:grid-cols-4 
+        ${columns === 3 ? "xl:grid-cols-3" : "xl:grid-cols-4"}
       `}
     >
       {data.map((stat, index) => (

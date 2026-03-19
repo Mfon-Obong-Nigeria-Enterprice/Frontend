@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { useClientStore } from "@/stores/useClientStore";
 import type { Client } from "@/types/types";
-import { Badge } from "@/components/ui/badge";
+import type { Transaction } from "@/types/transactions";
 import usePagination from "@/hooks/usePagination";
 import {
   Pagination,
@@ -25,15 +25,16 @@ import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { useNavigate } from "react-router-dom";
-import { getTypeDisplay } from "@/utils/helpersfunction";
-import {
-  getTransactionDateString,
-} from "@/utils/transactions";
+import { getTransactionDateString } from "@/utils/transactions";
+import { useQuery } from "@tanstack/react-query";
+import { getAllTransactions } from "@/services/transactionService";
+import { getTransactionTypeBadgeStyles } from "@/utils/transactionTypeStyles";
 
 interface ClientDirectoryProps {
   searchTerm: string;
   filteredClientsData: Client[];
   onClientAction?: (client: Client) => void;
+  onDepositAction?: (client: Client) => void;
   actionLabel?: string;
   isStaffView?: boolean;
 }
@@ -42,11 +43,31 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
   searchTerm,
   filteredClientsData,
   onClientAction,
+  onDepositAction,
   actionLabel = "view",
   isStaffView = false,
 }) => {
   const { clients } = useClientStore();
   const navigate = useNavigate();
+
+  const { data: allTransactions } = useQuery({
+    queryKey: ["transactions"],
+    queryFn: getAllTransactions,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const latestTransactionMap = useMemo(() => {
+    if (!allTransactions) return new Map<string, Transaction>();
+    const sorted = [...allTransactions].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    const map = new Map<string, Transaction>();
+    sorted.forEach((txn) => {
+      const clientId = typeof txn.clientId === "object" ? txn.clientId?._id : txn.clientId;
+      if (clientId && !map.has(clientId)) map.set(clientId, txn);
+    });
+    return map;
+  }, [allTransactions]);
 
   const filteredClients = (
     filteredClientsData.length > 0 ? filteredClientsData : clients ?? []
@@ -108,7 +129,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                 <TableHead>Date</TableHead>
                 <TableHead>Clients</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Amount</TableHead>
+                <TableHead>Transaction</TableHead>
                 <TableHead>Balance</TableHead>
                 <TableHead>Action</TableHead>
               </TableRow>
@@ -116,6 +137,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
             <TableBody>
               {currentClient.map((client) => {
                 const lastTransaction = getClientTransaction(client);
+                const latestTransaction = latestTransactionMap.get(client._id);
                 const isOwing = client.balance < 0;
 
                 return (
@@ -141,32 +163,29 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                     </TableCell>
 
                     <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={`uppercase p-2 md:w-full  lg:w-[85px] text-[12px] border rounded-2xl ${
-                          lastTransaction?.type === "PURCHASE"
-                            ? "border border-[#F95353] bg-[#FFCACA] text-[#F95353] rounded-2xl"
-                            : lastTransaction?.type === "PICKUP"
-                            ? "border border-[#FFA500] bg-[#FFE7A4] text-[#FFA500] rounded-2xl"
-                            : lastTransaction?.type === "DEPOSIT"
-                            ? "border border-[#2ECC71] bg-[#C8F9DD] text-[#2ECC71] rounded-2xl"
-                            : "bg-gray-100 rounded-2xl text-gray-300 border border-gray-300 "
-                        }`}
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${getTransactionTypeBadgeStyles(
+                          latestTransaction?.type || "N/A"
+                        )}`}
                       >
-                        {lastTransaction
-                          ? getTypeDisplay(lastTransaction.type)
-                          : "New Client"}
-                      </Badge>
+                        {latestTransaction?.type || "New Client"}
+                      </span>
                     </TableCell>
 
                     <TableCell>
-                      <div>
-                        <p className={`font-[400] text-[#444444] text-sm `}>
-                          {lastTransaction
-                            ? formatCurrency(lastTransaction.amount || 0)
-                            : "₦0"}
-                        </p>
-                      </div>
+                      <p
+                        className={`font-medium text-sm ${
+                          latestTransaction?.type === "DEPOSIT" || latestTransaction?.type === "RETURN"
+                            ? "text-[#2ECC71]"
+                            : latestTransaction
+                            ? "text-[#F95353]"
+                            : "text-[#444444]"
+                        }`}
+                      >
+                        {latestTransaction
+                          ? `${latestTransaction.type === "DEPOSIT" || latestTransaction.type === "RETURN" ? "+" : "-"}₦${Math.abs(latestTransaction.total ?? 0).toLocaleString()}`
+                          : "₦0"}
+                      </p>
                     </TableCell>
 
                     <TableCell>
@@ -195,14 +214,25 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                           {isOwing ? "Add payment" : "Deposit"}
                         </Button>
                       ) : (
-                        <Button
-                          variant="link"
-                          size="icon"
-                          className="text-[#3D80FF] text-sm underline ring-offset-1 font-[400] cursor-pointer"
-                          onClick={() => handleViewClient(client)}
-                        >
-                          {actionLabel}
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="link"
+                            size="icon"
+                            className="text-[#3D80FF] text-sm underline ring-offset-1 font-[400] cursor-pointer"
+                            onClick={() => handleViewClient(client)}
+                          >
+                            {actionLabel}
+                          </Button>
+                          {onDepositAction && (
+                            <Button
+                              variant="ghost"
+                              className="ml-6 border-[#3D80FF] border text-[#3D80FF] cursor-pointer hover:text-[#3D80FF] transition-colors duration-200 ease-in-out text-xs px-2 h-8"
+                              onClick={() => onDepositAction(client)}
+                            >
+                              Deposit
+                            </Button>
+                          )}
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>

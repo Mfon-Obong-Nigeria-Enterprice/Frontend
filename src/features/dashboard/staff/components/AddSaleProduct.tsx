@@ -304,11 +304,23 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
 
                 {/* Unit Price */}
                 <div className="w-[18%]">
+                  {salesType === "Wholesale" ? (
+                    <input
+                      type="text"
+                      value={formatMoneyInput(row.unitPrice)}
+                      onChange={(e) =>
+                        updateRow(index, { unitPrice: parseMoneyInput(e.target.value) })
+                      }
+                      placeholder="₦0"
+                      className="w-full h-[34px] border border-[#E5E7EB] rounded text-center text-[11px] outline-none bg-white focus:ring-1 focus:ring-gray-200"
+                    />
+                  ) : (
                     <div className="w-full h-[34px] border border-[#E5E7EB] rounded flex items-center justify-center bg-white">
-                        <span className="text-[10px] text-gray-600">
-                          {row.unitPrice > 0 ? formatCurrency(row.unitPrice) : "₦0.00"}
-                        </span>
+                      <span className="text-[10px] text-gray-600">
+                        {row.unitPrice > 0 ? formatCurrency(row.unitPrice) : "₦0.00"}
+                      </span>
                     </div>
+                  )}
                 </div>
 
                 {/* Discount */}
@@ -473,7 +485,19 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
 
                     {/* Unit Price */}
                     <TableCell className="text-center">
-                      <div>{formatCurrency(row.unitPrice)}</div>
+                      {salesType === "Wholesale" ? (
+                        <Input
+                          type="text"
+                          value={formatMoneyInput(row.unitPrice)}
+                          onChange={(e) =>
+                            updateRow(index, { unitPrice: parseMoneyInput(e.target.value) })
+                          }
+                          placeholder="₦0"
+                          className="text-center !bg-white w-[100px] mx-auto"
+                        />
+                      ) : (
+                        <div>{formatCurrency(row.unitPrice)}</div>
+                      )}
                     </TableCell>
 
                     {/* Discount */}
@@ -628,7 +652,7 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
       <div className="bg-[#F5F5F5] rounded-md overflow-hidden">
         {/* subtotal */}
         <div className="flex justify-between items-center py-3 px-7">
-          <p>Subtotal</p>
+          <p>Materials Total Cost</p>
           <p className="mr-2">{formatCurrency(subtotal)}</p>
         </div>
         {/* discount */}
@@ -641,7 +665,7 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
             </p>
           ) : (
             <div className="relative">
-              <span className="absolute left-2 top-2 text-sm">₦</span>
+              <span className="absolute left-2 top-2 text-sm"></span>
               <Input
                 className="w-24 border !bg-white py-1 pl-6 pr-2"
                 value={formatMoneyInput(globalDiscount)}

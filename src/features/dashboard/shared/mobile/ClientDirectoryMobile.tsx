@@ -13,6 +13,7 @@ interface ClientDirectoryProps {
   searchTerm: string;
   filteredClientsData: Client[];
   onClientAction?: (client: Client) => void;
+  onDepositAction?: (client: Client) => void;
   actionLabel?: string;
   isStaffView?: boolean;
 }
@@ -21,6 +22,7 @@ const ClientDirectoryMobile: React.FC<ClientDirectoryProps> = ({
   searchTerm,
   filteredClientsData,
   onClientAction,
+  onDepositAction,
   actionLabel = "view",
   isStaffView = false,
 }) => {
@@ -116,18 +118,13 @@ const ClientDirectoryMobile: React.FC<ClientDirectoryProps> = ({
                 </p>
               </div>
 
-              <div className="flex justify-between items-center gap-2 pb-2">
-                <div>
-                  <p className={`font-[400] text-[#444444] text-sm `}>
-                    {lastTransaction
-                      ? formatCurrency(
-                          Math.abs(lastTransaction.amountPaid || 0)
-                        )
-                      : "₦0"}
-                  </p>
-                </div>
-
-                <div>
+              <div className="flex items-center pb-2">
+                <p className="font-[400] text-[#444444] text-sm">
+                  {lastTransaction
+                    ? formatCurrency(Math.abs(lastTransaction.amountPaid || 0))
+                    : "₦0"}
+                </p>
+                <div className="mx-3">
                   <span>Balance:</span>
                   <span
                     className={`font-medium ${
@@ -136,7 +133,7 @@ const ClientDirectoryMobile: React.FC<ClientDirectoryProps> = ({
                         : client.balance < 0
                         ? "text-red-400"
                         : "text-gray-300"
-                    } `}
+                    }`}
                   >
                     {formatCurrency(client.balance)}
                   </span>
@@ -144,20 +141,31 @@ const ClientDirectoryMobile: React.FC<ClientDirectoryProps> = ({
                 {isStaffView ? (
                   <Button
                     variant="ghost"
-                    className=" w-30 border-[#3D80FF] border text-[#3D80FF] cursor-pointer hover:text-[#3D80FF] transition-colors duration-200 ease-in-out"
+                    className="ml-auto w-30 border-[#3D80FF] border text-[#3D80FF] cursor-pointer hover:text-[#3D80FF] transition-colors duration-200 ease-in-out"
                     onClick={() => handleViewClient(client)}
                   >
                     {client.balance < 0 ? "Add payment" : "Deposit"}
                   </Button>
                 ) : (
-                  <Button
-                    variant="link"
-                    size="icon"
-                    className="text-[#3D80FF] text-sm underline ring-offset-1 font-[400] cursor-pointer"
-                    onClick={() => handleViewClient(client)}
-                  >
-                    {actionLabel}
-                  </Button>
+                  <div className="ml-auto flex items-center gap-4">
+                    <Button
+                      variant="link"
+                      size="icon"
+                      className="text-[#3D80FF] text-sm underline ring-offset-1 font-[400] cursor-pointer"
+                      onClick={() => handleViewClient(client)}
+                    >
+                      {actionLabel}
+                    </Button>
+                    {onDepositAction && (
+                      <Button
+                        variant="ghost"
+                        className="border-[#3D80FF] border text-[#3D80FF] cursor-pointer hover:text-[#3D80FF] transition-colors duration-200 ease-in-out text-xs px-2 h-8"
+                        onClick={() => onDepositAction(client)}
+                      >
+                        Deposit
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
             </li>

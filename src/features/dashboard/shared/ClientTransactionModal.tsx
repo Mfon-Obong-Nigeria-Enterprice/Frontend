@@ -256,11 +256,12 @@ const ClientTransactionModal = () => {
               </div>
 
               {/* items bought */}
-              <h6 className="font-normal text-base text-[#333333] mb-3">
+              <h6 className="font-normal text-base text-[#333333] mb-1">
                 Product Purchase:
               </h6>
               {(selectedTransaction.type === "PURCHASE" ||
-                selectedTransaction.type === "PICKUP") &&
+                selectedTransaction.type === "PICKUP" ||
+                selectedTransaction.type === "WHOLESALE") &&
                 selectedTransaction.items && (
                   <ul className="flex flex-wrap gap-4 items-start">
                     {selectedTransaction.items.map((item) => (
@@ -284,7 +285,7 @@ const ClientTransactionModal = () => {
             </div>
 
             {/* discounts */}
-            {selectedTransaction.discount &&
+            {(selectedTransaction.discount ?? 0) > 0 &&
               (selectedTransaction.type === "PURCHASE" ||
                 selectedTransaction.type === "PICKUP") && (
                 <p className="bg-[#FFE7A4] mt-5 mb-10 px-3 py-3 rounded-[0.625rem] ">
@@ -300,7 +301,7 @@ const ClientTransactionModal = () => {
               )}
           </div>
           {/* buttons */}
-          <div className="bg-[#F5F5F5] py-5 px-5 flex justify-end items-center gap-10">
+          <div className="bg-[#F5F5F5] py-2 px-5 flex justify-end items-center gap-10">
             {selectedTransaction?.clientId &&
               selectedTransaction?.clientId?._id && (
                 <Button

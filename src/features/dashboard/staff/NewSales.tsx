@@ -1166,6 +1166,7 @@ const NewSales: React.FC = () => {
                 setRows={handleSetRows}
                 emptyRow={emptyRow}
                 onDiscountReasonChange={setDiscountReason}
+                discountReason={discountReason}
                 globalDiscount={globalDiscount}
                 setGlobalDiscount={setGlobalDiscount}
                 salesType={salesType}

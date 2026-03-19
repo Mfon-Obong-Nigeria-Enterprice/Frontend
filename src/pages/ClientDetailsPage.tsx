@@ -184,6 +184,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         "pick-up": "PICKUP",
         pickup: "PICKUP",
         deposit: "DEPOSIT",
+        return: "RETURN",
       };
 
       const filterType = typeMap[transactionTypeFilter];
@@ -759,6 +760,38 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       { align: "right" }
     );
 
+    // --- 7. CURRENT BALANCE (only when filter excludes the latest transaction) ---
+    const latestClientTxn = allClientTransactions[0]; // already sorted newest first
+    const isLatestIncluded = latestClientTxn
+      ? sortedTxns.some((t) => t._id === latestClientTxn._id)
+      : true;
+
+    if (!isLatestIncluded) {
+      cursorY += 16;
+      checkPageBreak(12);
+
+      const currentBalanceLabel =
+        currentBalance > 0
+          ? "CURRENT BALANCE (CREDIT)"
+          : currentBalance < 0
+          ? "CURRENT BALANCE (DEBT)"
+          : "CURRENT BALANCE";
+
+      doc.setFillColor(230, 240, 255);
+      doc.rect(margin, cursorY, pageWidth - margin * 2, 12, "F");
+      doc.setFillColor(46, 110, 247);
+      doc.rect(margin, cursorY, 1.5, 12, "F");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(51, 51, 51);
+      doc.text(
+        `${currentBalanceLabel}: ${formatCurrencyForPDF(currentBalance)}`,
+        pageWidth - margin - 4,
+        cursorY + 8,
+        { align: "right" }
+      );
+    }
+
     // --- FOOTER ---
     const footerY = pageHeight - 15;
     doc.setDrawColor(200, 200, 200);
@@ -935,8 +968,8 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
                     <SelectContent className="text-[#444444]">
                       <SelectItem value="all">All transactions</SelectItem>
                       <SelectItem value="purchase">Purchase</SelectItem>
-                      {/* Pick-up filter removed - deprecated type */}
                       <SelectItem value="deposit">Deposit</SelectItem>
+                      <SelectItem value="return">Return</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

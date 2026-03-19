@@ -38,14 +38,17 @@ function InputWithSuggestions({
               setShowSuggestions(true);
             }}
             onFocus={() => setShowSuggestions(true)}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+            onBlur={() => setShowSuggestions(false)}
             className="w-full py-2 text-[#333333] outline-none"
             {...props}
           />
         </div>
 
         {showSuggestions && filteredOptions.length > 0 && (
-          <div className="absolute z-10 mt-1 w-full bg-white border border-[#FFA500] rounded-md shadow-lg max-h-40 overflow-y-auto">
+          <div
+            onMouseDown={(e) => e.preventDefault()}
+            className="absolute z-10 mt-1 w-full bg-white border border-[#FFA500] rounded-md shadow-lg max-h-40 overflow-y-auto"
+          >
             {filteredOptions.map((option, idx) => (
               <div
                 key={idx}
