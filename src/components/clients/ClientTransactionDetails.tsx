@@ -193,10 +193,12 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                 ref={(element) => {
                   transactionRefs.current[txn._id] = element;
                 }}
-                className={`bg-white border border-gray-300 rounded-lg p-4 md:p-6 shadow-sm transition-all duration-700 ${
+                className={`border border-gray-300 rounded-lg p-4 md:p-6 shadow-sm transition-all duration-700 ${
                   highlightedTransactionId === txn._id
                     ? "transaction-highlight ring-2 ring-[#3D80FF] bg-[#F5FAFF]"
-                    : ""
+                    : i % 2 === 0
+                    ? "bg-white"
+                    : "bg-[#EEEFF1]"
                 }`}
               >
                 {/* --- HEADER --- */}

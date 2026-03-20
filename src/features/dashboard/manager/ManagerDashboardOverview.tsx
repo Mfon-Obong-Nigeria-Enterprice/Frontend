@@ -10,11 +10,11 @@ import type { StatCard } from "@/types/stats";
 // stores
 import { useClientStore } from "@/stores/useClientStore";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
-import { useRevenueStore } from "@/stores/useRevenueStore";
 
 // utils
 import { getChangeText } from "@/utils/helpersfunction";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { useMemo } from "react";
 
 // components
 import ManagerOutstandingDebt from "./component/ManagerOutstandingDebt";
@@ -26,13 +26,53 @@ const ManagerDashboardOverview = () => {
     getSalesPercentageChange,
   } = useTransactionsStore();
 
-  const { getMOMRevenue } = useRevenueStore();
   const { getOutStandingBalanceData } = useClientStore();
 
   const todaysSales = getTodaysSales();
-  const monthlyRevenue = getMOMRevenue();
   const outstandingBalance = getOutStandingBalanceData();
   const dailyChange = getSalesPercentageChange();
+
+  const monthlyRevenue = useMemo(() => {
+    if (!transactions) return { totalRevenue: 0, percentageChange: 0, direction: "no-change" as const };
+
+    const now = new Date();
+    const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfPreviousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfPreviousMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+
+    const revenueTypes = ["PURCHASE", "PICKUP", "WHOLESALE", "DEPOSIT"];
+
+    const sumRevenue = (txns: typeof transactions) =>
+      txns
+        .filter((t) => revenueTypes.includes(t.type))
+        .reduce((sum, t) => sum + (t.total || t.amountPaid || 0), 0);
+
+    const currentMonthRevenue = sumRevenue(
+      transactions.filter((t) => {
+        const d = new Date(t.createdAt);
+        return d >= startOfCurrentMonth && d <= now;
+      })
+    );
+
+    const previousMonthRevenue = sumRevenue(
+      transactions.filter((t) => {
+        const d = new Date(t.createdAt);
+        return d >= startOfPreviousMonth && d <= endOfPreviousMonth;
+      })
+    );
+
+    let direction: "increase" | "decrease" | "no-change" = "no-change";
+    let percentageChange = 0;
+    if (previousMonthRevenue === 0 && currentMonthRevenue > 0) {
+      direction = "increase"; percentageChange = 100;
+    } else if (previousMonthRevenue > 0) {
+      const change = ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100;
+      direction = change > 0 ? "increase" : change < 0 ? "decrease" : "no-change";
+      percentageChange = Math.round(Math.abs(change) * 100) / 100;
+    }
+
+    return { totalRevenue: currentMonthRevenue, percentageChange, direction };
+  }, [transactions]);
 
   const stats: StatCard[] = [
     {
@@ -83,7 +123,7 @@ const ManagerDashboardOverview = () => {
         description="Welcome back! Here’s an overview of your business"
       />
 
-      <Stats data={stats} />
+      <Stats data={stats} columns={3} />
 
       {/* Sales Overview + Recent Sales */}
       <div className="mt-9 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">

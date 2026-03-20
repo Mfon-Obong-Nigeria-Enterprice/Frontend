@@ -487,7 +487,7 @@ export default function ColumnSettings() {
   }
 
   return (
-    <div className="lg:scale-90 lg:-translate-x-20 p-2 md:p-6 space-y-3 bg-gray-50">
+    <div className="p-2 md:p-6 space-y-3 bg-gray-50 w-full max-w-full overflow-x-hidden">
       {/* HEADER: Updated Layout for Mobile/Desktop Match */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 md:gap-4">
         <div className="flex items-center justify-between w-full lg:w-auto">
