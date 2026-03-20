@@ -15,9 +15,11 @@ export const getDailySales = (transactions: Transaction[]) => {
   last7Days.forEach((dateStr) => (salesMap[dateStr] = 0));
 
   transactions.forEach((txn) => {
+    if (txn.type !== "PURCHASE" && txn.type !== "WHOLESALE" && txn.type !== "RETURN") return;
     const txnDate = new Date(txn.createdAt).toISOString().slice(0, 10);
     if (Object.prototype.hasOwnProperty.call(salesMap, txnDate)) {
-      salesMap[txnDate] += txn.total;
+      const amount = txn.type === "RETURN" ? -(txn.total ?? 0) : (txn.total ?? 0);
+      salesMap[txnDate] += amount;
     }
   });
 

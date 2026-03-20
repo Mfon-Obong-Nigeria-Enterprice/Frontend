@@ -12,6 +12,7 @@ export type ActivityLogs = {
   role: Role;
   device: string;
   timestamp: string;
+  branchId?: string;
   createdAt: string;
   updatedAt: string;
   __v: number;

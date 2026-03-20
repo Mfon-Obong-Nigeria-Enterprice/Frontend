@@ -40,12 +40,13 @@ const ManagerDashboardOverview = () => {
     const startOfPreviousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfPreviousMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
 
-    const revenueTypes = ["PURCHASE", "PICKUP", "WHOLESALE", "DEPOSIT"];
-
     const sumRevenue = (txns: typeof transactions) =>
       txns
-        .filter((t) => revenueTypes.includes(t.type))
-        .reduce((sum, t) => sum + (t.total || t.amountPaid || 0), 0);
+        .filter((t) => t.type === "PURCHASE" || t.type === "WHOLESALE" || t.type === "RETURN")
+        .reduce((sum, t) => {
+          const amount = t.total || t.amountPaid || 0;
+          return t.type === "RETURN" ? sum - amount : sum + amount;
+        }, 0);
 
     const currentMonthRevenue = sumRevenue(
       transactions.filter((t) => {

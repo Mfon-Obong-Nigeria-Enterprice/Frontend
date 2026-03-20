@@ -42,9 +42,15 @@ export function timeAgo(date: string | Date): string {
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
+  const months = Math.floor(days / 30);
+  const years = Math.floor(days / 365);
 
   let result = "";
-  if (days > 0) {
+  if (years > 0) {
+    result = `${years} ${years === 1 ? "year" : "years"}`;
+  } else if (months > 0) {
+    result = `${months} ${months === 1 ? "month" : "months"}`;
+  } else if (days > 0) {
     result = `${days} ${days === 1 ? "day" : "days"}`;
   } else if (hours > 0) {
     result = `${hours} ${hours === 1 ? "hour" : "hours"}`;

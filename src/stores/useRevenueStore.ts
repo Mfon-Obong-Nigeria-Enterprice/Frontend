@@ -148,15 +148,13 @@ const calculatePercentageChange = (current: number, previous: number) => {
 };
 
 // Helper function to get revenue from transactions
+// PURCHASE + WHOLESALE add to revenue, RETURN subtracts, DEPOSIT/PICKUP excluded
 const getRevenueFromTransactions = (transactions: Transaction[]): number => {
   return transactions
-    .filter(
-      (t) =>
-        t.type === "PURCHASE" || t.type === "PICKUP" || t.type === "DEPOSIT"
-    )
+    .filter((t) => t.type === "PURCHASE" || t.type === "WHOLESALE" || t.type === "RETURN")
     .reduce((total, t) => {
       const amount = t.total || t.amountPaid || t.amount || 0;
-      return total + amount;
+      return t.type === "RETURN" ? total - amount : total + amount;
     }, 0);
 };
 
@@ -636,7 +634,7 @@ export const useRevenueStore = create<RevenueState>((set, get) => ({
         return (
           transactionDate >= startOfDay &&
           transactionDate <= endOfDay &&
-          (t.type === "PURCHASE" || t.type === "PICKUP" || t.type === "DEPOSIT")
+          (t.type === "PURCHASE" || t.type === "WHOLESALE" || t.type === "RETURN")
         );
       });
 
@@ -686,7 +684,7 @@ export const useRevenueStore = create<RevenueState>((set, get) => ({
         return (
           transactionDate >= weekStart &&
           transactionDate <= weekEnd &&
-          (t.type === "PURCHASE" || t.type === "PICKUP" || t.type === "DEPOSIT")
+          (t.type === "PURCHASE" || t.type === "WHOLESALE" || t.type === "RETURN")
         );
       });
 
@@ -731,7 +729,7 @@ export const useRevenueStore = create<RevenueState>((set, get) => ({
         return (
           transactionDate >= startOfDay &&
           transactionDate <= endOfDay &&
-          (t.type === "PURCHASE" || t.type === "PICKUP" || t.type === "DEPOSIT")
+          (t.type === "PURCHASE" || t.type === "WHOLESALE" || t.type === "RETURN")
         );
       });
 
@@ -768,7 +766,7 @@ export const useRevenueStore = create<RevenueState>((set, get) => ({
       return (
         transactionDate >= thirtyDaysAgo &&
         transactionDate <= now &&
-        (t.type === "PURCHASE" || t.type === "PICKUP" || t.type === "DEPOSIT")
+        (t.type === "PURCHASE" || t.type === "WHOLESALE" || t.type === "RETURN")
       );
     });
 
@@ -778,7 +776,7 @@ export const useRevenueStore = create<RevenueState>((set, get) => ({
       return (
         transactionDate >= sixtyDaysAgo &&
         transactionDate < thirtyDaysAgo &&
-        (t.type === "PURCHASE" || t.type === "PICKUP" || t.type === "DEPOSIT")
+        (t.type === "PURCHASE" || t.type === "WHOLESALE" || t.type === "RETURN")
       );
     });
 
@@ -816,7 +814,7 @@ export const useRevenueStore = create<RevenueState>((set, get) => ({
     transactions.forEach((transaction) => {
       if (
         transaction.items &&
-        (transaction.type === "PURCHASE" || transaction.type === "PICKUP")
+        (transaction.type === "PURCHASE" || transaction.type === "WHOLESALE")
       ) {
         transaction.items.forEach((item) => {
           const product = products.find(
@@ -889,7 +887,7 @@ export const useRevenueStore = create<RevenueState>((set, get) => ({
 
     const transactionsWithDiscount = transactions.filter(
       (t) =>
-        (t.type === "PURCHASE" || t.type === "PICKUP") &&
+        (t.type === "PURCHASE" || t.type === "WHOLESALE") &&
         t.discount &&
         t.discount > 0
     );
@@ -959,7 +957,7 @@ export const useRevenueStore = create<RevenueState>((set, get) => ({
       const transactionDate = new Date(t.createdAt);
       return (
         transactionDate >= threeMonthsAgo &&
-        (t.type === "PURCHASE" || t.type === "PICKUP")
+        (t.type === "PURCHASE" || t.type === "WHOLESALE")
       );
     });
 
@@ -969,7 +967,7 @@ export const useRevenueStore = create<RevenueState>((set, get) => ({
       return (
         transactionDate >= sixMonthsAgo &&
         transactionDate < threeMonthsAgo &&
-        (t.type === "PURCHASE" || t.type === "PICKUP")
+        (t.type === "PURCHASE" || t.type === "WHOLESALE")
       );
     });
 
@@ -1101,8 +1099,7 @@ export const useRevenueStore = create<RevenueState>((set, get) => ({
     transactions.forEach((transaction) => {
       if (
         transaction.type === "PURCHASE" ||
-        transaction.type === "PICKUP" ||
-        transaction.type === "DEPOSIT"
+        transaction.type === "WHOLESALE"
       ) {
         const rawMethod = transaction.paymentMethod || "Cash";
         const methodKey = normalizeMethod(rawMethod);

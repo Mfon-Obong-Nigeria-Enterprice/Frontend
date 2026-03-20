@@ -20,6 +20,8 @@ export const getWeeklySales = (transactions: Transaction[]): WeeklySales[] => {
   const weeklyMap: Record<string, number> = {};
 
   transactions.forEach((txn) => {
+    if (txn.type !== "PURCHASE" && txn.type !== "WHOLESALE" && txn.type !== "RETURN") return;
+
     const date = new Date(txn.createdAt);
     const year = date.getFullYear();
 
@@ -31,10 +33,11 @@ export const getWeeklySales = (transactions: Transaction[]): WeeklySales[] => {
     const weekNumber = Math.ceil((date.getDay() + 1 + days) / 7);
 
     const key = `${year}-W${weekNumber}`;
-    if (weeklyMap[key]) {
-      weeklyMap[key] += txn.total;
+    const amount = txn.type === "RETURN" ? -(txn.total ?? 0) : (txn.total ?? 0);
+    if (weeklyMap[key] !== undefined) {
+      weeklyMap[key] += amount;
     } else {
-      weeklyMap[key] = txn.total;
+      weeklyMap[key] = amount;
     }
   });
 

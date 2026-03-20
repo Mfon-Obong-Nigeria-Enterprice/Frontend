@@ -29,6 +29,7 @@ import { getTransactionDateString } from "@/utils/transactions";
 import { useQuery } from "@tanstack/react-query";
 import { getAllTransactions } from "@/services/transactionService";
 import { getTransactionTypeBadgeStyles } from "@/utils/transactionTypeStyles";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ClientDirectoryProps {
   searchTerm: string;
@@ -50,7 +51,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
   const { clients } = useClientStore();
   const navigate = useNavigate();
 
-  const { data: allTransactions } = useQuery({
+  const { data: allTransactions, isLoading: isTransactionsLoading } = useQuery({
     queryKey: ["transactions"],
     queryFn: getAllTransactions,
     staleTime: 5 * 60 * 1000,
@@ -135,7 +136,17 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentClient.map((client) => {
+              {isTransactionsLoading && Array.from({ length: 8 }).map((_, i) => (
+                <TableRow key={`skeleton-${i}`}>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-8 w-16 rounded" /></TableCell>
+                </TableRow>
+              ))}
+              {!isTransactionsLoading && currentClient.map((client) => {
                 const lastTransaction = getClientTransaction(client);
                 const latestTransaction = latestTransactionMap.get(client._id);
                 const isOwing = client.balance < 0;
@@ -239,7 +250,7 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
                 );
               })}
 
-              {currentClient.length === 0 && (
+              {!isTransactionsLoading && currentClient.length === 0 && (
                 <TableRow>
                   <TableCell
                     colSpan={6}

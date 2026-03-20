@@ -103,10 +103,12 @@ const BarChartDaily = ({ yAxisRange = [0, 4000000] }: BarChartDailyProps) => {
     },
   };
 
+  const chartKey = salesData.map((d) => d.sales).join("-");
+
   return (
     // Updated container: bg-white to match first screenshot, fixed height for stability
     <div className="w-full h-[300px] bg-white p-2 sm:p-4 rounded-lg">
-      <Bar data={data} options={options} />
+      <Bar key={chartKey} data={data} options={options} />
     </div>
   );
 };

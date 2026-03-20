@@ -37,7 +37,7 @@ const SalesOverview = () => {
   const hasSalesData =
     transactions &&
     transactions.length > 0 &&
-    transactions.some((t) => t.type === "PURCHASE" || t.type === "PICKUP");
+    transactions.some((t) => t.type === "PURCHASE" || t.type === "WHOLESALE");
 
   return (
     <div className="bg-white rounded-xl px-4 sm:px-8 py-6 font-Inter">

@@ -80,6 +80,7 @@ const getRoleBasedCapabilities = (role: string) => {
 const Header = ({ userRole }: HeaderProps) => {
   const { userProfile, user, updateUser } = useAuthStore();
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [isNotificationDrawerOpen, setIsNotificationDrawerOpen] = useState(false);
 
   const unreadCount = useUnreadNotificationCount();
 
@@ -161,7 +162,7 @@ const Header = ({ userRole }: HeaderProps) => {
         <div className="flex gap-4 items-center">
           {/* Notifications - Role-based access */}
           {capabilities.canAccessNotifications && (
-            <Drawer direction="right">
+            <Drawer direction="right" open={isNotificationDrawerOpen} onOpenChange={setIsNotificationDrawerOpen}>
               <DrawerTrigger asChild>
                 <button
                   className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -195,7 +196,7 @@ const Header = ({ userRole }: HeaderProps) => {
                   )}
                 </DrawerHeader>
                 <div className=" pb-4">
-                  {user?.role && <NotificationModal />}
+                  {user?.role && <NotificationModal onClose={() => setIsNotificationDrawerOpen(false)} />}
                 </div>
               </DrawerContent>
             </Drawer>

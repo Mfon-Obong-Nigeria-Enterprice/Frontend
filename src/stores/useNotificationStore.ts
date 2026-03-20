@@ -91,10 +91,11 @@ export const useNotificationStore = create<NotificationStore>()(
           );
 
           if (existingIndex !== -1) {
-            // Update existing notification instead of adding duplicate
+            // Update existing notification but preserve the user's read/unread state
             const updatedNotifications = [...state.notifications];
             updatedNotifications[existingIndex] = {
               ...notification,
+              read: state.notifications[existingIndex].read, // never reset read status
               createdAt:
                 notification.createdAt instanceof Date
                   ? notification.createdAt
@@ -226,7 +227,7 @@ export const useNotificationStore = create<NotificationStore>()(
 // Enhanced helper function to check if notification is for user
 function isNotificationForUser(
   notification: Notification,
-  user: { id: string; role: string }
+  user: { id: string; role: string; branchId?: string }
 ): boolean {
   if (!user?.role) return false;
 
@@ -240,15 +241,24 @@ function isNotificationForUser(
     return false;
   }
 
-  // Notification targeting logic:
-  // 1. If userId is specified and matches current user -> show
-  // 2. If userId is undefined (global notification) and role matches -> show
-  // 3. If userId is specified but doesn't match current user -> don't show
+  // ADMIN branch filtering runs first — before any userId check —
+  // so that old notifications (created before branch filtering was added)
+  // cannot bypass the branch restriction via a matching userId.
+  if (userRoleUpper === "ADMIN") {
+    // Personal notifications (e.g. password reset) bypass branch check
+    if (notification.action === "password_reset_received") {
+      return notification.userId === user.id;
+    }
+    // All other ADMIN notifications must carry a matching branchId
+    if (!notification.meta?.branchId || !user.branchId) return false;
+    return String(notification.meta.branchId) === String(user.branchId);
+  }
+
+  // For SUPER_ADMIN / MAINTAINER: check userId if present, otherwise show all
   if (notification.userId !== undefined) {
     return notification.userId === user.id;
   }
 
-  // Global notification for the role
   return true;
 }
 

@@ -64,9 +64,11 @@ const BarChartMonthly = ({ yAxisRange = [0, 50000000] }: BarChartMonthlyProps) =
     },
   };
 
+  const chartKey = salesData.map((d) => d.sales).join("-");
+
   return (
     <div className="bg-[#F5F5F5] p-2 sm:p-6 rounded-lg shadow-md">
-      <Bar data={data} options={options} />
+      <Bar key={chartKey} data={data} options={options} />
     </div>
   );
 };

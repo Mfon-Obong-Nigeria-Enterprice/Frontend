@@ -21,6 +21,7 @@ import { getAllClients } from "@/services/clientService";
 import { getAllTransactions } from "@/services/transactionService";
 import type { Transaction } from "@/types/transactions";
 import { getTransactionTypeBadgeStyles } from "@/utils/transactionTypeStyles";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Helper for amount coloring
 const getAmountColor = (type: string) => {
@@ -30,17 +31,19 @@ const getAmountColor = (type: string) => {
 };
 
 const StaffClients: React.FC = () => {
-  const { data: clients } = useQuery({
+  const { data: clients, isLoading: isClientsLoading } = useQuery({
     queryKey: ["clients"],
     queryFn: getAllClients,
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: allTransactions } = useQuery({
+  const { data: allTransactions, isLoading: isTransactionsLoading } = useQuery({
     queryKey: ["transactions"],
     queryFn: getAllTransactions,
     staleTime: 5 * 60 * 1000,
   });
+
+  const isLoading = isClientsLoading || isTransactionsLoading;
 
   // Map clientId -> latest transaction from Transaction collection
   const latestTransactionMap = useMemo(() => {
@@ -236,7 +239,17 @@ const StaffClients: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E7EB]">
-                {paginatedClients.length > 0 ? (
+                {isLoading && Array.from({ length: 8 }).map((_, i) => (
+                  <tr key={`skeleton-${i}`}>
+                    <td className="py-4 px-6 md:px-2 lg:px-6"><Skeleton className="h-4 w-20" /></td>
+                    <td className="py-4 px-6 md:px-2 lg:px-6"><Skeleton className="h-4 w-28" /></td>
+                    <td className="py-4 px-6 md:px-2 lg:px-6"><Skeleton className="h-6 w-20 rounded-full" /></td>
+                    <td className="py-4 px-6 md:px-2 lg:px-6"><Skeleton className="h-4 w-20" /></td>
+                    <td className="py-4 px-6 md:px-2 lg:px-6"><Skeleton className="h-4 w-20" /></td>
+                    <td className="py-4 px-6 md:px-2 lg:px-6"><Skeleton className="h-8 w-24 rounded" /></td>
+                  </tr>
+                ))}
+                {!isLoading && paginatedClients.length > 0 ? (
                   paginatedClients.map((client, index) => {
                     const latestTransaction = latestTransactionMap.get(client._id);
                     return (
@@ -298,7 +311,7 @@ const StaffClients: React.FC = () => {
                       </tr>
                     );
                   })
-                ) : (
+                ) : !isLoading ? (
                   <tr>
                     <td
                       colSpan={6}
@@ -307,14 +320,27 @@ const StaffClients: React.FC = () => {
                       No clients found matching your search.
                     </td>
                   </tr>
-                )}
+                ) : null}
               </tbody>
             </table>
           </div>
 
           {/* 2. MOBILE CARD LIST VIEW (Matches Screenshot Layout) */}
           <div className="md:hidden flex flex-col divide-y divide-[#E5E7EB]">
-            {paginatedClients.length > 0 ? (
+            {isLoading && Array.from({ length: 5 }).map((_, i) => (
+              <div key={`m-skeleton-${i}`} className="p-4 flex flex-col gap-2">
+                <div className="flex justify-between items-center">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                </div>
+                <Skeleton className="h-3 w-24" />
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-8 w-20 rounded" />
+                </div>
+              </div>
+            ))}
+            {!isLoading && paginatedClients.length > 0 ? (
               paginatedClients.map((client, index) => {
                 const latestTransaction = latestTransactionMap.get(client._id);
                 return (
@@ -381,11 +407,11 @@ const StaffClients: React.FC = () => {
                   </div>
                 );
               })
-            ) : (
+            ) : !isLoading ? (
               <div className="py-8 text-center text-gray-500 text-sm">
                 No clients found matching your search.
               </div>
-            )}
+            ) : null}
           </div>
         </div>
 

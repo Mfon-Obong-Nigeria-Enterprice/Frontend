@@ -7,13 +7,16 @@ export const getMonthlySales = (
   const monthlyMap: Record<string, number> = {};
 
   transactions.forEach((txn) => {
+    if (txn.type !== "PURCHASE" && txn.type !== "WHOLESALE" && txn.type !== "RETURN") return;
+
     const date = new Date(txn.createdAt);
     const monthKey = `${date.getFullYear()}-${date.getMonth()}`; // e.g. "2025-7"
+    const amount = txn.type === "RETURN" ? -(txn.total ?? 0) : (txn.total ?? 0);
 
-    if (monthlyMap[monthKey]) {
-      monthlyMap[monthKey] += txn.total;
+    if (monthlyMap[monthKey] !== undefined) {
+      monthlyMap[monthKey] += amount;
     } else {
-      monthlyMap[monthKey] = txn.total;
+      monthlyMap[monthKey] = amount;
     }
   });
 

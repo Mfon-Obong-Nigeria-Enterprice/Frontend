@@ -301,8 +301,7 @@ function generateNotificationMessage(
 
 // Convert activity log to notification
 export function activityLogToNotification(
-  log: ActivityLogs,
-  userId?: string
+  log: ActivityLogs
 ): Notification | null {
   const config =
     NOTIFICATION_CONFIG[log.action as keyof typeof NOTIFICATION_CONFIG];
@@ -325,10 +324,11 @@ export function activityLogToNotification(
     action: config.actionType,
     createdAt: new Date(log.timestamp),
     recipients: config.recipients,
-    userId: userId,
+    // No userId — notifications are role+branch scoped, not user-scoped
     meta: {
       adminName: log.performedBy,
       branch: parsedInfo.branch,
+      branchId: log.branchId,
       transactionId: parsedInfo.transactionId,
       timestamp: log.timestamp,
       ...parsedInfo,
@@ -478,9 +478,18 @@ export class ActivityNotificationService {
       const { addNotification } = useNotificationStore.getState();
       let processedCount = 0;
 
-      for (const log of newLogs) {
+      // For ADMIN: only process logs that explicitly match their branch
+      // (logs without branchId are system-wide and not shown to branch admins)
+      const logsToProcess = currentUser.role === 'ADMIN'
+        ? newLogs.filter((log) => {
+            if (!log.branchId || !currentUser.branchId) return false;
+            return String(log.branchId) === String(currentUser.branchId);
+          })
+        : newLogs;
+
+      for (const log of logsToProcess) {
         try {
-          const notification = activityLogToNotification(log, currentUser.id);
+          const notification = activityLogToNotification(log);
           if (notification) {
             addNotification(notification);
             processedCount++;
@@ -493,7 +502,12 @@ export class ActivityNotificationService {
         }
       }
 
-      if (sortedLogs.length > 0) {
+      // Always advance the pointer using all sorted logs (not just the filtered set),
+      // so we don't re-process old logs on the next poll cycle.
+      if (newLogs.length > 0) {
+        this.saveLastProcessedId(newLogs[newLogs.length - 1]._id);
+      } else if (sortedLogs.length > 0 && !this.lastProcessedId) {
+        // First run with no new logs — anchor to the latest log so we only get future ones
         this.saveLastProcessedId(sortedLogs[sortedLogs.length - 1]._id);
       }
 
@@ -652,7 +666,7 @@ export class ActivityNotificationService {
     }
 
     try {
-      const notification = activityLogToNotification(log, currentUser.id);
+      const notification = activityLogToNotification(log);
       if (notification) {
         const { addNotification } = useNotificationStore.getState();
         addNotification(notification);
