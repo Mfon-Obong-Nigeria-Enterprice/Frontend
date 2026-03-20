@@ -322,7 +322,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     );
 
     const supplies = sortedTxns.filter(
-      (t) => t.type === "PURCHASE" || t.type === "PICKUP"
+      (t) => t.type === "PURCHASE" || t.type === "PICKUP" || t.type === "WHOLESALE"
     );
 
     // B/F: read balanceBefore directly from the first transaction in the filtered period
@@ -462,7 +462,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       doc.setFont("helvetica", "normal");
       doc.setTextColor(51, 51, 51);
       doc.text(
-        `Materials Supplied on ${formatDate(getTransactionDate(txn))}`,
+        `${t.type === "WHOLESALE" ? "Wholesale Supplied" : "Materials Supplied"} on ${formatDate(getTransactionDate(txn))}`,
         margin + 4,
         cursorY + 5.5
       );
@@ -681,7 +681,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
           });
         }
       } else if (
-        (t.type === "PURCHASE" || t.type === "PICKUP") &&
+        (t.type === "PURCHASE" || t.type === "PICKUP" || t.type === "WHOLESALE") &&
         (Number(t.amountPaid) || 0) > 0
       ) {
         const paid = Number(t.amountPaid);

@@ -403,7 +403,7 @@
 //       let paymentMethodForBackend = paymentMethod;
 //       if (subMethod) {
 //         if (paymentMethod === "bank" || paymentMethod === "transfer") {
-//           paymentMethodForBackend = `Transfer from ${subMethod}`;
+//           paymentMethodForBackend = `Transfer to ${subMethod}`;
 //         } else if (paymentMethod === "pos") {
 //           paymentMethodForBackend = `POS with ${subMethod}`;
 //         }
@@ -948,7 +948,7 @@ const NewSales: React.FC = () => {
     // Format payment method for display
     let paymentMethodDisplay = paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1);
     if (paymentMethod === "bank" || paymentMethod === "transfer") {
-      paymentMethodDisplay = subMethod ? `Transfer from ${subMethod}` : "Bank Transfer";
+      paymentMethodDisplay = subMethod ? `Transfer to ${subMethod}` : "Bank Transfer";
     } else if (paymentMethod === "pos") {
       paymentMethodDisplay = subMethod ? `POS - ${subMethod}` : "POS";
     }
@@ -1012,7 +1012,7 @@ const NewSales: React.FC = () => {
       let paymentMethodForBackend = paymentMethod;
       if (subMethod) {
         if (paymentMethod === "bank" || paymentMethod === "transfer") {
-          paymentMethodForBackend = `Transfer from ${subMethod}`;
+          paymentMethodForBackend = `Transfer to ${subMethod}`;
         } else if (paymentMethod === "pos") {
           paymentMethodForBackend = `POS with ${subMethod}`;
         }

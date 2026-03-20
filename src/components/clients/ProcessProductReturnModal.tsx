@@ -3,8 +3,8 @@ import ReactDOM from 'react-dom';
 import { X, Minus, Plus, ChevronDown } from 'lucide-react';
 import type { Transaction } from '@/types/transactions';
 import { getTransactionDate } from '@/utils/transactions';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createReturnTransaction, type ReturnTransactionItem } from '@/services/transactionService';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { createReturnTransaction, getAllTransactions, type ReturnTransactionItem } from '@/services/transactionService';
 import { toast } from 'react-toastify';
 
 // Infer the item type from the Transaction's items array
@@ -18,11 +18,12 @@ interface ReturnedItemInfo extends ReturnTransactionItem {
 
 interface ProductReturnCardProps {
   item: TransactionItem;
+  maxQuantity: number;
   returnedInfo: { quantity: number; returnPrice: number; returnAmount: number };
   onReturnInfoChange: (info: { quantity: number; returnPrice: number; returnAmount: number }) => void;
 }
 
-const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedInfo, onReturnInfoChange }) => {
+const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, maxQuantity, returnedInfo, onReturnInfoChange }) => {
   const { quantity: returnedQuantity, returnPrice, returnAmount } = returnedInfo;
 
   const formatMoneyInput = (value: number) => {
@@ -37,11 +38,11 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedInf
   };
 
   const handleIncrement = () => {
-    const newQuantity = Math.min(returnedQuantity + 1, item.quantity);
+    const newQuantity = Math.min(returnedQuantity + 1, maxQuantity);
     onReturnInfoChange({
       quantity: newQuantity,
       returnPrice: returnPrice,
-      returnAmount: newQuantity * returnPrice, // Recalculate amount
+      returnAmount: newQuantity * returnPrice,
     });
   };
 
@@ -50,23 +51,18 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedInf
     onReturnInfoChange({
       quantity: newQuantity,
       returnPrice: returnPrice,
-      returnAmount: newQuantity * returnPrice, // Recalculate amount
+      returnAmount: newQuantity * returnPrice,
     });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Allow empty string to let user clear the input, otherwise default to 0
     let val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
-    
     if (isNaN(val)) val = 0;
-    
-    // Clamp value between 0 and max quantity
-    val = Math.max(0, Math.min(val, item.quantity));
-    
+    val = Math.max(0, Math.min(val, maxQuantity));
     onReturnInfoChange({
       quantity: val,
       returnPrice: returnPrice,
-      returnAmount: val * returnPrice, // Recalculate amount
+      returnAmount: val * returnPrice,
     });
   };
 
@@ -106,7 +102,10 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedInf
 />
           <div>
             <h3 className="text-base font-semibold text-[#333333]">{item.productName}</h3>
-            <p className="text-sm text-gray-500 mt-1">{item.quantity} {item.unit || 'units'}</p>
+            <p className="text-sm text-gray-500 mt-1">{item.quantity} {item.unit || 'units'} purchased</p>
+            {maxQuantity < item.quantity && (
+              <p className="text-xs text-amber-600 mt-0.5">{item.quantity - maxQuantity} already returned</p>
+            )}
             <p className="text-sm text-gray-500 mt-1">₦{item.unitPrice.toLocaleString()}/{item.unit || 'unit'}</p>
           </div>
         </div>
@@ -133,10 +132,10 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedInf
       <div className="relative">
         <input
           type="number"
-          value={returnedQuantity.toString()} // toString removes leading zeros if any
+          value={returnedQuantity.toString()}
           onChange={handleInputChange}
           min={0}
-          max={item.quantity}
+          max={maxQuantity}
           className="w-[31px] h-[34px] border border-[#D9D9D9] rounded pl-2 text-left text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
@@ -152,7 +151,7 @@ const ProductReturnCard: React.FC<ProductReturnCardProps> = ({ item, returnedInf
     {/* Stacked Helper Text (Unit & Max) */}
     <div className="flex flex-col mt-1.5">
       <span className="text-xs text-gray-500">{item.unit || 'units'}</span>
-      <span className="text-xs text-gray-400">Max {item.quantity}</span>
+      <span className="text-xs text-gray-400">Max {maxQuantity}</span>
     </div>
   </div>
 
@@ -205,6 +204,33 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
   const [returnedItems, setReturnedItems] = useState<Record<string, ReturnedItemInfo>>({});
   const [reason, setReason] = useState('');
   const [actualAmountReturned, setActualAmountReturned] = useState(0);
+
+  // Fetch all transactions to find prior returns referencing this transaction
+  const { data: allTransactions } = useQuery({
+    queryKey: ['transactions'],
+    queryFn: getAllTransactions,
+    enabled: isOpen,
+  });
+
+  // Build a map of already-returned quantities per productId for this specific transaction
+  const alreadyReturnedMap = useMemo(() => {
+    if (!allTransactions || !transaction) return new Map<string, number>();
+    const map = new Map<string, number>();
+    allTransactions
+      .filter((t) => {
+        const refId = typeof t.referenceTransactionId === 'object'
+          ? t.referenceTransactionId?._id
+          : t.referenceTransactionId;
+        return t.type === 'RETURN' && refId === transaction._id;
+      })
+      .forEach((returnTxn) => {
+        returnTxn.items.forEach((item) => {
+          const current = map.get(item.productId) || 0;
+          map.set(item.productId, current + item.quantity);
+        });
+      });
+    return map;
+  }, [allTransactions, transaction]);
 
   const formatMoneyInput = (value: number) => {
     if (!value || value <= 0) return "";
@@ -346,16 +372,26 @@ const ProcessProductReturnModal: React.FC<ProcessProductReturnModalProps> = ({ i
               Select Item to return
             </h3>
             <div className="space-y-4">
-              {transaction.items && transaction.items.length > 0 ? (
-                transaction.items.map((item, index) => (
-                  <ProductReturnCard
-                    key={`${item.productId}-${index}`}
-                    item={item}
-                    returnedInfo={returnedItems[item.productId] || { quantity: 0, returnPrice: item.unitPrice, returnAmount: 0 }}
-                    onReturnInfoChange={(info) => handleReturnInfoChange(item, info)}
-                  />
-                ))
-              ) : (
+              {transaction.items && transaction.items.length > 0 ? (() => {
+                const returnableItems = transaction.items.map((item) => ({
+                  item,
+                  maxQuantity: item.quantity - (alreadyReturnedMap.get(item.productId) || 0),
+                })).filter(({ maxQuantity }) => maxQuantity > 0);
+
+                return returnableItems.length > 0 ? (
+                  returnableItems.map(({ item, maxQuantity }, index) => (
+                    <ProductReturnCard
+                      key={`${item.productId}-${index}`}
+                      item={item}
+                      maxQuantity={maxQuantity}
+                      returnedInfo={returnedItems[item.productId] || { quantity: 0, returnPrice: item.unitPrice, returnAmount: 0 }}
+                      onReturnInfoChange={(info) => handleReturnInfoChange(item, info)}
+                    />
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500">All items from this transaction have already been returned.</p>
+                );
+              })() : (
                 <p className="text-sm text-gray-500">No items available for return in this transaction.</p>
               )}
             </div>
