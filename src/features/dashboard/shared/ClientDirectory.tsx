@@ -10,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useClientStore } from "@/stores/useClientStore";
 import type { Client } from "@/types/types";
 import type { Transaction } from "@/types/transactions";
 import usePagination from "@/hooks/usePagination";
@@ -48,7 +47,6 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
   actionLabel = "view",
   isStaffView = false,
 }) => {
-  const { clients } = useClientStore();
   const navigate = useNavigate();
 
   const { data: allTransactions, isLoading: isTransactionsLoading } = useQuery({
@@ -64,15 +62,15 @@ const ClientDirectory: React.FC<ClientDirectoryProps> = ({
     );
     const map = new Map<string, Transaction>();
     sorted.forEach((txn) => {
-      const clientId = typeof txn.clientId === "object" ? txn.clientId?._id : txn.clientId;
+      const clientId =
+        (typeof txn.clientId === "object" ? txn.clientId?._id : txn.clientId) ||
+        (typeof txn.client === "object" ? txn.client?._id : undefined);
       if (clientId && !map.has(clientId)) map.set(clientId, txn);
     });
     return map;
   }, [allTransactions]);
 
-  const filteredClients = (
-    filteredClientsData.length > 0 ? filteredClientsData : clients ?? []
-  ).filter(
+  const filteredClients = filteredClientsData.filter(
     (client) =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client._id.toLowerCase().includes(searchTerm.toLowerCase())

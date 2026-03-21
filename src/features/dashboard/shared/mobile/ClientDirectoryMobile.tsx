@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import usePagination from "@/hooks/usePagination";
-import { useClientStore } from "@/stores/useClientStore";
 import type { Client } from "@/types/types";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getTypeDisplay } from "@/utils/helpersfunction";
@@ -28,11 +27,8 @@ const ClientDirectoryMobile: React.FC<ClientDirectoryProps> = ({
 }) => {
   //
 
-  const { clients } = useClientStore();
   const navigate = useNavigate();
-  const filteredClients = (
-    filteredClientsData.length > 0 ? filteredClientsData : clients ?? []
-  ).filter(
+  const filteredClients = filteredClientsData.filter(
     (client) =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client._id.toLowerCase().includes(searchTerm.toLowerCase())

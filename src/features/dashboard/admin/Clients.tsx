@@ -16,6 +16,8 @@ import useClientFiltering, {
   type clientBalance,
   type clientStat,
 } from "@/hooks/useClientFiltering";
+import { useQuery } from "@tanstack/react-query";
+import { getAllTransactions } from "@/services/transactionService";
 import ClientStats from "./components/ClientStats";
 import ClientDirectoryMobile from "../shared/mobile/ClientDirectoryMobile";
 import {
@@ -49,6 +51,12 @@ export const Clients: React.FC<ClientProps> = ({
 }) => {
   const { clients } = useClientStore();
 
+  const { data: allTransactions } = useQuery({
+    queryKey: ["transactions"],
+    queryFn: getAllTransactions,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showPdfConfirmDialog, setShowPdfConfirmDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -66,7 +74,7 @@ export const Clients: React.FC<ClientProps> = ({
     clientBalance,
     setClientBalance,
     setClientStatus,
-  } = useClientFiltering(clients);
+  } = useClientFiltering(clients, allTransactions);
 
   const handleStatusChange = (value: string) => {
     setClientStatus(value as clientStat);
@@ -301,7 +309,8 @@ export const Clients: React.FC<ClientProps> = ({
               <SelectContent className="bg-white">
                 <SelectItem value="All Balances">All Balances</SelectItem>
                 <SelectItem value="PURCHASE">Purchase</SelectItem>
-                {/* PICKUP filter removed - deprecated type */}
+                <SelectItem value="WHOLESALE">Wholesale</SelectItem>
+                <SelectItem value="RETURN">Return</SelectItem>
                 <SelectItem value="DEPOSIT">Deposit</SelectItem>
               </SelectContent>
             </Select>

@@ -14,6 +14,7 @@ import {
   // syncSupportNotifications,
   syncAllMaintenanceNotifications,
 } from "@/services/passwordService";
+import { useBranchStore } from "@/stores/useBranchStore";
 
 // Type for notification config entries
 type NotificationConfigEntry = {
@@ -34,6 +35,20 @@ const NOTIFICATION_CONFIG: Record<string, NotificationConfigEntry> = {
     actionType: "transaction_completed" as ActionType,
     priority: "high",
     title: "New Transaction Created",
+  },
+  RETURN_TRANSACTION_CREATED: {
+    recipients: ["ADMIN", "MAINTAINER", "SUPER_ADMIN"] as Role[],
+    type: "info",
+    actionType: "transaction_completed" as ActionType,
+    priority: "high",
+    title: "Return Transaction Created",
+  },
+  WHOLESALE_TRANSACTION_CREATED: {
+    recipients: ["ADMIN", "MAINTAINER", "SUPER_ADMIN"] as Role[],
+    type: "success",
+    actionType: "transaction_completed" as ActionType,
+    priority: "high",
+    title: "New Wholesale Transaction",
   },
   CLIENT_TRANSACTION_ADDED: {
     recipients: ["ADMIN", "MAINTAINER", "SUPER_ADMIN"] as Role[],
@@ -157,6 +172,32 @@ function parseActivityDetails(action: string, details: string) {
       break;
     }
 
+    case "RETURN_TRANSACTION_CREATED": {
+      const returnMatch = details.match(
+        /Return transaction (\S+) created for original transaction (\S+)\. Total Refunded: (\d+), Actual Amount Returned: (\d+)/
+      );
+      if (returnMatch) {
+        info.invoiceNumber = returnMatch[1];
+        info.originalInvoice = returnMatch[2];
+        info.amount = parseInt(returnMatch[3]);
+        info.actualAmountReturned = parseInt(returnMatch[4]);
+      }
+      break;
+    }
+
+    case "WHOLESALE_TRANSACTION_CREATED": {
+      const wholesaleMatch = details.match(
+        /Transaction (\w+) created for ([^(]+)\((\w+)\) - Total: (\d+)/
+      );
+      if (wholesaleMatch) {
+        info.transactionId = wholesaleMatch[1];
+        info.clientName = wholesaleMatch[2].trim();
+        info.transactionType = wholesaleMatch[3];
+        info.amount = parseInt(wholesaleMatch[4]);
+      }
+      break;
+    }
+
     case "USER_CREATED": {
       const userMatch = details.match(
         /New user created: ([^(]+)\(([^)]+)\) with role (\w+)/
@@ -248,6 +289,16 @@ function generateNotificationMessage(
           }`
         : log.details;
 
+    case "RETURN_TRANSACTION_CREATED":
+      return parsedInfo.amount
+        ? `Return of ₦${parsedInfo.amount.toLocaleString()} processed (Invoice: ${parsedInfo.invoiceNumber}, original: ${parsedInfo.originalInvoice})`
+        : log.details;
+
+    case "WHOLESALE_TRANSACTION_CREATED":
+      return parsedInfo.amount
+        ? `Wholesale transaction of ₦${parsedInfo.amount.toLocaleString()} created for ${parsedInfo.clientName}`
+        : log.details;
+
     case "USER_CREATED":
       return parsedInfo.userName
         ? `${parsedInfo.userName} (${parsedInfo.userRole}) has been added to the system`
@@ -301,7 +352,8 @@ function generateNotificationMessage(
 
 // Convert activity log to notification
 export function activityLogToNotification(
-  log: ActivityLogs
+  log: ActivityLogs,
+  branchName?: string
 ): Notification | null {
   const config =
     NOTIFICATION_CONFIG[log.action as keyof typeof NOTIFICATION_CONFIG];
@@ -314,11 +366,13 @@ export function activityLogToNotification(
   }
 
   const parsedInfo = parseActivityDetails(log.action, log.details);
+  const baseMessage = generateNotificationMessage(log, parsedInfo);
+  const message = branchName ? `${baseMessage} — ${branchName}` : baseMessage;
 
   return {
     id: log._id,
     title: config.title,
-    message: generateNotificationMessage(log, parsedInfo),
+    message,
     read: false,
     type: config.type,
     action: config.actionType,
@@ -487,9 +541,19 @@ export class ActivityNotificationService {
           })
         : newLogs;
 
+      const branches = useBranchStore.getState().branches;
+      const isSuperAdmin = currentUser.role === 'SUPER_ADMIN';
+
       for (const log of logsToProcess) {
         try {
-          const notification = activityLogToNotification(log);
+          // For SUPER_ADMIN, resolve branch name from branchId so they know which branch it's from
+          let branchName: string | undefined;
+          if (isSuperAdmin && log.branchId) {
+            const branch = branches.find((b) => String(b._id) === String(log.branchId));
+            branchName = branch?.name;
+          }
+
+          const notification = activityLogToNotification(log, branchName);
           if (notification) {
             addNotification(notification);
             processedCount++;

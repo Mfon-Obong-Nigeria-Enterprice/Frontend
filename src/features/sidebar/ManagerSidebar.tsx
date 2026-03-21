@@ -59,11 +59,11 @@ const items = [
     url: "/manager/dashboard/manager-notifications",
     icon: "material-symbols:notifications-outline",
   },
-  {
-    title: "Settings",
-    url: "/manager/dashboard/manager-settings",
-    icon: "material-symbols:settings-outline-rounded",
-  },
+  // {
+  //   title: "Settings",
+  //   url: "/manager/dashboard/manager-settings",
+  //   icon: "material-symbols:settings-outline-rounded",
+  // },
 ];
 
 interface ManagerSidebarProps {

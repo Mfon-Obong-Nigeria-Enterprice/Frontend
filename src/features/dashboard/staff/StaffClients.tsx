@@ -58,7 +58,9 @@ const StaffClients: React.FC = () => {
     
     // For each transaction, if we haven't seen this clientId yet, it's the latest
     sorted.forEach(txn => {
-      const clientId = typeof txn.clientId === 'string' ? txn.clientId : txn.clientId?._id;
+      const clientId =
+        (typeof txn.clientId === "object" ? txn.clientId?._id : txn.clientId) ||
+        (typeof txn.client === "object" ? txn.client?._id : undefined);
       if (clientId && !map.has(clientId)) {
         map.set(clientId, txn);
       }
@@ -77,7 +79,7 @@ const StaffClients: React.FC = () => {
     filteredClients: statusBalanceFilter,
     clientBalance,
     setClientBalance,
-  } = useClientFiltering(clients);
+  } = useClientFiltering(clients, allTransactions);
 
   const filteredClients = useMemo(() => {
     return statusBalanceFilter.filter(
@@ -203,7 +205,8 @@ const StaffClients: React.FC = () => {
                 <SelectContent>
                   <SelectItem value="All Balances">All Balances</SelectItem>
                   <SelectItem value="PURCHASE">Purchase</SelectItem>
-                  {/* PICKUP filter removed - deprecated type */}
+                  <SelectItem value="WHOLESALE">Wholesale</SelectItem>
+                  <SelectItem value="RETURN">Return</SelectItem>
                   <SelectItem value="DEPOSIT">Deposit</SelectItem>
                 </SelectContent>
               </Select>

@@ -8,6 +8,8 @@ import useClientFiltering, {
   type clientBalance,
   type clientStat,
 } from "@/hooks/useClientFiltering";
+import { useQuery } from "@tanstack/react-query";
+import { getAllTransactions } from "@/services/transactionService";
 import {
   Select,
   SelectTrigger,
@@ -112,13 +114,19 @@ const ManagerClients = () => {
     },
   ];
 
+  const { data: allTransactions } = useQuery({
+    queryKey: ["transactions"],
+    queryFn: getAllTransactions,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const {
     filteredClients: statusBalanceFilter,
     clientStatus,
     clientBalance,
     setClientBalance,
     setClientStatus,
-  } = useClientFiltering(clients);
+  } = useClientFiltering(clients, allTransactions);
 
   const filteredClients = useMemo(() => {
     return statusBalanceFilter.filter(
@@ -352,7 +360,8 @@ const ManagerClients = () => {
                 <SelectContent className="bg-[#D9D9D9] text-[#444444]">
                   <SelectItem value="All Balances">All Balances</SelectItem>
                   <SelectItem value="PURCHASE">Purchase</SelectItem>
-                  {/* PICKUP filter removed - deprecated type */}
+                  <SelectItem value="WHOLESALE">Wholesale</SelectItem>
+                  <SelectItem value="RETURN">Return</SelectItem>
                   <SelectItem value="DEPOSIT">Deposit</SelectItem>
                 </SelectContent>
               </Select>

@@ -1,15 +1,30 @@
+import type { Transaction } from "@/types/transactions";
 import type { Client } from "@/types/types";
 import { useCallback, useMemo, useState } from "react";
 
 export type clientStat = "All status" | "registered" | "unregistered";
-export type clientBalance = "All Balances" | "PURCHASE" | "PICKUP" | "DEPOSIT";
+export type clientBalance = "All Balances" | "PURCHASE" | "WHOLESALE" | "RETURN" | "DEPOSIT";
 
-function useClientFiltering(clients: Client[] = []) {
+function useClientFiltering(clients: Client[] = [], allTransactions?: Transaction[]) {
   const [clientStatus, setClientStatus] = useState<clientStat>("All status");
-  const [clientBalance, setClientBalance] =
-    useState<clientBalance>("All Balances");
+  const [clientBalance, setClientBalance] = useState<clientBalance>("All Balances");
 
-  //
+  // Build a map of clientId → latest transaction type using allTransactions (same source as display)
+  const latestTypeMap = useMemo(() => {
+    if (!allTransactions || allTransactions.length === 0) return null;
+    const sorted = [...allTransactions].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    const map = new Map<string, string>();
+    sorted.forEach((txn) => {
+      const clientId =
+        (typeof txn.clientId === "object" ? txn.clientId?._id : txn.clientId) ||
+        (typeof txn.client === "object" && txn.client !== null ? (txn.client as any)?._id : undefined);
+      if (clientId && !map.has(clientId)) map.set(clientId, txn.type);
+    });
+    return map;
+  }, [allTransactions]);
+
   const clientStat = useCallback(
     (client: Client) => {
       if (clientStatus === "All status") return true;
@@ -20,12 +35,16 @@ function useClientFiltering(clients: Client[] = []) {
     [clientStatus]
   );
 
-  //
   const clientBal = useCallback(
     (client: Client) => {
       if (clientBalance === "All Balances") return true;
 
-      // Check if client has transactions
+      // Use allTransactions-based map when available (same data source as Type column display)
+      if (latestTypeMap) {
+        return latestTypeMap.get(client._id) === clientBalance;
+      }
+
+      // Fallback: use client.transactions embedded on the client object
       if (
         !client.transactions ||
         !Array.isArray(client.transactions) ||
@@ -33,50 +52,21 @@ function useClientFiltering(clients: Client[] = []) {
       ) {
         return false;
       }
-
-      const hasPurchase = client.transactions.some((transaction) => {
-        return transaction.type === "PURCHASE";
-      });
-
-      const hasPickup = client.transactions.some((transaction) => {
-        return transaction.type === "PICKUP";
-      });
-      const hasDeposit = client.transactions.some((transaction) => {
-        return transaction.type === "DEPOSIT";
-      });
-      if (clientBalance === "PURCHASE") return hasPurchase;
-      if (clientBalance === "PICKUP") return hasPickup;
-      if (clientBalance === "DEPOSIT") return hasDeposit;
-
-      return true;
+      const sorted = [...client.transactions].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      return sorted[0]?.type === clientBalance;
     },
-    [clientBalance]
+    [clientBalance, latestTypeMap]
   );
 
-  //
-  // Usage example with filtered clients
   const filteredClients = useMemo(() => {
-    if (!clients || !Array.isArray(clients)) {
-      return [];
-    }
-    // console.log("📊 Original clients count:", clients.length);
-
-    // Apply status filter first
-    const statusFiltered = clients.filter((client) => {
-      const passes = clientStat(client);
-      return passes;
-    });
-
-    // Apply balance filter
-    const balanceFiltered = statusFiltered.filter((client) => {
-      const passes = clientBal(client);
-      return passes;
-    });
-
-    return balanceFiltered;
+    if (!clients || !Array.isArray(clients)) return [];
+    return clients
+      .filter((client) => clientStat(client))
+      .filter((client) => clientBal(client));
   }, [clients, clientStat, clientBal]);
 
-  //
   return {
     filteredClients,
     clientBalance,

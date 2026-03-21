@@ -35,7 +35,7 @@ export const SalesOverview = ({ transactions }: SalesOverviewProps) => {
   // --- Core Logic: Process Data based on Filter ---
   const chartData = useMemo(() => {
     // 2. SAFEGUARD: Filter out items without dates before sorting
-    const validTransactions = tx.filter(t => t.date);
+    const validTransactions = tx.filter(t => t.date || t.createdAt);
 
     // Determine the "Current" date based on data
     const latestTransactionDate = validTransactions.length > 0 
@@ -78,10 +78,13 @@ export const SalesOverview = ({ transactions }: SalesOverviewProps) => {
 
     // 2. Aggregate Transactions
     tx.forEach((t) => {
-      // 3. CHECK: Ensure date exists before processing
-      if (t.status !== "COMPLETED" || !t.date) return;
+      // Only count revenue-relevant transaction types
+      if (t.type !== "PURCHASE" && t.type !== "WHOLESALE" && t.type !== "RETURN") return;
+      // Use date if available, fall back to createdAt
+      const dateStr = t.date || t.createdAt;
+      if (!dateStr) return;
 
-      const tDate = new Date(t.date);
+      const tDate = new Date(dateStr);
       let key = "";
 
       if (filter === "Daily") {

@@ -216,10 +216,8 @@ const Transactions = () => {
     }
 
     // Transaction type filter
-    if (transactionTypeFilter?.toUpperCase() === "PURCHASE") {
-      filtered = filtered.filter((tx) => tx.type === "PURCHASE");
-    } else if (transactionTypeFilter === "PICKUP") {
-      filtered = filtered.filter((tx) => tx.type === "PICKUP");
+    if (transactionTypeFilter && transactionTypeFilter !== "allType") {
+      filtered = filtered.filter((tx) => tx.type === transactionTypeFilter.toUpperCase());
     }
 
     // Branch filter (only for SUPER_ADMIN/manager)
@@ -473,7 +471,9 @@ const Transactions = () => {
             <SelectGroup>
               <SelectItem value="allType">All Transaction Types</SelectItem>
               <SelectItem value="PURCHASE">Purchase</SelectItem>
-              {/* PICKUP filter removed - deprecated type, but historical data still displays */}
+              <SelectItem value="WHOLESALE">Wholesale</SelectItem>
+              <SelectItem value="RETURN">Return</SelectItem>
+              <SelectItem value="DEPOSIT">Deposit</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
