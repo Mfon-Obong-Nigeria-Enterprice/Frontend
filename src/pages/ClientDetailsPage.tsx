@@ -54,22 +54,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   const { user } = useAuthStore();
 
   // Determine if current user is a manager/super_admin
-  const isManager = useMemo(() => {
+  const isSuperAdmin = useMemo(() => {
     if (isManagerView) return true;
     if (!user || !user.role) return false;
-
-    const normalizedRole = user.role.toString().trim().toUpperCase();
-    return (
-      normalizedRole === "SUPER_ADMIN" ||
-      normalizedRole === "ADMIN" ||
-      normalizedRole === "MAINTAINER"
-    );
-  }, [user, isManagerView]);
-
-  const isSuperAdmin = useMemo(() => {
-    if (!user || !user.role) return false;
     return user.role.toString().trim().toUpperCase() === "SUPER_ADMIN";
-  }, [user]);
+  }, [user, isManagerView]);
 
   const { data: fetchedTransactions, isLoading: transactionsLoading } =
     useQuery({
