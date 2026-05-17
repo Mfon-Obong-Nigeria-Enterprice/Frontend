@@ -1,6 +1,5 @@
 import type { Client } from "@/types/types";
 import type { Transaction } from "@/types/transactions";
-import { getDaysSince } from "@/utils/helpersfunction";
 import { useEffect, useMemo, useState } from "react";
 import {
   formatCurrency
@@ -20,11 +19,6 @@ const ClientDetailInfo = ({
     setClient(initialClient);
   }, [initialClient]);
 
-  const daysOverdue = useMemo(() => {
-    if (!client.lastTransactionDate) return 0;
-    return client.balance < 0 ? getDaysSince(client.lastTransactionDate) : 0;
-  }, [client.balance, client.lastTransactionDate]);
-
   const totalOrders = useMemo(() => {
     if (!transactions || transactions.length === 0) return 0;
     return transactions.filter(
@@ -41,22 +35,6 @@ const ClientDetailInfo = ({
       return sum;
     }, 0);
     return `${formatLargeMonetaryNumber(total)}`;
-  }, [transactions]);
-
-  // Calculate pending invoices or fallback to UI screenshot value
-  const pendingInvoices = useMemo(() => {
-    if (!transactions || transactions.length === 0) return 0;
-
-    const pending = transactions.filter((txn) => {
-      if (txn.type !== "PURCHASE") return false;
-
-      const total = txn.total ?? 0;
-      const paid = txn.amountPaid ?? 0;
-
-      return paid < total;
-    });
-
-    return pending.length;
   }, [transactions]);
 
   // Determine visual status
@@ -111,11 +89,6 @@ const ClientDetailInfo = ({
       </span>
     </div>
     
-    {client.balance < 0 && daysOverdue > 0 && (
-      <div className="bg-[#FDE68A] text-[#92400E] text-[10px] md:text-xs font-medium px-3 py-1.5 rounded flex items-center">
-        {daysOverdue} days overdue
-      </div>
-    )}
   </div>
 </div>
 
@@ -188,17 +161,6 @@ const ClientDetailInfo = ({
              <span className="text-xs text-[#444444]">Lifetime value</span>
         </div>
 
-        {/* Days Overdue */}
-        <div className="bg-[#F5F5F5] rounded-lg p-6 flex flex-col items-center justify-center gap-1">
-             <span className="text-xl md:text-2xl font-semibold text-[#333333]">{daysOverdue}</span>
-             <span className="text-xs text-[#444444]">Days overdue</span>
-        </div>
-
-        {/* Pending Invoices */}
-        <div className="bg-[#F5F5F5] rounded-lg p-6 flex flex-col items-center justify-center gap-1">
-             <span className="text-xl md:text-2xl font-semibold text-[#333333]">{pendingInvoices}</span>
-             <span className="text-xs text-[#444444]">Pending invoices</span>
-        </div>
       </div>
     </section>
   );

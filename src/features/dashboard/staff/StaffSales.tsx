@@ -1,13 +1,13 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 // components
 import DashboardTitle from "../shared/DashboardTitle";
 import MySalesActivity from "./components/desktop/MySalesActivity";
 import MobileSalesActivity from "./components/mobile/MobileSalesActivity";
-import WaybillModal from "./components/WaybillModal"; 
 
 // ui
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Pagination,
   PaginationContent,
@@ -20,6 +20,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // icons
 import { VscRefresh } from "react-icons/vsc";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Search } from "lucide-react";
 
 // stores
 import { useTransactionsStore } from "@/stores/useTransactionStore";
@@ -38,41 +39,59 @@ const StaffSales = () => {
   const [filter, setFilter] = useState<"today" | "week" | "month" | "all">(
     "today"
   );
-  const [isWaybillModalOpen, setIsWaybillModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Filter and sort transactions
   const filteredTransactions = useMemo(() => {
     const now = new Date();
+    const query = searchQuery.trim().toLowerCase();
+
     const filtered = transactions?.filter((tx) => {
       const txDate = getTransactionDate(tx);
 
-      if (filter === "all") return true;
+      // Date filter
+      if (filter !== "all") {
+        if (filter === "today") {
+          if (
+            !(
+              txDate.getDate() === now.getDate() &&
+              txDate.getMonth() === now.getMonth() &&
+              txDate.getFullYear() === now.getFullYear()
+            )
+          )
+            return false;
+        }
 
-      if (filter === "today") {
-        return (
-          txDate.getDate() === now.getDate() &&
-          txDate.getMonth() === now.getMonth() &&
-          txDate.getFullYear() === now.getFullYear()
-        );
+        if (filter === "week") {
+          const startOfWeek = new Date(now);
+          startOfWeek.setDate(now.getDate() - now.getDay());
+          startOfWeek.setHours(0, 0, 0, 0);
+          const endOfWeek = new Date(startOfWeek);
+          endOfWeek.setDate(startOfWeek.getDate() + 6);
+          endOfWeek.setHours(23, 59, 59, 999);
+          if (!(txDate >= startOfWeek && txDate <= endOfWeek)) return false;
+        }
+
+        if (filter === "month") {
+          if (
+            !(
+              txDate.getMonth() === now.getMonth() &&
+              txDate.getFullYear() === now.getFullYear()
+            )
+          )
+            return false;
+        }
       }
 
-      if (filter === "week") {
-        const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() - now.getDay()); // sunday
-        startOfWeek.setHours(0, 0, 0, 0);
-
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 6);
-        endOfWeek.setHours(23, 59, 59, 999);
-
-        return txDate >= startOfWeek && txDate <= endOfWeek;
-      }
-
-      if (filter === "month") {
-        return (
-          txDate.getMonth() === now.getMonth() &&
-          txDate.getFullYear() === now.getFullYear()
-        );
+      // Client name search filter
+      if (query) {
+        const clientName = (
+          (tx as any).client?.name ||
+          (tx as any).clientName ||
+          (tx as any).walkInClient?.name ||
+          ""
+        ).toLowerCase();
+        if (!clientName.includes(query)) return false;
       }
 
       return true;
@@ -82,9 +101,9 @@ const StaffSales = () => {
     return filtered.sort((a, b) => {
       const dateA = getTransactionDate(a).getTime();
       const dateB = getTransactionDate(b).getTime();
-      return dateB - dateA; // Descending order (newest first)
+      return dateB - dateA;
     });
-  }, [transactions, filter]);
+  }, [transactions, filter, searchQuery]);
 
   //  use filtered transaction for pagination
   const {
@@ -94,7 +113,12 @@ const StaffSales = () => {
     goToNextPage,
     canGoPrevious,
     canGoNext,
+    resetPage,
   } = usePagination((filteredTransactions ?? []).length, 5);
+
+  useEffect(() => {
+    resetPage();
+  }, [filter, searchQuery, resetPage]);
 
   const currentTransaction = useMemo(() => {
     const startIndex = (currentPage - 1) * 5;
@@ -120,14 +144,19 @@ const StaffSales = () => {
             <VscRefresh />
             Refresh
           </Button>
-          <Button
-            className="min-w-40 hover:bg-[#f5f5f5] text-[#444444] border border-[#7D7D7D] font-medium hover:text-[#2E6EF7] hover:shadow-sm hover:-translate-y-[1px]"
-            onClick={() => setIsWaybillModalOpen(true)} // Open modal on click
-          >
-            <img src="/icons/brick.svg" alt="" className="w-4" />
-            Add Waybill
-          </Button>
         </div>
+      </div>
+
+      {/* search bar */}
+      <div className="relative mt-4 max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7d7d7d]" size={16} />
+        <Input
+          type="text"
+          placeholder="Search by client name..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9 border-[#d9d9d9] text-sm font-Inter"
+        />
       </div>
 
       {/* sales activity */}
@@ -260,12 +289,6 @@ const StaffSales = () => {
           )}
       </section>
 
-      {/* Waybill Modal */}
-      <WaybillModal
-        isOpen={isWaybillModalOpen}
-        onClose={() => setIsWaybillModalOpen(false)}
-        transactions={transactions} // Pass all transactions for recent selection
-      />
     </div>
   );
 };

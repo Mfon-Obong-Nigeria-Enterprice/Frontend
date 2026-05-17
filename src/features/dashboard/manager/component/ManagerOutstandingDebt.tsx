@@ -111,7 +111,7 @@ const ManagerOutstandingDebt = () => {
                   {/* Action */}
                   <div className="flex justify-end md:col-span-2">
                     <button
-                      onClick={handleButtonNavigate}
+                      onClick={() => navigate(`/clients/${client._id}`)}
                       className="text-[#3D80FF] hover:text-blue-700 text-sm font-medium transition-colors"
                     >
                       View

@@ -97,9 +97,6 @@ const getReferenceTransactionId = (txn: Transaction): string | null => {
   return null;
 };
 
-const formatSignedCurrency = (value: number): string => {
-  return `${value >= 0 ? "+" : ""}${formatCurrency(value).trim()}`;
-};
 
 // Helper to get styles based on transaction type matching the screenshots
 const getTypeStyles = (type: string) => {

@@ -77,26 +77,7 @@ const Transactions = () => {
     to: undefined,
   });
 
-  const isAdmin = useMemo(() => {
-    if (!user || !user.role) return false;
-    const normalizedRole = user.role.toString().trim().toUpperCase();
-    return normalizedRole === "ADMIN";
-  }, [user]);
 
-  const branchTransactions = useMemo(() => {
-    if (!user?.branchId) return transactions ?? [];
-
-    if (isAdmin) {
-      return (transactions ?? []).filter((transaction) => {
-        const txBranchId =
-          typeof transaction.branchId === "string"
-            ? transaction.branchId
-            : (transaction.branchId as { _id?: string } | undefined)?._id;
-        return txBranchId === user.branchId;
-      });
-    }
-    return transactions ?? [];
-  }, [transactions, user?.branchId, isAdmin]);
 
   const outstandingBalance = getOutStandingBalanceData() || {
     totalDebt: 0,

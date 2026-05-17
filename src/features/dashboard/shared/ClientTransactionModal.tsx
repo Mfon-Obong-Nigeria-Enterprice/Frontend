@@ -62,8 +62,6 @@ const resolveReturnReasonText = (txn: any): string => {
   return "Return";
 };
 
-const formatSignedCurrency = (value: number): string =>
-  `${value >= 0 ? "+" : ""}${formatCurrency(value).trim()}`;
 
 const getTypeStyles = (type: string) => ({
   badge: getTransactionTypeBadgeStyles(type),

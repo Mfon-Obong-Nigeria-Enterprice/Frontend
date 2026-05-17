@@ -25,8 +25,6 @@ interface FormData {
   name: string;
   phone: string;
   description: string;
-  balance: number;
-  balanceDisplay: string;
   address: string;
 }
 
@@ -39,21 +37,8 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
     name: "",
     phone: "",
     description: "",
-    balance: 0,
-    balanceDisplay: "₦0",
     address: "",
   });
-
-  const formatCurrencyDisplay = (value: string) => {
-    if (!value) return "₦0";
-    const digitsOnly = value.replace(/\D/g, "");
-    if (digitsOnly === "") return "₦0";
-    const numericValue = parseFloat(digitsOnly);
-    return `₦${numericValue.toLocaleString("en-GB", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    })}`;
-  };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
@@ -63,19 +48,6 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
     setFormData((prev) => ({
       ...prev,
       phone: limitedDigits,
-    }));
-  };
-
-  const handleBalanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value;
-    const digitsOnly = inputValue.replace(/\D/g, "");
-    const numericValue = digitsOnly === "" ? 0 : parseFloat(digitsOnly);
-    const formattedDisplay = formatCurrencyDisplay(digitsOnly);
-
-    setFormData((prev) => ({
-      ...prev,
-      balance: numericValue,
-      balanceDisplay: formattedDisplay,
     }));
   };
 
@@ -127,10 +99,6 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
         clientData.description = formData.description.trim();
       }
 
-      if (formData.balance > 0) {
-        clientData.balance = Number(formData.balance);
-      }
-
       await createMutate.mutateAsync(clientData);
 
       onOpenChange(false);
@@ -140,8 +108,6 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
         name: "",
         phone: "",
         description: "",
-        balance: 0,
-        balanceDisplay: "₦0",
         address: "",
       });
       setError(null);
@@ -172,8 +138,6 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
         name: "",
         phone: "",
         description: "",
-        balance: 0,
-        balanceDisplay: "₦0",
         address: "",
       });
       setError(null);
@@ -239,46 +203,27 @@ export function AddClientDialog({ open, onOpenChange }: AddClientDialogProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="sm:w-[225px] w-full">
-                <Label
-                  htmlFor="address"
-                  className="text-sm text-[#333333] font-[400]"
-                >
-                  Client Address
-                </Label>
-                <Input
-                  className="mt-2 font-[400] text-sm border border-[#444444] "
-                  id="address"
-                  placeholder="Enter client address"
-                  required
-                  disabled={isLoading}
-                  value={formData.address}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      address: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="sm:w-[225px] w-full">
-                <Label
-                  htmlFor="balance"
-                  className="text-sm text-[#333333] font-[400]"
-                >
-                  Initial Balance (optional)
-                </Label>
-                <Input
-                  className="mt-2 font-[400] text-sm border border-[#444444] "
-                  id="balance"
-                  type="text"
-                  placeholder="₦0"
-                  disabled={isLoading}
-                  value={formData.balanceDisplay}
-                  onChange={handleBalanceChange}
-                />
-              </div>
+            <div>
+              <Label
+                htmlFor="address"
+                className="text-sm text-[#333333] font-[400]"
+              >
+                Client Address
+              </Label>
+              <Input
+                className="mt-2 font-[400] text-sm border border-[#444444]"
+                id="address"
+                placeholder="Enter client address"
+                required
+                disabled={isLoading}
+                value={formData.address}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    address: e.target.value,
+                  }))
+                }
+              />
             </div>
 
             <div>

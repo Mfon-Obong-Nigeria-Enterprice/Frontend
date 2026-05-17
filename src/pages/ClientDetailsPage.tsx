@@ -777,8 +777,9 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       if (t.type === "DEPOSIT") {
         const amount = Number(t.total) || 0;
         totalDeductions += amount;
+        const depositMethod = t.paymentMethod ? ` (${t.paymentMethod})` : "";
         displayItems.push({
-          description: `Deposited: `,
+          description: `Deposited${depositMethod}: `,
           value: formatCurrencyForPDF(amount),
           isReturn: false,
         });
@@ -877,8 +878,9 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       ) {
         const paid = Number(t.amountPaid);
         totalDeductions += paid;
+        const payMethod = t.paymentMethod ? ` (${t.paymentMethod})` : "";
         displayItems.push({
-          description: `Payment: `,
+          description: `Payment${payMethod}: `,
           value: formatCurrencyForPDF(paid),
           isReturn: false,
         });
