@@ -7,6 +7,7 @@ import {
 } from "@/utils/transactions";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ProcessProductReturnModal from "./ProcessProductReturnModal";
+import { generateReceiptPDF } from "@/utils/generateReceiptPDF";
 
 interface clientTrasactionDetailsProps {
   clientTransactions: Transaction[];
@@ -252,6 +253,12 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                         View Original
                       </button>
                     )}
+                    <button
+                      onClick={() => generateReceiptPDF(txn)}
+                      className="border border-gray-300 text-[#444444] px-4 py-1.5 rounded-md text-sm font-medium bg-white transition-all duration-200 hover:bg-[#F3F7FF] hover:border-[#3D80FF] hover:text-[#2E6EF7] hover:shadow-sm hover:-translate-y-[1px]"
+                    >
+                      Print Receipt
+                    </button>
                   </div>
                 </div>
 

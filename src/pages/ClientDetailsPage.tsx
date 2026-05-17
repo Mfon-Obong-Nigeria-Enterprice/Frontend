@@ -294,21 +294,118 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
     // --- 1. HEADER ---
     const logoSize = 20;
+    const headerTopY = cursorY;
     if (logoBase64) {
-      doc.addImage(logoBase64, "PNG", margin, cursorY, logoSize, logoSize);
+      doc.addImage(logoBase64, "PNG", margin, headerTopY, logoSize, logoSize);
     }
 
-    // Title & subtitle centred vertically in the logo area
+    // Motto and RC number stacked below the logo
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(6);
+    doc.setTextColor(80, 80, 80);
+    doc.text("Motto: TRUTH IS SUCCESS", margin, headerTopY + logoSize + 4);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6);
+    doc.text("RC. BN2801551", margin, headerTopY + logoSize + 8);
+
+    // Company name centered on the page
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(15);
+    doc.setFontSize(13);
     doc.setTextColor(33, 33, 33);
-    doc.text("Account Statement", pageWidth / 2, cursorY + 8, { align: "center" });
+    doc.text("MFON-OBONG NIGERIA ENTERPRISES", pageWidth / 2, headerTopY + 8, { align: "center" });
+
+    // Business description centered, below company name
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    doc.setTextColor(80, 80, 80);
+    const descriptionText =
+      "Building Materials Merchant, General Contractors, Transporters, Dealers and Suppliers of all types of " +
+      "Construction Materials such as Wood of all sizes, Cement, Rods, Zinc, Ceiling Board, Aluminium Products, " +
+      "Importer and Exporter of General goods etc.";
+    const textStartX = margin + logoSize + 6;
+    const descLines = doc.splitTextToSize(descriptionText, pageWidth - textStartX - margin);
+    doc.text(descLines, textStartX, headerTopY + 14);
+
+    cursorY = headerTopY + logoSize + 12;
+
+    // Dividing line
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.2);
+    doc.line(margin, cursorY, pageWidth - margin, cursorY);
+    cursorY += 5;
+
+    // Four address columns
+    const contentWidth = pageWidth - margin * 2;
+    const colWidth = contentWidth / 4;
+    const col1X = margin;
+    const col2X = margin + colWidth;
+    const col3X = margin + colWidth * 2;
+    const col4X = margin + colWidth * 3;
+
+    const addresses = [
+      {
+        label: "HEAD OFFICE:",
+        lines: ["LUS/TM NO. 24/25,", "Timber Market, Utu Edem", "Usung, Ikot Ekpene,", "Akwa Ibom State"],
+      },
+      {
+        label: "UYO (Shelter Afrique):",
+        lines: ["Plot 32 Block 1,", "Shelter Afrique,", "Uyo, Akwa Ibom State"],
+      },
+      {
+        label: "UYO (Oron Road):",
+        lines: ["Km 7 Oron Road,", "(by 1st U-Turn after", "Custom Office),", "Uyo, Akwa Ibom State"],
+      },
+      {
+        label: "UYO (Idoro Road):",
+        lines: ["Idoro Road,", "(By Pepsi Junction),", "Uyo, Akwa Ibom State"],
+      },
+    ];
+
+    const colXPositions = [col1X, col2X, col3X, col4X];
+    const addrLineHeight = 3.8;
+    const addrStartY = cursorY;
+
+    addresses.forEach((addr, i) => {
+      const x = colXPositions[i];
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7);
+      doc.setTextColor(33, 33, 33);
+      doc.text(addr.label, x, addrStartY);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(60, 60, 60);
+      addr.lines.forEach((line, j) => {
+        doc.text(line, x, addrStartY + 4 + j * addrLineHeight);
+      });
+    });
+
+    const maxLines = Math.max(...addresses.map((a) => a.lines.length));
+    cursorY += 4 + maxLines * addrLineHeight + 4;
+
+    // Contact numbers
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(60, 60, 60);
+    doc.text("Tel: 0802-472-0210,  0703-436-7795", margin, cursorY);
+    cursorY += 6;
+
+    // Dividing line before statement content
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.2);
+    doc.line(margin, cursorY, pageWidth - margin, cursorY);
+    cursorY += 6;
+
+    // Account Statement title
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(33, 33, 33);
+    doc.text("Account Statement", pageWidth / 2, cursorY + 5, { align: "center" });
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(80, 80, 80);
-    doc.text("Materials Supply Record", pageWidth / 2, cursorY + 14, { align: "center" });
+    doc.text("Materials Supply Record", pageWidth / 2, cursorY + 11, { align: "center" });
+    cursorY += 18;
 
-    cursorY += logoSize + 5;
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.2);
     doc.line(margin, cursorY, pageWidth - margin, cursorY);
@@ -325,12 +422,32 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       (t) => t.type === "PURCHASE" || t.type === "PICKUP" || t.type === "WHOLESALE"
     );
 
-    // B/F: read balanceBefore directly from the first transaction in the filtered period
-    const firstTxn = sortedTxns[0];
-    const bfBalance = firstTxn ? firstTxn.balanceBefore : 0;
-    const isDebt = bfBalance < 0;
-    const isCredit = bfBalance > 0;
-    const absInitialBalance = Math.abs(bfBalance);
+    // Compute final balance first from the reliable backend snapshot
+    const lastTxnForBalance = sortedTxns[sortedTxns.length - 1];
+    const finalBalance = lastTxnForBalance ? lastTxnForBalance.balanceAfter : currentBalance;
+
+    // Compute opening balance by reversing all transaction effects from the known-correct final balance.
+    // This is reliable even for old transactions that lack a clientBalanceAfterTransaction snapshot.
+    let periodSupplyOutstanding = 0;
+    let periodDepositTotal = 0;
+    let periodReturnTotal = 0;
+
+    sortedTxns.forEach((txn) => {
+      const rawT = (mergedTransactions.find((m) => m._id === txn._id) || txn) as any;
+      if (rawT.type === "PURCHASE" || rawT.type === "PICKUP" || rawT.type === "WHOLESALE") {
+        periodSupplyOutstanding += (Number(rawT.total) || 0) - (Number(rawT.amountPaid) || 0);
+      } else if (rawT.type === "DEPOSIT") {
+        periodDepositTotal += Number(rawT.total) || 0;
+      } else if (rawT.type === "RETURN") {
+        periodReturnTotal += Number(rawT.actualAmountReturned) || 0;
+      }
+    });
+
+    // openingBalance = finalBalance + what was owed - what was paid back
+    const openingBalance = finalBalance + periodSupplyOutstanding - periodDepositTotal - periodReturnTotal;
+    const isDebt = openingBalance < 0;
+    const isCredit = openingBalance > 0;
+    const absInitialBalance = Math.abs(openingBalance);
 
     // Report date range
     const reportStartDate =
@@ -446,6 +563,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       // Block Height Calculation
       const headerHeight = 8;
       const itemLineHeight = 6;
+      const itemTableHeaderHeight = 5;
       const chargesLineHeight = 6;
       const discountLineHeight = 6;
       const subTotalHeight = 10;
@@ -453,6 +571,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
       let totalBlockHeight =
         headerHeight +
+        (txn.items && txn.items.length > 0 ? itemTableHeaderHeight : 0) +
         itemsCount * itemLineHeight +
         charges.length * chargesLineHeight +
         subTotalHeight +
@@ -475,27 +594,54 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         margin + 4,
         cursorY + 5.5
       );
+
+      // Invoice & waybill numbers — right side of header
+      const refParts: string[] = [];
+      if (t.invoiceNumber) refParts.push(t.invoiceNumber);
+      if (t.waybillNumber) refParts.push(t.waybillNumber);
+      if (refParts.length > 0) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7.5);
+        doc.setTextColor(80, 80, 80);
+        doc.text(refParts.join("  |  "), pageWidth - margin - 4, cursorY + 5.5, { align: "right" });
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+      }
+
       cursorY += headerHeight + 3;
 
       // Items
       doc.setFontSize(8);
       doc.setTextColor(80, 80, 80);
 
+      const colQty = margin + 4;
+      const colDesc = margin + 18;
+      const colRate = pageWidth - margin - 28;
+      const colAmount = pageWidth - margin - 4;
+
       if (txn.items && txn.items.length > 0) {
+        // Table header row
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7.5);
+        doc.setTextColor(130, 130, 130);
+        doc.text("Qty", colQty, cursorY);
+        doc.text("Description", colDesc, cursorY);
+        doc.text("Rate", colRate, cursorY, { align: "right" });
+        doc.text("Amount", colAmount, cursorY, { align: "right" });
+        cursorY += itemTableHeaderHeight;
+
+        // Item rows
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(80, 80, 80);
         txn.items.forEach((item) => {
           const qty = item.quantity || 0;
           const price = item.unitPrice || 0;
-          doc.text(
-            `(${qty}) ${(`${item.productName} (${item.unit})`)?.toUpperCase() || "ITEM"} @ ${formatCurrencyForPDF(price)}`,
-            margin + 4,
-            cursorY
-          );
-          doc.text(
-            formatCurrencyForPDF(qty * price),
-            pageWidth - margin - 4,
-            cursorY,
-            { align: "right" }
-          );
+          const descText = (`${item.productName} (${item.unit})`)?.toUpperCase() || "ITEM";
+          doc.text(String(qty), colQty, cursorY);
+          doc.text(descText, colDesc, cursorY);
+          doc.text(formatCurrencyForPDF(price), colRate, cursorY, { align: "right" });
+          doc.text(formatCurrencyForPDF(qty * price), colAmount, cursorY, { align: "right" });
           cursorY += itemLineHeight;
         });
       } else {
@@ -638,50 +784,86 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
         });
       } else if (t.type === "RETURN") {
         if (t.items && t.items.length > 0) {
-          // Use actualAmountReturned for deductions — this is the real amount credited to the client
           const returnTotal = Number(t.actualAmountReturned) || 0;
           totalDeductions += returnTotal;
 
-          // Render one unified block for all returned items under one date badge
-          const dateBadgeHeight = 8;
-          const itemLineHeight = 7;
-          const blockHeight = dateBadgeHeight + t.items.length * itemLineHeight + 4;
+          const retHeaderHeight = 8;
+          const retItemTableHeaderHeight = 5;
+          const retItemLineHeight = 6;
+          const retSubTotalHeight = 10;
+          const retBlockHeight =
+            retHeaderHeight + 3 + retItemTableHeaderHeight +
+            t.items.length * retItemLineHeight + retSubTotalHeight + 6;
 
-          checkPageBreak(blockHeight);
+          checkPageBreak(retBlockHeight);
 
-          doc.setFillColor(224, 224, 224);
-          doc.rect(margin, cursorY, pageWidth - margin * 2, blockHeight, "F");
-          doc.setFillColor(150, 150, 150);
-          doc.rect(margin, cursorY, 1.5, blockHeight, "F");
-
-          // Date badge
-          doc.setFillColor(200, 200, 200);
-          doc.rect(margin + 5, cursorY + 2, 35, 6, "F");
+          // Header bar
+          doc.setFillColor(246, 246, 246);
+          doc.rect(margin, cursorY, pageWidth - margin * 2, retHeaderHeight, "F");
+          doc.setFillColor(51, 51, 51);
+          doc.rect(margin, cursorY, 1.5, retHeaderHeight, "F");
           doc.setFont("helvetica", "normal");
           doc.setFontSize(8);
           doc.setTextColor(51, 51, 51);
-          doc.text(`On ${formatDate(getTransactionDate(txn))}`, margin + 7, cursorY + 6);
-          cursorY += dateBadgeHeight;
+          doc.text(`Items Returned on ${formatDate(getTransactionDate(txn))}`, margin + 4, cursorY + 5.5);
 
-          // Each returned item on its own line
+          if (t.invoiceNumber) {
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(7.5);
+            doc.setTextColor(80, 80, 80);
+            doc.text(t.invoiceNumber, pageWidth - margin - 4, cursorY + 5.5, { align: "right" });
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+          }
+          cursorY += retHeaderHeight + 3;
+
+          // Table column headers
+          const colQty = margin + 4;
+          const colDesc = margin + 18;
+          const colRate = pageWidth - margin - 28;
+          const colAmount = pageWidth - margin - 4;
+
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(7.5);
+          doc.setTextColor(130, 130, 130);
+          doc.text("Qty", colQty, cursorY);
+          doc.text("Description", colDesc, cursorY);
+          doc.text("Rate", colRate, cursorY, { align: "right" });
+          doc.text("Amount", colAmount, cursorY, { align: "right" });
+          cursorY += retItemTableHeaderHeight;
+
+          // Item rows
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8);
+          doc.setTextColor(80, 80, 80);
           t.items.forEach((item: any) => {
-            const itemAmount = Number(item.subtotal) || (item.quantity || 0) * (item.unitPrice || 0);
-            const desc = `(${item.quantity}) ${(`${item.productName} (${item.unit})`)?.toUpperCase() || "PRODUCT"} (RETURNED): `;
-            doc.setFontSize(9);
-            const descWidth = (doc.getStringUnitWidth(desc) * doc.getFontSize()) / doc.internal.scaleFactor;
-            doc.setTextColor(68, 68, 68);
-            doc.text(desc, margin + 7, cursorY + 5);
-            doc.setTextColor(231, 76, 60);
-            doc.text(formatCurrencyForPDF(itemAmount), margin + 7 + descWidth, cursorY + 5);
-            cursorY += itemLineHeight;
+            const qty = item.quantity || 0;
+            const rate = item.unitPrice || 0;
+            const amount = Number(item.subtotal) || qty * rate;
+            const descText = (`${item.productName} (${item.unit})`)?.toUpperCase() || "ITEM";
+            doc.text(String(qty), colQty, cursorY);
+            doc.text(descText, colDesc, cursorY);
+            doc.text(formatCurrencyForPDF(rate), colRate, cursorY, { align: "right" });
+            doc.text(formatCurrencyForPDF(amount), colAmount, cursorY, { align: "right" });
+            cursorY += retItemLineHeight;
           });
 
-          doc.setDrawColor(230, 230, 230);
-          doc.line(margin + 5, cursorY + 2, pageWidth - margin - 5, cursorY + 2);
-          cursorY += 6;
+          // Amount returned footer
+          doc.setFillColor(246, 246, 246);
+          doc.rect(margin, cursorY, pageWidth - margin * 2, retSubTotalHeight, "F");
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(8);
+          doc.setTextColor(51, 51, 51);
+          doc.text(
+            `AMOUNT RETURNED: ${formatCurrencyForPDF(returnTotal)}`,
+            pageWidth - margin - 4,
+            cursorY + 6.5,
+            { align: "right" }
+          );
+          cursorY += retSubTotalHeight + 6;
         } else {
           // Fallback: no items stored, show total
-          const amount = Number(t.total) || 0;
+          const amount = Number(t.actualAmountReturned) || Number(t.total) || 0;
           totalDeductions += amount;
           displayItems.push({
             description: `(Returned items): `,
@@ -748,12 +930,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
     // --- 6. BALANCE ---
     checkPageBreak(12);
-    // Calculation: Grand Total (Debt+Purchases) - Deductions (Credit+Payments)
-    const finalBalance = runningTotalForGrand - totalDeductions;
+    // finalBalance already computed above from the backend snapshot
 
     let balanceLabel = "BALANCE";
-    if (finalBalance > 0) balanceLabel = "BALANCE (DEBT)";
-    else if (finalBalance < 0) balanceLabel = "BALANCE (CREDIT)";
+    if (finalBalance < 0) balanceLabel = "BALANCE (DEBT)";
+    else if (finalBalance > 0) balanceLabel = "BALANCE (CREDIT)";
     
     doc.setFillColor(248, 235, 235);
     doc.rect(margin, cursorY, pageWidth - margin * 2, 12, "F");
