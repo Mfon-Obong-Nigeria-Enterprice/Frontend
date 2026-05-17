@@ -425,9 +425,18 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
           amount: loadingOffloading,
         });
 
+      const extraChargesList: { name: string; amount: number }[] = t.extraCharges || [];
+      let extraChargesTotal = 0;
+      extraChargesList.forEach((charge) => {
+        if (charge.amount > 0) {
+          charges.push({ label: charge.name, amount: charge.amount });
+          extraChargesTotal += charge.amount;
+        }
+      });
+
       const discount = Number(t.discount) || 0;
       const calculatedExpectedTotal =
-        itemsTotal + loading + transport + loadingOffloading - discount;
+        itemsTotal + loading + transport + loadingOffloading + extraChargesTotal - discount;
       const discrepancy = transactionTotal - calculatedExpectedTotal;
 
       if (discrepancy > 1) {
@@ -477,7 +486,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
           const qty = item.quantity || 0;
           const price = item.unitPrice || 0;
           doc.text(
-            `(${qty}) ${item.productName?.toUpperCase() || "ITEM"} @ ${formatCurrencyForPDF(price)}`,
+            `(${qty}) ${(`${item.productName} (${item.unit})`)?.toUpperCase() || "ITEM"} @ ${formatCurrencyForPDF(price)}`,
             margin + 4,
             cursorY
           );
@@ -657,7 +666,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
           // Each returned item on its own line
           t.items.forEach((item: any) => {
             const itemAmount = Number(item.subtotal) || (item.quantity || 0) * (item.unitPrice || 0);
-            const desc = `(${item.quantity}) ${item.productName?.toUpperCase() || "PRODUCT"} (RETURNED): `;
+            const desc = `(${item.quantity}) ${(`${item.productName} (${item.unit})`)?.toUpperCase() || "PRODUCT"} (RETURNED): `;
             doc.setFontSize(9);
             const descWidth = (doc.getStringUnitWidth(desc) * doc.getFontSize()) / doc.internal.scaleFactor;
             doc.setTextColor(68, 68, 68);

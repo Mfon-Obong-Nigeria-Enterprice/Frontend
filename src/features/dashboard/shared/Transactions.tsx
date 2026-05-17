@@ -29,7 +29,6 @@ import Stats from "../shared/Stats";
 import SearchBar from "./SearchBar";
 import TransactionTable from "./desktop/TransactionTable";
 import DateRangePicker from "@/components/DateRangePicker";
-import WaybillModal from "../staff/components/WaybillModal";
 
 // ui
 import { Button } from "@/components/ui/button";
@@ -77,7 +76,6 @@ const Transactions = () => {
     from: undefined,
     to: undefined,
   });
-  const [isWaybillModalOpen, setIsWaybillModalOpen] = useState(false);
 
   const isAdmin = useMemo(() => {
     if (!user || !user.role) return false;
@@ -99,13 +97,6 @@ const Transactions = () => {
     }
     return transactions ?? [];
   }, [transactions, user?.branchId, isAdmin]);
-
-  const handleWaybillAssigned = (
-    _transactionId: string,
-    _waybillNumber: string
-  ) => {
-    // Waybill assigned successfully
-  };
 
   const outstandingBalance = getOutStandingBalanceData() || {
     totalDebt: 0,
@@ -416,16 +407,6 @@ const Transactions = () => {
             Download Excel
           </Button>
 
-          {isAdmin && (
-            <Button
-              className="min-w-40 bg-white text-[#444444] border border-[#7d7d7d] hover:bg-gray-100 shrink-0"
-              onClick={() => setIsWaybillModalOpen(true)}
-            >
-              <img src="/icons/add-waybill-icon.svg" alt="" className="w-4" />
-              Add Waybill
-            </Button>
-          )}
-
           <Button onClick={handleExportPDF} className="w-42 md:w-50 h-10 shrink-0">
             Export PDF
           </Button>
@@ -554,12 +535,6 @@ const Transactions = () => {
           )}
       </div>
 
-      <WaybillModal
-        isOpen={isWaybillModalOpen}
-        onClose={() => setIsWaybillModalOpen(false)}
-        transactions={branchTransactions}
-        onWaybillGenerated={handleWaybillAssigned}
-      />
     </div>
   );
 };

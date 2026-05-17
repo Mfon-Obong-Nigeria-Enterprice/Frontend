@@ -111,6 +111,23 @@ export interface WaybillError {
   status?: number;
 }
 
+export interface WaybillGenerationResponse {
+  waybillNumber: string;
+}
+
+export const generateWaybillNumber = async (): Promise<WaybillGenerationResponse> => {
+  try {
+    const response = await api.get("/transactions/generate-waybill-number");
+    return response.data;
+  } catch (error) {
+    const err = error as AxiosError;
+    throw {
+      message: "Failed to generate waybill number",
+      status: err.response?.status,
+    } as WaybillError;
+  }
+};
+
 // Assign waybill to transaction (main function)
 export const assignWaybillToTransaction = async (
   transactionId: string,

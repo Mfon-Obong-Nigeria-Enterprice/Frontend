@@ -1,5 +1,10 @@
 import type { Client, TransactionType } from "./types";
 
+export interface ExtraCharge {
+  name: string;
+  amount: number;
+}
+
 export interface Item {
   productName: string;
   productId: string;
@@ -45,6 +50,7 @@ export interface Transaction {
   transportFare?: number;
   loading?: number;
   loadingAndOffloading?: number;
+  extraCharges?: ExtraCharge[];
   total: number;
   amountPaid?: number;
   paymentMethod?: string;
@@ -89,6 +95,8 @@ export type TransactionCreate = {
   date?: string;
   salesType?: "Retail" | "Wholesale";
   walkInClient?: { name: string; phone: string };
+  extraCharges?: ExtraCharge[];
+  waybillNumber?: string;
 };
 
 // New type specifically for client debt payments

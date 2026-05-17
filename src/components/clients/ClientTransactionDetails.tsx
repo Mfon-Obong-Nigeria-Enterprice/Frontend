@@ -414,7 +414,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                                     "unit"}
                                 </span>
                                 <span className="text-xs md:text-sm text-[#444444]">
-                                  {item.productName}
+                                  {item.productName} ({item.unit})
                                 </span>
                                 <span className="text-xs md:text-sm text-[#444444] text-right">
                                   {formatCurrency(item.subtotal)}
@@ -485,6 +485,18 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                             ) : null;
                           })()}
 
+                          {/* Extra / Miscellaneous Charges */}
+                          {(txn.extraCharges || []).filter((c) => c.amount > 0).map((charge, idx) => (
+                            <div key={idx} className="bg-[#F5F5F5] flex justify-end px-4 gap-4 items-center py-3">
+                              <span className="text-xs md:text-sm text-[#333333] font-medium">
+                                {charge.name}:
+                              </span>
+                              <span className="text-xs md:text-sm text-[#333333] font-bold">
+                                {formatCurrency(charge.amount)}
+                              </span>
+                            </div>
+                          ))}
+
                           {/* Discount */}
                           {(() => {
                             const discount = Number(txn.discount || 0);
@@ -550,7 +562,7 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                                   <span className="text-xs md:text-sm text-[#444444]">
                                     {hasExactLineData ? `${formatCurrency(meta.returnUnitPrice)}/${item.unit?.split(" ")[0]?.toLowerCase() || "unit"}` : "-"}
                                   </span>
-                                  <span className="text-xs md:text-sm text-[#444444]">{item.productName}</span>
+                                  <span className="text-xs md:text-sm text-[#444444]">{item.productName} ({item.unit})</span>
                                   <span className="text-xs md:text-sm text-[#444444] text-right">
                                     {hasExactLineData
                                       ? formatCurrency(meta.returnAmount)

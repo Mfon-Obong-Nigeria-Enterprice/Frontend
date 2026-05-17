@@ -471,6 +471,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 
 // services
 import { AddTransaction } from "@/services/transactionService";
+import { generateWaybillNumber } from "@/services/waybillService";
 
 // types
 import type { Client } from "@/types/types";
@@ -497,7 +498,7 @@ import {
 import { handleApiError } from "@/services/errorhandler";
 
 // icons
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 
 // data
 import { bankNames, posNames } from "@/data/banklist";
@@ -586,6 +587,11 @@ const NewSales: React.FC = () => {
   const [transportFare, setTransportFare] = useState("");
   const [loadingOffloading, setLoadingOffloading] = useState("");
   const [loadingCharge, setLoadingCharge] = useState("");
+  const [extraCharges, setExtraCharges] = useState<{ name: string; amount: string }[]>([]);
+
+  // Waybill state
+  const [waybillNumber, setWaybillNumber] = useState("");
+  const [isGeneratingWaybill, setIsGeneratingWaybill] = useState(false);
 
   const [bankSearch, setBankSearch] = useState("");
   const [date, setDate] = useState<string>(() => getTodayDateString());
@@ -638,6 +644,19 @@ const NewSales: React.FC = () => {
       setRows((prev) => [prev[0]]);
     }
   }, [salesType, rows]);
+
+  // Auto-generate waybill number when transaction type is PURCHASE or WHOLESALE
+  useEffect(() => {
+    if (transactionType === "PURCHASE" || transactionType === "WHOLESALE") {
+      setIsGeneratingWaybill(true);
+      generateWaybillNumber()
+        .then((res) => setWaybillNumber(res.waybillNumber))
+        .catch(() => setWaybillNumber(""))
+        .finally(() => setIsGeneratingWaybill(false));
+    } else {
+      setWaybillNumber("");
+    }
+  }, [transactionType]);
 
   const handleSetRows = (newRows: React.SetStateAction<Row[]>) => {
     setRows((prev) => {
@@ -767,6 +786,11 @@ const NewSales: React.FC = () => {
     if (!paymentMethod) return false;
     const paid = getAmountPaid();
     if (paid === null || paid < 0) return false;
+    if (
+      (transactionType === "PURCHASE" || transactionType === "WHOLESALE") &&
+      !waybillNumber.trim()
+    )
+      return false;
     return true;
   };
 
@@ -794,7 +818,8 @@ const NewSales: React.FC = () => {
     const transport = parseFloat(transportFare) || 0;
     const loadingOff = parseFloat(loadingOffloading) || 0;
     const loading = parseFloat(loadingCharge) || 0;
-    const additionalCharges = transport + loadingOff + loading;
+    const extraChargesSum = extraCharges.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
+    const additionalCharges = transport + loadingOff + loading + extraChargesSum;
 
     const gDiscount = globalDiscount || 0;
     const discountTotal =
@@ -904,8 +929,10 @@ const NewSales: React.FC = () => {
     setTransportFare("");
     setLoadingOffloading("");
     setLoadingCharge("");
+    setExtraCharges([]);
     setDate(getTodayDateString());
     setTransactionType("PICKUP");
+    setWaybillNumber("");
     setShowConfirmationModal(false);
     setConfirmationData(null);
   };
@@ -961,6 +988,9 @@ const NewSales: React.FC = () => {
       transportCost: parseFloat(transportFare) || 0,
       loadingOffloading: parseFloat(loadingOffloading) || 0,
       loadingCharge: parseFloat(loadingCharge) || 0,
+      extraCharges: extraCharges
+        .filter((c) => c.name.trim() && parseFloat(c.amount) > 0)
+        .map((c) => ({ name: c.name.trim(), amount: parseFloat(c.amount) })),
       discount: discountTotal,
       total,
       amountPaid: effectiveAmountPaid,
@@ -1030,10 +1060,17 @@ const NewSales: React.FC = () => {
         additionalCharges: additionalCharges,
         transportFare: parseFloat(transportFare) || 0,
         loadingAndOffloading: parseFloat(loadingOffloading) || 0,
-        loading: parseFloat(loadingCharge) || 0,        paymentMethod:
+        loading: parseFloat(loadingCharge) || 0,
+        extraCharges: extraCharges
+          .filter((c) => c.name.trim() && parseFloat(c.amount) > 0)
+          .map((c) => ({ name: c.name.trim(), amount: parseFloat(c.amount) })),
+        paymentMethod:
           transactionType === "PICKUP" ? "Credit" : paymentMethodForBackend,
         notes,
         date,
+        ...(transactionType === "PURCHASE" || transactionType === "WHOLESALE"
+          ? { waybillNumber: waybillNumber.trim() }
+          : {}),
       };
 
       await AddTransaction(payload);
@@ -1068,7 +1105,7 @@ const NewSales: React.FC = () => {
         setAmountPaid(total.toString());
       }
     }
-  }, [isWalkIn, rows, globalDiscount, transportFare, loadingOffloading, loadingCharge]);
+  }, [isWalkIn, rows, globalDiscount, transportFare, loadingOffloading, loadingCharge, extraCharges]);
 
   return (
     <main>
@@ -1174,6 +1211,49 @@ const NewSales: React.FC = () => {
             </div>
           )}
 
+          {/* Waybill Number Section — required for PURCHASE and WHOLESALE */}
+          {(transactionType === "PURCHASE" || transactionType === "WHOLESALE") && (
+            <div className="mt-6 border border-[#E4E4E7] rounded-lg p-6 bg-white">
+              <h4 className="text-lg font-medium text-[#111] mb-5">
+                Waybill Number <span className="text-red-500">*</span>
+              </h4>
+              <div className="flex items-end gap-3">
+                <div className="flex-1 space-y-2">
+                  <Label className="font-normal text-[#444] text-[15px]">
+                    Waybill No.
+                  </Label>
+                  <Input
+                    type="text"
+                    value={waybillNumber}
+                    onChange={(e) => setWaybillNumber(e.target.value)}
+                    placeholder={isGeneratingWaybill ? "Generating..." : "e.g. WB20260517-0001"}
+                    disabled={isGeneratingWaybill}
+                    className="bg-[#F5F6F8] border-[#E4E4E7] h-[45px] text-[#333] placeholder:text-gray-400"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsGeneratingWaybill(true);
+                    generateWaybillNumber()
+                      .then((res) => setWaybillNumber(res.waybillNumber))
+                      .catch(() => toast.error("Failed to generate waybill number"))
+                      .finally(() => setIsGeneratingWaybill(false));
+                  }}
+                  disabled={isGeneratingWaybill}
+                  title="Regenerate waybill number"
+                  className="flex items-center gap-1.5 h-[45px] px-4 border border-[#E4E4E7] rounded-md text-sm text-[#444] bg-white hover:bg-[#F5F6F8] disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isGeneratingWaybill ? "animate-spin" : ""}`} />
+                  Regenerate
+                </button>
+              </div>
+              <p className="text-xs text-[#7D7D7D] mt-2">
+                Auto-generated. You can type a different number if you have a pre-printed waybill.
+              </p>
+            </div>
+          )}
+
           {/* Additional Charges Section */}
           {(!selectedClient || !isClientBlocked || isWalkIn) && (
             <div className="mt-6 border border-[#E4E4E7] rounded-lg p-6 bg-white">
@@ -1217,6 +1297,62 @@ const NewSales: React.FC = () => {
                     className="bg-[#F5F6F8] border-[#E4E4E7] h-[45px] text-[#333] placeholder:text-gray-400"
                   />
                 </div>
+              </div>
+
+              {/* Miscellaneous / Extra Charges */}
+              <div className="mt-5">
+                <div className="flex items-center justify-between mb-3">
+                  <Label className="font-medium text-[#444] text-[15px]">
+                    Other Charges (e.g. service fees paid on behalf)
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() => setExtraCharges((prev) => [...prev, { name: "", amount: "" }])}
+                    className="text-sm text-[#3D80FF] hover:underline"
+                  >
+                    + Add charge
+                  </button>
+                </div>
+
+                {extraCharges.length > 0 && (
+                  <div className="space-y-3">
+                    {extraCharges.map((charge, idx) => (
+                      <div key={idx} className="flex items-center gap-3">
+                        <Input
+                          type="text"
+                          placeholder="Charge name"
+                          value={charge.name}
+                          onChange={(e) =>
+                            setExtraCharges((prev) =>
+                              prev.map((c, i) => i === idx ? { ...c, name: e.target.value } : c)
+                            )
+                          }
+                          className="flex-1 bg-[#F5F6F8] border-[#E4E4E7] h-[45px] text-[#333]"
+                        />
+                        <Input
+                          type="text"
+                          placeholder="₦0.00"
+                          value={formatInputDisplay(charge.amount)}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/\D/g, "");
+                            setExtraCharges((prev) =>
+                              prev.map((c, i) => i === idx ? { ...c, amount: raw } : c)
+                            );
+                          }}
+                          className="w-[130px] bg-[#F5F6F8] border-[#E4E4E7] h-[45px] text-[#333]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setExtraCharges((prev) => prev.filter((_, i) => i !== idx))}
+                          className="text-red-500 hover:text-red-700 text-lg font-bold px-1"
+                          title="Remove charge"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}

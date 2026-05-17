@@ -18,6 +18,7 @@ export type TransactionConfirmationData = {
   transportCost: number;
   loadingOffloading: number;
   loadingCharge: number;
+  extraCharges?: { name: string; amount: number }[];
   discount: number;
   total: number;
   amountPaid: number;
@@ -83,10 +84,12 @@ const TransactionConfirmationModal: React.FC<TransactionConfirmationModalProps> 
     return `${sign}${formatCurrency(amount)}`;
   };
 
-  const additionalCharges = 
-    (data.transportCost || 0) + 
-    (data.loadingOffloading || 0) + 
-    (data.loadingCharge || 0);
+  const extraChargesTotal = (data.extraCharges || []).reduce((sum, c) => sum + c.amount, 0);
+  const additionalCharges =
+    (data.transportCost || 0) +
+    (data.loadingOffloading || 0) +
+    (data.loadingCharge || 0) +
+    extraChargesTotal;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -244,6 +247,12 @@ const TransactionConfirmationModal: React.FC<TransactionConfirmationModalProps> 
                     <span className="text-gray-900">{formatCurrency(data.loadingCharge)}</span>
                   </div>
                 )}
+                {(data.extraCharges || []).map((charge, i) => (
+                  <div key={i} className="flex justify-between text-sm">
+                    <span className="text-gray-600">{charge.name}</span>
+                    <span className="text-gray-900">{formatCurrency(charge.amount)}</span>
+                  </div>
+                ))}
               </>
             )}
 

@@ -82,7 +82,7 @@ const WalkinTransactionModal = () => {
     doc.text("Items/Services", 14, 150);
 
     const itemsData = selectedTransaction.items.map((item) => [
-      item.productName,
+      `${item.productName} (${item.unit})`,
       item.quantity,
       formatCurrency(item.unitPrice),
       "₦0.00", // Discount
@@ -140,7 +140,7 @@ const WalkinTransactionModal = () => {
 
     // Add items details
     const itemsData = selectedTransaction.items.map((item, index) => ({
-      [`Item ${index + 1} - Product`]: item.productName,
+      [`Item ${index + 1} - Product`]: `${item.productName} (${item.unit})`,
       [`Item ${index + 1} - Quantity`]: item.quantity,
       [`Item ${index + 1} - Unit Price`]: item.unitPrice,
       [`Item ${index + 1} - Subtotal`]: item.subtotal,
@@ -328,7 +328,7 @@ const WalkinTransactionModal = () => {
                       key={item.productId}
                       className="text-[#444444] text-center text-xs border-b border-[#d9d9d9]"
                     >
-                      <td className="py-2">{item.productName}</td>
+                      <td className="py-2">{item.productName} ({item.unit})</td>
                       <td className="py-2">{item.quantity}</td>
                       <td className="py-2">{formatCurrency(item.unitPrice)}</td>
                       <td className="py-2">₦0.00</td>
@@ -338,9 +338,9 @@ const WalkinTransactionModal = () => {
                 </tbody>
               </table>
             </div>
-            {/* discount and total */}
+            {/* discount, extra charges and total */}
             <div className="flex justify-end px-5 mt-5 pb-3">
-              <div className="space-y-1 ">
+              <div className="space-y-1">
                 <p className="font-medium text-sm">
                   <span className="text-[#333333]">Total Discount</span>
                   <span className="text-text-dark ml-3">
@@ -349,6 +349,14 @@ const WalkinTransactionModal = () => {
                       : "0"}
                   </span>
                 </p>
+
+                {/* Extra charges */}
+                {(selectedTransaction.extraCharges || []).filter((c) => c.amount > 0).map((charge, idx) => (
+                  <p key={idx} className="font-medium text-sm">
+                    <span className="text-[#333333]">{charge.name}:</span>
+                    <span className="text-text-dark ml-3">{formatCurrency(charge.amount)}</span>
+                  </p>
+                ))}
 
                 {/* total */}
                 <p className="font-medium text-sm">
