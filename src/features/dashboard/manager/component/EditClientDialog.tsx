@@ -26,7 +26,6 @@ type FormData = {
   name: string;
   phone: string;
   description: string;
-  balance: number;
   address: string;
 };
 
@@ -44,7 +43,6 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
     name: "",
     phone: "",
     description: "",
-    balance: 0,
     address: "",
   });
 
@@ -54,7 +52,6 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
         name: client.name || "",
         phone: client.phone || "",
         description: client.description || "",
-        balance: client.balance || 0,
         address: client.address || "",
       });
     }
@@ -104,7 +101,6 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
         name: formData.name.trim(),
         phone: formData.phone.trim(),
         description: formData.description.trim(),
-        balance: Number(formData.balance),
         address: formData.address.trim(),
       };
 
@@ -122,7 +118,6 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
         name: formData.name.trim(),
         phone: formData.phone.trim(),
         description: formData.description.trim(),
-        balance: Number(formData.balance),
         address: formData.address.trim(),
       });
 
@@ -161,7 +156,6 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
       setFormData({
         name: "",
         description: "",
-        balance: 0,
         phone: "",
         address: "",
       });
@@ -174,6 +168,7 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
         <DialogContent
           aria-describedby="edit-client-dialog"
           className="max-w-md"
+          onOpenAutoFocus={(e) => e.preventDefault()}
         >
           <DialogHeader>
             <DialogTitle className="font-medium text-xl pb-4 pt-2 text-[#1E1E1E]">
@@ -220,42 +215,21 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="sm:w-[225px] w-full">
-                <Label
-                  htmlFor="address"
-                  className="text-sm text-[#333333] font-[400]"
-                >
-                  Client Address
-                </Label>
-                <Input
-                  className="mt-2 font-[400] text-sm border border-[#444444] "
-                  id="address"
-                  placeholder="Enter Client address"
-                  disabled={isUpdating}
-                  value={formData.address}
-                  onChange={(e) => handleInputChange("address", e.target.value)}
-                />
-              </div>
-
-              <div className="sm:w-[225px] w-full">
-                <Label
-                  htmlFor="balance"
-                  className="text-sm text-[#333333] font-[400]"
-                >
-                  Balance
-                </Label>
-                <Input
-                  className="mt-2 font-[400] text-sm border border-[#444444] "
-                  id="balance"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  disabled={isUpdating}
-                  value={formData.balance}
-                  onChange={(e) => handleInputChange("balance", e.target.value)}
-                />
-              </div>
+            <div>
+              <Label
+                htmlFor="address"
+                className="text-sm text-[#333333] font-[400]"
+              >
+                Client Address
+              </Label>
+              <Input
+                className="mt-2 font-[400] text-sm border border-[#444444]"
+                id="address"
+                placeholder="Enter Client address"
+                disabled={isUpdating}
+                value={formData.address}
+                onChange={(e) => handleInputChange("address", e.target.value)}
+              />
             </div>
 
             <div>

@@ -8,13 +8,16 @@ import { toast } from "react-toastify";
 import { deleteCategory, updateCategory } from "@/services/categoryService";
 import { isAxiosError } from "axios";
 import { useInventoryStore } from "@/stores/useInventoryStore";
+import TagInput from "@/components/TagInput";
 
 type ModalProps = {
   setOpenModal: () => void;
   categoryId: string;
   categoryName: string;
   description?: string;
+  units?: string[];
   productCount: number;
+  initialEditMode?: boolean;
 };
 
 const CategoryModal = ({
@@ -22,13 +25,16 @@ const CategoryModal = ({
   categoryId,
   categoryName,
   description,
+  units,
   productCount,
+  initialEditMode = false,
 }: ModalProps) => {
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState(initialEditMode);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [editedName, setEditedName] = useState(categoryName);
   const [editedDescription, setEditedDescription] = useState(description || "");
+  const [editedUnits, setEditedUnits] = useState<string[]>(units || []);
 
   // Zustand actions
   const setCategories = useInventoryStore((s) => s.setCategories);
@@ -49,6 +55,7 @@ const CategoryModal = ({
       const response = await updateCategory(categoryId, {
         name: editedName,
         description: editedDescription,
+        units: editedUnits,
       });
 
 
@@ -106,10 +113,10 @@ const CategoryModal = ({
   };
 
   const handleCancelEdit = () => {
-    // Reset to the current values from the store (which should be updated)
     const currentCategory = categories.find(cat => cat._id === categoryId);
     setEditedName(currentCategory?.name || categoryName);
     setEditedDescription(currentCategory?.description || description || "");
+    setEditedUnits(currentCategory?.units || units || []);
     setEditMode(false);
   };
 
@@ -237,6 +244,33 @@ const CategoryModal = ({
                 <p className="text-gray-600 leading-relaxed">
                   {displayDescription || "No description available"}
                 </p>
+              )}
+            </div>
+
+            {/* Measurement Units Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Measurement Units
+              </label>
+              {editMode ? (
+                <TagInput
+                  value={editedUnits}
+                  onChange={setEditedUnits}
+                  placeholder="Type a unit and press Enter (e.g. bag, litre)"
+                  className="border-[#7d7d7d]"
+                />
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {(currentCategory?.units || units || []).length > 0 ? (
+                    (currentCategory?.units || units || []).map((u, i) => (
+                      <span key={i} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm">
+                        {u}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-gray-400 text-sm italic">No units defined</p>
+                  )}
+                </div>
               )}
             </div>
 

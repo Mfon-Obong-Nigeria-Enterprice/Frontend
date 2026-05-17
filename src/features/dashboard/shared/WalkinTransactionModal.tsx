@@ -3,161 +3,23 @@
 import Modal from "@/components/Modal";
 import { useTransactionsStore } from "@/stores/useTransactionStore";
 import { Button } from "@/components/ui/button";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp } from "lucide-react";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { getTransactionTypeBadgeStyles } from "@/utils/transactionTypeStyles";
 import { balanceClassT } from "@/utils/styles";
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { generateReceiptPDF } from "@/utils/generateReceiptPDF";
 
 const WalkinTransactionModal = () => {
   const { open, selectedTransaction, closeModal } = useTransactionsStore();
 
   // Export PDF function
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!selectedTransaction) return;
-
-    const doc = new jsPDF();
-
-    // Add title
-    doc.setFontSize(16);
-    doc.text("Walk-in Transaction Details", 14, 16);
-
-    doc.setFontSize(10);
-    doc.text(
-      `Generated: ${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
-      14,
-      26
-    );
-
-    // Client Information
-    doc.setFontSize(12);
-    doc.text("Client Information", 14, 40);
-
-    const clientData = [
-      ["Client Type", "Walk-in client"],
-      ["Client Name", selectedTransaction.walkInClientName || "N/A"],
-      ["Phone", selectedTransaction.walkInClient?.phone || "Not provided"],
-      ["Registration", "Unregistered"],
-    ];
-
-    autoTable(doc, {
-      startY: 50,
-      head: [["Field", "Value"]],
-      body: clientData,
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [44, 204, 113] },
-    });
-
-    // Transaction Information
-    doc.setFontSize(12);
-    doc.text("Transaction Information", 14, 90);
-
-    const transactionData = [
-      ["Invoice Number", selectedTransaction.invoiceNumber || "N/A"],
-      ["Date & Time", new Date(selectedTransaction.createdAt).toLocaleString()],
-      ["Transaction Type", selectedTransaction.type || "N/A"],
-      ["Amount", formatCurrency(selectedTransaction.total)],
-      ["Processed by", selectedTransaction.userId?.name || "N/A"],
-    ];
-
-    autoTable(doc, {
-      startY: 100,
-      head: [["Field", "Value"]],
-      body: transactionData,
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [44, 204, 113] },
-    });
-
-    // Items Table
-    doc.setFontSize(12);
-    doc.text("Items/Services", 14, 150);
-
-    const itemsData = selectedTransaction.items.map((item) => [
-      `${item.productName} (${item.unit})`,
-      item.quantity,
-      formatCurrency(item.unitPrice),
-      "₦0.00", // Discount
-      formatCurrency(item.subtotal),
-    ]);
-
-    autoTable(doc, {
-      startY: 160,
-      head: [["Description", "Quantity", "Unit Price", "Discount", "Total"]],
-      body: itemsData,
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [44, 204, 113] },
-    });
-
-    // Summary
-    const summaryY = 200;
-    doc.setFontSize(10);
-    doc.text(
-      `Total Discount: ${
-        selectedTransaction?.discount
-          ? formatCurrency(selectedTransaction.discount)
-          : "₦0.00"
-      }`,
-      14,
-      summaryY
-    );
-    doc.text(
-      `Total Amount: ${formatCurrency(selectedTransaction.total)}`,
-      14,
-      summaryY + 10
-    );
-
-    doc.save(`walkin_transaction_${selectedTransaction.invoiceNumber}.pdf`);
+    await generateReceiptPDF(selectedTransaction);
     toast.success("PDF downloaded successfully!");
   };
 
-  // Export Excel function
-  const handleExportExcel = () => {
-    if (!selectedTransaction) return;
-
-    const data = {
-      "Invoice Number": selectedTransaction.invoiceNumber || "N/A",
-      Date: new Date(selectedTransaction.createdAt).toLocaleDateString(),
-      Time: new Date(selectedTransaction.createdAt).toLocaleTimeString(),
-      "Client Type": "Walk-in client",
-      "Client Name": selectedTransaction.walkInClientName || "N/A",
-      Phone: selectedTransaction.walkInClient?.phone || "Not provided",
-      "Registration Status": "Unregistered",
-      "Transaction Type": selectedTransaction.type || "N/A",
-      Amount: selectedTransaction.total,
-      "Processed By": selectedTransaction.userId?.name || "N/A",
-      "Total Discount": selectedTransaction?.discount || 0,
-      "Items Count": selectedTransaction.items?.length || 0,
-    };
-
-    // Add items details
-    const itemsData = selectedTransaction.items.map((item, index) => ({
-      [`Item ${index + 1} - Product`]: `${item.productName} (${item.unit})`,
-      [`Item ${index + 1} - Quantity`]: item.quantity,
-      [`Item ${index + 1} - Unit Price`]: item.unitPrice,
-      [`Item ${index + 1} - Subtotal`]: item.subtotal,
-    }));
-
-    // Merge main data with items data
-    const finalData = { ...data, ...Object.assign({}, ...itemsData) };
-
-    const worksheet = XLSX.utils.json_to_sheet([finalData]);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Walk-in Transaction");
-    XLSX.writeFile(
-      workbook,
-      `walkin_transaction_${selectedTransaction.invoiceNumber}.xlsx`
-    );
-    toast.success("Excel file downloaded successfully!");
-  };
 
   return (
     <Modal isOpen={open} onClose={closeModal} size="xxl">
@@ -174,33 +36,10 @@ const WalkinTransactionModal = () => {
               </p>
             </div>
             <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant={"tertiary"}>
-                    <ChevronUp />
-                    Export Data
-                    <ChevronDown className="w-4 h-4 ml-1" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem
-                    onClick={handleExportPDF}
-                    className="cursor-pointer hover:bg-[#f5f5f5] focus:bg-[#f5f5f5] p-3 rounded-md"
-                  >
-                    <span className="text-[#333333] font-Inter font-medium">
-                      Export PDF
-                    </span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={handleExportExcel}
-                    className="cursor-pointer hover:bg-[#f5f5f5] focus:bg-[#f5f5f5] p-3 rounded-md"
-                  >
-                    <span className="text-[#333333] font-Inter font-medium hover:text-[#2E6EF7] hover:shadow-sm hover:-translate-y-[1px]">
-                      Download Excel
-                    </span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button variant={"tertiary"} onClick={handleExportPDF}>
+                <ChevronUp />
+                Export PDF
+              </Button>
             </div>
           </div>
 

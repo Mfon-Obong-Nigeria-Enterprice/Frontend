@@ -66,6 +66,11 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     );
   }, [user, isManagerView]);
 
+  const isSuperAdmin = useMemo(() => {
+    if (!user || !user.role) return false;
+    return user.role.toString().trim().toUpperCase() === "SUPER_ADMIN";
+  }, [user]);
+
   const { data: fetchedTransactions, isLoading: transactionsLoading } =
     useQuery({
       queryKey: ["transactions", user?.branchId],
@@ -94,6 +99,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
   const [showDialog, setShowDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showBlockUnblockDialog, setShowBlockUnblockDialog] = useState(false);
+  const [clientMenuValue, setClientMenuValue] = useState("");
 
   //
   const mergedTransactions = useMemo(() => {
@@ -1025,6 +1031,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       default:
         break;
     }
+    setClientMenuValue("");
   };
 
   const handleBlockUnblockSuccess = () => {
@@ -1099,8 +1106,8 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
             <ChevronUp />
             <span>Export data</span>
           </Button>
-          {isManager && (
-            <Select onValueChange={handleSelection}>
+          {isSuperAdmin && (
+            <Select value={clientMenuValue} onValueChange={handleSelection}>
               <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder="Edit Client"></SelectValue>
               </SelectTrigger>

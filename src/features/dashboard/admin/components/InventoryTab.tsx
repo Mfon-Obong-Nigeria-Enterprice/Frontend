@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import ProductDisplayTab from "./ProductDisplayTab";
 import CategoryModal from "./CategoryModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Info } from "lucide-react";
+import { Pencil } from "lucide-react";
 import type { Product, Category } from "@/types/types";
 import { useInventoryStore } from "@/stores/useInventoryStore";
 
@@ -27,6 +27,7 @@ const InventoryTab = React.memo(
       name: string;
       count: number;
       description?: string;
+      units?: string[];
     } | null>(null);
 
     // Only get searchQuery from store
@@ -148,11 +149,13 @@ const InventoryTab = React.memo(
                           name: category.name,
                           count,
                           description: category.description,
+                          units: category.units,
                         });
                       }}
                       className="ml-1"
+                      title="Edit category"
                     >
-                      <Info className="text-[#D9D9D9] h-4 w-4" />
+                      <Pencil className="text-[#aaaaaa] hover:text-orange-500 h-3.5 w-3.5 transition-colors" />
                     </p>
                   </TabsTrigger>
                 );
@@ -199,7 +202,9 @@ const InventoryTab = React.memo(
             categoryId={openCategory._id}
             categoryName={openCategory.name}
             description={openCategory.description}
+            units={openCategory.units}
             productCount={openCategory.count}
+            initialEditMode={true}
           />
         )}
       </div>

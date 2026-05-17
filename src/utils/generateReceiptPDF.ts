@@ -322,10 +322,14 @@ export const generateReceiptPDF = async (txn: Transaction): Promise<void> => {
       cursorY += 5;
 
       if (txn.paymentMethod) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8.5);
         doc.setTextColor(60, 60, 60);
-        doc.text("Payment Method:", pageWidth - margin - 55, cursorY);
-        doc.text(txn.paymentMethod, pageWidth - margin - 4, cursorY, { align: "right" });
-        cursorY += 5;
+        const pmLabelX = pageWidth - margin - 55;
+        const pmMaxWidth = pageWidth - margin - pmLabelX;
+        const pmLines = doc.splitTextToSize(`Payment Method: ${txn.paymentMethod}`, pmMaxWidth);
+        doc.text(pmLines, pmLabelX, cursorY);
+        cursorY += pmLines.length * 4.5 + 0.5;
       }
     }
 
