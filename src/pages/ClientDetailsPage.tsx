@@ -139,7 +139,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       .filter((t) => t.client?._id === clientId)
       .sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          new Date(b.date || b.createdAt).getTime() - new Date(a.date || a.createdAt).getTime()
       );
 
     // Use the most recent transaction's snapshot, fallback to client.balance
@@ -167,7 +167,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
       .filter((t) => t.client?._id === clientId)
       .sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          new Date(b.date || b.createdAt).getTime() - new Date(a.date || a.createdAt).getTime()
       );
   }, [clientId, mergedTransactions]);
 
@@ -222,7 +222,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
 
     return filtered.sort(
       (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        new Date(b.date || b.createdAt).getTime() - new Date(a.date || a.createdAt).getTime()
     );
   }, [
     clientId,
@@ -318,7 +318,7 @@ const ClientDetailsPage: React.FC<ClientDetailsPageProps> = ({
     // Sort the filtered transactions (Oldest to Newest)
     const sortedTxns = [...transactionsWithBalance].sort(
       (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        new Date(a.date || a.createdAt).getTime() - new Date(b.date || b.createdAt).getTime()
     );
 
     const supplies = sortedTxns.filter(

@@ -228,7 +228,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
 
     return transactions
       .filter((t) => {
-        const transactionDate = new Date(t.createdAt).toDateString();
+        const transactionDate = new Date(t.date || t.createdAt).toDateString();
 
         return (
           (t.type === "PURCHASE" || t.type === "PICKUP") &&
@@ -250,7 +250,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
 
     return transactions
       .filter((t) => {
-        const transactionDate = new Date(t.createdAt).toDateString();
+        const transactionDate = new Date(t.date || t.createdAt).toDateString();
         // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
         return (
           (t.type === "PURCHASE" || t.type === "PICKUP") &&
@@ -279,7 +279,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     const today = new Date().toDateString();
 
     return transactions.filter((t) => {
-      const transactionDate = new Date(t.createdAt).toDateString();
+      const transactionDate = new Date(t.date || t.createdAt).toDateString();
       return transactionDate === today;
     }).length;
   },
@@ -292,7 +292,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString();
 
     return transactions.filter((t) => {
-      const transactionDate = new Date(t.createdAt).toDateString();
+      const transactionDate = new Date(t.date || t.createdAt).toDateString();
       return transactionDate === yesterday;
     }).length;
   },
@@ -316,7 +316,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
 
     return transactions
       .filter((t) => {
-        const transactionDate = new Date(t.createdAt);
+        const transactionDate = new Date(t.date || t.createdAt);
         // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
         return (
           (t.type === "PURCHASE" || t.type === "PICKUP") &&
@@ -341,7 +341,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
 
     return transactions
       .filter((t) => {
-        const transactionDate = new Date(t.createdAt);
+        const transactionDate = new Date(t.date || t.createdAt);
         // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
         return (
           (t.type === "PURCHASE" || t.type === "PICKUP") &&
@@ -371,7 +371,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
 
     return transactions
       .filter((t) => {
-        const transactionDate = new Date(t.createdAt);
+        const transactionDate = new Date(t.date || t.createdAt);
         // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
         return (
           (t.type === "PURCHASE" || t.type === "PICKUP") &&
@@ -394,7 +394,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
 
     return transactions
       .filter((t) => {
-        const transactionDate = new Date(t.createdAt);
+        const transactionDate = new Date(t.date || t.createdAt);
         // Only count PURCHASE transactions as sales (PICKUP means not yet collected)
         return (
           (t.type === "PURCHASE" || t.type === "PICKUP") &&
@@ -423,7 +423,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
     return transactions.filter((t) => {
-      const transactionDate = new Date(t.createdAt);
+      const transactionDate = new Date(t.date || t.createdAt);
       return isDateInRange(transactionDate, startOfMonth, endOfMonth);
     }).length;
   },
@@ -437,7 +437,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
     return transactions.filter((t) => {
-      const transactionDate = new Date(t.createdAt);
+      const transactionDate = new Date(t.date || t.createdAt);
       return isDateInRange(transactionDate, startOfLastMonth, endOfLastMonth);
     }).length;
   },
@@ -456,7 +456,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
 
     return transactions
       .filter((t) => {
-        const transactionDate = new Date(t.createdAt).toDateString();
+        const transactionDate = new Date(t.date || t.createdAt).toDateString();
         // Include both sales and debt payments
         return (
           (t.type === "PURCHASE" ||
@@ -480,7 +480,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
 
     return transactions
       .filter((t) => {
-        const transactionDate = new Date(t.createdAt).toDateString();
+        const transactionDate = new Date(t.date || t.createdAt).toDateString();
         // Include both sales and debt payments
         return (
           (t.type === "PURCHASE" ||
@@ -513,7 +513,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
 
     return transactions
       .filter((t) => {
-        const transactionDate = new Date(t.createdAt);
+        const transactionDate = new Date(t.date || t.createdAt);
         return (
           (t.type === "PURCHASE" ||
             t.type === "PICKUP" ||
@@ -540,7 +540,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
 
     return transactions
       .filter((t) => {
-        const transactionDate = new Date(t.createdAt);
+        const transactionDate = new Date(t.date || t.createdAt);
         // Include both sales and debt payments
         return (
           (t.type === "PURCHASE" ||
@@ -573,7 +573,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
 
     return transactions
       .filter((t) => {
-        const transactionDate = new Date(t.createdAt);
+        const transactionDate = new Date(t.date || t.createdAt);
         // Include both sales and debt payments
         return (
           (t.type === "PURCHASE" ||
@@ -598,7 +598,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
 
     return transactions
       .filter((t) => {
-        const transactionDate = new Date(t.createdAt);
+        const transactionDate = new Date(t.date || t.createdAt);
         // Include both sales and debt payments
         return (
           (t.type === "PURCHASE" ||
@@ -630,7 +630,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     const endOfWeek = getEndOfWeek(now);
 
     const thisWeekTransactions = transactions.filter((t) => {
-      const transactionDate = new Date(t.createdAt);
+      const transactionDate = new Date(t.date || t.createdAt);
       return (
         (t.type === "PURCHASE" || t.type === "PICKUP") &&
         isDateInRange(transactionDate, startOfWeek, endOfWeek)
@@ -659,7 +659,7 @@ export const useTransactionsStore = create<TransactionState>((set, get) => ({
     lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
 
     const lastWeekTransactions = transactions.filter((t) => {
-      const transactionDate = new Date(t.createdAt);
+      const transactionDate = new Date(t.date || t.createdAt);
       return (
         (t.type === "PURCHASE" || t.type === "PICKUP") &&
         isDateInRange(transactionDate, lastWeekStart, lastWeekEnd)

@@ -13,7 +13,7 @@ function useClientFiltering(clients: Client[] = [], allTransactions?: Transactio
   const latestTypeMap = useMemo(() => {
     if (!allTransactions || allTransactions.length === 0) return null;
     const sorted = [...allTransactions].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a, b) => new Date(b.date || b.createdAt).getTime() - new Date(a.date || a.createdAt).getTime()
     );
     const map = new Map<string, string>();
     sorted.forEach((txn) => {
@@ -53,7 +53,7 @@ function useClientFiltering(clients: Client[] = [], allTransactions?: Transactio
         return false;
       }
       const sorted = [...client.transactions].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a, b) => new Date(b.date || b.createdAt).getTime() - new Date(a.date || a.createdAt).getTime()
       );
       return sorted[0]?.type === clientBalance;
     },

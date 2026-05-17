@@ -117,7 +117,9 @@ export interface WaybillGenerationResponse {
 
 export const generateWaybillNumber = async (): Promise<WaybillGenerationResponse> => {
   try {
-    const response = await api.get("/transactions/generate-waybill-number");
+    const response = await api.get("/transactions/generate-waybill-number", {
+      timeout: 15000,
+    });
     return response.data;
   } catch (error) {
     const err = error as AxiosError;

@@ -29,7 +29,7 @@ const ClientSalesTypes: React.FC<ClientSalesTypesProps> = ({
           <SelectValue placeholder="Select Sales Type" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="Retail">Retail</SelectItem>
+          <SelectItem value="Retail">Purchase</SelectItem>
           <SelectItem value="Wholesale">Wholesale</SelectItem>
         </SelectContent>
       </Select>

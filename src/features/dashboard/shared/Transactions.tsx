@@ -228,10 +228,9 @@ const Transactions = () => {
       });
     }
 
-    // Sort by createdAt - NEWEST FIRST (chronological order of record creation)
     return filtered.sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
+      const dateA = new Date(a.date || a.createdAt).getTime();
+      const dateB = new Date(b.date || b.createdAt).getTime();
       return dateB - dateA;
     });
   }, [

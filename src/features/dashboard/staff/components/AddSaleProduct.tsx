@@ -230,11 +230,10 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
       <div className="block md:hidden">
         {/* Header Row */}
         <div className="flex items-center gap-2 bg-[#F5F5F5] py-3 px-1 mb-2">
-            <div className="w-[32%] text-[11px] text-[#666] font-medium pl-1">Description</div>
-            <div className="w-[14%] text-[11px] text-[#666] font-medium text-center">Quantity</div>
-            <div className="w-[18%] text-[11px] text-[#666] font-medium text-center">Unit Price</div>
-            <div className="w-[14%] text-[11px] text-[#666] font-medium text-center">Discount</div>
-            <div className="w-[14%] text-[11px] text-[#666] font-medium text-center">Total</div>
+            <div className="w-[36%] text-[11px] text-[#666] font-medium pl-1">Description</div>
+            <div className="w-[16%] text-[11px] text-[#666] font-medium text-center">Quantity</div>
+            <div className="w-[20%] text-[11px] text-[#666] font-medium text-center">Unit Price</div>
+            <div className="w-[20%] text-[11px] text-[#666] font-medium text-center">Total</div>
             <div className="w-[8%] text-[11px] text-[#666] font-medium text-center">Action</div>
         </div>
 
@@ -249,7 +248,7 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
             return (
               <div key={index} className="flex items-center gap-2 border-b pb-3 last:border-0 px-1">
                 {/* Product Select */}
-                <div className="w-[32%]">
+                <div className="w-[36%]">
                    <Select
                     value={row.productId}
                     onValueChange={(value) => handleProductChange(index, value)}
@@ -278,7 +277,7 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                 </div>
 
                 {/* Quantity */}
-                <div className="w-[14%]">
+                <div className="w-[16%]">
                     <input
                       type="number"
                       max={maxQuantity}
@@ -303,47 +302,20 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                 </div>
 
                 {/* Unit Price */}
-                <div className="w-[18%]">
-                  {salesType === "Wholesale" ? (
-                    <input
-                      type="text"
-                      value={formatMoneyInput(row.unitPrice)}
-                      onChange={(e) =>
-                        updateRow(index, { unitPrice: parseMoneyInput(e.target.value) })
-                      }
-                      placeholder="₦0"
-                      className="w-full h-[34px] border border-[#E5E7EB] rounded text-center text-[11px] outline-none bg-white focus:ring-1 focus:ring-gray-200"
-                    />
-                  ) : (
-                    <div className="w-full h-[34px] border border-[#E5E7EB] rounded flex items-center justify-center bg-white">
-                      <span className="text-[10px] text-gray-600">
-                        {row.unitPrice > 0 ? formatCurrency(row.unitPrice) : "₦0.00"}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Discount */}
-                <div className="w-[14%]">
-                    <div className="w-full h-[34px] border border-[#E5E7EB] rounded flex items-center justify-center bg-white relative">
-                         <input 
-                            type="number"
-                            value={row.discount === 0 ? "" : row.discount}
-                            placeholder="0"
-                            onChange={(e) => {
-                                let newDiscount = Number(e.target.value) || 0;
-                                updateRow(index, { discount: newDiscount });
-                            }}
-                            className="w-full h-full text-center text-[11px] outline-none bg-transparent px-1"
-                         />
-                         <span className="absolute right-1 text-[9px] text-gray-400 pointer-events-none">
-                            {row.discountType === 'percent' ? '%' : ''}
-                         </span>
-                    </div>
+                <div className="w-[20%]">
+                  <input
+                    type="text"
+                    value={formatMoneyInput(row.unitPrice)}
+                    onChange={(e) =>
+                      updateRow(index, { unitPrice: parseMoneyInput(e.target.value) })
+                    }
+                    placeholder="₦0"
+                    className="w-full h-[34px] border border-[#E5E7EB] rounded text-center text-[11px] outline-none bg-white focus:ring-1 focus:ring-gray-200"
+                  />
                 </div>
 
                  {/* Total */}
-                 <div className="w-[14%] text-center">
+                 <div className="w-[20%] text-center">
                     {salesType === "Wholesale" ? (
                       <input
                         type="text"
@@ -392,9 +364,6 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
                 </TableHead>
                 <TableHead className="text-[#333333] text-center font-normal">
                   Unit Price
-                </TableHead>
-                <TableHead className=" text-[#333333] text-center font-normal">
-                  Discount
                 </TableHead>
                 <TableHead className="text-[#333333] text-center font-normal">
                   Total
@@ -485,73 +454,15 @@ const AddSaleProduct: React.FC<AddSaleProductProps> = ({
 
                     {/* Unit Price */}
                     <TableCell className="text-center">
-                      {salesType === "Wholesale" ? (
-                        <Input
-                          type="text"
-                          value={formatMoneyInput(row.unitPrice)}
-                          onChange={(e) =>
-                            updateRow(index, { unitPrice: parseMoneyInput(e.target.value) })
-                          }
-                          placeholder="₦0"
-                          className="text-center !bg-white w-[100px] mx-auto"
-                        />
-                      ) : (
-                        <div>{formatCurrency(row.unitPrice)}</div>
-                      )}
-                    </TableCell>
-
-                    {/* Discount */}
-                    <TableCell>
-                      <div className="w-16 md:w-20 mx-auto h-[35.5px] flex items-center border px-2 !rounded-[7.5px]">
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={row.discount === 0 ? "" : row.discount}
-                          onChange={(e) => {
-                            let newDiscount = Number(e.target.value) || 0;
-                            const baseAmount = row.quantity * row.unitPrice;
-
-                            if (
-                              row.discountType === "percent" &&
-                              newDiscount > 100
-                            ) {
-                              toast.warn(
-                                "Discount percentage cannot exceed 100%"
-                              );
-                              newDiscount = 100;
-                            } else if (
-                              row.discountType === "amount" &&
-                              newDiscount > baseAmount
-                            ) {
-                              toast.warn(
-                                "Discount cannot exceed total amount of goods"
-                              );
-                              newDiscount = baseAmount;
-                            }
-
-                            updateRow(index, {
-                              discount: newDiscount,
-                            });
-                          }}
-                          className="flex-1/3 text-center w-8 md:w-12 outline-0 mr-0.5"
-                        />
-                        <Select
-                          value={row.discountType}
-                          onValueChange={(val) =>
-                            updateRow(index, {
-                              discountType: val as "amount" | "percent",
-                            })
-                          }
-                        >
-                          <SelectTrigger className="w-auto !border-0 !bg-transparent !outline-0 shadow-none -ml-2">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="w-2">
-                            <SelectItem value="amount">₦</SelectItem>
-                            <SelectItem value="percent">%</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      <Input
+                        type="text"
+                        value={formatMoneyInput(row.unitPrice)}
+                        onChange={(e) =>
+                          updateRow(index, { unitPrice: parseMoneyInput(e.target.value) })
+                        }
+                        placeholder="₦0"
+                        className="text-center !bg-white w-[100px] mx-auto"
+                      />
                     </TableCell>
 
                     {/* Total */}

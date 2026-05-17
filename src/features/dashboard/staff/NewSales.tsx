@@ -571,7 +571,7 @@ const NewSales: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [transactionType, setTransactionType] = useState<
     "PURCHASE" | "PICKUP" | "WHOLESALE" | "RETURN"
-  >("PICKUP");
+  >("PURCHASE");
   const [subMethod, setSubMethod] = useState("");
   const [amountPaid, setAmountPaid] = useState("");
   const [notes, setNotes] = useState("");
@@ -634,7 +634,7 @@ const NewSales: React.FC = () => {
     if (salesType === "Wholesale") {
       setTransactionType("WHOLESALE");
     } else {
-      setTransactionType("PICKUP");
+      setTransactionType("PURCHASE");
     }
   }, [salesType]);
 
@@ -647,15 +647,17 @@ const NewSales: React.FC = () => {
 
   // Auto-generate waybill number when transaction type is PURCHASE or WHOLESALE
   useEffect(() => {
-    if (transactionType === "PURCHASE" || transactionType === "WHOLESALE") {
-      setIsGeneratingWaybill(true);
-      generateWaybillNumber()
-        .then((res) => setWaybillNumber(res.waybillNumber))
-        .catch(() => setWaybillNumber(""))
-        .finally(() => setIsGeneratingWaybill(false));
-    } else {
+    if (transactionType !== "PURCHASE" && transactionType !== "WHOLESALE") {
       setWaybillNumber("");
+      return;
     }
+    let cancelled = false;
+    setIsGeneratingWaybill(true);
+    generateWaybillNumber()
+      .then((res) => { if (!cancelled) setWaybillNumber(res.waybillNumber); })
+      .catch(() => { if (!cancelled) setWaybillNumber(""); })
+      .finally(() => { if (!cancelled) setIsGeneratingWaybill(false); });
+    return () => { cancelled = true; setIsGeneratingWaybill(false); };
   }, [transactionType]);
 
   const handleSetRows = (newRows: React.SetStateAction<Row[]>) => {
@@ -931,7 +933,7 @@ const NewSales: React.FC = () => {
     setLoadingCharge("");
     setExtraCharges([]);
     setDate(getTodayDateString());
-    setTransactionType("PICKUP");
+    setTransactionType("PURCHASE");
     setWaybillNumber("");
     setShowConfirmationModal(false);
     setConfirmationData(null);
@@ -950,10 +952,7 @@ const NewSales: React.FC = () => {
       .filter((row) => row.productId)
       .map((row) => {
         const product = products.find((p) => p._id === row.productId);
-        const isWholesale = transactionType === "WHOLESALE";
-        const price = isWholesale
-          ? Number(row.unitPrice) || 0
-          : product?.unitPrice || 0;
+        const price = Number(row.unitPrice) || product?.unitPrice || 0;
         
         return {
           productName: product?.name || row.productName || "Unknown Product",
@@ -1018,9 +1017,9 @@ const NewSales: React.FC = () => {
         .map((row) => {
           const product = products.find((p) => p._id === row.productId)!;
           const isWholesale = transactionType === "WHOLESALE";
-          const price = isWholesale
-            ? Number(row.unitPrice) || 0
-            : product.unitPrice;
+          // Use the row's unit price (which may have been overridden by staff)
+          // falling back to the product's default price if not set
+          const price = Number(row.unitPrice) || product.unitPrice;
 
           if (isWholesale && price <= 0) {
             throw new Error(
@@ -1477,28 +1476,6 @@ const NewSales: React.FC = () => {
                 </div>
               )}
 
-              <div>
-                <Label className="mb-1">Transaction Type</Label>
-                <Select
-                  value={transactionType}
-                  onValueChange={(value: string) =>
-                    setTransactionType(
-                      value as "PURCHASE" | "WHOLESALE" | "RETURN"
-                    )
-                  }
-                >
-                  <SelectTrigger className="w-full sm:w-[180px] bg-[#D9D9D9]">
-                    <SelectValue placeholder="Select option" />
-                  </SelectTrigger>
-                  <SelectContent side="top">
-                    <SelectItem value="PURCHASE">Purchase</SelectItem>
-                    <SelectItem value="WHOLESALE">Wholesale</SelectItem>
-                    {/* <SelectItem value="RETURN">Return</SelectItem> */}
-                    {/* PICKUP deprecated - removed from new transaction creation */}
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div className="w-full sm:w-auto">
                 <Label className="mb-1">Amount Paid</Label>
                 <Input
@@ -1521,6 +1498,7 @@ const NewSales: React.FC = () => {
                   placeholder=""
                   className="w-full sm:w-40"
                   value={date}
+                  max={getTodayDateString()}
                   onChange={(e) => setDate(e.target.value)}
                 />
               </div>

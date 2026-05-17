@@ -175,28 +175,8 @@ const ClientTransactionModal = () => {
               </div>
             </div>
 
-            {/* Main Grid: Balance Change, Transaction Details, Process By */}
-            <div className="pb-4 grid grid-cols-1 md:grid-cols-[40%_30%_30%] gap-6 mb-6">
-
-              {/* Balance Change */}
-              <div className="md:w-[204px]">
-                <h3 className="text-[#333333] text-[16px] mb-3">Balance Change</h3>
-                <div className="md:h-[49px] bg-[#F5F5F5] rounded-[8px] p-4 flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-[#7D7D7D] text-[9px] mb-1">Previous</span>
-                    <span className="text-[#444444] text-[13px] font-medium">
-                      {formatSignedCurrency((txn as any).balanceBefore ?? 0)}
-                    </span>
-                  </div>
-                  <img src="/icons/forward-arrow.svg" alt="arrow right" className="mt-4 w-[13px] h-[9px]" />
-                  <div className="flex flex-col text-right">
-                    <span className="text-[#7D7D7D] text-[9px] font-medium mb-1">New</span>
-                    <span className="text-[#444444] text-[13px] font-medium">
-                      {formatSignedCurrency((txn as any).balanceAfter ?? 0)}
-                    </span>
-                  </div>
-                </div>
-              </div>
+            {/* Main Grid: Transaction Details, Process By */}
+            <div className="pb-4 grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 
               {/* Transaction Details */}
               <div>
@@ -239,8 +219,8 @@ const ClientTransactionModal = () => {
               <div>
                 <h3 className="text-[#333333] text-[13px] mb-3">Process By</h3>
                 <ul className="space-y-2">
-                  <li className="text-sm text-[#444444] flex flex-col max-w-full">
-                    <span className="font-medium">{formatRole(txn.userId?.role)}:</span>
+                  <li className="text-sm text-[#444444]">
+                    <span className="font-medium">{formatRole(txn.userId?.role)}: </span>
                     <span className="break-all whitespace-normal">{txn.userId?.name || "Unknown"}</span>
                   </li>
                   {txn.invoiceNumber && (

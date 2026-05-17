@@ -159,10 +159,9 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
       client
     );
 
-    // Sort by createdAt - NEWEST FIRST
     return transactionsWithBalance.sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
+      const dateA = new Date(a.date || a.createdAt).getTime();
+      const dateB = new Date(b.date || b.createdAt).getTime();
       return dateB - dateA;
     });
   }, [clientTransactions, client]);
@@ -256,35 +255,10 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                   </div>
                 </div>
 
-                {/* --- MAIN GRID (Balance, Details, Process) --- */}
-                <div className=" pb-4 grid grid-cols-1 md:grid-cols-[40%_30%_30%] gap-6 mb-6">
-                  {/* 1. Balance Change */}
-                  <div className="md:w-[204px]">
-                    <h3 className="text-[#333333] text-[16px] mb-3">
-                      Balance Change
-                    </h3>
-                    <div className="md:h-[49px] bg-[#F5F5F5] rounded-[8px] p-4 flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <span className="text-[#7D7D7D] text-[9px] mb-1">
-                          Previous
-                        </span>
-                        <span className="text-[#444444] text-[13px] font-medium">
-                          {formatSignedCurrency(txn.balanceBefore)}
-                        </span>
-                      </div>
-                      <img src="/icons/forward-arrow.svg" alt="arrow right" className="mt-4 w-[13px] h-[9px]"/>
-                      <div className="flex flex-col text-right">
-                        <span className="text-[#7D7D7D] text-[9px] font-medium mb-1">
-                          New
-                        </span>
-                        <span className="text-[#444444] text-[13px] font-medium">
-                          {formatSignedCurrency(txn.balanceAfter)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                {/* --- MAIN GRID (Details, Process) --- */}
+                <div className=" pb-4 grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 
-                  {/* 2. Transaction Details */}
+                  {/* 1. Transaction Details */}
                   <div>
                     <h3 className="text-[#444444] text-[16px] mb-3">
                       Transaction Details
@@ -334,19 +308,15 @@ export const ClientTransactionDetails: React.FC<clientTrasactionDetailsProps> = 
                     </ul>
                   </div>
 
-                  {/* 3. Process By */}
+                  {/* 2. Process By */}
                   <div>
                     <h3 className="text-[#333333] text-[13px] mb-3">
                       Process By
                     </h3>
                     <ul className="space-y-2">
-                      <li className="text-sm text-[#444444] flex flex-col max-w-full">
-                        <span className="font-medium text-[#444444]">
-                          {formatRole(txn.userId?.role)}:
-                        </span>
-                        <span className="break-all whitespace-normal">
-                          {txn.userId?.name || "Unknown"}
-                        </span>
+                      <li className="text-sm text-[#444444]">
+                        <span className="font-medium text-[#444444]">{formatRole(txn.userId?.role)}: </span>
+                        <span className="break-all whitespace-normal">{txn.userId?.name || "Unknown"}</span>
                       </li>
                       {txn.invoiceNumber && (
                         <li>
