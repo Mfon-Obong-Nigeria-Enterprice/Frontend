@@ -105,6 +105,11 @@ api.interceptors.response.use(
 
     // If 401 and not already retried
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // Never try to refresh the refresh endpoint itself — that would cause a deadlock
+      if (originalRequest.url?.includes('/auth/refresh')) {
+        return Promise.reject(error);
+      }
+
       // 👇 check auth state before trying refresh
       const { isAuthenticated } = useAuthStore.getState();
       if (!isAuthenticated) {
