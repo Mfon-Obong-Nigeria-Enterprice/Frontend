@@ -121,7 +121,6 @@ const DashboardSales = () => {
 
   const mergedTransactions = useMemo(() => {
     return (transactions ?? []).map((transaction) => {
-      // const clientId = transaction.clientId?._id;
       const clientId =
         typeof transaction.clientId === "string"
           ? transaction.clientId
@@ -135,6 +134,17 @@ const DashboardSales = () => {
     });
   }, [transactions, getClientById]);
 
+  // Filter and sort before paginating so every page has a consistent row count
+  const salesTransactions = useMemo(() => {
+    return mergedTransactions
+      .filter((txn) => txn.type === "PURCHASE" || txn.type === "PICKUP")
+      .sort((a, b) => {
+        const dateA = new Date(a.date || a.createdAt || 0).getTime();
+        const dateB = new Date(b.date || b.createdAt || 0).getTime();
+        return dateB - dateA;
+      });
+  }, [mergedTransactions]);
+
   const {
     currentPage,
     setCurrentPage,
@@ -143,13 +153,13 @@ const DashboardSales = () => {
     goToNextPage,
     canGoPrevious,
     canGoNext,
-  } = usePagination((mergedTransactions ?? []).length, 5);
+  } = usePagination(salesTransactions.length, 5);
 
   const currentTransaction = useMemo(() => {
     const startIndex = (currentPage - 1) * 5;
     const endIndex = startIndex + 5;
-    return mergedTransactions?.slice(startIndex, endIndex);
-  }, [mergedTransactions, currentPage]);
+    return salesTransactions.slice(startIndex, endIndex);
+  }, [salesTransactions, currentPage]);
 
   const handleExportExcel = () => {
     const data =

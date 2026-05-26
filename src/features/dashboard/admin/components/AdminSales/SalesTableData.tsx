@@ -35,7 +35,6 @@ import type { Transaction } from "@/types/transactions";
 //hooks
 import { useTransactionSearch } from "@/hooks/useTransactionSearch";
 import { formatCurrency } from "@/utils/formatCurrency";
-import { useMemo } from "react";
 
 // Empty State Component
 function EmptySalesState() {
@@ -75,21 +74,7 @@ const SalesTableData = ({
     onPageChange: (page: number) => setCurrentPage(page),
   });
 
-  // Filter for only purchase and pickup transactions
-  const salesTransactions = useMemo(() => {
-    const filtered = currentTransaction.filter(
-      (txn) => txn.type === "PURCHASE" || txn.type === "PICKUP"
-    );
-
-    // Sort by date/time - newest first
-    return filtered.sort((a, b) => {
-      const dateA = new Date(a.date || a.createdAt || 0).getTime();
-      const dateB = new Date(b.date || b.createdAt || 0).getTime();
-      return dateB - dateA; // Descending order (newest first)
-    });
-  }, [currentTransaction]);
-
-  const hasTransactions = salesTransactions && salesTransactions.length > 0;
+  const hasTransactions = currentTransaction && currentTransaction.length > 0;
 
   return (
     <div className="bg-white px-3 md:px-6 py-3 md:py-6 rounded-lg font-Inter">
@@ -118,7 +103,7 @@ const SalesTableData = ({
               <TableHeader>
                 <TableRow className="bg-[#D9D9D9]">
                   <TableHead className="text-[#333333] text-base">
-                    Time
+                    Date
                   </TableHead>
                   <TableHead className="text-[#333333] text-base">
                     Client
@@ -138,13 +123,13 @@ const SalesTableData = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {salesTransactions.map((transaction) => (
+                {currentTransaction.map((transaction) => (
                   <TableRow
                     key={transaction._id}
                     id={`invoice-${transaction.invoiceNumber}`}
                   >
                     <TableCell className="text-sm text-gray-600">
-                      {new Date(transaction.createdAt).toLocaleTimeString()}
+                      {new Date(transaction.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
                       {toSentenceCaseName(
